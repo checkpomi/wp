@@ -1,0 +1,325 @@
+
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"></meta>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"></meta>
+    <title></title>
+<style>
+    :root {
+        --neon-blue: #00d2ff;
+        --neon-pink: #ff007f;
+        --neon-green: #39ff14;
+        --bg-dark: #0a0a12;
+    }
+
+    .game-container {
+        font-family: 'Pretendard', -apple-system, sans-serif;
+        background-color: #1a1a2e;
+        padding: 20px;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 500px;
+        margin: 20px auto;
+        color: white;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        touch-action: none; /* 모바일 브라우저 스크롤/확대 방지 */
+    }
+
+    .game-hud {
+        display: flex;
+        justify-content: space-between;
+        background: rgba(0,0,0,0.5);
+        padding: 12px 15px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+    }
+
+    .hud-item { text-align: center; }
+    .hud-label { font-size: 10px; color: #888; display: block; }
+    .hud-value { font-family: 'Courier New', monospace; font-size: 18px; color: var(--neon-blue); font-weight: bold; }
+    #life-val { font-size: 16px; letter-spacing: 2px; }
+
+    #brickCanvas {
+        background-color: var(--bg-dark);
+        border: 3px solid #30336b;
+        border-radius: 10px;
+        display: block;
+        width: 100%; /* 반응형 설정 */
+        height: auto;
+    }
+
+    /* 모바일 전용 컨트롤러 */
+    .mobile-ctrl {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .touch-btn {
+        height: 60px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid #444;
+        border-radius: 12px;
+        color: white;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+    }
+    .touch-btn:active { background: rgba(0, 210, 255, 0.3); border-color: var(--neon-blue); }
+
+    .game-btns {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        color: white;
+        transition: 0.2s;
+    }
+    .btn-start { background: #27ae60; }
+    .btn-pause { background: #f39c12; }
+    .btn-stop { background: #c0392b; }
+    .btn:disabled { background: #444; opacity: 0.6; }
+</style>
+</head>
+<body>
+<div>🎾 벽돌깨기 (Breakout, 1976)</div>
+<br />
+
+<div class="game-container">
+    <div class="game-hud">
+        <div class="hud-item"><span class="hud-label">LIFE</span><span id="life-val"></span></div>
+        <div class="hud-item"><span class="hud-label">STAGE</span><span class="hud-value" id="stage-val">1 / 20</span></div>
+        <div class="hud-item"><span class="hud-label">SCORE</span><span class="hud-value" id="score-val">0</span></div>
+    </div>
+
+    <canvas height="500" id="brickCanvas" width="400"></canvas>
+
+    <div class="mobile-ctrl">
+        <div class="touch-btn" id="l-btn">◀</div>
+        <div class="touch-btn" id="r-btn">▶</div>
+    </div>
+
+    <div class="game-btns">
+        <button class="btn btn-start" id="s-btn" onclick="startGame()">START</button>
+        <button class="btn btn-pause" disabled="" id="p-btn" onclick="pauseGame()">PAUSE</button>
+        <button class="btn btn-stop" id="t-btn" onclick="stopGame()">STOP</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('brickCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 자바스크립트 내부 유니코드 직접 할당 (하트, 트로피)
+    const U_HEART = "\u2764\uFE0F";
+    const U_TROPHY = "\uD83C\uDFC6";
+
+    let score = 0, lives = 3, stage = 1;
+    let active = false, paused = false, loop;
+    
+    // 게임 오브젝트 설정
+    const ballRadius = 8;
+    let x, y, dx, dy;
+    const paddleHeight = 12, paddleBaseWidth = 90;
+    let paddleWidth = paddleBaseWidth, paddleX;
+    
+    const brickRowCount = 6, brickColumnCount = 5;
+    const brickWidth = 65, brickHeight = 20, brickPadding = 10, brickOffsetTop = 40, brickOffsetLeft = 15;
+    let bricks = [];
+
+    // 방향키 스크롤 방지 로직
+    window.addEventListener('keydown', e => {
+        if(["ArrowUp", "ArrowDown", "Space", "ArrowLeft", "ArrowRight"].includes(e.code)) {
+            e.preventDefault(); // 화면 스크롤 차단
+        }
+        keys[e.code] = true;
+    });
+    window.addEventListener('keyup', e => keys[e.code] = false);
+
+    // 모바일 터치 조작
+    const keys = {};
+    const addTouch = (id, key) => {
+        const el = document.getElementById(id);
+        el.addEventListener('touchstart', e => { e.preventDefault(); keys[key] = true; });
+        el.addEventListener('touchend', e => { e.preventDefault(); keys[key] = false; });
+    };
+    addTouch('l-btn', 'ArrowLeft');
+    addTouch('r-btn', 'ArrowRight');
+
+    function initBricks() {
+        bricks = [];
+        for (let c = 0; c < brickColumnCount; c++) {
+            bricks[c] = [];
+            for (let r = 0; r < brickRowCount; r++) {
+                bricks[c][r] = { x: 0, y: 0, status: 1 };
+            }
+        }
+    }
+
+    function startGame() {
+        if(paused) { pauseGame(); return; }
+        active = true; paused = false; score = 0; lives = 3; stage = 1;
+        initStage();
+        document.getElementById('s-btn').disabled = true;
+        document.getElementById('p-btn').disabled = false;
+        runGame();
+    }
+
+    function initStage() {
+        paddleWidth = Math.max(paddleBaseWidth - (stage * 2), 40); // 스테이지별 패들 감소
+        paddleX = (canvas.width - paddleWidth) / 2;
+        x = canvas.width / 2;
+        y = canvas.height - 40;
+        // 스테이지별 속도 증가 (20단계 난이도)
+        let speed = 2.5 + (stage * 0.4); 
+        dx = speed; dy = -speed;
+        initBricks();
+        updateHUD();
+    }
+
+    function pauseGame() {
+        paused = !paused;
+        document.getElementById('p-btn').innerText = paused ? "RESUME" : "PAUSE";
+        if(!paused) runGame();
+    }
+
+    function stopGame() {
+        active = false; paused = false;
+        cancelAnimationFrame(loop);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.getElementById('s-btn').disabled = false;
+        document.getElementById('p-btn').disabled = true;
+        alert("게임 종료! 최종 스테이지: " + stage);
+    }
+
+    function updateHUD() {
+        document.getElementById('score-val').innerText = score;
+        document.getElementById('stage-val').innerText = stage + " / 20";
+        document.getElementById('life-val').innerText = U_HEART.repeat(lives);
+    }
+
+    function collisionDetection() {
+        let activeBricks = 0;
+        for (let c = 0; c < brickColumnCount; c++) {
+            for (let r = 0; r < brickRowCount; r++) {
+                let b = bricks[c][r];
+                if (b.status === 1) {
+                    activeBricks++;
+                    if (x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+                        dy = -dy;
+                        b.status = 0;
+                        score += 10;
+                        updateHUD();
+                    }
+                }
+            }
+        }
+        if(activeBricks === 0) {
+            if(stage < 20) {
+                stage++;
+                alert("STAGE " + stage + " START!");
+                initStage();
+            } else {
+                alert(U_TROPHY + " ALL STAGES CLEARED!");
+                stopGame();
+            }
+        }
+    }
+
+    function runGame() {
+        if(!active || paused) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 배경 그리드
+        ctx.strokeStyle = "#161d27";
+        for(let i=0; i<canvas.width; i+=40) {
+            ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke();
+        }
+
+        drawBricks();
+        drawBall();
+        drawPaddle();
+        collisionDetection();
+
+        if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) dx = -dx;
+        if (y + dy < ballRadius) dy = -dy;
+        else if (y + dy > canvas.height - ballRadius - 10) {
+            if (x > paddleX && x < paddleX + paddleWidth) {
+                dy = -dy;
+                dx = 8 * ((x - (paddleX + paddleWidth / 2)) / paddleWidth);
+            } else {
+                lives--;
+                updateHUD();
+                if (!lives) {
+                    alert("GAME OVER!");
+                    stopGame();
+                } else {
+                    x = canvas.width / 2; y = canvas.height - 40;
+                    dx = Math.abs(dx); dy = -Math.abs(dy);
+                }
+            }
+        }
+
+        if (keys['ArrowRight'] && paddleX < canvas.width - paddleWidth) paddleX += 7;
+        else if (keys['ArrowLeft'] && paddleX > 0) paddleX -= 7;
+
+        x += dx; y += dy;
+        loop = requestAnimationFrame(runGame);
+    }
+
+    function drawBall() {
+        ctx.beginPath(); ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+        ctx.fillStyle = "#fff";
+        ctx.shadowBlur = 10; ctx.shadowColor = "#fff";
+        ctx.fill(); ctx.closePath();
+        ctx.shadowBlur = 0;
+    }
+
+    function drawPaddle() {
+        ctx.beginPath(); ctx.rect(paddleX, canvas.height - paddleHeight - 10, paddleWidth, paddleHeight);
+        ctx.fillStyle = varColor(stage);
+        ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
+        ctx.fill(); ctx.closePath();
+        ctx.shadowBlur = 0;
+    }
+
+    function drawBricks() {
+        for (let c = 0; c < brickColumnCount; c++) {
+            for (let r = 0; r < brickRowCount; r++) {
+                if (bricks[c][r].status === 1) {
+                    let brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft;
+                    let brickY = (r * (brickHeight + brickPadding)) + brickOffsetTop;
+                    bricks[c][r].x = brickX; bricks[c][r].y = brickY;
+                    ctx.beginPath(); ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                    ctx.fillStyle = r % 2 === 0 ? "#ff007f" : "#39ff14";
+                    ctx.fill(); ctx.closePath();
+                }
+            }
+        }
+    }
+
+    function varColor(s) {
+        if(s <= 7) return "#00d2ff";
+        if(s <= 14) return "#f39c12";
+        return "#ff007f";
+    }
+
+    updateHUD();
+</script>
+
+<br />
+#벽돌깨기 #블로그게임 #자바스크립트게임 #무료게임 #20단계챌린지 #네온그래픽 #인터랙티브콘텐츠 #모바일게임 #킬링타임 #Blogger게임
+  </body>
+</html>
