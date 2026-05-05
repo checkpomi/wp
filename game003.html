@@ -3,303 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Classic Bubble Shooter Online - Retro Arcade Tool</title>
-    <meta name="description" content="Play the classic bubble shooter game online. A retro arcade experience inspired by Bubble Bobble. Free to play, no download required.">
+    <title>Classic Bubble Shooter Online - Retro Arcade</title>
     <style>
-        :root {
-            --bg-dark: #0f0f1b;
-            --primary-accent: #00d2ff;
-            --retro-pink: #ff007a;
-        }
-
         body {
-            background-color: var(--bg-dark);
+            background: #0b0e14;
             color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            padding: 20px;
-            overflow-x: hidden;
-        }
-
-        /* SEO용 헤더 */
-        header { text-align: center; margin-bottom: 20px; }
-        h1 { font-size: 24px; color: var(--primary-accent); margin: 0; }
-        .score-container { font-size: 20px; margin: 10px 0; color: var(--retro-pink); font-weight: bold; }
-
-        /* 게임 보드 박스 */
-        #game-container {
-            position: relative;
-            width: 320px;
-            height: 480px;
-            border: 4px solid #333;
-            background: #000;
-            overflow: hidden;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
-        }
-
-        canvas { display: block; touch-action: none; }
-
-        /* 오버레이 창 */
-        #overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            font-family: 'Segoe UI', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 20;
+            min-height: 100vh;
+            margin: 0;
         }
 
-        /* 컨트롤 버튼 스타일 */
-        .controls {
+        .game-header { text-align: center; margin-bottom: 10px; }
+        .score-box { font-size: 24px; color: #00d2ff; font-weight: bold; }
+
+        #game-wrapper {
+            position: relative;
+            border: 4px solid #333;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        canvas { display: block; background: #000; cursor: crosshair; }
+
+        /* 오버레이 */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        /* 컨트롤 패널 */
+        .panel {
             margin-top: 20px;
             display: flex;
             gap: 10px;
         }
 
         .btn {
-            padding: 12px 24px;
-            font-size: 16px;
+            padding: 12px 25px;
+            font-size: 15px;
             font-weight: bold;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: 0.3s;
-            color: white;
+            transition: 0.2s;
+            color: #white;
         }
 
-        .btn-start { background: #27ae60; }
-        .btn-pause { background: #f39c12; }
-        .btn-reset { background: #e74c3c; }
-        .btn:hover { transform: scale(1.05); opacity: 0.9; }
-        .btn:disabled { background: #555; cursor: not-allowed; }
+        .btn-start { background: #2ecc71; color: white; }
+        .btn-pause { background: #f1c40f; color: #333; }
+        .btn-reset { background: #e74c3c; color: white; }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn:disabled { background: #555; cursor: not-allowed; opacity: 0.5; }
 
-        .instructions {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #888;
-            max-width: 320px;
-            text-align: center;
-            line-height: 1.6;
-        }
+        .desc { margin-top: 15px; color: #777; font-size: 13px; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>Bubble Shooter Retro Arcade</h1>
-    <div class="score-container">SCORE: <span id="score-val">0</span></div>
-</header>
-
-<div id="game-container">
-    <div id="overlay">
-        <h2 id="msg" style="color: var(--primary-accent);">READY?</h2>
-        <button class="btn btn-start" onclick="game.init()">START GAME</button>
+    <div class="game-header">
+        <div class="score-box">SCORE: <span id="score">0</span></div>
     </div>
-    <canvas id="gameCanvas"></canvas>
-</div>
 
-<div class="controls">
-    <button id="pauseBtn" class="btn btn-pause" onclick="game.togglePause()" disabled>PAUSE</button>
-    <button class="btn btn-reset" onclick="game.reset()">RESET</button>
-</div>
+    <div id="game-wrapper">
+        <div id="overlay">
+            <h2 id="msg" style="color: #00d2ff;">BUBBLE SHOOTER</h2>
+            <button class="btn btn-start" onclick="startGame()">START GAME</button>
+        </div>
+        <canvas id="bubbleCanvas" width="320" height="400"></canvas>
+    </div>
 
-<section class="instructions">
-    <p><strong>How to Play:</strong> Aim with your mouse or touch. Click to shoot the bubble. Match 3 or more of the same color to pop them!</p>
-</section>
+    <div class="panel">
+        <button id="pauseBtn" class="btn btn-pause" onclick="togglePause()" disabled>PAUSE</button>
+        <button class="btn btn-reset" onclick="resetGame()">RESET</button>
+    </div>
 
-<script>
-/**
- * 버블 슈터 엔진 핵심 로직
- */
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const scoreEl = document.getElementById('score-val');
-const overlay = document.getElementById('overlay');
-const msg = document.getElementById('msg');
-const pauseBtn = document.getElementById('pauseBtn');
+    <p class="desc">클릭하여 버블을 발사하세요! 3개 이상 모이면 터집니다.</p>
 
-canvas.width = 320;
-canvas.height = 480;
+    <script>
+        const canvas = document.getElementById('bubbleCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const overlay = document.getElementById('overlay');
+        const msg = document.getElementById('msg');
 
-const COLORS = ['#FF007A', '#00D2FF', '#FFEE00', '#00FF66', '#AA00FF'];
+        const COLORS = ['#ff007a', '#00d2ff', '#ffee00', '#00ff66', '#aa00ff'];
+        let bubbles = [];
+        let projectile = null;
+        let score = 0;
+        let gameRunning = false;
+        let isPaused = false;
+        let animationId;
 
-const game = {
-    running: false,
-    paused: false,
-    score: 0,
-    bubbles: [],
-    currentBubble: null,
-    
-    init() {
-        this.running = true;
-        this.paused = false;
-        this.score = 0;
-        this.bubbles = [];
-        scoreEl.innerText = '0';
-        overlay.style.display = 'none';
-        pauseBtn.disabled = false;
-        pauseBtn.innerText = "PAUSE";
-        
-        // 초기 버블 배치 (간이 구현)
-        for(let i=0; i<5; i++) {
-            for(let j=0; j<8; j++) {
-                this.bubbles.push({
-                    x: j * 40 + 20,
-                    y: i * 40 + 20,
-                    color: COLORS[Math.floor(Math.random() * COLORS.length)],
-                    radius: 18
-                });
+        function startGame() {
+            bubbles = [];
+            score = 0;
+            scoreEl.innerText = '0';
+            gameRunning = true;
+            isPaused = false;
+            overlay.style.display = 'none';
+            pauseBtn.disabled = false;
+            pauseBtn.innerText = "PAUSE";
+            
+            // 초기 버블 배치
+            for(let r=0; r<4; r++) {
+                for(let c=0; c<8; c++) {
+                    bubbles.push({
+                        x: c * 40 + 20,
+                        y: r * 40 + 20,
+                        color: COLORS[Math.floor(Math.random() * COLORS.length)]
+                    });
+                }
             }
+            createProjectile();
+            animate();
         }
-        this.newProjectile();
-        this.loop();
-    },
 
-    newProjectile() {
-        this.currentBubble = {
-            x: canvas.width / 2,
-            y: canvas.height - 30,
-            color: COLORS[Math.floor(Math.random() * COLORS.length)],
-            radius: 18,
-            vx: 0,
-            vy: 0,
-            active: false
-        };
-    },
-
-    draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // 설치된 버블 그리기
-        this.bubbles.forEach(b => {
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-            ctx.fillStyle = b.color;
-            ctx.fill();
-            ctx.closePath();
-        });
-
-        // 현재 발사체 그리기
-        if (this.currentBubble) {
-            ctx.beginPath();
-            ctx.arc(this.currentBubble.x, this.currentBubble.y, this.currentBubble.radius, 0, Math.PI * 2);
-            ctx.fillStyle = this.currentBubble.color;
-            ctx.fill();
-            ctx.strokeStyle = "white";
-            ctx.stroke();
-            ctx.closePath();
+        function createProjectile() {
+            projectile = {
+                x: canvas.width / 2,
+                y: canvas.height - 30,
+                color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                vx: 0,
+                vy: 0,
+                active: false
+            };
         }
-    },
 
-    update() {
-        if (!this.running || this.paused) return;
-
-        if (this.currentBubble && this.currentBubble.active) {
-            this.currentBubble.x += this.currentBubble.vx;
-            this.currentBubble.y += this.currentBubble.vy;
-
-            // 벽 반사
-            if (this.currentBubble.x < 18 || this.currentBubble.x > canvas.width - 18) {
-                this.currentBubble.vx *= -1;
-            }
-
-            // 천장 도달 또는 버블 충돌
-            if (this.currentBubble.y < 20) {
-                this.attachBubble();
+        function togglePause() {
+            if (!gameRunning) return;
+            isPaused = !isPaused;
+            if (isPaused) {
+                pauseBtn.innerText = "RESUME";
+                cancelAnimationFrame(animationId);
             } else {
-                this.bubbles.forEach((b, index) => {
-                    const dist = Math.hypot(this.currentBubble.x - b.x, this.currentBubble.y - b.y);
-                    if (dist < 36) {
-                        this.attachBubble();
-                    }
-                });
+                pauseBtn.innerText = "PAUSE";
+                animate();
             }
         }
-    },
 
-    attachBubble() {
-        this.bubbles.push({
-            x: this.currentBubble.x,
-            y: this.currentBubble.y,
-            color: this.currentBubble.color,
-            radius: 18
-        });
-        this.score += 10;
-        scoreEl.innerText = this.score;
-        this.currentBubble.active = false;
-        this.newProjectile();
-        
-        if (this.bubbles.length > 60) {
-            this.gameOver();
+        function resetGame() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            msg.innerText = "GAME RESET";
+            overlay.style.display = 'flex';
+            pauseBtn.disabled = true;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
-    },
 
-    togglePause() {
-        if(!this.running) return;
-        this.paused = !this.paused;
-        pauseBtn.innerText = this.paused ? "RESUME" : "PAUSE";
-        if(!this.paused) this.loop();
-    },
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 기존 버블 그리기
+            bubbles.forEach(b => {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 18, 0, Math.PI * 2);
+                ctx.fillStyle = b.color;
+                ctx.fill();
+                ctx.closePath();
+            });
 
-    reset() {
-        this.running = false;
-        this.bubbles = [];
-        this.currentBubble = null;
-        overlay.style.display = 'flex';
-        msg.innerText = "RESET DONE";
-        pauseBtn.disabled = true;
-        this.draw();
-    },
+            // 발사체 그리기
+            if (projectile) {
+                ctx.beginPath();
+                ctx.arc(projectile.x, projectile.y, 18, 0, Math.PI * 2);
+                ctx.fillStyle = projectile.color;
+                ctx.fill();
+                ctx.strokeStyle = "white";
+                ctx.stroke();
+                ctx.closePath();
+            }
+        }
 
-    gameOver() {
-        this.running = false;
-        overlay.style.display = 'flex';
-        msg.innerText = "GAME OVER";
-        pauseBtn.disabled = true;
-    },
+        function update() {
+            if (projectile && projectile.active) {
+                projectile.x += projectile.vx;
+                projectile.y += projectile.vy;
 
-    loop() {
-        if (!this.running || this.paused) return;
-        game.update();
-        game.draw();
-        requestAnimationFrame(() => game.loop());
-    }
-};
+                // 벽 충돌
+                if (projectile.x < 18 || projectile.x > canvas.width - 18) projectile.vx *= -1;
 
-// 입력 이벤트 제어
-canvas.addEventListener('mousedown', (e) => {
-    if(!game.running || game.paused || game.currentBubble.active) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const targetX = e.clientX - rect.left;
-    const targetY = e.clientY - rect.top;
-    
-    const angle = Math.atan2(targetY - game.currentBubble.y, targetX - game.currentBubble.x);
-    game.currentBubble.vx = Math.cos(angle) * 7;
-    game.currentBubble.vy = Math.sin(angle) * 7;
-    game.currentBubble.active = true;
-});
+                // 천장 충돌 및 버블 충돌 체크
+                let hit = false;
+                if (projectile.y < 18) hit = true;
+                
+                bubbles.forEach(b => {
+                    const dist = Math.hypot(projectile.x - b.x, projectile.y - b.y);
+                    if (dist < 34) hit = true;
+                });
 
-// 터치 지원
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const targetX = touch.clientX - rect.left;
-    const targetY = touch.clientY - rect.top;
-    
-    const angle = Math.atan2(targetY - game.currentBubble.y, targetX - game.currentBubble.x);
-    game.currentBubble.vx = Math.cos(angle) * 7;
-    game.currentBubble.vy = Math.sin(angle) * 7;
-    game.currentBubble.active = true;
-}, {passive: false});
+                if (hit) {
+                    bubbles.push({ x: projectile.x, y: projectile.y, color: projectile.color });
+                    score += 10;
+                    scoreEl.innerText = score;
+                    if (projectile.y > canvas.height - 80) {
+                        gameRunning = false;
+                        msg.innerText = "GAME OVER";
+                        overlay.style.display = 'flex';
+                    }
+                    createProjectile();
+                }
+            }
+        }
 
-</script>
+        function animate() {
+            if (!gameRunning || isPaused) return;
+            draw();
+            update();
+            animationId = requestAnimationFrame(animate);
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (!gameRunning || isPaused || projectile.active) return;
+            const rect = canvas.getBoundingClientRect();
+            const tx = e.clientX - rect.left;
+            const ty = e.clientY - rect.top;
+            const angle = Math.atan2(ty - projectile.y, tx - projectile.x);
+            projectile.vx = Math.cos(angle) * 8;
+            projectile.vy = Math.sin(angle) * 8;
+            projectile.active = true;
+        });
+    </script>
 </body>
 </html>
