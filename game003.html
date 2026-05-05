@@ -3,52 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Classic Bubble Bobble – Retro Mobile Edition</title>
+    <title>Classic Bubble Bobble – 10 Levels & 3 Lives</title>
     <style>
-        body { background: #000; color: #fff; font-family: 'Courier New', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; touch-action: none; }
-        #score-board { font-size: 24px; color: #2ecc71; margin-bottom: 10px; font-weight: bold; }
-        
+        body { background: #000; color: #fff; font-family: 'Courier New', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 10px; touch-action: none; }
+        .hud { display: flex; gap: 20px; font-size: 18px; color: #2ecc71; margin: 10px 0; font-weight: bold; text-shadow: 2px 2px #000; }
         #game-container { position: relative; border: 3px solid #3498db; background: #00021a; }
-        canvas { display: block; background: #000; }
-        
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); z-index: 10; }
-
-        /* 메인 제어 버튼 */
+        canvas { display: block; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); z-index: 10; text-align: center; padding: 20px; box-sizing: border-box; }
         .main-btns { margin: 15px 0; display: flex; gap: 10px; }
         .btn { padding: 10px 20px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; }
         .btn-start { background: #2ecc71; color: white; font-size: 1.2rem; }
         .btn-pause { background: #f1c40f; color: #000; }
         .btn-reset { background: #e74c3c; color: white; }
-
-        /* 모바일 조작 버튼 패드 */
-        .mobile-controls {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-            width: 320px;
-        }
-        .ctrl-btn {
-            height: 60px; background: #333; color: white; border: 2px solid #555;
-            border-radius: 10px; font-size: 18px; font-weight: bold;
-            display: flex; align-items: center; justify-content: center;
-            user-select: none; -webkit-tap-highlight-color: transparent;
-        }
+        .mobile-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; width: 100%; max-width: 360px; }
+        .ctrl-btn { height: 60px; background: #333; color: white; border: 2px solid #555; border-radius: 10px; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-tap-highlight-color: transparent; }
         .ctrl-btn:active { background: #666; }
-        .btn-fire { background: #e67e22; border-color: #d35400; }
-        .btn-jump { background: #3498db; border-color: #2980b9; }
+        .btn-fire { background: #e67e22; border-color: #d35400; grid-column: span 3; }
     </style>
 </head>
 <body>
 
-    <div id="score-board">SCORE: <span id="score">0</span></div>
+    <div class="hud">
+        <div>SCORE: <span id="score">0</span></div>
+        <div>LEVEL: <span id="level">1</span></div>
+        <div style="color: #e74c3c;">LIVES: <span id="lives">3</span></div>
+    </div>
 
     <div id="game-container">
         <div id="overlay" class="overlay">
             <h1 id="msg" style="color:#2ecc71">BUBBLE BOBBLE</h1>
+            <p id="sub-msg">10 Levels Challenge!</p>
             <button class="btn btn-start" onclick="game.start()">START GAME</button>
         </div>
-        <canvas id="gameCanvas" width="320" height="300"></canvas>
+        <canvas id="gameCanvas" width="320" height="320"></canvas>
     </div>
 
     <div class="main-btns">
@@ -56,56 +43,86 @@
         <button class="btn btn-reset" onclick="resetGame()">RESET</button>
     </div>
 
-    <!-- 모바일 전용 실행 버튼들 -->
     <div class="mobile-controls">
         <div class="ctrl-btn" onmousedown="game.input.left=true" onmouseup="game.input.left=false" ontouchstart="game.input.left=true" ontouchend="game.input.left=false">LEFT</div>
-        <div class="ctrl-btn btn-jump" onmousedown="game.jump()" ontouchstart="game.jump()">JUMP</div>
+        <div class="ctrl-btn" style="background:#3498db" onmousedown="game.jump()" ontouchstart="game.jump()">JUMP</div>
         <div class="ctrl-btn" onmousedown="game.input.right=true" onmouseup="game.input.right=false" ontouchstart="game.input.right=true" ontouchend="game.input.right=false">RIGHT</div>
-        <div class="ctrl-btn btn-fire" style="grid-column: span 3;" onmousedown="game.shoot()" ontouchstart="game.shoot()">FIRE BUBBLE (X)</div>
+        <div class="ctrl-btn btn-fire" onmousedown="game.shoot()" ontouchstart="game.shoot()">FIRE BUBBLE (X)</div>
     </div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('score');
+const levelEl = document.getElementById('level');
+const livesEl = document.getElementById('lives');
 const pauseBtn = document.getElementById('pauseBtn');
 const overlay = document.getElementById('overlay');
+const msgEl = document.getElementById('msg');
+const subMsgEl = document.getElementById('sub-msg');
 
 const game = {
     running: false,
     paused: false,
     score: 0,
+    level: 1,
+    lives: 3,
+    spawnTimer: 0,
+    enemiesDefeated: 0,
     input: { left: false, right: false },
     bubbles: [],
     enemies: [],
     platforms: [
-        {x: 0, y: 280, w: 320, h: 20}, // 바닥
-        {x: 40, y: 210, w: 80, h: 10},
-        {x: 200, y: 210, w: 80, h: 10},
-        {x: 110, y: 130, w: 100, h: 10}
+        {x: 0, y: 300, w: 320, h: 20},
+        {x: 30, y: 220, w: 100, h: 10},
+        {x: 190, y: 220, w: 100, h: 10},
+        {x: 100, y: 140, w: 120, h: 10},
+        {x: 0, y: 70, w: 80, h: 10},
+        {x: 240, y: 70, w: 80, h: 10}
     ],
-    player: { x: 40, y: 230, w: 24, h: 24, vx: 0, vy: 0, speed: 3, jumpPower: -9, grounded: false, dir: 1 },
+    player: { x: 150, y: 250, w: 22, h: 22, vx: 0, vy: 0, speed: 3.5, jumpPower: -10, grounded: false, dir: 1, invincible: 0 },
 
     start() {
         this.running = true;
         this.paused = false;
         this.score = 0;
-        this.bubbles = [];
-        this.enemies = [
-            { x: 250, y: 150, w: 20, h: 20, vx: -1.5, dir: -1, trapped: false },
-            { x: 100, y: 50, w: 20, h: 20, vx: 1.5, dir: 1, trapped: false }
-        ];
-        scoreEl.innerText = '0';
+        this.level = 1;
+        this.lives = 3;
+        this.enemiesDefeated = 0;
+        this.resetLevelData();
         overlay.style.display = 'none';
         pauseBtn.disabled = false;
         this.loop();
+    },
+
+    resetLevelData() {
+        this.bubbles = [];
+        this.enemies = [];
+        this.spawnTimer = 0;
+        this.player.x = 150; this.player.y = 250;
+        this.player.invincible = 60; // 부활 시 1초 무적
+        scoreEl.innerText = this.score;
+        levelEl.innerText = this.level;
+        livesEl.innerText = this.lives;
+        this.spawnEnemy();
+    },
+
+    spawnEnemy() {
+        // 레벨에 따른 난이도 조절
+        const speedBoost = this.level * 0.3;
+        const xPos = Math.random() > 0.5 ? 20 : 280;
+        this.enemies.push({
+            x: xPos, y: 20, w: 20, h: 20,
+            vx: (Math.random() * 1.2 + 1 + speedBoost) * (xPos > 150 ? -1 : 1),
+            trapped: false, life: 100 + (this.level * 10)
+        });
     },
 
     jump() { if(this.player.grounded) this.player.vy = this.player.jumpPower; },
     
     shoot() {
         if(!this.running || this.paused) return;
-        this.bubbles.push({ x: this.player.x + (this.player.dir*10), y: this.player.y + 5, vx: this.player.dir*6, vy: -0.5, life: 120, trappedEnemy: null });
+        this.bubbles.push({ x: this.player.x + (this.player.dir*10), y: this.player.y + 5, vx: this.player.dir*7, vy: -0.2, life: 100, trappedEnemy: null });
     },
 
     togglePause() {
@@ -114,20 +131,54 @@ const game = {
         if(!this.paused) this.loop();
     },
 
+    die() {
+        if(this.player.invincible > 0) return;
+        this.lives--;
+        livesEl.innerText = this.lives;
+        if(this.lives <= 0) {
+            this.gameOver();
+        } else {
+            // 부활 로직
+            this.player.x = 150; this.player.y = 250;
+            this.player.vy = 0;
+            this.player.invincible = 90; // 1.5초 무적
+        }
+    },
+
     update() {
         if(!this.running || this.paused) return;
 
-        // 플레이어 이동 로직
+        // 무적 시간 감소
+        if(this.player.invincible > 0) this.player.invincible--;
+
+        // 레벨업 조건 (레벨당 5마리 처치 시 다음 단계)
+        if(this.enemiesDefeated >= this.level * 5 && this.level < 10) {
+            this.level++;
+            this.enemiesDefeated = 0;
+            levelEl.innerText = this.level;
+        }
+
+        // 악당 리스폰 주기 (레벨이 높을수록 빨라짐)
+        this.spawnTimer++;
+        const spawnRate = Math.max(60, 200 - (this.level * 15));
+        if(this.spawnTimer > spawnRate) {
+            this.spawnEnemy();
+            this.spawnTimer = 0;
+        }
+
+        // 플레이어 물리
         if(this.input.left) { this.player.vx = -this.player.speed; this.player.dir = -1; }
         else if(this.input.right) { this.player.vx = this.player.speed; this.player.dir = 1; }
         else { this.player.vx = 0; }
 
-        this.player.vy += 0.5; // 중력
+        this.player.vy += 0.5;
         this.player.x += this.player.vx;
         this.player.y += this.player.vy;
         this.player.grounded = false;
 
-        // 플랫폼 충돌
+        if(this.player.x < 0) this.player.x = 0;
+        if(this.player.x > canvas.width - this.player.w) this.player.x = canvas.width - this.player.w;
+
         this.platforms.forEach(p => {
             if(this.player.x < p.x + p.w && this.player.x + this.player.w > p.x && this.player.y + this.player.h > p.y && this.player.y + this.player.h < p.y + p.h + 10) {
                 if(this.player.vy > 0) {
@@ -138,84 +189,82 @@ const game = {
             }
         });
 
-        // 악당(몬스터) 업데이트
-        this.enemies.forEach((en, ei) => {
+        // 적 충돌
+        this.enemies.forEach((en) => {
             if(!en.trapped) {
                 en.x += en.vx;
                 if(en.x <= 0 || en.x >= canvas.width - en.w) en.vx *= -1;
-
-                // 플레이어와 충돌 시 (버블에 안 갇혔을 때)
-                if(Math.abs(this.player.x - en.x) < 20 && Math.abs(this.player.y - en.y) < 20) {
-                    this.gameOver();
+                if(Math.abs(this.player.x - en.x) < 18 && Math.abs(this.player.y - en.y) < 18) {
+                    this.die();
                 }
             }
         });
 
-        // 거품 업데이트 및 악당 포획 체크
+        // 거품 로직
         this.bubbles.forEach((b, bi) => {
             b.x += b.vx; b.y += b.vy;
-            b.vx *= 0.96; b.life--;
+            b.vx *= 0.95; b.life--;
 
             if(!b.trappedEnemy) {
                 this.enemies.forEach((en) => {
-                    if(!en.trapped && Math.abs(b.x - en.x) < 25 && Math.abs(b.y - en.y) < 25) {
-                        en.trapped = true;
-                        b.trappedEnemy = en;
-                        b.vy = -1; // 적을 가두면 위로 떠오름
+                    if(!en.trapped && Math.abs(b.x - en.x) < 22 && Math.abs(b.y - en.y) < 22) {
+                        en.trapped = true; b.trappedEnemy = en; b.vy = -0.8;
                     }
                 });
             } else {
-                // 적이 든 거품을 플레이어가 터뜨릴 때
                 if(Math.abs(this.player.x - b.x) < 25 && Math.abs(this.player.y - b.y) < 25) {
-                    this.score += 100;
+                    this.score += 100 * this.level; // 레벨 비례 점수
+                    this.enemiesDefeated++;
                     scoreEl.innerText = this.score;
                     this.enemies = this.enemies.filter(e => e !== b.trappedEnemy);
                     this.bubbles.splice(bi, 1);
+                    return;
                 }
                 b.trappedEnemy.x = b.x; b.trappedEnemy.y = b.y;
             }
-            if(b.life <= 0) this.bubbles.splice(bi, 1);
+            if(b.life <= 0) {
+                if(b.trappedEnemy) b.trappedEnemy.trapped = false;
+                this.bubbles.splice(bi, 1);
+            }
         });
     },
 
     draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // 지형
         ctx.fillStyle = '#2c3e50';
         this.platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
-        // 플레이어 (공룡)
-        ctx.fillStyle = '#2ecc71';
-        ctx.fillRect(this.player.x, this.player.y, this.player.w, this.player.h);
+        // 플레이어 (무적 시 깜빡임)
+        if(this.player.invincible % 4 < 2) {
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(this.player.x, this.player.y, this.player.w, this.player.h);
+        }
 
-        // 악당
         this.enemies.forEach(en => {
             if(!en.trapped) {
                 ctx.fillStyle = '#e74c3c';
                 ctx.fillRect(en.x, en.y, en.w, en.h);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(en.vx > 0 ? en.x+12 : en.x+4, en.y+4, 4, 4);
             }
         });
 
-        // 거품
         this.bubbles.forEach(b => {
             ctx.beginPath();
-            ctx.arc(b.x, b.y, b.trappedEnemy ? 15 : 10, 0, Math.PI*2);
+            ctx.arc(b.x, b.y, b.trappedEnemy ? 14 : 9, 0, Math.PI*2);
             ctx.strokeStyle = b.trappedEnemy ? '#f1c40f' : '#00d2ff';
             ctx.lineWidth = 2;
             ctx.stroke();
-            if(b.trappedEnemy) {
-                ctx.fillStyle = '#e74c3c';
-                ctx.fillRect(b.x-5, b.y-5, 10, 10);
-            }
         });
     },
 
     gameOver() {
         this.running = false;
         overlay.style.display = 'flex';
-        document.getElementById('msg').innerText = "GAME OVER";
-        document.getElementById('msg').style.color = "#e74c3c";
+        msgEl.innerText = "GAME OVER";
+        msgEl.style.color = "#e74c3c";
+        subMsgEl.innerHTML = `Final Score: ${this.score}<br>Reached Level: ${this.level}`;
+        pauseBtn.disabled = true;
     },
 
     loop() {
@@ -228,11 +277,10 @@ const game = {
 
 function resetGame() { location.reload(); }
 
-// 키보드 지원 (PC용)
 window.addEventListener('keydown', e => {
     if(e.code === 'ArrowLeft') game.input.left = true;
     if(e.code === 'ArrowRight') game.input.right = true;
-    if(e.code === 'KeyZ' || e.code === 'ArrowUp') game.jump();
+    if(e.code === 'KeyZ' || e.code === 'ArrowUp' || e.code === 'Space') game.jump();
     if(e.code === 'KeyX') game.shoot();
 });
 window.addEventListener('keyup', e => {
