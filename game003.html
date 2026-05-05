@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Classic Bubble Bobble – 10 Levels & 3 Lives</title>
+    <title>Classic Bubble Bobble – Smart Enemy Edition</title>
     <style>
         body { background: #000; color: #fff; font-family: 'Courier New', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 10px; touch-action: none; }
         .hud { display: flex; gap: 20px; font-size: 18px; color: #2ecc71; margin: 10px 0; font-weight: bold; text-shadow: 2px 2px #000; }
@@ -25,7 +25,7 @@
 
     <div class="hud">
         <div>SCORE: <span id="score">0</span></div>
-        <div>LEVEL: <span id="level">1</span></div>
+        <div>LVL: <span id="level">1</span></div>
         <div style="color: #e74c3c;">LIVES: <span id="lives">3</span></div>
     </div>
 
@@ -64,14 +64,10 @@ const subMsgEl = document.getElementById('sub-msg');
 const game = {
     running: false,
     paused: false,
-    score: 0,
-    level: 1,
-    lives: 3,
-    spawnTimer: 0,
-    enemiesDefeated: 0,
+    score: 0, level: 1, lives: 3,
+    spawnTimer: 0, enemiesDefeated: 0,
     input: { left: false, right: false },
-    bubbles: [],
-    enemies: [],
+    bubbles: [], enemies: [],
     platforms: [
         {x: 0, y: 300, w: 320, h: 20},
         {x: 30, y: 220, w: 100, h: 10},
@@ -80,15 +76,10 @@ const game = {
         {x: 0, y: 70, w: 80, h: 10},
         {x: 240, y: 70, w: 80, h: 10}
     ],
-    player: { x: 150, y: 250, w: 22, h: 22, vx: 0, vy: 0, speed: 3.5, jumpPower: -10, grounded: false, dir: 1, invincible: 0 },
+    player: { x: 150, y: 250, w: 20, h: 20, vx: 0, vy: 0, speed: 3.5, jumpPower: -10, grounded: false, dir: 1, invincible: 0 },
 
     start() {
-        this.running = true;
-        this.paused = false;
-        this.score = 0;
-        this.level = 1;
-        this.lives = 3;
-        this.enemiesDefeated = 0;
+        this.running = true; this.paused = false; this.score = 0; this.level = 1; this.lives = 3; this.enemiesDefeated = 0;
         this.resetLevelData();
         overlay.style.display = 'none';
         pauseBtn.disabled = false;
@@ -96,33 +87,28 @@ const game = {
     },
 
     resetLevelData() {
-        this.bubbles = [];
-        this.enemies = [];
-        this.spawnTimer = 0;
+        this.bubbles = []; this.enemies = []; this.spawnTimer = 0;
         this.player.x = 150; this.player.y = 250;
-        this.player.invincible = 60; // 부활 시 1초 무적
+        this.player.invincible = 60;
         scoreEl.innerText = this.score;
         levelEl.innerText = this.level;
         livesEl.innerText = this.lives;
-        this.spawnEnemy();
     },
 
     spawnEnemy() {
-        // 레벨에 따른 난이도 조절
-        const speedBoost = this.level * 0.3;
         const xPos = Math.random() > 0.5 ? 20 : 280;
         this.enemies.push({
             x: xPos, y: 20, w: 20, h: 20,
-            vx: (Math.random() * 1.2 + 1 + speedBoost) * (xPos > 150 ? -1 : 1),
-            trapped: false, life: 100 + (this.level * 10)
+            vx: (Math.random() * 1 + 1 + (this.level * 0.2)) * (xPos > 150 ? -1 : 1),
+            vy: 0, trapped: false, grounded: false,
+            jumpChance: 0.01 + (this.level * 0.005) // 레벨당 점프 확률 증가
         });
     },
 
     jump() { if(this.player.grounded) this.player.vy = this.player.jumpPower; },
-    
     shoot() {
         if(!this.running || this.paused) return;
-        this.bubbles.push({ x: this.player.x + (this.player.dir*10), y: this.player.y + 5, vx: this.player.dir*7, vy: -0.2, life: 100, trappedEnemy: null });
+        this.bubbles.push({ x: this.player.x + (this.player.dir*10), y: this.player.y+5, vx: this.player.dir*7, vy: -0.2, life: 100, trappedEnemy: null });
     },
 
     togglePause() {
@@ -135,76 +121,43 @@ const game = {
         if(this.player.invincible > 0) return;
         this.lives--;
         livesEl.innerText = this.lives;
-        if(this.lives <= 0) {
-            this.gameOver();
-        } else {
-            // 부활 로직
-            this.player.x = 150; this.player.y = 250;
-            this.player.vy = 0;
-            this.player.invincible = 90; // 1.5초 무적
-        }
+        if(this.lives <= 0) this.gameOver();
+        else { this.player.x = 150; this.player.y = 250; this.player.vy = 0; this.player.invincible = 90; }
     },
 
     update() {
         if(!this.running || this.paused) return;
-
-        // 무적 시간 감소
         if(this.player.invincible > 0) this.player.invincible--;
 
-        // 레벨업 조건 (레벨당 5마리 처치 시 다음 단계)
-        if(this.enemiesDefeated >= this.level * 5 && this.level < 10) {
-            this.level++;
-            this.enemiesDefeated = 0;
-            levelEl.innerText = this.level;
-        }
-
-        // 악당 리스폰 주기 (레벨이 높을수록 빨라짐)
+        // 레벨업 및 리스폰
+        if(this.enemiesDefeated >= this.level * 5 && this.level < 10) { this.level++; this.enemiesDefeated = 0; levelEl.innerText = this.level; }
         this.spawnTimer++;
-        const spawnRate = Math.max(60, 200 - (this.level * 15));
-        if(this.spawnTimer > spawnRate) {
-            this.spawnEnemy();
-            this.spawnTimer = 0;
-        }
+        if(this.spawnTimer > Math.max(50, 180 - (this.level * 15))) { this.spawnEnemy(); this.spawnTimer = 0; }
 
-        // 플레이어 물리
+        // 플레이어 이동
         if(this.input.left) { this.player.vx = -this.player.speed; this.player.dir = -1; }
         else if(this.input.right) { this.player.vx = this.player.speed; this.player.dir = 1; }
         else { this.player.vx = 0; }
+        this.applyPhysics(this.player);
 
-        this.player.vy += 0.5;
-        this.player.x += this.player.vx;
-        this.player.y += this.player.vy;
-        this.player.grounded = false;
-
-        if(this.player.x < 0) this.player.x = 0;
-        if(this.player.x > canvas.width - this.player.w) this.player.x = canvas.width - this.player.w;
-
-        this.platforms.forEach(p => {
-            if(this.player.x < p.x + p.w && this.player.x + this.player.w > p.x && this.player.y + this.player.h > p.y && this.player.y + this.player.h < p.y + p.h + 10) {
-                if(this.player.vy > 0) {
-                    this.player.grounded = true;
-                    this.player.vy = 0;
-                    this.player.y = p.y - this.player.h;
-                }
-            }
-        });
-
-        // 적 충돌
+        // 악당 이동 및 AI (중력 적용)
         this.enemies.forEach((en) => {
             if(!en.trapped) {
                 en.x += en.vx;
                 if(en.x <= 0 || en.x >= canvas.width - en.w) en.vx *= -1;
-                if(Math.abs(this.player.x - en.x) < 18 && Math.abs(this.player.y - en.y) < 18) {
-                    this.die();
-                }
+                
+                // 악당 랜덤 점프 AI
+                if(en.grounded && Math.random() < en.jumpChance) en.vy = -8;
+                
+                this.applyPhysics(en);
+
+                if(Math.abs(this.player.x - en.x) < 18 && Math.abs(this.player.y - en.y) < 18) this.die();
             }
         });
 
         // 거품 로직
         this.bubbles.forEach((b, bi) => {
-            b.x += b.vx; b.y += b.vy;
-            b.vx *= 0.95; b.life--;
-
+            b.x += b.vx; b.y += b.vy; b.vx *= 0.95; b.life--;
             if(!b.trappedEnemy) {
                 this.enemies.forEach((en) => {
                     if(!en.trapped && Math.abs(b.x - en.x) < 22 && Math.abs(b.y - en.y) < 22) {
@@ -213,18 +166,34 @@ const game = {
                 });
             } else {
                 if(Math.abs(this.player.x - b.x) < 25 && Math.abs(this.player.y - b.y) < 25) {
-                    this.score += 100 * this.level; // 레벨 비례 점수
-                    this.enemiesDefeated++;
+                    this.score += 100 * this.level; this.enemiesDefeated++;
                     scoreEl.innerText = this.score;
                     this.enemies = this.enemies.filter(e => e !== b.trappedEnemy);
                     this.bubbles.splice(bi, 1);
-                    return;
+                } else {
+                    b.trappedEnemy.x = b.x; b.trappedEnemy.y = b.y;
                 }
-                b.trappedEnemy.x = b.x; b.trappedEnemy.y = b.y;
             }
-            if(b.life <= 0) {
-                if(b.trappedEnemy) b.trappedEnemy.trapped = false;
-                this.bubbles.splice(bi, 1);
+            if(b.life <= 0) { if(b.trappedEnemy) b.trappedEnemy.trapped = false; this.bubbles.splice(bi, 1); }
+        });
+    },
+
+    applyPhysics(obj) {
+        obj.vy += 0.5; // 중력
+        obj.x += obj.vx || 0;
+        obj.y += obj.vy;
+        obj.grounded = false;
+
+        if(obj.x < 0) obj.x = 0;
+        if(obj.x > canvas.width - obj.w) obj.x = canvas.width - obj.w;
+
+        this.platforms.forEach(p => {
+            if(obj.x < p.x + p.w && obj.x + obj.w > p.x && obj.y + obj.h > p.y && obj.y + obj.h < p.y + p.h + 10) {
+                if(obj.vy > 0) {
+                    obj.grounded = true;
+                    obj.vy = 0;
+                    obj.y = p.y - obj.h;
+                }
             }
         });
     },
@@ -234,7 +203,6 @@ const game = {
         ctx.fillStyle = '#2c3e50';
         this.platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
-        // 플레이어 (무적 시 깜빡임)
         if(this.player.invincible % 4 < 2) {
             ctx.fillStyle = '#2ecc71';
             ctx.fillRect(this.player.x, this.player.y, this.player.w, this.player.h);
@@ -259,18 +227,15 @@ const game = {
     },
 
     gameOver() {
-        this.running = false;
-        overlay.style.display = 'flex';
-        msgEl.innerText = "GAME OVER";
-        msgEl.style.color = "#e74c3c";
-        subMsgEl.innerHTML = `Final Score: ${this.score}<br>Reached Level: ${this.level}`;
+        this.running = false; overlay.style.display = 'flex';
+        msgEl.innerText = "GAME OVER"; msgEl.style.color = "#e74c3c";
+        subMsgEl.innerHTML = `Final Score: ${this.score}<br>Level: ${this.level}`;
         pauseBtn.disabled = true;
     },
 
     loop() {
         if(!this.running || this.paused) return;
-        this.update();
-        this.draw();
+        this.update(); this.draw();
         requestAnimationFrame(() => this.loop());
     }
 };
