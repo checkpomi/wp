@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Classic Minesweeper Online - 1989 Retro Puzzle</title>
+    <style>
+        :root {
+            --bg-color: #bdbdbd;
+            --border-light: #ffffff;
+            --border-dark: #7b7b7b;
+            --cell-size: 30px;
+        }
+
+        body {
+            margin: 0;
+            background-color: #222;
+            color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            touch-action: manipulation;
+        }
+
+        #minesweeper-container {
+            background-color: var(--bg-color);
+            padding: 10px;
+            border: 3px solid var(--border-light);
+            border-right-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+            margin-top: 20px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-color);
+            border: 3px solid var(--border-dark);
+            border-right-color: var(--border-light);
+            border-bottom-color: var(--border-light);
+            padding: 5px 10px;
+            margin-bottom: 10px;
+        }
+
+        .lcd-display {
+            background-color: #000;
+            color: #ff0000;
+            font-size: 24px;
+            padding: 2px 5px;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        #reset-btn {
+            width: 35px;
+            height: 35px;
+            font-size: 20px;
+            cursor: pointer;
+            border: 2px solid var(--border-light);
+            border-right-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+            background-color: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #reset-btn:active {
+            border: 2px solid var(--border-dark);
+            border-right-color: var(--border-light);
+            border-bottom-color: var(--border-light);
+        }
+
+        #grid {
+            display: grid;
+            border: 3px solid var(--border-dark);
+            border-right-color: var(--border-light);
+            border-bottom-color: var(--border-light);
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border: 3px solid var(--border-light);
+            border-right-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .cell.revealed {
+            border: 1px solid var(--border-dark);
+            background-color: #c0c0c0;
+            cursor: default;
+        }
+
+        .cell.mine { background-color: #ff4d4d; }
+        .cell.flagged::after { content: "🚩"; font-size: 14px; }
+        
+        /* 숫자별 색상 */
+        .n1 { color: blue; }
+        .n2 { color: green; }
+        .n3 { color: red; }
+        .n4 { color: darkblue; }
+        .n5 { color: darkred; }
+
+        .instructions {
+            max-width: 400px;
+            color: #ccc;
+            margin-top: 20px;
+            font-size: 0.9em;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        @media (max-width: 400px) {
+            :root { --cell-size: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="minesweeper-container">
+    <div class="header">
+        <div class="lcd-display" id="mine-count">10</div>
+        <button id="reset-btn">😊</button>
+        <div class="lcd-display" id="timer">000</div>
+    </div>
+    <div id="grid"></div>
+</div>
+
+<div class="instructions">
+    <strong>[조작법]</strong><br>
+    PC: 클릭(열기), 우클릭(깃발)<br>
+    모바일: 터치(열기), 길게 터치(깃발)
+</div>
+
+<script>
+    const ROWS = 10;
+    const COLS = 10;
+    const MINES_COUNT = 10;
+    
+    let grid = [];
+    let revealedCount = 0;
+    let gameOver = false;
+    let timerInterval = null;
+    let seconds = 0;
+    let minesLocation = [];
+    let flagCount = 0;
+
+    const gridEl = document.getElementById('grid');
+    const mineDisplay = document.getElementById('mine-count');
+    const timerDisplay = document.getElementById('timer');
+    const resetBtn = document.getElementById('reset-btn');
+
+    // 게임 초기화
+    function initGame() {
+        gridEl.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+        grid = [];
+        revealedCount = 0;
+        gameOver = false;
+        seconds = 0;
+        flagCount = 0;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerDisplay.innerText = "000";
+        mineDisplay.innerText = MINES_COUNT;
+        resetBtn.innerText = "😊";
+        gridEl.innerHTML = '';
+
+        // 그리드 생성
+        for (let r = 0; r < ROWS; r++) {
+            grid[r] = [];
+            for (let c = 0; c < COLS; c++) {
+                const cellEl = document.createElement('div');
+                cellEl.classList.add('cell');
+                cellEl.dataset.r = r;
+                cellEl.dataset.c = c;
+                
+                // 이벤트 리스너
+                cellEl.addEventListener('click', () => handleClick(r, c));
+                cellEl.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    handleFlag(r, c);
+                });
+
+                // 모바일 롱터치 깃발 지원
+                let touchTimer;
+                cellEl.addEventListener('touchstart', (e) => {
+                    touchTimer = setTimeout(() => handleFlag(r, c), 500);
+                }, {passive: true});
+                cellEl.addEventListener('touchend', () => clearTimeout(touchTimer));
+
+                gridEl.appendChild(cellEl);
+                grid[r][c] = {
+                    mine: false,
+                    revealed: false,
+                    flagged: false,
+                    neighborMines: 0,
+                    el: cellEl
+                };
+            }
+        }
+        placeMines();
+        calculateNeighbors();
+    }
+
+    function placeMines() {
+        let placed = 0;
+        while (placed < MINES_COUNT) {
+            let r = Math.floor(Math.random() * ROWS);
+            let c = Math.floor(Math.random() * COLS);
+            if (!grid[r][c].mine) {
+                grid[r][c].mine = true;
+                placed++;
+            }
+        }
+    }
+
+    function calculateNeighbors() {
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (grid[r][c].mine) continue;
+                let count = 0;
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        if (grid[r+i] && grid[r+i][c+j] && grid[r+i][c+j].mine) count++;
+                    }
+                }
+                grid[r][c].neighborMines = count;
+            }
+        }
+    }
+
+    function startTimer() {
+        if (!timerInterval) {
+            timerInterval = setInterval(() => {
+                seconds++;
+                timerDisplay.innerText = seconds.toString().padStart(3, '0');
+            }, 1000);
+        }
+    }
+
+    function handleClick(r, c) {
+        if (gameOver || grid[r][c].flagged || grid[r][c].revealed) return;
+        
+        startTimer();
+
+        if (grid[r][c].mine) {
+            endGame(false);
+            return;
+        }
+
+        revealCell(r, c);
+
+        if (revealedCount === (ROWS * COLS) - MINES_COUNT) {
+            endGame(true);
+        }
+    }
+
+    function revealCell(r, c) {
+        const cell = grid[r][c];
+        if (cell.revealed || cell.flagged) return;
+
+        cell.revealed = true;
+        cell.el.classList.add('revealed');
+        revealedCount++;
+
+        if (cell.neighborMines > 0) {
+            cell.el.innerText = cell.neighborMines;
+            cell.el.classList.add(`n${cell.neighborMines}`);
+        } else {
+            // 빈 공간이면 주변 자동 열기
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (grid[r+i] && grid[r+i][c+j]) revealCell(r+i, c+j);
+                }
+            }
+        }
+    }
+
+    function handleFlag(r, c) {
+        if (gameOver || grid[r][c].revealed) return;
+        startTimer();
+        
+        const cell = grid[r][c];
+        cell.flagged = !cell.flagged;
+        cell.el.classList.toggle('flagged');
+        
+        flagCount += cell.flagged ? 1 : -1;
+        mineDisplay.innerText = (MINES_COUNT - flagCount).toString().padStart(2, '0');
+    }
+
+    function endGame(win) {
+        gameOver = true;
+        clearInterval(timerInterval);
+        resetBtn.innerText = win ? "😎" : "😵";
+        
+        // 지뢰 공개
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (grid[r][c].mine) {
+                    grid[r][c].el.classList.add('revealed', 'mine');
+                    grid[r][c].el.innerText = "💣";
+                }
+            }
+        }
+        if (win) alert("축하합니다! 승리하셨습니다.");
+    }
+
+    resetBtn.addEventListener('click', initGame);
+    initGame();
+</script>
+
+</body>
+</html>
