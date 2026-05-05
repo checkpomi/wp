@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxian Online: Retro Arcade Shooter Tool</title>
+    <style>
+        :root {
+            --bg-color: #000b1e;
+            --accent-color: #f8e71c;
+            --text-color: #ffffff;
+            --btn-bg: #333;
+            --btn-hover: #555;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            border: 4px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        canvas {
+            display: block;
+            background: #000;
+            width: 100%;
+            height: auto;
+            cursor: crosshair;
+        }
+
+        .game-ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+            pointer-events: none;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background: #111;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: var(--btn-bg);
+            color: var(--text-color);
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--btn-hover);
+        }
+
+        .start-btn {
+            background-color: var(--accent-color);
+            color: #000;
+            font-weight: bold;
+        }
+
+        #mobile-controls {
+            display: none; /* 기본적으로 숨김 */
+            justify-content: center;
+            gap: 20px;
+            padding: 15px;
+            background-color: #1a1a1a;
+        }
+
+        .mobile-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 24px;
+            border: 2px solid #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none; /* 텍스트 선택 방지 */
+        }
+
+        .mobile-btn:active {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        @media (max-width: 600px) {
+            #mobile-controls {
+                display: flex; /* 모바일 화면에서 표시 */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="game-ui">
+        Score: <span id="score">0</span>
+        <button id="pauseBtn" class="btn">Pause</button>
+        <button id="resetBtn" class="btn">Reset</button>
+    </div>
+    <canvas id="gameCanvas" width="600" height="500"></canvas>
+    <div class="controls">
+        <button id="startBtn" class="btn start-btn">Start Game</button>
+        <button id="stopBtn" class="btn">Stop</button>
+    </div>
+    <div id="mobile-controls">
+        <button id="leftBtn" class="mobile-btn">←</button>
+        <button id="rightBtn" class="mobile-btn">→</button>
+        <button id="fireBtn" class="mobile-btn">🔥</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    const fireBtn = document.getElementById('fireBtn');
+
+    let score = 0;
+    let gameActive = false;
+    let isPaused = false;
+    let player = { x: 300, y: 450, w: 30, h: 30, speed: 5 };
+    let bullets = [];
+    let enemies = [];
+    let enemySpawnInterval;
+
+    // 플레이어 그리기
+    function drawPlayer() {
+        ctx.fillStyle = '#00d2ff';
+        ctx.beginPath();
+        ctx.moveTo(player.x, player.y);
+        ctx.lineTo(player.x - 15, player.y + 25);
+        ctx.lineTo(player.x + 15, player.y + 25);
+        ctx.fill();
+    }
+
+    // 적 생성 및 그리기
+    function spawnEnemy() {
+        if (gameActive && !isPaused && Math.random() < 0.05) {
+            enemies.push({ x: Math.random() * (canvas.width - 30), y: 0, w: 25, h: 20, speed: 2 + (score / 500) });
+        }
+    }
+
+    function drawEnemies() {
+        ctx.fillStyle = '#ff4d4d';
+        enemies.forEach((enemy, index) => {
+            ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
+            if (!isPaused) {
+                enemy.y += enemy.speed;
+            }
+
+            // 게임 오버 체크
+            if (enemy.y > canvas.height) {
+                gameOver();
+            }
+        });
+    }
+
+    // 총알 그리기 및 업데이트
+    function drawBullets() {
+        ctx.fillStyle = '#fff';
+        bullets.forEach((bullet, bIndex) => {
+            ctx.fillRect(bullet.x - 2, bullet.y, 4, 10);
+            if (!isPaused) {
+                bullet.y -= 7;
+            }
+
+            // 충돌 감지
+            enemies.forEach((enemy, eIndex) => {
+                if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.w &&
+                    bullet.y > enemy.y && bullet.y < enemy.y + enemy.h) {
+                    enemies.splice(eIndex, 1);
+                    bullets.splice(bIndex, 1);
+                    score += 10;
+                    scoreElement.innerText = score;
+                }
+            });
+
+            // 화면 밖 총알 제거
+            if (bullet.y < 0) {
+                bullets.splice(bIndex, 1);
+            }
+        });
+    }
+
+    // 게임 루프
+    function update() {
+        if (!gameActive) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drawPlayer();
+        drawBullets();
+        drawEnemies();
+
+        if (isPaused) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#fff';
+            ctx.font = '30px Courier New';
+            ctx.fillText('Paused', canvas.width / 2 - 50, canvas.height / 2);
+        }
+
+        requestAnimationFrame(update);
+    }
+
+    // 게임 오버
+    function gameOver() {
+        gameActive = false;
+        clearInterval(enemySpawnInterval);
+        alert("GAME OVER! Your Score: " + score);
+        resetGame();
+    }
+
+    // 게임 초기화
+    function resetGame() {
+        score = 0;
+        scoreElement.innerText = score;
+        bullets = [];
+        enemies = [];
+        player.x = canvas.width / 2;
+        gameActive = false;
+        isPaused = false;
+        pauseBtn.innerText = 'Pause';
+        startBtn.style.display = 'block';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // 컨트롤러 - 데스크톱
+    canvas.addEventListener('mousemove', (e) => {
+        if (gameActive && !isPaused) {
+            const rect = canvas.getBoundingClientRect();
+            player.x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        }
+    });
+
+    canvas.addEventListener('mousedown', () => {
+        if (gameActive && !isPaused) {
+            bullets.push({ x: player.x, y: player.y });
+        }
+    });
+
+    // 키보드 컨트롤 추가 (선택 사항)
+    document.addEventListener('keydown', (e) => {
+        if (gameActive && !isPaused) {
+            if (e.key === 'ArrowLeft' && player.x > 15) {
+                player.x -= player.speed * 2; // 이동 속도 조정
+            } else if (e.key === 'ArrowRight' && player.x < canvas.width - 15) {
+                player.x += player.speed * 2;
+            } else if (e.key === ' ') { // 스페이스바
+                bullets.push({ x: player.x, y: player.y });
+            }
+        }
+    });
+
+    // 컨트롤러 - 모바일
+    leftBtn.addEventListener('touchstart', (e) => {
+        if (gameActive && !isPaused && player.x > 15) {
+            player.x -= player.speed * 3;
+        }
+        e.preventDefault(); // 기본 터치 동작 방지
+    });
+
+    rightBtn.addEventListener('touchstart', (e) => {
+        if (gameActive && !isPaused && player.x < canvas.width - 15) {
+            player.x += player.speed * 3;
+        }
+        e.preventDefault();
+    });
+
+    fireBtn.addEventListener('touchstart', (e) => {
+        if (gameActive && !isPaused) {
+            bullets.push({ x: player.x, y: player.y });
+        }
+        e.preventDefault();
+    });
+
+    // 버튼 이벤트 리스너
+    startBtn.addEventListener('click', () => {
+        if (!gameActive) {
+            startBtn.style.display = 'none';
+            gameActive = true;
+            enemySpawnInterval = setInterval(spawnEnemy, 1000); // 1초마다 적 생성
+            update();
+        }
+    });
+
+    stopBtn.addEventListener('click', () => {
+        gameOver();
+    });
+
+    pauseBtn.addEventListener('click', () => {
+        if (gameActive) {
+            isPaused = !isPaused;
+            pauseBtn.innerText = isPaused ? 'Resume' : 'Pause';
+        }
+    });
+
+    resetBtn.addEventListener('click', () => {
+        resetGame();
+    });
+</script>
+
+</body>
+</html>
