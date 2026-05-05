@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Classic Tetris Game Online – Retro Puzzle</title>
+    <title>Classic Tetris - Control Panel Edition</title>
     <style>
         body {
-            background: #1a1a1a;
+            background: #121212;
             color: #fff;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Apple SD Gothic Neo', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -17,21 +17,29 @@
             margin: 0;
         }
 
+        /* 스코어 및 상태 표시 */
+        .header {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .score-board { font-size: 28px; color: #f1c40f; font-weight: bold; }
+        .status-text { color: #aaa; font-size: 14px; margin-top: 5px; }
+
+        /* 게임 보드 박스 */
         #game-wrapper {
             position: relative;
-            border: 4px solid #333;
+            border: 5px solid #333;
             background: #000;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
-        canvas {
-            display: block;
-        }
+        canvas { display: block; }
 
-        /* 시작 및 오버레이 화면 */
+        /* 중앙 메시지 오버레이 */
         #overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.7);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -39,62 +47,72 @@
             z-index: 10;
         }
 
-        .score-board {
-            font-size: 24px;
-            margin-bottom: 15px;
-            color: #f1c40f;
+        /* 메인 컨트롤 버튼 그룹 */
+        .main-controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
         }
 
-        .btn-start {
-            padding: 15px 40px;
-            font-size: 20px;
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
             font-weight: bold;
-            background: #27ae60;
-            color: white;
             border: none;
-            border-radius: 50px;
+            border-radius: 5px;
             cursor: pointer;
             transition: 0.2s;
         }
 
-        .btn-start:hover { background: #2ecc71; transform: scale(1.05); }
+        .btn-start { background: #27ae60; color: white; }
+        .btn-pause { background: #f39c12; color: white; }
+        .btn-reset { background: #e74c3c; color: white; }
+        .btn:hover { opacity: 0.8; transform: translateY(-2px); }
+        .btn:disabled { background: #555; cursor: not-allowed; transform: none; }
 
-        /* 모바일 컨트롤러 */
-        .controls {
-            margin-top: 20px;
+        /* 이동 버튼 (모바일용) */
+        .move-controls {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
+            margin-top: 10px;
         }
 
         .ctrl-btn {
-            padding: 20px;
+            padding: 18px;
             background: #333;
             border: none;
             color: white;
             border-radius: 10px;
-            font-weight: bold;
+            font-size: 18px;
             touch-action: manipulation;
         }
-
-        .ctrl-btn:active { background: #555; }
         .span-3 { grid-column: span 3; }
     </style>
 </head>
 <body>
 
-    <div class="score-board">SCORE: <span id="score">0</span></div>
+    <div class="header">
+        <div class="score-board">SCORE: <span id="score">0</span></div>
+        <div id="status" class="status-text">Press Start to Play!</div>
+    </div>
 
     <div id="game-wrapper">
-        <!-- 시작 버튼 오버레이 -->
         <div id="overlay">
             <h2 id="msg">RETRO TETRIS</h2>
-            <button class="btn-start" onclick="startGame()">GAME START</button>
+            <button class="btn btn-start" onclick="startGame()">START GAME</button>
         </div>
         <canvas id="tetris" width="240" height="400"></canvas>
     </div>
 
-    <div class="controls">
+    <!-- 상단 주요 기능 버튼 -->
+    <div class="main-controls">
+        <button id="pauseBtn" class="btn btn-pause" onclick="togglePause()" disabled>PAUSE</button>
+        <button class="btn btn-reset" onclick="resetGame()">RESET</button>
+    </div>
+
+    <!-- 방향 조절 버튼 -->
+    <div class="move-controls">
         <button class="ctrl-btn span-3" onclick="playerRotate(1)">ROTATE</button>
         <button class="ctrl-btn" onclick="playerMove(-1)">LEFT</button>
         <button class="ctrl-btn" onclick="playerDrop()">DOWN</button>
@@ -105,13 +123,21 @@
         const canvas = document.getElementById('tetris');
         const context = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
+        const statusElement = document.getElementById('status');
+        const pauseBtn = document.getElementById('pauseBtn');
         const overlay = document.getElementById('overlay');
         const msg = document.getElementById('msg');
 
         context.scale(20, 20);
 
         let gameRunning = false;
+        let isPaused = false;
+        let dropCounter = 0;
+        let dropInterval = 1000;
+        let lastTime = 0;
+        let requestId;
 
+        // [시작] 게임 시작
         function startGame() {
             arena.forEach(row => row.fill(0));
             player.score = 0;
@@ -119,7 +145,41 @@
             playerReset();
             overlay.style.display = 'none';
             gameRunning = true;
+            isPaused = false;
+            pauseBtn.disabled = false;
+            pauseBtn.innerText = "PAUSE";
+            statusElement.innerText = "Playing...";
             update();
+        }
+
+        // [중지/재개] 일시정지 토글
+        function togglePause() {
+            if (!gameRunning) return;
+            
+            isPaused = !isPaused;
+            if (isPaused) {
+                cancelAnimationFrame(requestId);
+                pauseBtn.innerText = "RESUME";
+                statusElement.innerText = "Paused";
+            } else {
+                lastTime = performance.now();
+                pauseBtn.innerText = "PAUSE";
+                statusElement.innerText = "Playing...";
+                update();
+            }
+        }
+
+        // [종료] 게임 리셋
+        function resetGame() {
+            cancelAnimationFrame(requestId);
+            gameRunning = false;
+            isPaused = false;
+            pauseBtn.disabled = true;
+            pauseBtn.innerText = "PAUSE";
+            msg.innerText = "GAME RESET";
+            overlay.style.display = 'flex';
+            statusElement.innerText = "Press Start to Play!";
+            context.clearRect(0, 0, canvas.width, canvas.height);
         }
 
         function arenaSweep() {
@@ -198,7 +258,7 @@
         }
 
         function playerDrop() {
-            if (!gameRunning) return;
+            if (!gameRunning || isPaused) return;
             player.pos.y++;
             if (collide(arena, player)) {
                 player.pos.y--;
@@ -210,7 +270,7 @@
         }
 
         function playerMove(offset) {
-            if (!gameRunning) return;
+            if (!gameRunning || isPaused) return;
             player.pos.x += offset;
             if (collide(arena, player)) player.pos.x -= offset;
         }
@@ -222,13 +282,15 @@
             player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
             if (collide(arena, player)) {
                 gameRunning = false;
+                pauseBtn.disabled = true;
                 msg.innerText = "GAME OVER";
                 overlay.style.display = 'flex';
+                statusElement.innerText = "Try Again!";
             }
         }
 
         function playerRotate(dir) {
-            if (!gameRunning) return;
+            if (!gameRunning || isPaused) return;
             const pos = player.pos.x;
             let offset = 1;
             rotate(player.matrix, dir);
@@ -243,18 +305,14 @@
             }
         }
 
-        let dropCounter = 0;
-        let dropInterval = 1000;
-        let lastTime = 0;
-
         function update(time = 0) {
-            if (!gameRunning) return;
+            if (!gameRunning || isPaused) return;
             const deltaTime = time - lastTime;
             lastTime = time;
             dropCounter += deltaTime;
             if (dropCounter > dropInterval) playerDrop();
             draw();
-            requestAnimationFrame(update);
+            requestId = requestAnimationFrame(update);
         }
 
         function updateScore() {
@@ -270,6 +328,7 @@
             else if (event.keyCode === 39) playerMove(1);
             else if (event.keyCode === 40) playerDrop();
             else if (event.keyCode === 38) playerRotate(1);
+            else if (event.keyCode === 32) togglePause(); // 스페이스바 일시정지
         });
     </script>
 </body>
