@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Classic Nonogram Online - Retro Logic Puzzle</title>
-    <meta name="description" content="Solve classic 5x5 Nonogram puzzles online. Use logic to reveal hidden pixel art in this retro 1987 style game.">
-    
     <style>
         :root {
             --bg-color: #f8f9fa;
@@ -19,11 +17,11 @@
             color: var(--line-color);
             font-family: 'Inter', -apple-system, sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; margin: 0; touch-action: none;
+            min-height: 100vh; margin: 0; 
+            /* touch-action: none을 제거하거나 조절하여 스크롤 방해 금지 */
         }
 
-        .game-wrapper { text-align: center; max-width: 95vw; }
-        
+        .game-wrapper { text-align: center; max-width: 95vw; padding: 20px; }
         .header { margin-bottom: 20px; }
         .header h1 { margin: 0; font-size: 2rem; letter-spacing: -1px; }
 
@@ -34,6 +32,7 @@
             background-color: var(--line-color);
             border: 3px solid var(--line-color);
             box-shadow: 10px 10px 0px #b2bec3;
+            margin: 0 auto;
         }
 
         .cell {
@@ -42,14 +41,13 @@
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; font-weight: bold; font-size: 20px;
             user-select: none;
+            -webkit-user-select: none; /* iOS 지원 */
         }
 
-        /* 힌트 영역 스타일 */
-        .hint { background-color: var(--hint-bg); font-size: 14px; display: flex; align-items: center; justify-content: center; }
-        .col-hint { flex-direction: column; border-bottom: 2px solid var(--line-color); }
+        .hint { background-color: var(--hint-bg); font-size: 14px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .col-hint { flex-direction: column; border-bottom: 2px solid var(--line-color); line-height: 1.2; }
         .row-hint { justify-content: flex-end; padding-right: 8px; border-right: 2px solid var(--line-color); }
 
-        /* 타일 상태 */
         .cell.filled { background-color: var(--line-color); }
         .cell.marked::after { content: "×"; color: #d63031; font-size: 30px; }
 
@@ -57,14 +55,16 @@
         .btn {
             padding: 12px 24px; border: 2px solid var(--line-color); background: white;
             font-weight: bold; cursor: pointer; transition: 0.2s;
+            border-radius: 4px;
         }
         .btn:hover { background: var(--line-color); color: white; }
         
-        .status { margin-top: 20px; font-weight: bold; color: #0984e3; height: 24px; }
+        .status { margin-top: 20px; font-weight: bold; color: #0984e3; min-height: 24px; }
 
         @media (max-width: 400px) {
-            --cell-size: 45px;
+            :root { --cell-size: 45px; }
             .header h1 { font-size: 1.5rem; }
+            .nonogram-grid { grid-template-columns: 50px repeat(5, var(--cell-size)); grid-template-rows: 50px repeat(5, var(--cell-size)); }
         }
     </style>
 </head>
@@ -73,12 +73,10 @@
     <div class="game-wrapper">
         <div class="header">
             <h1>NONOGRAM 1987</h1>
-            <p>Left Click: Fill | Right Click: Mark (X)</p>
+            <p>Click: Fill | Right Click: Mark (X)</p>
         </div>
 
-        <div id="grid" class="nonogram-grid">
-            <!-- Hints and Cells will be generated here -->
-        </div>
+        <div id="grid" class="nonogram-grid"></div>
 
         <div id="status" class="status"></div>
 
@@ -89,7 +87,6 @@
     </div>
 
     <script>
-        // 정답 맵 (5x5): 하트 모양 예시
         const solution = [
             [0, 1, 0, 1, 0],
             [1, 1, 1, 1, 1],
@@ -101,18 +98,18 @@
         const rowHints = [[1, 1], [5], [5], [3], [1]];
         const colHints = [[2], [4], [5], [4], [2]];
 
-        const gridElement = document.getElementById('grid');
-        const statusElement = document.getElementById('status');
         let userGrid = Array(5).fill().map(() => Array(5).fill(0));
 
         function initGame() {
+            const gridElement = document.getElementById('grid');
             gridElement.innerHTML = '';
-            // 빈 코너 (0,0)
+            
+            // 1. 빈 코너 생성
             const corner = document.createElement('div');
             corner.className = 'hint';
             gridElement.appendChild(corner);
 
-            // 열 힌트 생성
+            // 2. 열 힌트 생성
             colHints.forEach(hint => {
                 const div = document.createElement('div');
                 div.className = 'hint col-hint';
@@ -120,7 +117,7 @@
                 gridElement.appendChild(div);
             });
 
-            // 행 힌트 + 셀 생성
+            // 3. 행 힌트 및 셀 생성
             for (let r = 0; r < 5; r++) {
                 const rHint = document.createElement('div');
                 rHint.className = 'hint row-hint';
@@ -133,12 +130,15 @@
                     cell.dataset.row = r;
                     cell.dataset.col = c;
                     
-                    // 왼쪽 클릭 (채우기)
-                    cell.addEventListener('click', (e) => toggleCell(r, c, cell, 'fill'));
-                    // 우측 클릭 (X 표시)
-                    cell.addEventListener('contextmenu', (e) => {
+                    // 클릭 이벤트
+                    cell.addEventListener('click', function() {
+                        toggleCell(parseInt(this.dataset.row), parseInt(this.dataset.col), this, 'fill');
+                    });
+
+                    // 우클릭 이벤트
+                    cell.addEventListener('contextmenu', function(e) {
                         e.preventDefault();
-                        toggleCell(r, c, cell, 'mark');
+                        toggleCell(parseInt(this.dataset.row), parseInt(this.dataset.col), this, 'mark');
                     });
 
                     gridElement.appendChild(cell);
@@ -168,16 +168,18 @@
         }
 
         function checkWin() {
-            let win = true;
+            const statusElement = document.getElementById('status');
+            let isCorrect = true;
             for (let r = 0; r < 5; r++) {
                 for (let c = 0; c < 5; c++) {
                     if (userGrid[r][c] !== solution[r][c]) {
-                        win = false;
+                        isCorrect = false;
                         break;
                     }
                 }
             }
-            if (win) {
+
+            if (isCorrect) {
                 statusElement.innerText = "🎉 Puzzle Solved! It's a Heart!";
                 statusElement.style.color = "#d63031";
             } else {
@@ -188,22 +190,12 @@
 
         function resetGame() {
             userGrid = Array(5).fill().map(() => Array(5).fill(0));
-            statusElement.innerText = "";
+            document.getElementById('status').innerText = "";
             initGame();
         }
 
-        // 모바일 사용자를 위한 롱프레스(X표시) 간이 구현
-        let touchTimer;
-        gridElement.addEventListener('touchstart', (e) => {
-            if(e.target.classList.contains('cell')) {
-                const r = e.target.dataset.row;
-                const c = e.target.dataset.col;
-                touchTimer = setTimeout(() => toggleCell(r, c, e.target, 'mark'), 500);
-            }
-        });
-        gridElement.addEventListener('touchend', () => clearTimeout(touchTimer));
-
-        initGame();
+        // 초기 실행
+        window.onload = initGame;
     </script>
 </body>
 </html>
