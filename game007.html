@@ -1,208 +1,147 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Classic Nonogram Online - 1987 Style</title>
+    <title>Classic Nonogram Online – Solving Retro Logic Puzzles Since 1987</title>
     <style>
-        body {
-            background-color: #f8f9fa;
-            color: #2d3436;
-            font-family: 'Inter', -apple-system, sans-serif;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; margin: 0;
-        }
-
-        .game-wrapper { text-align: center; padding: 10px; }
-        
-        /* 그리드 레이아웃: 첫 번째 열/행은 힌트 영역 */
+        :root { --bg: #f0f2f5; --dark: #2d3436; --accent: #0984e3; }
+        body { background: var(--bg); color: var(--dark); font-family: 'Inter', -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .header { text-align: center; margin-bottom: 20px; }
         .nonogram-grid {
             display: grid;
             grid-template-columns: 80px repeat(5, 50px);
             grid-template-rows: 80px repeat(5, 50px);
-            background-color: #2d3436;
-            border: 4px solid #2d3436;
-            box-shadow: 10px 10px 0px #b2bec3;
+            background: var(--dark); border: 4px solid var(--dark);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-
-        /* 공통 셀 스타일 */
-        .grid-item {
-            display: flex; align-items: center; justify-content: center;
-            background-color: white; border: 1px solid #dfe6e9;
-        }
-
-        /* 힌트 영역 스타일 (배경색 구분) */
-        .hint {
-            background-color: #dfe6e9;
-            font-weight: bold;
-            font-size: 16px;
-            color: #2d3436;
-        }
-
-        .col-hint { flex-direction: column; line-height: 1.2; } /* 세로 힌트 */
-        .row-hint { justify-content: flex-end; padding-right: 10px; } /* 가로 힌트 */
-
-        /* 실제 클릭하는 게임 칸 */
-        .cell {
-            cursor: pointer;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        /* 상태별 색상 */
-        .cell.filled { background-color: #2d3436; }
-        .cell.marked::after { content: "×"; color: #d63031; font-size: 30px; }
-
-        .controls { margin-top: 25px; display: flex; gap: 10px; justify-content: center; }
-        .btn {
-            padding: 12px 20px; border: 2px solid #2d3436; background: white;
-            font-weight: bold; cursor: pointer; border-radius: 4px;
-        }
-        .btn:hover { background: #2d3436; color: white; }
+        .grid-item { background: white; border: 1px solid #dfe6e9; display: flex; align-items: center; justify-content: center; }
+        .hint { background: #dfe6e9; font-weight: 800; font-size: 15px; color: #636e72; }
+        .col-hint { flex-direction: column; line-height: 1.1; border-bottom: 2px solid var(--dark); }
+        .row-hint { justify-content: flex-end; padding-right: 10px; border-right: 2px solid var(--dark); }
+        .cell { cursor: pointer; user-select: none; -webkit-user-select: none; transition: 0.1s; }
+        .cell.filled { background: var(--dark); }
+        .cell.marked::after { content: "×"; color: #d63031; font-size: 32px; }
+        .controls { margin-top: 25px; display: flex; gap: 10px; }
+        .btn { padding: 12px 25px; border: 2px solid var(--dark); background: white; font-weight: bold; cursor: pointer; border-radius: 8px; transition: 0.2s; }
+        .btn:hover { background: var(--dark); color: white; }
+        .status { margin-top: 20px; font-weight: bold; height: 30px; font-size: 1.2rem; }
+        #level-info { color: var(--accent); margin-bottom: 5px; font-weight: bold; }
         
-        .status { margin-top: 20px; font-weight: bold; color: #0984e3; min-height: 24px; }
-
         @media (max-width: 450px) {
             .nonogram-grid {
                 grid-template-columns: 60px repeat(5, 45px);
                 grid-template-rows: 60px repeat(5, 45px);
             }
-            .hint { font-size: 14px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="game-wrapper">
-        <div style="margin-bottom: 20px;">
-            <h1 style="margin: 0;">NONOGRAM 1987</h1>
-            <p style="font-size: 14px; color: #636e72;">가로/세로 숫자를 보고 그림을 맞추세요!</p>
-        </div>
+    <div class="header">
+        <h1>NONOGRAM 1987</h1>
+        <div id="level-info">Level: Random Challenge</div>
+        <p style="font-size: 14px; margin: 0;">Left Click: Fill | Right Click: Mark (X)</p>
+    </div>
 
-        <div id="grid" class="nonogram-grid">
-            <!-- 자바스크립트가 여기를 채웁니다 -->
-        </div>
+    <div id="grid" class="nonogram-grid"></div>
+    <div id="status" class="status"></div>
 
-        <div id="status" class="status"></div>
-
-        <div class="controls">
-            <button class="btn" onclick="checkWin()">정답 확인</button>
-            <button class="btn" onclick="resetGame()">다시 시작</button>
-        </div>
+    <div class="controls">
+        <button class="btn" onclick="checkWin()">Check Answer</button>
+        <button class="btn" onclick="nextLevel()">New Game</button>
     </div>
 
     <script>
-        const solution = [
-            [0, 1, 0, 1, 0],
-            [1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1],
-            [0, 1, 1, 1, 0],
-            [0, 0, 1, 0, 0]
+        const puzzleBank = [
+            { name: "Heart", solution: [[0,1,0,1,0],[1,1,1,1,1],[1,1,1,1,1],[0,1,1,1,0],[0,0,1,0,0]], r: [[1,1],[5],[5],[3],[1]], c: [[2],[4],[5],[4],[2]] },
+            { name: "Smile", solution: [[0,1,0,1,0],[0,0,0,0,0],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]], r: [[1,1],[0],[1,1],[3],[0]], c: [[1],[1,1],[1],[1,1],[1]] },
+            { name: "Window", solution: [[1,1,0,1,1],[1,1,0,1,1],[0,0,0,0,0],[1,1,0,1,1],[1,1,0,1,1]], r: [[2,2],[2,2],[0],[2,2],[2,2]], c: [[2,2],[2,2],[0],[2,2],[2,2]] },
+            { name: "Arrow", solution: [[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0]], r: [[1],[3],[5],[1],[1]], c: [[1],[2],[5],[2],[1]] },
+            { name: "Checkers", solution: [[1,0,1,0,1],[0,1,0,1,0],[1,0,1,0,1],[0,1,0,1,0],[1,0,1,0,1]], r: [[1,1,1],[1,1],[1,1,1],[1,1],[1,1,1]], c: [[1,1,1],[1,1],[1,1,1],[1,1],[1,1,1]] },
+            { name: "Letter A", solution: [[0,1,1,1,0],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1]], r: [[3],[1,1],[5],[1,1],[1,1]], c: [[4],[2,1],[2,1],[2,1],[4]] },
+            { name: "Umbrella", solution: [[0,1,1,1,0],[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,1,1,0,0]], r: [[3],[5],[1],[1],[2]], c: [[1],[2],[4],[2],[1]] },
+            { name: "Cross", solution: [[0,0,1,0,0],[0,0,1,0,0],[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0]], r: [[1],[1],[5],[1],[1]], c: [[1],[1],[5],[1],[1]] },
+            { name: "Letter H", solution: [[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1]], r: [[1,1],[1,1],[5],[1,1],[1,1]], c: [[5],[1],[1],[1],[5]] },
+            { name: "House", solution: [[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[1,1,0,1,1],[1,1,0,1,1]], r: [[1],[3],[5],[2,2],[2,2]], c: [[3],[4],[3],[4],[3]] },
+            { name: "Star", solution: [[0,0,1,0,0],[1,1,1,1,1],[0,1,1,1,0],[1,1,0,1,1],[0,0,0,0,0]], r: [[1],[5],[3],[2,2],[0]], c: [[1,1],[2,1],[3],[2,1],[1,1]] },
+            { name: "Stairs", solution: [[0,0,0,0,1],[0,0,0,1,1],[0,0,1,1,1],[0,1,1,1,1],[1,1,1,1,1]], r: [[1],[2],[3],[4],[5]], c: [[1],[2],[3],[4],[5]] },
+            { name: "Diamond", solution: [[0,0,1,0,0],[0,1,0,1,0],[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0]], r: [[1],[1,1],[1,1],[1,1],[1]], c: [[1],[1,1],[1,1],[1,1],[1]] },
+            { name: "Cup", solution: [[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[0,1,1,1,0],[0,0,0,0,0]], r: [[1,1],[1,1],[5],[3],[0]], c: [[3],[1],[1],[1],[3]] },
+            { name: "Tree", solution: [[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,0,1,0,0],[0,1,1,1,0]], r: [[1],[3],[5],[1],[3]], c: [[1],[2,1],[5],[2,1],[1]] },
+            { name: "Letter E", solution: [[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,1]], r: [[5],[1],[5],[1],[5]], c: [[5],[1,1,1],[1,1,1],[1,1,1],[1,1,1]] },
+            { name: "Mushroom", solution: [[0,1,1,1,0],[1,1,1,1,1],[1,1,1,1,1],[0,1,1,1,0],[0,1,1,1,0]], r: [[3],[5],[5],[3],[3]], c: [[2],[4],[5],[4],[2]] },
+            { name: "Chair", solution: [[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,1,0],[1,0,0,1,0]], r: [[1],[1],[4],[1,1],[1,1]], c: [[5],[1],[1],[3],[0]] },
+            { name: "Mountain", solution: [[0,0,0,0,0],[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,0,0,0,0]], r: [[0],[1],[3],[5],[0]], c: [[1],[2],[3],[2],[1]] },
+            { name: "Box", solution: [[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1]], r: [[5],[1,1],[1,1],[1,1],[5]], c: [[5],[1,1],[1,1],[1,1],[5]] }
         ];
 
-        const rowHints = [[1, 1], [5], [5], [3], [1]];
-        const colHints = [[2], [4], [5], [4], [2]];
+        let currentPuzzle;
+        let userGrid;
 
-        let userGrid = Array(5).fill().map(() => Array(5).fill(0));
+        function nextLevel() {
+            currentPuzzle = puzzleBank[Math.floor(Math.random() * puzzleBank.length)];
+            userGrid = Array(5).fill().map(() => Array(5).fill(0));
+            document.getElementById('status').innerText = "";
+            document.getElementById('level-info').innerText = `Mission: What is the hidden shape?`;
+            initGame();
+        }
 
         function initGame() {
             const gridElement = document.getElementById('grid');
             gridElement.innerHTML = '';
             
-            // 1. 왼쪽 위 모서리 빈 공간
             const corner = document.createElement('div');
             corner.className = 'grid-item hint';
             gridElement.appendChild(corner);
 
-            // 2. 상단 세로 힌트 (열 힌트)
             for (let i = 0; i < 5; i++) {
                 const div = document.createElement('div');
                 div.className = 'grid-item hint col-hint';
-                div.innerHTML = colHints[i].join('<br>');
+                div.innerHTML = currentPuzzle.c[i].join('<br>');
                 gridElement.appendChild(div);
             }
 
-            // 3. 행 반복 (가로 힌트 + 게임 칸)
             for (let r = 0; r < 5; r++) {
-                // 가로 힌트 추가
                 const rHint = document.createElement('div');
                 rHint.className = 'grid-item hint row-hint';
-                rHint.innerHTML = rowHints[r].join(' ');
+                rHint.innerHTML = currentPuzzle.r[r].join(' ');
                 gridElement.appendChild(rHint);
 
-                // 게임 칸 5개 추가
                 for (let c = 0; c < 5; c++) {
                     const cell = document.createElement('div');
                     cell.className = 'grid-item cell';
-                    cell.dataset.row = r;
-                    cell.dataset.col = c;
-                    
-                    // 왼쪽 클릭
-                    cell.addEventListener('click', function() {
-                        handleToggle(parseInt(this.dataset.row), parseInt(this.dataset.col), this, 'fill');
-                    });
-
-                    // 우클릭 (X 표시)
-                    cell.addEventListener('contextmenu', function(e) {
-                        e.preventDefault();
-                        handleToggle(parseInt(this.dataset.row), parseInt(this.dataset.col), this, 'mark');
-                    });
-
+                    cell.dataset.row = r; cell.dataset.col = c;
+                    cell.addEventListener('click', function() { handleAction(r, c, this, 'fill'); });
+                    cell.addEventListener('contextmenu', function(e) { e.preventDefault(); handleAction(r, c, this, 'mark'); });
                     gridElement.appendChild(cell);
                 }
             }
         }
 
-        function handleToggle(r, c, el, type) {
+        function handleAction(r, c, el, type) {
             if (type === 'fill') {
-                if (el.classList.contains('filled')) {
-                    el.classList.remove('filled');
-                    userGrid[r][c] = 0;
-                } else {
-                    el.classList.remove('marked');
-                    el.classList.add('filled');
-                    userGrid[r][c] = 1;
-                }
+                if (el.classList.contains('filled')) { el.classList.remove('filled'); userGrid[r][c] = 0; }
+                else { el.classList.remove('marked'); el.classList.add('filled'); userGrid[r][c] = 1; }
             } else {
-                if (el.classList.contains('marked')) {
-                    el.classList.remove('marked');
-                } else {
-                    el.classList.remove('filled');
-                    el.classList.add('marked');
-                    userGrid[r][c] = 0;
-                }
+                if (el.classList.contains('marked')) { el.classList.remove('marked'); }
+                else { el.classList.remove('filled'); el.classList.add('marked'); userGrid[r][c] = 0; }
             }
         }
 
         function checkWin() {
-            const statusElement = document.getElementById('status');
-            let isCorrect = true;
-            for (let r = 0; r < 5; r++) {
-                for (let c = 0; c < 5; c++) {
-                    if (userGrid[r][c] !== solution[r][c]) {
-                        isCorrect = false;
-                        break;
-                    }
-                }
-            }
-
-            if (isCorrect) {
-                statusElement.innerText = "🎉 성공! 하트 모양을 찾았습니다!";
-                statusElement.style.color = "#d63031";
+            const status = document.getElementById('status');
+            const win = currentPuzzle.solution.every((row, r) => row.every((val, c) => val === userGrid[r][c]));
+            if (win) {
+                status.innerText = `🎉 Correct! It's a [${currentPuzzle.name}]!`;
+                status.style.color = "#d63031";
             } else {
-                statusElement.innerText = "틀린 부분이 있습니다. 다시 확인해보세요!";
-                statusElement.style.color = "#0984e3";
+                status.innerText = "Not quite right yet!";
+                status.style.color = "#0984e3";
             }
         }
 
-        function resetGame() {
-            userGrid = Array(5).fill().map(() => Array(5).fill(0));
-            document.getElementById('status').innerText = "";
-            initGame();
-        }
-
-        // 페이지 로드 시 실행
-        document.addEventListener('DOMContentLoaded', initGame);
+        nextLevel();
     </script>
 </body>
 </html>
