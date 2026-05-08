@@ -1,207 +1,326 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Classic 2048 Online - Full Version</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Classic Minesweeper Online - 1989 Retro Puzzle</title>
     <style>
         :root {
-            --bg-color: #faf8ef;
-            --grid-bg: #bbada0;
-            --tile-empty: #cdc1b4;
-            --text-dark: #776e65;
-            --text-light: #f9f6f2;
+            --bg-color: #bdbdbd;
+            --border-light: #ffffff;
+            --border-dark: #7b7b7b;
+            --cell-size: 30px;
         }
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-dark);
-            font-family: 'Clear Sans', Arial, sans-serif;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; margin: 0; touch-action: none;
-        }
-        .header { width: 320px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .score-container { background: var(--grid-bg); padding: 10px 20px; border-radius: 6px; color: white; text-align: center; min-width: 60px; }
-        .grid-container {
-            background: var(--grid-bg); width: 320px; height: 320px;
-            padding: 10px; border-radius: 6px; display: grid;
-            grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr);
-            gap: 10px; box-sizing: border-box; position: relative;
-        }
-        .cell {
-            background: var(--tile-empty); border-radius: 4px; width: 100%; height: 100%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px; font-weight: bold; transition: all 0.1s ease;
-        }
-        /* Tile Colors */
-        .cell[data-value="2"] { background: #eee4da; color: var(--text-dark); }
-        .cell[data-value="4"] { background: #ede0c8; color: var(--text-dark); }
-        .cell[data-value="8"] { background: #f2b179; color: white; }
-        .cell[data-value="16"] { background: #f59563; color: white; }
-        .cell[data-value="32"] { background: #f67c5f; color: white; }
-        .cell[data-value="64"] { background: #f65e3b; color: white; }
-        .cell[data-value="128"] { background: #edcf72; color: white; font-size: 20px; }
-        .cell[data-value="256"] { background: #edcc61; color: white; font-size: 20px; }
-        .cell[data-value="512"] { background: #edc850; color: white; font-size: 20px; }
-        .cell[data-value="1024"] { background: #edc53f; color: white; font-size: 16px; }
-        .cell[data-value="2048"] { background: #edc22e; color: white; font-size: 16px; }
 
-        .btn-restart { margin-top: 20px; padding: 10px 25px; background: #8f7a66; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; font-weight: bold; }
-        .btn-restart:hover { background: #7f6a56; }
+        body {
+            margin: 0;
+            background-color: #222;
+            color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            touch-action: manipulation;
+        }
+
+        #minesweeper-container {
+            background-color: var(--bg-color);
+            padding: 10px;
+            border: 3px solid var(--border-light);
+            border-right-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+            margin-top: 20px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-color);
+            border: 3px solid var(--border-dark);
+            border-right-color: var(--border-light);
+            border-bottom-color: var(--border-light);
+            padding: 5px 10px;
+            margin-bottom: 10px;
+        }
+
+        .lcd-display {
+            background-color: #000;
+            color: #ff0000;
+            font-size: 24px;
+            padding: 2px 5px;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        #reset-btn {
+            width: 35px;
+            height: 35px;
+            font-size: 20px;
+            cursor: pointer;
+            border: 2px solid var(--border-light);
+            border-right-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+            background-color: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #reset-btn:active {
+            border: 2px solid var(--border-dark);
+            border-right-color: var(--border-light);
+            border-bottom-color: var(--border-light);
+        }
+
+        #grid {
+            display: grid;
+            border: 3px solid var(--border-dark);
+            border-right-color: var(--border-light);
+            border-bottom-color: var(--border-light);
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border: 3px solid var(--border-light);
+            border-right-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .cell.revealed {
+            border: 1px solid var(--border-dark);
+            background-color: #c0c0c0;
+            cursor: default;
+        }
+
+        .cell.mine { background-color: #ff4d4d; }
+        .cell.flagged::after { content: "🚩"; font-size: 14px; }
+        
+        /* 숫자별 색상 */
+        .n1 { color: blue; }
+        .n2 { color: green; }
+        .n3 { color: red; }
+        .n4 { color: darkblue; }
+        .n5 { color: darkred; }
+
+        .instructions {
+            max-width: 400px;
+            color: #ccc;
+            margin-top: 20px;
+            font-size: 0.9em;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        @media (max-width: 400px) {
+            :root { --cell-size: 25px; }
+        }
     </style>
 </head>
 <body>
 
+<div id="minesweeper-container">
     <div class="header">
-        <h1 style="margin:0; font-size: 48px;">2048</h1>
-        <div class="score-container">
-            <div style="font-size:12px; font-weight: bold;">SCORE</div>
-            <div id="score" style="font-size: 24px; font-weight: bold;">0</div>
-        </div>
+        <div class="lcd-display" id="mine-count">10</div>
+        <button id="reset-btn">😊</button>
+        <div class="lcd-display" id="timer">000</div>
     </div>
+    <div id="grid"></div>
+</div>
 
-    <div id="grid" class="grid-container"></div>
+<div class="instructions">
+    <strong>[조작법]</strong><br>
+    PC: 클릭(열기), 우클릭(깃발)<br>
+    모바일: 터치(열기), 길게 터치(깃발)
+</div>
 
-    <button class="btn-restart" onclick="resetGame()">New Game</button>
+<script>
+    const ROWS = 10;
+    const COLS = 10;
+    const MINES_COUNT = 10;
+    
+    let grid = [];
+    let revealedCount = 0;
+    let gameOver = false;
+    let timerInterval = null;
+    let seconds = 0;
+    let minesLocation = [];
+    let flagCount = 0;
 
-    <script>
-        const gridDisplay = document.querySelector('#grid');
-        const scoreDisplay = document.querySelector('#score');
-        let squares = [];
-        let score = 0;
+    const gridEl = document.getElementById('grid');
+    const mineDisplay = document.getElementById('mine-count');
+    const timerDisplay = document.getElementById('timer');
+    const resetBtn = document.getElementById('reset-btn');
 
-        function createBoard() {
-            gridDisplay.innerHTML = '';
-            squares = [];
-            for (let i = 0; i < 16; i++) {
-                const square = document.createElement('div');
-                square.classList.add('cell');
-                gridDisplay.appendChild(square);
-                squares.push(square);
+    // 게임 초기화
+    function initGame() {
+        gridEl.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+        grid = [];
+        revealedCount = 0;
+        gameOver = false;
+        seconds = 0;
+        flagCount = 0;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerDisplay.innerText = "000";
+        mineDisplay.innerText = MINES_COUNT;
+        resetBtn.innerText = "😊";
+        gridEl.innerHTML = '';
+
+        // 그리드 생성
+        for (let r = 0; r < ROWS; r++) {
+            grid[r] = [];
+            for (let c = 0; c < COLS; c++) {
+                const cellEl = document.createElement('div');
+                cellEl.classList.add('cell');
+                cellEl.dataset.r = r;
+                cellEl.dataset.c = c;
+                
+                // 이벤트 리스너
+                cellEl.addEventListener('click', () => handleClick(r, c));
+                cellEl.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    handleFlag(r, c);
+                });
+
+                // 모바일 롱터치 깃발 지원
+                let touchTimer;
+                cellEl.addEventListener('touchstart', (e) => {
+                    touchTimer = setTimeout(() => handleFlag(r, c), 500);
+                }, {passive: true});
+                cellEl.addEventListener('touchend', () => clearTimeout(touchTimer));
+
+                gridEl.appendChild(cellEl);
+                grid[r][c] = {
+                    mine: false,
+                    revealed: false,
+                    flagged: false,
+                    neighborMines: 0,
+                    el: cellEl
+                };
             }
-            generate();
-            generate();
+        }
+        placeMines();
+        calculateNeighbors();
+    }
+
+    function placeMines() {
+        let placed = 0;
+        while (placed < MINES_COUNT) {
+            let r = Math.floor(Math.random() * ROWS);
+            let c = Math.floor(Math.random() * COLS);
+            if (!grid[r][c].mine) {
+                grid[r][c].mine = true;
+                placed++;
+            }
+        }
+    }
+
+    function calculateNeighbors() {
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (grid[r][c].mine) continue;
+                let count = 0;
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        if (grid[r+i] && grid[r+i][c+j] && grid[r+i][c+j].mine) count++;
+                    }
+                }
+                grid[r][c].neighborMines = count;
+            }
+        }
+    }
+
+    function startTimer() {
+        if (!timerInterval) {
+            timerInterval = setInterval(() => {
+                seconds++;
+                timerDisplay.innerText = seconds.toString().padStart(3, '0');
+            }, 1000);
+        }
+    }
+
+    function handleClick(r, c) {
+        if (gameOver || grid[r][c].flagged || grid[r][c].revealed) return;
+        
+        startTimer();
+
+        if (grid[r][c].mine) {
+            endGame(false);
+            return;
         }
 
-        function generate() {
-            const emptySquares = squares.filter(s => s.innerHTML === '');
-            if (emptySquares.length > 0) {
-                const randomSquare = emptySquares[Math.floor(Math.random() * emptySquares.length)];
-                const val = Math.random() > 0.1 ? 2 : 4;
-                randomSquare.innerHTML = val;
-                randomSquare.setAttribute('data-value', val);
-                checkForGameOver();
-            }
-        }
+        revealCell(r, c);
 
-        // 공통 이동/합치기 로직
-        function slide(line) {
-            let filtered = line.filter(num => num);
-            for (let i = 0; i < filtered.length - 1; i++) {
-                if (filtered[i] === filtered[i + 1]) {
-                    filtered[i] = filtered[i] * 2;
-                    score += filtered[i];
-                    scoreDisplay.innerHTML = score;
-                    filtered.splice(i + 1, 1);
+        if (revealedCount === (ROWS * COLS) - MINES_COUNT) {
+            endGame(true);
+        }
+    }
+
+    function revealCell(r, c) {
+        const cell = grid[r][c];
+        if (cell.revealed || cell.flagged) return;
+
+        cell.revealed = true;
+        cell.el.classList.add('revealed');
+        revealedCount++;
+
+        if (cell.neighborMines > 0) {
+            cell.el.innerText = cell.neighborMines;
+            cell.el.classList.add(`n${cell.neighborMines}`);
+        } else {
+            // 빈 공간이면 주변 자동 열기
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (grid[r+i] && grid[r+i][c+j]) revealCell(r+i, c+j);
                 }
             }
-            while (filtered.length < 4) filtered.push(0);
-            return filtered;
         }
+    }
 
-        function moveLeft() {
-            let changed = false;
-            for (let i = 0; i < 16; i += 4) {
-                let row = [parseInt(squares[i].innerHTML)||0, parseInt(squares[i+1].innerHTML)||0, parseInt(squares[i+2].innerHTML)||0, parseInt(squares[i+3].innerHTML)||0];
-                let newRow = slide(row);
-                for (let j = 0; j < 4; j++) {
-                    if (parseInt(squares[i+j].innerHTML)||0 !== newRow[j]) changed = true;
-                    squares[i+j].innerHTML = newRow[j] === 0 ? '' : newRow[j];
-                    squares[i+j].setAttribute('data-value', newRow[j] === 0 ? '' : newRow[j]);
+    function handleFlag(r, c) {
+        if (gameOver || grid[r][c].revealed) return;
+        startTimer();
+        
+        const cell = grid[r][c];
+        cell.flagged = !cell.flagged;
+        cell.el.classList.toggle('flagged');
+        
+        flagCount += cell.flagged ? 1 : -1;
+        mineDisplay.innerText = (MINES_COUNT - flagCount).toString().padStart(2, '0');
+    }
+
+    function endGame(win) {
+        gameOver = true;
+        clearInterval(timerInterval);
+        resetBtn.innerText = win ? "😎" : "😵";
+        
+        // 지뢰 공개
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (grid[r][c].mine) {
+                    grid[r][c].el.classList.add('revealed', 'mine');
+                    grid[r][c].el.innerText = "💣";
                 }
             }
-            if (changed) generate();
         }
+        if (win) alert("축하합니다! 승리하셨습니다.");
+    }
 
-        function moveRight() {
-            let changed = false;
-            for (let i = 0; i < 16; i += 4) {
-                let row = [parseInt(squares[i+3].innerHTML)||0, parseInt(squares[i+2].innerHTML)||0, parseInt(squares[i+1].innerHTML)||0, parseInt(squares[i].innerHTML)||0];
-                let newRow = slide(row);
-                for (let j = 0; j < 4; j++) {
-                    if (parseInt(squares[i+3-j].innerHTML)||0 !== newRow[j]) changed = true;
-                    squares[i+3-j].innerHTML = newRow[j] === 0 ? '' : newRow[j];
-                    squares[i+3-j].setAttribute('data-value', newRow[j] === 0 ? '' : newRow[j]);
-                }
-            }
-            if (changed) generate();
-        }
+    resetBtn.addEventListener('click', initGame);
+    initGame();
+</script>
 
-        function moveUp() {
-            let changed = false;
-            for (let i = 0; i < 4; i++) {
-                let col = [parseInt(squares[i].innerHTML)||0, parseInt(squares[i+4].innerHTML)||0, parseInt(squares[i+8].innerHTML)||0, parseInt(squares[i+12].innerHTML)||0];
-                let newCol = slide(col);
-                for (let j = 0; j < 4; j++) {
-                    if (parseInt(squares[i+j*4].innerHTML)||0 !== newCol[j]) changed = true;
-                    squares[i+j*4].innerHTML = newCol[j] === 0 ? '' : newCol[j];
-                    squares[i+j*4].setAttribute('data-value', newCol[j] === 0 ? '' : newCol[j]);
-                }
-            }
-            if (changed) generate();
-        }
-
-        function moveDown() {
-            let changed = false;
-            for (let i = 0; i < 4; i++) {
-                let col = [parseInt(squares[i+12].innerHTML)||0, parseInt(squares[i+8].innerHTML)||0, parseInt(squares[i+4].innerHTML)||0, parseInt(squares[i].innerHTML)||0];
-                let newCol = slide(col);
-                for (let j = 0; j < 4; j++) {
-                    if (parseInt(squares[i+(3-j)*4].innerHTML)||0 !== newCol[j]) changed = true;
-                    squares[i+(3-j)*4].innerHTML = newCol[j] === 0 ? '' : newCol[j];
-                    squares[i+(3-j)*4].setAttribute('data-value', newCol[j] === 0 ? '' : newCol[j]);
-                }
-            }
-            if (changed) generate();
-        }
-
-        function handleKey(e) {
-            if (e.keyCode === 37) moveLeft();
-            else if (e.keyCode === 38) moveUp();
-            else if (e.keyCode === 39) moveRight();
-            else if (e.keyCode === 40) moveDown();
-        }
-
-        function checkForGameOver() {
-            let zeros = squares.filter(s => s.innerHTML === '').length;
-            if (zeros === 0) {
-                // 더 합칠 수 있는게 있는지 확인 로직 생략(심플화), 꽉 차면 종료 제안
-                // 실제 고도화시 인접 타일 체크 필요
-            }
-        }
-
-        function resetGame() {
-            score = 0;
-            scoreDisplay.innerHTML = 0;
-            createBoard();
-        }
-
-        document.addEventListener('keyup', handleKey);
-        window.onload = createBoard;
-
-        // Swipe Support
-        let startX, startY;
-        document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; });
-        document.addEventListener('touchend', e => {
-            if (!startX || !startY) return;
-            let diffX = e.changedTouches[0].clientX - startX;
-            let diffY = e.changedTouches[0].clientY - startY;
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                if (diffX > 0) moveRight(); else moveLeft();
-            } else {
-                if (diffY > 0) moveDown(); else moveUp();
-            }
-            startX = null; startY = null;
-        });
-    </script>
 </body>
 </html>
