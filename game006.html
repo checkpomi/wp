@@ -1,4 +1,4 @@
-<!-- Playable Space Invaders HTML5 Game -->
+<!-- Playable Space Invaders HTML5 Game (Bug Fix & Polished) -->
 <div id="invaders-game-container" style="max-width: 500px; margin: 40px auto; background: #0a0a0a; border-radius: 12px; padding: 20px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(46,204,113,0.1); border: 3px solid #333; touch-action: none; user-select: none;">
     
     <!-- Game HUD -->
@@ -59,6 +59,7 @@
             const MAX_LEVEL = 20;
             let reqId = null;
             let isPlaying = false;
+            let isGameOverTriggered = false; // 중복 게임오버 방지 플래그
             
             let level = 1;
             let score = 0;
@@ -69,7 +70,6 @@
             let bullets = [];
             let alienBullets = [];
             let shields = [];
-            let particles = [];
 
             let keys = { ArrowLeft: false, ArrowRight: false, Space: false };
             let lastShotTime = 0;
@@ -77,7 +77,6 @@
             // Alien Movement logic
             let alienDir = 1; // 1 = right, -1 = left
             let alienSpeed = 0.5;
-            let alienMoveDown = false;
 
             // --- Classes ---
             class Player {
@@ -93,7 +92,8 @@
                 }
                 draw() {
                     if (this.isHit) {
-                        if (Math.floor(Date.now() / 100) % 2 === 0) return; // 깜빡임 효과
+                        // 피격 시 10프레임 간격으로 깜빡임 처리
+                        if (Math.floor(this.hitTimer / 10) % 2 === 0) return;
                     }
                     ctx.fillStyle = this.color;
                     ctx.shadowBlur = 10;
@@ -110,7 +110,7 @@
                     
                     if (this.isHit) {
                         this.hitTimer--;
-                        if(this.hitTimer <= 0) this.isHit = false;
+                        if(this.hitTimer <= 0) this.isHit = false; // 무적 시간 종료
                     }
                 }
             }
@@ -121,14 +121,13 @@
                     this.height = 16;
                     this.x = x;
                     this.y = y;
-                    this.type = row; // determines color
+                    this.type = row; 
                     this.alive = true;
                 }
                 draw() {
                     if(!this.alive) return;
                     ctx.fillStyle = this.type < 2 ? '#e74c3c' : (this.type < 4 ? '#f1c40f' : '#3498db');
                     ctx.fillRect(this.x, this.y, this.width, this.height);
-                    // Alien eyes
                     ctx.fillStyle = '#000';
                     ctx.fillRect(this.x + 4, this.y + 4, 4, 4);
                     ctx.fillRect(this.x + 16, this.y + 4, 4, 4);
@@ -178,6 +177,7 @@
                     lives = 3;
                 }
                 
+                isGameOverTriggered = false;
                 player = new Player();
                 bullets = [];
                 alienBullets = [];
@@ -191,7 +191,6 @@
 
             function initAliens() {
                 aliens = [];
-                // Speed increases with level
                 alienSpeed = 0.3 + (level * 0.15); 
                 
                 let rows = 5;
@@ -209,7 +208,6 @@
                 shieldXStarts.forEach(startX => {
                     for (let r = 0; r < 4; r++) {
                         for (let c = 0; c < 6; c++) {
-                            // 모서리 깎기
                             if(r===0 && (c===0 || c===5)) continue;
                             shields.push(new ShieldBlock(startX + c * 6, 380 + r * 6));
                         }
@@ -220,12 +218,12 @@
             function updateUI() {
                 scoreEl.innerText = score;
                 levelEl.innerText = level;
-                livesEl.innerText = '❤️'.repeat(lives);
+                livesEl.innerText = lives > 0 ? '❤️'.repeat(lives) : '💀';
             }
 
             // --- Main Game Loop ---
             function gameLoop() {
-                if (!isPlaying) return;
+                if (!isPlaying || isGameOverTriggered) return;
                 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
@@ -236,14 +234,14 @@
                 
                 drawAll();
                 
-                reqId = requestAnimationFrame(gameLoop);
+                if (!isGameOverTriggered) {
+                    reqId = requestAnimationFrame(gameLoop);
+                }
             }
 
             function updatePlayer() {
                 player.update();
-                // Shooting
                 if (keys.Space && Date.now() - lastShotTime > 400 && !player.isHit) {
-                    // Limit bullets to 2 on screen
                     if (bullets.filter(b => b.active).length < 2) {
                         bullets.push(new Bullet(player.x + player.width/2 - 2, player.y, -7, '#2ecc71'));
                         lastShotTime = Date.now();
@@ -260,60 +258,57 @@
                     return;
                 }
 
-                // Calculate dynamic speed based on remaining aliens
                 let currentSpeed = alienSpeed + (40 - aliveAliens.length) * 0.02;
 
-                // Move logic
+                // 외계인들이 벽에 닿을지 미리 예측 (버그 픽스 핵심)
                 for (let a of aliveAliens) {
-                    a.x += currentSpeed * alienDir;
-                    if (a.x <= 10 || a.x + a.width >= canvas.width - 10) {
+                    if (a.x + (currentSpeed * alienDir) <= 10 || a.x + a.width + (currentSpeed * alienDir) >= canvas.width - 10) {
                         hitWall = true;
+                        break; // 한 마리라도 닿으면 전체 방향 전환
                     }
                 }
 
                 if (hitWall) {
-                    alienDir *= -1;
+                    alienDir *= -1; // 방향 전환
                     for (let a of aliveAliens) {
-                        a.y += 20; // Drop down
-                        a.x += currentSpeed * alienDir; // push away from wall
+                        a.y += 20; // 아래로 전진
+                        a.x += currentSpeed * alienDir; // 바뀐 방향으로 즉시 밀어내기
                         
-                        // Game Over if they reach bottom
+                        // 바닥에 닿으면 목숨 상관없이 게임 오버
                         if (a.y + a.height >= player.y) {
-                            handleGameOver();
+                            handleGameOver(true);
+                            return; 
                         }
+                    }
+                } else {
+                    for (let a of aliveAliens) {
+                        a.x += currentSpeed * alienDir;
                     }
                 }
 
-                // Random Alien Shooting
+                // 외계인 총알 발사
                 let fireRate = 0.005 + (level * 0.002);
                 if (Math.random() < fireRate) {
                     let shooter = aliveAliens[Math.floor(Math.random() * aliveAliens.length)];
-                    alienBullets.push(new Bullet(shooter.x + shooter.width/2, shooter.y + shooter.height, 4 + (level*0.2), '#fff'));
+                    alienBullets.push(new Bullet(shooter.x + shooter.width/2 - 2, shooter.y + shooter.height, 4 + (level*0.2), '#fff'));
                 }
             }
 
             function updateBullets() {
                 bullets.forEach(b => b.update());
                 alienBullets.forEach(b => b.update());
-                
-                // Cleanup inactive
                 bullets = bullets.filter(b => b.active);
                 alienBullets = alienBullets.filter(b => b.active);
             }
 
             function checkCollisions() {
-                // AABB Collision helper
                 const rectIntersect = (r1, r2) => {
-                    return !(r2.x > r1.x + r1.width || 
-                             r2.x + r2.width < r1.x || 
-                             r2.y > r1.y + r1.height ||
-                             r2.y + r2.height < r1.y);
+                    return !(r2.x > r1.x + r1.width || r2.x + r2.width < r1.x || r2.y > r1.y + r1.height || r2.y + r2.height < r1.y);
                 };
 
-                // Player bullets hitting Aliens or Shields
+                // 플레이어 총알 -> 외계인 / 쉴드
                 bullets.forEach(b => {
                     if(!b.active) return;
-                    // Hit Alien
                     for (let a of aliens) {
                         if (a.alive && rectIntersect(b, a)) {
                             a.alive = false;
@@ -323,7 +318,6 @@
                             break;
                         }
                     }
-                    // Hit Shield
                     if (b.active) {
                         for (let s of shields) {
                             if (s.active && rectIntersect(b, {x:s.x, y:s.y, width:s.size, height:s.size})) {
@@ -335,15 +329,13 @@
                     }
                 });
 
-                // Alien bullets hitting Player or Shields
+                // 외계인 총알 -> 플레이어 / 쉴드
                 alienBullets.forEach(b => {
                     if(!b.active) return;
-                    // Hit Player
                     if (!player.isHit && rectIntersect(b, player)) {
                         b.active = false;
                         handlePlayerHit();
                     }
-                    // Hit Shield
                     if (b.active) {
                         for (let s of shields) {
                             if (s.active && rectIntersect(b, {x:s.x, y:s.y, width:s.size, height:s.size})) {
@@ -360,21 +352,23 @@
                 lives--;
                 updateUI();
                 player.isHit = true;
-                player.hitTimer = 60; // 1 second invulnerability (60 frames)
+                player.hitTimer = 90; // 1.5초간 무적 (약 90프레임)
                 
                 if (lives <= 0) {
-                    handleGameOver();
+                    handleGameOver(false);
                 } else {
-                    // Reset positions slightly
-                    bullets = [];
-                    alienBullets = [];
+                    alienBullets = []; // 부활 시 억까(연속 피격) 방지를 위해 적 총알 초기화
                 }
             }
 
-            function handleGameOver() {
+            function handleGameOver(isInvaded) {
+                if (isGameOverTriggered) return;
+                isGameOverTriggered = true;
                 isPlaying = false;
                 cancelAnimationFrame(reqId);
-                setTimeout(() => alert(`💥 게임 오버! \n최종 점수: ${score}\n다시 도전하세요!`), 100);
+                
+                let msg = isInvaded ? "💥 외계인들이 기지에 침투했습니다!" : "💥 목숨을 모두 잃었습니다!";
+                setTimeout(() => alert(`${msg}\n최종 점수: ${score}\n다시 도전하세요!`), 100);
             }
 
             function levelUp() {
@@ -408,8 +402,8 @@
 
             // --- Event Listeners ---
             document.getElementById('btn-si-start').addEventListener('click', () => {
-                if (!isPlaying && lives > 0) {
-                    if(aliens.length === 0) initGame(true); // if ended
+                if (!isPlaying && lives > 0 && !isGameOverTriggered) {
+                    if(aliens.length === 0) initGame(true); 
                     isPlaying = true;
                     gameLoop();
                 }
@@ -423,13 +417,14 @@
                 isPlaying = false;
                 cancelAnimationFrame(reqId);
                 initGame(true);
-                drawAll(); // draw initial state
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawAll(); 
             });
 
             // Keyboard
             window.addEventListener('keydown', (e) => {
                 if (["ArrowLeft", "ArrowRight", "Space"].includes(e.code)) {
-                    e.preventDefault(); // 스크롤 방지
+                    e.preventDefault(); 
                 }
                 if (e.code === 'ArrowLeft') keys.ArrowLeft = true;
                 if (e.code === 'ArrowRight') keys.ArrowRight = true;
