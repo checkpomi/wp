@@ -1,4 +1,4 @@
-<!-- Playable Cute Snake Game (20 Levels & 3 Lives) -->
+<!-- Playable Cute Snake Game (With End Button) -->
 <div id="snake-game-container" style="max-width: 500px; margin: 40px auto; background: #2d3436; border-radius: 12px; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 3px solid #00b894; touch-action: none; user-select: none;">
     
     <!-- Game HUD -->
@@ -19,6 +19,7 @@
     <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
         <button id="btn-snk-start" class="snk-ctrl-btn" style="background: #00b894; color: #fff;">▶ START</button>
         <button id="btn-snk-pause" class="snk-ctrl-btn" style="background: #b2bec3; color: #2d3436;">⏸ PAUSE</button>
+        <button id="btn-snk-end" class="snk-ctrl-btn" style="background: #e74c3c; color: #fff;">⏹ END</button>
         <button id="btn-snk-ai" class="snk-ctrl-btn" style="background: #fdcb6e; color: #2d3436;">🤖 AI AUTO</button>
     </div>
 
@@ -38,7 +39,7 @@
     </div>
 
     <style>
-        #snake-game-container .snk-ctrl-btn { border: none; padding: 10px 14px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-family: inherit; font-size: 0.8rem; box-shadow: 0 4px 0 rgba(0,0,0,0.3); flex: 1; min-width: 80px; }
+        #snake-game-container .snk-ctrl-btn { border: none; padding: 10px 10px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-family: inherit; font-size: 0.75rem; box-shadow: 0 4px 0 rgba(0,0,0,0.3); flex: 1; min-width: 70px; }
         #snake-game-container .snk-ctrl-btn:active { transform: translateY(4px); box-shadow: none; }
         
         #snake-game-container .snk-dir-btn { background: #636e72; color: #fff; border: none; width: 55px; height: 55px; border-radius: 50%; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 0 #2d3436; touch-action: manipulation; font-weight: bold; }
@@ -65,7 +66,7 @@
             let gameInterval = null;
             let isPlaying = false;
             let isAI = false;
-            let speed = 250; // 초기 속도를 느리게 설정 (250ms)
+            let speed = 250; 
             
             let snake = [];
             let food = {};
@@ -75,7 +76,7 @@
             let level = 1;
             let score = 0;
             let lives = 3;
-            let applesEaten = 0; // 레벨업 카운터
+            let applesEaten = 0; 
             
             let particles = [];
             let tickCount = 0;
@@ -92,7 +93,6 @@
             }
 
             function resetBoard() {
-                // 부활 시 뱀 길이는 초기화하되, 점수와 레벨은 유지
                 snake = [
                     {x: 5, y: 10},
                     {x: 4, y: 10},
@@ -100,7 +100,6 @@
                 ];
                 dx = 1; dy = 0;
                 nextDx = 1; nextDy = 0;
-                // 레벨에 따른 속도 계산 (1레벨 250ms -> 20레벨 79ms)
                 speed = 250 - ((level - 1) * 9); 
                 particles = [];
                 placeFood();
@@ -177,7 +176,6 @@
                 lives--;
                 updateUI();
                 
-                // Screen Shake / Flash Effect
                 ctx.fillStyle = 'rgba(231, 76, 60, 0.4)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -215,7 +213,7 @@
                 
                 level++;
                 applesEaten = 0;
-                speed = 250 - ((level - 1) * 9); // 레벨업 시 속도 증가
+                speed = 250 - ((level - 1) * 9); 
                 updateUI();
 
                 setTimeout(() => {
@@ -235,7 +233,6 @@
 
                 let head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
-                // Collision Check
                 if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) return handleDeath();
                 for (let i = 0; i < snake.length; i++) {
                     if (head.x === snake[i].x && head.y === snake[i].y) return handleDeath();
@@ -243,7 +240,6 @@
 
                 snake.unshift(head); 
 
-                // Eat Food
                 if (head.x === food.x && head.y === food.y) {
                     score += 10;
                     applesEaten++;
@@ -252,7 +248,6 @@
                     for(let i=0; i<15; i++) particles.push(new Particle(food.x * TILE + TILE/2, food.y * TILE + TILE/2));
                     placeFood();
                     
-                    // 레벨 업 체크
                     if (applesEaten >= APPLES_PER_LEVEL) {
                         levelUp();
                     }
@@ -264,7 +259,6 @@
             function draw() {
                 tickCount++;
 
-                // Background & Checkerboard
                 ctx.fillStyle = '#c8d6e5';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#b2bec3';
@@ -276,7 +270,6 @@
                 }
                 ctx.globalAlpha = 1.0;
 
-                // Draw Food (Cute Apple)
                 let fx = food.x * TILE + TILE/2;
                 let fy = food.y * TILE + TILE/2;
                 let pulse = Math.sin(tickCount * 0.2) * 1.5;
@@ -286,7 +279,6 @@
                 ctx.fillStyle = '#2ed573';
                 ctx.beginPath(); ctx.ellipse(fx + 3, fy - 5 + pulse, 5, 2.5, -Math.PI/4, 0, Math.PI*2); ctx.fill();
 
-                // Draw Snake Body
                 for (let i = snake.length - 1; i >= 0; i--) {
                     let seg = snake[i];
                     let cx = seg.x * TILE + TILE/2;
@@ -296,7 +288,6 @@
                         ctx.fillStyle = (i % 2 === 0) ? '#1dd1a1' : '#10ac84'; 
                         ctx.beginPath(); ctx.arc(cx, cy, TILE/2 - 1, 0, Math.PI*2); ctx.fill();
                     } else {
-                        // Tongue
                         if (Math.sin(tickCount * 0.5) > 0) {
                             ctx.strokeStyle = '#ff6b81';
                             ctx.lineWidth = 3;
@@ -306,11 +297,9 @@
                             ctx.stroke();
                         }
 
-                        // Head
                         ctx.fillStyle = '#01a3a4';
                         ctx.beginPath(); ctx.arc(cx, cy, TILE/2 + 1, 0, Math.PI*2); ctx.fill();
 
-                        // Eyes & Blush
                         let e1x = cx, e1y = cy, e2x = cx, e2y = cy;
                         if (dx === 1) { e1x=cx+3; e1y=cy-4; e2x=cx+3; e2y=cy+4; }
                         else if (dx === -1) { e1x=cx-3; e1y=cy-4; e2x=cx-3; e2y=cy+4; }
@@ -335,7 +324,6 @@
                     }
                 }
 
-                // Particles
                 for (let i = particles.length - 1; i >= 0; i--) {
                     particles[i].update();
                     particles[i].draw();
@@ -361,6 +349,14 @@
             document.getElementById('btn-snk-pause').addEventListener('click', () => {
                 isPlaying = false;
                 clearInterval(gameInterval);
+            });
+
+            // Added "END/RESET" Button Logic
+            document.getElementById('btn-snk-end').addEventListener('click', () => {
+                isPlaying = false;
+                clearInterval(gameInterval);
+                initGame(true); // 완전 초기화
+                draw(); // 빈 상태 화면 렌더링
             });
 
             document.getElementById('btn-snk-ai').addEventListener('click', () => {
