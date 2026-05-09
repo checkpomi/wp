@@ -73,7 +73,7 @@
             const GRAVITY = 0.5;
             const JUMP_POWER = -8.5;
             const MOVE_SPEED = 2.5;
-            const CLIMB_SPEED = 2;
+            const CLIMB_SPEED = 2.0;
 
             // Map Data (Girders: x1, y1, x2, y2)
             const girders = [
@@ -154,8 +154,8 @@
             }
 
             function spawnBarrel() {
-                // 악당(통)의 속도를 대폭 하향: (기본 1.0 + 레벨당 0.15 추가)
-                let barrelSpeed = 1.0 + (level * 0.15);
+                // 악당(통)의 속도를 엄청나게 하향: 기본 0.5 + 레벨당 0.1 추가
+                let barrelSpeed = 0.5 + (level * 0.1);
                 barrels.push({
                     x: 60, y: 110, r: 10,
                     dx: barrelSpeed, dy: 0,
@@ -175,7 +175,7 @@
                 if (lives > 0) {
                     setTimeout(() => {
                         alert(`앗! 술통에 맞았습니다.\n남은 생명: ${lives}개\n[확인]을 누르면 점수를 유지한 채 다시 시작합니다.`);
-                        resetLevel(); // 점수는 유지하고 위치만 초기화
+                        resetLevel(); 
                         isPlaying = true;
                         gameLoop();
                     }, 100);
@@ -211,8 +211,8 @@
             function update() {
                 frameCount++;
                 
-                // 적 스폰 주기 하향 (초기 약 2초마다 1개 -> 레벨당 조금씩 단축)
-                let spawnRate = Math.max(90, 150 - (level * 8)); 
+                // 적 스폰 주기 하향 (더 여유롭게 스폰)
+                let spawnRate = Math.max(120, 180 - (level * 5)); 
                 if (frameCount % spawnRate === 0) spawnBarrel();
 
                 let activeLadder = isNearLadder(player);
@@ -292,7 +292,7 @@
                     // Collision: Death
                     let distX = (player.x + player.w/2) - b.x;
                     let distY = (player.y + player.h/2) - b.y;
-                    if (Math.abs(distX) < player.w/2 + b.r - 3 && Math.abs(distY) < player.h/2 + b.r - 3) {
+                    if (Math.abs(distX) < player.w/2 + b.r - 2 && Math.abs(distY) < player.h/2 + b.r - 2) {
                         return handleDeath();
                     }
 
@@ -309,32 +309,63 @@
                 checkLevelClear();
             }
 
-            // --- 귀여운 그림 그리기 ---
+            // --- 한층 더 귀여워진 치비 스타일 플레이어 ---
             function drawCutePlayer(x, y, w, h) {
-                // 몸통 (파란색 바지, 빨간 셔츠)
-                ctx.fillStyle = '#3498db'; 
-                ctx.beginPath(); ctx.roundRect(x, y + 10, w, h - 10, 4); ctx.fill();
-                ctx.fillStyle = '#e74c3c'; 
-                ctx.beginPath(); ctx.roundRect(x, y + 10, w, h/2, 4); ctx.fill();
-
-                // 얼굴
-                ctx.fillStyle = '#ffeaa7'; 
-                ctx.beginPath(); ctx.arc(x + w/2, y + 8, 9, 0, Math.PI*2); ctx.fill();
-
-                // 안전모 (노란색)
-                ctx.fillStyle = '#f1c40f';
-                ctx.beginPath(); ctx.arc(x + w/2, y + 5, 9, Math.PI, Math.PI*2); ctx.fill();
-                ctx.fillRect(x - 2, y + 3, w + 4, 3);
-
-                // 눈과 홍조
+                let cx = x + w/2;
                 let dir = player.facingRight ? 1 : -1;
-                ctx.fillStyle = 'white';
-                ctx.beginPath(); ctx.arc(x + w/2 + dir*2, y + 7, 3.5, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = 'black';
-                ctx.beginPath(); ctx.arc(x + w/2 + dir*3, y + 7, 2, 0, Math.PI*2); ctx.fill();
+
+                // 1. 작은 몸통 (오버롤)
+                ctx.fillStyle = '#3498db'; // 파란 바지
+                ctx.beginPath(); ctx.roundRect(x + 2, y + 16, w - 4, 12, 4); ctx.fill();
+                ctx.fillStyle = '#e74c3c'; // 빨간 셔츠
+                ctx.beginPath(); ctx.roundRect(x + 3, y + 14, w - 6, 8, 3); ctx.fill();
                 
-                ctx.fillStyle = 'rgba(255, 118, 117, 0.7)';
-                ctx.beginPath(); ctx.arc(x + w/2 + dir*5, y + 10, 2.5, 0, Math.PI*2); ctx.fill();
+                // 2. 앙증맞은 발 (신발)
+                ctx.fillStyle = '#8b4513';
+                // 걷기 상태일 때 발을 까딱거림
+                let footOffset = (player.state === 'walk' && Math.floor(frameCount / 5) % 2 === 0) ? 2 : 0;
+                ctx.beginPath(); ctx.ellipse(cx - 5, y + 27 - footOffset, 4, 3, 0, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(cx + 5, y + 27 + footOffset, 4, 3, 0, 0, Math.PI*2); ctx.fill();
+
+                // 3. 커다란 머리 (가분수 비율)
+                ctx.fillStyle = '#ffeaa7'; // 살구색 피부
+                ctx.beginPath(); ctx.arc(cx, y + 8, 11, 0, Math.PI*2); ctx.fill();
+
+                // 4. 빨간 빵모자 (마리오 스타일)
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath(); ctx.arc(cx, y + 3, 11, Math.PI, Math.PI*2); ctx.fill(); // 모자 윗부분
+                ctx.beginPath(); ctx.ellipse(cx + dir*3, y + 3, 12, 4, 0, 0, Math.PI*2); ctx.fill(); // 모자 챙
+
+                // 5. 크고 초롱초롱한 애니메이션풍 눈
+                let eyeX1 = cx + dir*3;
+                let eyeX2 = cx + dir*8;
+                if(!player.facingRight) {
+                    eyeX1 = cx - 3;
+                    eyeX2 = cx - 8;
+                }
+                
+                // 메인 눈 (앞쪽)
+                ctx.fillStyle = '#2d3436';
+                ctx.beginPath(); ctx.ellipse(eyeX1, y + 8, 2.5, 3.5, 0, 0, Math.PI*2); ctx.fill();
+                // 눈망울 하이라이트 (반짝!)
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(eyeX1 - dir*0.5, y + 6.5, 1.2, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eyeX1 + dir*0.5, y + 9, 0.5, 0, Math.PI*2); ctx.fill();
+
+                // 서브 눈 (뒤쪽 - 입체감)
+                ctx.fillStyle = '#2d3436';
+                ctx.beginPath(); ctx.ellipse(eyeX2, y + 8, 1.5, 2.5, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(eyeX2 - dir*0.5, y + 6.5, 0.8, 0, Math.PI*2); ctx.fill();
+
+                // 6. 발그레한 볼
+                ctx.fillStyle = 'rgba(255, 118, 117, 0.8)';
+                ctx.beginPath(); ctx.ellipse(cx + dir*5, y + 12, 3, 1.5, 0, 0, Math.PI*2); ctx.fill();
+                
+                // 7. 귀여운 입 (살짝 벌린 미소)
+                ctx.strokeStyle = '#d63031';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(cx + dir*7, y + 10, 2, 0, Math.PI, false); ctx.stroke();
             }
 
             function drawCuteGorilla(x, y) {
@@ -348,7 +379,7 @@
                 ctx.fillStyle = 'black';
                 ctx.beginPath(); ctx.arc(x + 14, y + 20, 3.5, 0, Math.PI*2); ctx.fill();
                 ctx.beginPath(); ctx.arc(x + 31, y + 20, 3.5, 0, Math.PI*2); ctx.fill();
-                // 귀여운 화난 눈썹
+                // 화난 눈썹
                 ctx.lineWidth = 3; ctx.strokeStyle = '#5c2a0b';
                 ctx.beginPath(); ctx.moveTo(x + 10, y + 15); ctx.lineTo(x + 18, y + 17); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(x + 35, y + 15); ctx.lineTo(x + 27, y + 17); ctx.stroke();
@@ -357,7 +388,6 @@
             }
 
             function draw() {
-                // Background
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 // Draw Girders (둥글고 귀여운 느낌으로)
@@ -394,11 +424,10 @@
                 ctx.fillStyle = 'black';
                 ctx.beginPath(); ctx.arc(goal.x + goal.w/2 - 2, goal.y+8, 1.5, 0, Math.PI*2); ctx.fill();
                 ctx.beginPath(); ctx.arc(goal.x + goal.w/2 + 2, goal.y+8, 1.5, 0, Math.PI*2); ctx.fill();
-                // 티아라
-                ctx.fillStyle = '#f1c40f';
+                ctx.fillStyle = '#f1c40f'; // 티아라
                 ctx.beginPath(); ctx.moveTo(goal.x+4, goal.y+2); ctx.lineTo(goal.x+8, goal.y-4); ctx.lineTo(goal.x+12, goal.y+2); ctx.lineTo(goal.x+16, goal.y-4); ctx.lineTo(goal.x+20, goal.y+2); ctx.fill();
 
-                // Draw Player
+                // Draw Player (Super Cute Chibi!)
                 drawCutePlayer(player.x, player.y, player.w, player.h);
 
                 // Draw Gorilla
