@@ -1,4 +1,4 @@
-<!-- Playable Super Mario Style Platformer -->
+<!-- Playable Super Mario Style Platformer (Upgraded Pixel Art Character) -->
 <div id="mario-platformer-container" style="max-width: 500px; margin: 40px auto; background: #222; border-radius: 12px; padding: 20px; font-family: 'Press Start 2P', 'Segoe UI', Tahoma, sans-serif; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 4px solid #444; touch-action: none; user-select: none;">
     
     <!-- Game HUD -->
@@ -22,7 +22,7 @@
 
     <!-- Canvas Container -->
     <div style="position: relative; width: 100%; aspect-ratio: 5/4; background: #5c94fc; border-radius: 8px; border: 4px solid #000; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.3);">
-        <canvas id="sm-canvas" width="400" height="320" style="display: block; width: 100%; height: 100%;"></canvas>
+        <canvas id="sm-canvas" width="400" height="320" style="display: block; width: 100%; height: 100%; image-rendering: pixelated;"></canvas>
     </div>
 
     <!-- Mobile Action Controls -->
@@ -47,15 +47,13 @@
             const canvas = document.getElementById('sm-canvas');
             const ctx = canvas.getContext('2d');
             
-            // DOM
             const scoreEl = document.getElementById('sm-score');
             const levelEl = document.getElementById('sm-level');
             const livesEl = document.getElementById('sm-lives');
 
-            // Game Constants
             const TILE = 40;
             const ROWS = 8;
-            let COLS = 25; // Expands per level
+            let COLS = 25; 
             let reqId = null;
             let isPlaying = false;
             
@@ -75,33 +73,96 @@
                 grounded: false, isDead: false, deathTimer: 0, facingRight: true
             };
 
-            // Dynamic Map Generator (Concept 2: Tile-Based Level)
+            // --- 8-Bit Pixel Art Data ---
+            const palette = {
+                'R': '#e74c3c', // Red (Hat/Shirt)
+                'B': '#2980b9', // Blue (Overalls)
+                'S': '#ffcc99', // Skin (Face/Hands)
+                'H': '#8b4513', // Brown (Hair/Shoes)
+                'K': '#000000', // Black (Eyes/Mustache)
+                'Y': '#f1c40f'  // Yellow (Buttons)
+            };
+
+            const sprites = {
+                idle: [
+                    "   RRRRR    ",
+                    "  RRRRRRRRR ",
+                    "  HHHSSHK   ",
+                    " HSHHSSSKS  ",
+                    " HSHHSSSKS  ",
+                    " HHSSSSKKKK ",
+                    "   SSSSSSS  ",
+                    "  RRBBRR    ",
+                    " RRRBBRRRR  ",
+                    "RRRRBBBBRRR ",
+                    "SSBBYYBBSS  ",
+                    "SSBBBBBBSS  ",
+                    "BBBBBBBBBB  ",
+                    "  BB  BB    ",
+                    " HHH  HHH   ",
+                    "HHHH  HHHH  "
+                ],
+                run: [
+                    "   RRRRR    ",
+                    "  RRRRRRRRR ",
+                    "  HHHSSHK   ",
+                    " HSHHSSSKS  ",
+                    " HSHHSSSKS  ",
+                    " HHSSSSKKKK ",
+                    "   SSSSSSS  ",
+                    "  RRBBRR    ",
+                    " RRRBBRRRR  ",
+                    "RRRRBBBBRRR ",
+                    "SSBBYYBBS   ",
+                    "SSBBBBBBSS  ",
+                    "BBBBBBBBBB  ",
+                    "   BB  HHH  ",
+                    "  HHH  HHHH ",
+                    " HHHH       "
+                ],
+                jump: [
+                    "   RRRRR    ",
+                    "  RRRRRRRRR ",
+                    "  HHHSSHK   ",
+                    " HSHHSSSKS  ",
+                    " HSHHSSSKS  ",
+                    " HHSSSSKKKK ",
+                    "   SSSSSSS  ",
+                    "  RRBBRR  SS",
+                    " RRRBBRRRR S",
+                    "RRRRBBBBRR  ",
+                    "SSBBYYBB    ",
+                    " SBBBBBB    ",
+                    "  BB  BB    ",
+                    " HHH  HHH   ",
+                    "HHHH        ",
+                    "            "
+                ]
+            };
+
             function generateMap(lvl) {
-                COLS = 20 + (lvl * 5); // 맵이 점점 길어짐
+                COLS = 20 + (lvl * 5); 
                 let newMap = Array.from({length: ROWS}, () => Array(COLS).fill(0));
                 
-                // 바닥 생성 (중간중간 낙사 구간 추가)
                 for (let i = 0; i < COLS; i++) {
-                    newMap[ROWS - 1][i] = 1; // 1: Ground
+                    newMap[ROWS - 1][i] = 1; 
                     if (i > 5 && i < COLS - 5 && Math.random() < 0.15) {
-                        newMap[ROWS - 1][i] = 0; // Hole
+                        newMap[ROWS - 1][i] = 0; 
                     }
                 }
                 
-                // 블록 및 동전 생성
                 for (let i = 4; i < COLS - 4; i++) {
                     if (newMap[ROWS - 1][i] === 1 && Math.random() < 0.3) {
                         let h = Math.random() > 0.5 ? 4 : 5; 
-                        newMap[h][i] = 2; // 2: Brick
-                        if (Math.random() < 0.6) newMap[h - 1][i] = 3; // 3: Coin
+                        newMap[h][i] = 2; 
+                        if (Math.random() < 0.6) newMap[h - 1][i] = 3; 
                     }
                 }
                 
-                // 깃발 (목표 지점)
                 newMap[ROWS - 2][COLS - 2] = 4; 
                 newMap[ROWS - 3][COLS - 2] = 4;
                 newMap[ROWS - 4][COLS - 2] = 4;
-                newMap[ROWS - 5][COLS - 2] = 5; // 5: Flag Top
+                newMap[ROWS - 5][COLS - 2] = 5; 
                 
                 return newMap;
             }
@@ -128,7 +189,6 @@
                 livesEl.innerText = lives > 0 ? '❤️'.repeat(lives) : '💀';
             }
 
-            // --- Physics & Collision (Concept 1 & 3) ---
             function checkMapCollision(x, y) {
                 let col = Math.floor(x / TILE);
                 let row = Math.floor(y / TILE);
@@ -152,13 +212,11 @@
                     return;
                 }
 
-                // Horizontal Movement
                 if (keys.left) { player.dx -= player.accel; player.facingRight = false; }
                 if (keys.right) { player.dx += player.accel; player.facingRight = true; }
                 player.dx *= player.friction;
                 player.x += player.dx;
 
-                // X-Axis Collision
                 let left = Math.floor(player.x / TILE);
                 let right = Math.floor((player.x + player.width - 0.1) / TILE);
                 let top = Math.floor(player.y / TILE);
@@ -175,12 +233,10 @@
                     }
                 }
 
-                // Vertical Movement (Gravity)
                 player.dy += player.gravity;
                 player.y += player.dy;
                 player.grounded = false;
 
-                // Y-Axis Collision
                 left = Math.floor(player.x / TILE);
                 right = Math.floor((player.x + player.width - 0.1) / TILE);
                 top = Math.floor(player.y / TILE);
@@ -196,17 +252,15 @@
                                 player.grounded = true;
                             } else if (player.dy < 0) {
                                 player.y = (r + 1) * TILE;
-                                player.dy = 0; // 머리 부딪힘 (Head-Bonk)
+                                player.dy = 0; 
                             }
                         } else if (tile === 3) collectCoin(c, r);
                         else if (tile === 4 || tile === 5) levelClear();
                     }
                 }
 
-                // 낙사 처리
                 if (player.y > canvas.height) triggerDeath();
 
-                // Camera Logic (Concept 5: Culling & Scrolling)
                 camX = player.x - canvas.width / 2 + player.width / 2;
                 if (camX < 0) camX = 0;
                 if (camX > (COLS * TILE) - canvas.width) camX = (COLS * TILE) - canvas.width;
@@ -215,7 +269,7 @@
             function triggerDeath() {
                 if(player.isDead) return;
                 player.isDead = true;
-                player.dy = -10; // 사망 시 위로 살짝 튀어오름
+                player.dy = -10; 
                 lives--;
                 updateUI();
             }
@@ -245,15 +299,13 @@
                 }, 100);
             }
 
-            // --- Rendering ---
             function draw() {
-                ctx.fillStyle = '#5c94fc'; // Sky Blue
+                ctx.fillStyle = '#5c94fc'; 
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 ctx.save();
                 ctx.translate(-camX, 0);
 
-                // 화면에 보이는 타일만 렌더링 (Culling)
                 let startCol = Math.max(0, Math.floor(camX / TILE));
                 let endCol = Math.min(COLS, Math.ceil((camX + canvas.width) / TILE));
 
@@ -263,36 +315,60 @@
                         let tx = c * TILE;
                         let ty = r * TILE;
 
-                        if (t === 1) { // Ground
+                        if (t === 1) { 
                             ctx.fillStyle = '#6ab04c'; ctx.fillRect(tx, ty, TILE, TILE/4);
                             ctx.fillStyle = '#d35400'; ctx.fillRect(tx, ty+TILE/4, TILE, TILE*0.75);
                             ctx.strokeStyle = '#000'; ctx.strokeRect(tx, ty, TILE, TILE);
-                        } else if (t === 2) { // Brick
+                        } else if (t === 2) { 
                             ctx.fillStyle = '#e67e22'; ctx.fillRect(tx, ty, TILE, TILE);
                             ctx.strokeStyle = '#000'; ctx.strokeRect(tx, ty, TILE, TILE);
                             ctx.beginPath(); ctx.moveTo(tx, ty+TILE/2); ctx.lineTo(tx+TILE, ty+TILE/2); ctx.stroke();
-                        } else if (t === 3) { // Coin
+                        } else if (t === 3) { 
                             let pulse = Math.sin(frameCount * 0.1) * 2;
                             ctx.fillStyle = '#f1c40f';
                             ctx.beginPath(); ctx.arc(tx + TILE/2, ty + TILE/2, 10 + pulse, 0, Math.PI*2); ctx.fill();
                             ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1;
-                        } else if (t === 4) { // Flag pole
+                        } else if (t === 4) { 
                             ctx.fillStyle = '#bdc3c7'; ctx.fillRect(tx + TILE/2 - 2, ty, 4, TILE);
-                        } else if (t === 5) { // Flag Top
+                        } else if (t === 5) { 
                             ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(tx + TILE/2, ty + TILE/2, 8, 0, Math.PI*2); ctx.fill();
                         }
                     }
                 }
 
-                // Draw Player (Sprite Simulation)
-                ctx.fillStyle = player.isDead ? '#555' : '#e74c3c';
-                ctx.fillRect(player.x, player.y, player.width, player.height);
-                // Eyes indicating direction
-                ctx.fillStyle = '#fff';
-                let eyeX = player.facingRight ? player.x + 14 : player.x + 4;
-                ctx.fillRect(eyeX, player.y + 4, 6, 6);
-                ctx.fillStyle = '#000';
-                ctx.fillRect(player.facingRight ? eyeX+2 : eyeX, player.y + 6, 4, 4);
+                // --- Draw Pixel Art Player ---
+                ctx.save();
+                if (player.isDead) ctx.filter = 'grayscale(100%)';
+
+                let cx = player.x + player.width / 2;
+                let cy = player.y + player.height / 2;
+
+                ctx.translate(cx, cy);
+                if (!player.facingRight) ctx.scale(-1, 1);
+
+                let state = 'idle';
+                if (!player.grounded && !player.isDead) {
+                    state = 'jump';
+                } else if (Math.abs(player.dx) > 0.5 && !player.isDead) {
+                    state = (Math.floor(frameCount / 6) % 2 === 0) ? 'run' : 'idle';
+                }
+
+                let currentSprite = sprites[state];
+                let pSize = 2; // Pixel Scale (12x16 grid * 2 = 24x32 size)
+                let startX = -player.width / 2;
+                let startY = -player.height / 2;
+
+                for (let r = 0; r < 16; r++) {
+                    for (let c = 0; c < 12; c++) {
+                        let colorCode = currentSprite[r][c];
+                        if (colorCode !== ' ') {
+                            ctx.fillStyle = palette[colorCode];
+                            ctx.fillRect(startX + c * pSize, startY + r * pSize, pSize, pSize);
+                        }
+                    }
+                }
+                ctx.restore();
+                // -----------------------------
 
                 ctx.restore();
             }
@@ -305,7 +381,7 @@
                 reqId = requestAnimationFrame(gameLoop);
             }
 
-            // --- Controls ---
+            // Controls
             document.getElementById('btn-sm-start').addEventListener('click', () => {
                 if (!isPlaying) {
                     if(lives <= 0) initGame(true);
@@ -321,7 +397,6 @@
                 draw();
             });
 
-            // Keyboard
             window.addEventListener('keydown', (e) => {
                 if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space"].includes(e.code)) e.preventDefault();
                 if (e.code === 'ArrowLeft') keys.left = true;
@@ -336,7 +411,6 @@
                 if (e.code === 'ArrowRight') keys.right = false;
             });
 
-            // Mobile Touch Controls
             const btnLeft = document.getElementById('btn-sm-left');
             const btnRight = document.getElementById('btn-sm-right');
             const btnJump = document.getElementById('btn-sm-jump');
@@ -352,7 +426,6 @@
             addTouch(btnLeft, 'left');
             addTouch(btnRight, 'right');
             
-            // Jump uses special logic (impulse)
             const handleJump = (e) => {
                 e.preventDefault();
                 if (player.grounded && !player.isDead && isPlaying) {
@@ -362,7 +435,6 @@
             btnJump.addEventListener('touchstart', handleJump, {passive: false});
             btnJump.addEventListener('mousedown', handleJump);
 
-            // Initial Render
             initGame(true);
             draw();
         })();
