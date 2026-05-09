@@ -1,14 +1,16 @@
-<!-- Playable Cute Snake Game with AI & Lives -->
+<!-- Playable Cute Snake Game (20 Levels & 3 Lives) -->
 <div id="snake-game-container" style="max-width: 500px; margin: 40px auto; background: #2d3436; border-radius: 12px; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 3px solid #00b894; touch-action: none; user-select: none;">
     
     <!-- Game HUD -->
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; color: #fff;">
         <div>
-            <h3 style="color: #00b894; margin: 0; font-size: 1.3rem; font-weight: 800; text-transform: uppercase;">Cute Snake JS</h3>
-            <div style="font-size: 0.85rem; color: #b2bec3; margin-top: 5px; font-weight: bold;">MODE: <span id="snk-mode" style="color: #fdcb6e;">HUMAN</span></div>
+            <h3 style="color: #00b894; margin: 0; font-size: 1.2rem; font-weight: 800; text-transform: uppercase;">Cute Snake JS</h3>
+            <div style="font-size: 0.85rem; color: #b2bec3; margin-top: 5px; font-weight: bold;">
+                LEVEL: <span id="snk-level" style="color: #fdcb6e;">1</span>/20
+            </div>
         </div>
         <div style="text-align: right;">
-            <div style="font-size: 1.2rem; color: #fff; font-weight: bold;">SCORE: <span id="snk-score" style="color: #00b894;">0</span></div>
+            <div style="font-size: 1.1rem; color: #fff; font-weight: bold;">SCORE: <span id="snk-score" style="color: #00b894;">0</span></div>
             <div style="font-size: 0.8rem; color: #ff7675; margin-top: 2px;">LIVES: <span id="snk-lives">❤️❤️❤️</span></div>
         </div>
     </div>
@@ -50,37 +52,47 @@
             
             const scoreEl = document.getElementById('snk-score');
             const livesEl = document.getElementById('snk-lives');
-            const modeEl = document.getElementById('snk-mode');
+            const levelEl = document.getElementById('snk-level');
+            const aiBtn = document.getElementById('btn-snk-ai');
 
             // Game Constants
             const TILE = 20;
             const ROWS = canvas.height / TILE;
             const COLS = canvas.width / TILE;
+            const MAX_LEVEL = 20;
+            const APPLES_PER_LEVEL = 5;
             
             let gameInterval = null;
             let isPlaying = false;
             let isAI = false;
-            let speed = 120; 
+            let speed = 250; // 초기 속도를 느리게 설정 (250ms)
             
             let snake = [];
             let food = {};
             let dx = 1, dy = 0;
             let nextDx = 1, nextDy = 0;
+            
+            let level = 1;
             let score = 0;
             let lives = 3;
+            let applesEaten = 0; // 레벨업 카운터
+            
             let particles = [];
             let tickCount = 0;
 
             function initGame(fullReset = true) {
                 if (fullReset) {
+                    level = 1;
                     score = 0;
                     lives = 3;
+                    applesEaten = 0;
                 }
                 resetBoard();
                 updateUI();
             }
 
             function resetBoard() {
+                // 부활 시 뱀 길이는 초기화하되, 점수와 레벨은 유지
                 snake = [
                     {x: 5, y: 10},
                     {x: 4, y: 10},
@@ -88,13 +100,15 @@
                 ];
                 dx = 1; dy = 0;
                 nextDx = 1; nextDy = 0;
-                speed = 120;
+                // 레벨에 따른 속도 계산 (1레벨 250ms -> 20레벨 79ms)
+                speed = 250 - ((level - 1) * 9); 
                 particles = [];
                 placeFood();
             }
 
             function updateUI() {
                 scoreEl.innerText = score;
+                levelEl.innerText = level;
                 livesEl.innerText = lives > 0 ? '❤️'.repeat(lives) : '💀';
             }
 
@@ -169,7 +183,7 @@
 
                 if (lives > 0) {
                     setTimeout(() => {
-                        alert(`앗! 부딪혔습니다. 남은 목숨: ${lives}개\n확인을 누르면 이어서 시작합니다.`);
+                        alert(`앗! 부딪혔습니다.\n남은 목숨: ${lives}개\n[확인]을 누르면 레벨 ${level}에서 이어서 시작합니다.`);
                         resetBoard();
                         isPlaying = true;
                         gameInterval = setInterval(gameLoop, speed);
@@ -183,8 +197,32 @@
                     ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2);
                     ctx.fillStyle = '#fff';
                     ctx.font = '16px "Segoe UI"';
-                    ctx.fillText(`최종 점수: ${score}`, canvas.width/2, canvas.height/2 + 30);
+                    ctx.fillText(`최종 점수: ${score} (레벨 ${level})`, canvas.width/2, canvas.height/2 + 30);
                 }
+            }
+
+            function levelUp() {
+                isPlaying = false;
+                clearInterval(gameInterval);
+                
+                if (level >= MAX_LEVEL) {
+                    setTimeout(() => {
+                        alert(`🏆 축하합니다! 20레벨을 모두 클리어했습니다!\n최종 점수: ${score}`);
+                        initGame(true);
+                    }, 100);
+                    return;
+                }
+                
+                level++;
+                applesEaten = 0;
+                speed = 250 - ((level - 1) * 9); // 레벨업 시 속도 증가
+                updateUI();
+
+                setTimeout(() => {
+                    alert(`🚀 레벨 ${level} 달성!\n뱀의 이동 속도가 조금 빨라집니다.`);
+                    isPlaying = true;
+                    gameInterval = setInterval(gameLoop, speed);
+                }, 100);
             }
 
             function update() {
@@ -197,9 +235,8 @@
 
                 let head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
-                // Collision: Walls
+                // Collision Check
                 if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) return handleDeath();
-                // Collision: Body
                 for (let i = 0; i < snake.length; i++) {
                     if (head.x === snake[i].x && head.y === snake[i].y) return handleDeath();
                 }
@@ -209,13 +246,15 @@
                 // Eat Food
                 if (head.x === food.x && head.y === food.y) {
                     score += 10;
+                    applesEaten++;
                     updateUI();
+                    
                     for(let i=0; i<15; i++) particles.push(new Particle(food.x * TILE + TILE/2, food.y * TILE + TILE/2));
                     placeFood();
-                    if(speed > 50) {
-                        speed -= 2;
-                        clearInterval(gameInterval);
-                        gameInterval = setInterval(gameLoop, speed);
+                    
+                    // 레벨 업 체크
+                    if (applesEaten >= APPLES_PER_LEVEL) {
+                        levelUp();
                     }
                 } else {
                     snake.pop(); 
@@ -225,11 +264,9 @@
             function draw() {
                 tickCount++;
 
-                // Background
+                // Background & Checkerboard
                 ctx.fillStyle = '#c8d6e5';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Checkerboard pattern for cuteness
                 ctx.fillStyle = '#b2bec3';
                 ctx.globalAlpha = 0.2;
                 for(let r=0; r<ROWS; r++){
@@ -244,25 +281,22 @@
                 let fy = food.y * TILE + TILE/2;
                 let pulse = Math.sin(tickCount * 0.2) * 1.5;
                 
-                ctx.fillStyle = '#ff4757'; // Red apple
+                ctx.fillStyle = '#ff4757';
                 ctx.beginPath(); ctx.arc(fx, fy + 2, TILE/2 - 3 + pulse, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#2ed573'; // Green leaf
+                ctx.fillStyle = '#2ed573';
                 ctx.beginPath(); ctx.ellipse(fx + 3, fy - 5 + pulse, 5, 2.5, -Math.PI/4, 0, Math.PI*2); ctx.fill();
 
-                // Draw Snake Body (Tail to Head so Head overlaps)
+                // Draw Snake Body
                 for (let i = snake.length - 1; i >= 0; i--) {
                     let seg = snake[i];
                     let cx = seg.x * TILE + TILE/2;
                     let cy = seg.y * TILE + TILE/2;
 
-                    // Body
                     if (i !== 0) {
-                        ctx.fillStyle = (i % 2 === 0) ? '#1dd1a1' : '#10ac84'; // Alternate cute green
+                        ctx.fillStyle = (i % 2 === 0) ? '#1dd1a1' : '#10ac84'; 
                         ctx.beginPath(); ctx.arc(cx, cy, TILE/2 - 1, 0, Math.PI*2); ctx.fill();
-                    } 
-                    // Cute Head
-                    else {
-                        // Tongue (Animates in and out)
+                    } else {
+                        // Tongue
                         if (Math.sin(tickCount * 0.5) > 0) {
                             ctx.strokeStyle = '#ff6b81';
                             ctx.lineWidth = 3;
@@ -272,20 +306,17 @@
                             ctx.stroke();
                         }
 
-                        // Head Circle
+                        // Head
                         ctx.fillStyle = '#01a3a4';
                         ctx.beginPath(); ctx.arc(cx, cy, TILE/2 + 1, 0, Math.PI*2); ctx.fill();
 
-                        // Cute Eyes & Blush offsets based on direction
+                        // Eyes & Blush
                         let e1x = cx, e1y = cy, e2x = cx, e2y = cy;
-                        let bx = cx, by = cy;
+                        if (dx === 1) { e1x=cx+3; e1y=cy-4; e2x=cx+3; e2y=cy+4; }
+                        else if (dx === -1) { e1x=cx-3; e1y=cy-4; e2x=cx-3; e2y=cy+4; }
+                        else if (dy === 1) { e1x=cx-4; e1y=cy+3; e2x=cx+4; e2y=cy+3; }
+                        else if (dy === -1) { e1x=cx-4; e1y=cy-3; e2x=cx+4; e2y=cy-3; }
 
-                        if (dx === 1) { e1x=cx+3; e1y=cy-4; e2x=cx+3; e2y=cy+4; bx=cx; by=cy+6; }      // Right
-                        else if (dx === -1) { e1x=cx-3; e1y=cy-4; e2x=cx-3; e2y=cy+4; bx=cx; by=cy-6; }// Left
-                        else if (dy === 1) { e1x=cx-4; e1y=cy+3; e2x=cx+4; e2y=cy+3; bx=cx-6; by=cy; } // Down
-                        else if (dy === -1) { e1x=cx-4; e1y=cy-3; e2x=cx+4; e2y=cy-3; bx=cx+6; by=cy;} // Up
-
-                        // Eyes (White -> Black -> Highlight)
                         const drawEye = (x, y) => {
                             ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI*2); ctx.fill();
                             ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x + dx, y + dy, 2, 0, Math.PI*2); ctx.fill();
@@ -293,7 +324,6 @@
                         };
                         drawEye(e1x, e1y); drawEye(e2x, e2y);
 
-                        // Blush
                         ctx.fillStyle = 'rgba(255, 107, 129, 0.6)';
                         if(dx !== 0) {
                             ctx.beginPath(); ctx.ellipse(cx, cy-6, 2, 3, 0, 0, Math.PI*2); ctx.fill();
@@ -335,8 +365,9 @@
 
             document.getElementById('btn-snk-ai').addEventListener('click', () => {
                 isAI = !isAI;
-                modeEl.innerText = isAI ? "AI AUTO-PILOT" : "HUMAN";
-                modeEl.style.color = isAI ? "#00b894" : "#fdcb6e";
+                aiBtn.innerText = isAI ? "👤 MANUAL" : "🤖 AI AUTO";
+                aiBtn.style.background = isAI ? "#00b894" : "#fdcb6e";
+                aiBtn.style.color = isAI ? "#fff" : "#2d3436";
                 
                 if(!isPlaying && lives > 0) {
                     isPlaying = true;
