@@ -1,380 +1,483 @@
-<!-- Playable Cute Snake Game with AI & Lives -->
-<div id="snake-game-container" style="max-width: 500px; margin: 40px auto; background: #2d3436; border-radius: 12px; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 3px solid #00b894; touch-action: none; user-select: none;">
+<!-- Playable Asteroids HTML5 Arcade Game -->
+<div id="asteroids-game-container" style="max-width: 500px; margin: 40px auto; background: #000; border-radius: 12px; padding: 20px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 0 30px rgba(255,255,255,0.2), inset 0 0 20px rgba(255,255,255,0.05); border: 2px solid #555; touch-action: none; user-select: none;">
     
     <!-- Game HUD -->
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; color: #fff;">
         <div>
-            <h3 style="color: #00b894; margin: 0; font-size: 1.3rem; font-weight: 800; text-transform: uppercase;">Cute Snake JS</h3>
-            <div style="font-size: 0.85rem; color: #b2bec3; margin-top: 5px; font-weight: bold;">MODE: <span id="snk-mode" style="color: #fdcb6e;">HUMAN</span></div>
+            <h3 style="color: #fff; margin: 0; font-size: 1.2rem; font-weight: bold; letter-spacing: 2px;">ASTEROIDS</h3>
+            <div style="font-size: 0.9rem; color: #aaa; margin-top: 5px;">WAVE: <span id="ast-level">1</span></div>
         </div>
         <div style="text-align: right;">
-            <div style="font-size: 1.2rem; color: #fff; font-weight: bold;">SCORE: <span id="snk-score" style="color: #00b894;">0</span></div>
-            <div style="font-size: 0.8rem; color: #ff7675; margin-top: 2px;">LIVES: <span id="snk-lives">❤️❤️❤️</span></div>
+            <div style="font-size: 0.9rem; color: #fff; margin-bottom: 5px;">SCORE: <span id="ast-score">0</span></div>
+            <div style="font-size: 0.9rem; color: #fff;">LIVES: <span id="ast-lives">🚀🚀🚀</span></div>
         </div>
     </div>
 
-    <!-- Game Controls -->
-    <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
-        <button id="btn-snk-start" class="snk-ctrl-btn" style="background: #00b894; color: #fff;">▶ START</button>
-        <button id="btn-snk-pause" class="snk-ctrl-btn" style="background: #b2bec3; color: #2d3436;">⏸ PAUSE</button>
-        <button id="btn-snk-ai" class="snk-ctrl-btn" style="background: #fdcb6e; color: #2d3436;">🤖 AI AUTO</button>
+    <!-- Game Controls (Start, Pause, Reset) -->
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
+        <button id="btn-ast-start" class="ast-ctrl-btn" style="background: #fff; color: #000;">▶ START</button>
+        <button id="btn-ast-pause" class="ast-ctrl-btn" style="background: #888; color: #fff;">⏸ PAUSE</button>
+        <button id="btn-ast-reset" class="ast-ctrl-btn" style="background: #e74c3c; color: #fff; border-color: #e74c3c;">⏹ RESET</button>
     </div>
 
-    <!-- Canvas Container -->
-    <div style="position: relative; width: 100%; aspect-ratio: 1; background: #c8d6e5; border-radius: 12px; border: 4px solid #8395a7; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 0 20px rgba(0,0,0,0.2);">
-        <canvas id="snk-canvas" width="400" height="400" style="display: block; width: 100%; height: 100%;"></canvas>
+    <!-- Canvas Container with CRT Effect -->
+    <div style="position: relative; width: 100%; aspect-ratio: 1; background: #000; border-radius: 8px; border: 2px solid #333; overflow: hidden; margin-bottom: 15px;">
+        <!-- Scanlines -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.5) 50%); background-size: 100% 4px; pointer-events: none; z-index: 10;"></div>
+        
+        <canvas id="ast-canvas" width="400" height="400" style="display: block; width: 100%; height: 100%;"></canvas>
     </div>
 
-    <!-- Mobile D-Pad -->
-    <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
-        <button class="snk-dir-btn" id="btn-snk-up">▲</button>
-        <div style="display: flex; gap: 45px;">
-            <button class="snk-dir-btn" id="btn-snk-left">◀</button>
-            <button class="snk-dir-btn" id="btn-snk-right">▶</button>
+    <!-- Mobile Action Controls -->
+    <div style="display: flex; justify-content: space-between; gap: 10px;">
+        <div style="display: flex; gap: 5px;">
+            <button class="ast-dir-btn" id="btn-ast-left" style="width: 50px;">↺</button>
+            <button class="ast-dir-btn" id="btn-ast-right" style="width: 50px;">↻</button>
         </div>
-        <button class="snk-dir-btn" id="btn-snk-down">▼</button>
+        <div style="display: flex; gap: 5px; flex: 1;">
+            <button class="ast-dir-btn" id="btn-ast-thrust" style="flex: 1; font-size: 1rem;">🔥 THRUST</button>
+            <button class="ast-dir-btn" id="btn-ast-shoot" style="flex: 1; background: #fff; color: #000; border-color: #ccc; font-size: 1rem; font-weight: bold;">🎯 FIRE</button>
+        </div>
     </div>
 
     <style>
-        #snake-game-container .snk-ctrl-btn { border: none; padding: 10px 14px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-family: inherit; font-size: 0.8rem; box-shadow: 0 4px 0 rgba(0,0,0,0.3); flex: 1; min-width: 80px; }
-        #snake-game-container .snk-ctrl-btn:active { transform: translateY(4px); box-shadow: none; }
+        #asteroids-game-container .ast-ctrl-btn { border: 2px solid #fff; padding: 8px 15px; border-radius: 0; font-weight: bold; cursor: pointer; transition: 0.1s; font-family: inherit; font-size: 0.85rem; }
+        #asteroids-game-container .ast-ctrl-btn:active { transform: scale(0.95); }
         
-        #snake-game-container .snk-dir-btn { background: #636e72; color: #fff; border: none; width: 55px; height: 55px; border-radius: 50%; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 0 #2d3436; touch-action: manipulation; font-weight: bold; }
-        #snake-game-container .snk-dir-btn:active { background: #00b894; transform: translateY(5px); box-shadow: none; color: #fff; }
+        #asteroids-game-container .ast-dir-btn { background: #111; color: #fff; border: 2px solid #555; height: 50px; border-radius: 4px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
+        #asteroids-game-container .ast-dir-btn:active { background: #333; border-color: #fff; }
     </style>
 
     <script>
         (function() {
-            const canvas = document.getElementById('snk-canvas');
+            const canvas = document.getElementById('ast-canvas');
             const ctx = canvas.getContext('2d');
             
-            const scoreEl = document.getElementById('snk-score');
-            const livesEl = document.getElementById('snk-lives');
-            const modeEl = document.getElementById('snk-mode');
+            const scoreEl = document.getElementById('ast-score');
+            const levelEl = document.getElementById('ast-level');
+            const livesEl = document.getElementById('ast-lives');
 
-            // Game Constants
-            const TILE = 20;
-            const ROWS = canvas.height / TILE;
-            const COLS = canvas.width / TILE;
-            
-            let gameInterval = null;
+            let reqId = null;
             let isPlaying = false;
-            let isAI = false;
-            let speed = 120; 
             
-            let snake = [];
-            let food = {};
-            let dx = 1, dy = 0;
-            let nextDx = 1, nextDy = 0;
+            let level = 1;
             let score = 0;
             let lives = 3;
+            
+            let ship;
+            let asteroids = [];
+            let bullets = [];
             let particles = [];
-            let tickCount = 0;
 
-            function initGame(fullReset = true) {
-                if (fullReset) {
-                    score = 0;
-                    lives = 3;
+            const FPS = 60;
+            const FRICTION = 0.98; // Space inertia
+            const AST_ROIDS_NUM = 3; // Starting asteroids
+            const AST_SIZE = 80;
+            
+            let keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, Space: false };
+            let lastShot = 0;
+
+            // --- Vector Physics Classes ---
+            class Ship {
+                constructor() {
+                    this.x = canvas.width / 2;
+                    this.y = canvas.height / 2;
+                    this.r = 12; // radius
+                    this.a = -Math.PI / 2; // angle (pointing up)
+                    this.rot = 0;
+                    this.thrusting = false;
+                    this.dx = 0;
+                    this.dy = 0;
+                    this.isDead = false;
+                    this.invulnerable = 120; // 2 seconds at 60fps
                 }
-                resetBoard();
-                updateUI();
-            }
+                draw() {
+                    if (this.isDead) return;
+                    
+                    // Blink if invulnerable
+                    if (this.invulnerable > 0 && Math.floor(this.invulnerable / 10) % 2 === 0) return;
 
-            function resetBoard() {
-                snake = [
-                    {x: 5, y: 10},
-                    {x: 4, y: 10},
-                    {x: 3, y: 10}
-                ];
-                dx = 1; dy = 0;
-                nextDx = 1; nextDy = 0;
-                speed = 120;
-                particles = [];
-                placeFood();
-            }
+                    ctx.strokeStyle = "white";
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    
+                    // Draw Triangle Ship
+                    ctx.moveTo(
+                        this.x + 4/3 * this.r * Math.cos(this.a),
+                        this.y + 4/3 * this.r * Math.sin(this.a)
+                    );
+                    ctx.lineTo(
+                        this.x - this.r * (2/3 * Math.cos(this.a) + Math.sin(this.a)),
+                        this.y - this.r * (2/3 * Math.sin(this.a) - Math.cos(this.a))
+                    );
+                    ctx.lineTo(
+                        this.x - this.r * (2/3 * Math.cos(this.a) - Math.sin(this.a)),
+                        this.y - this.r * (2/3 * Math.sin(this.a) + Math.cos(this.a))
+                    );
+                    ctx.closePath();
+                    ctx.stroke();
 
-            function updateUI() {
-                scoreEl.innerText = score;
-                livesEl.innerText = lives > 0 ? '❤️'.repeat(lives) : '💀';
-            }
-
-            function placeFood() {
-                let valid = false;
-                while (!valid) {
-                    food = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
-                    valid = true;
-                    for (let segment of snake) {
-                        if (segment.x === food.x && segment.y === food.y) { valid = false; break; }
+                    // Draw Thrust Flame
+                    if (this.thrusting) {
+                        ctx.strokeStyle = "#e74c3c";
+                        ctx.beginPath();
+                        ctx.moveTo(
+                            this.x - this.r * (2/3 * Math.cos(this.a) + 0.5 * Math.sin(this.a)),
+                            this.y - this.r * (2/3 * Math.sin(this.a) - 0.5 * Math.cos(this.a))
+                        );
+                        ctx.lineTo(
+                            this.x - this.r * 5/3 * Math.cos(this.a),
+                            this.y - this.r * 5/3 * Math.sin(this.a)
+                        );
+                        ctx.lineTo(
+                            this.x - this.r * (2/3 * Math.cos(this.a) - 0.5 * Math.sin(this.a)),
+                            this.y - this.r * (2/3 * Math.sin(this.a) + 0.5 * Math.cos(this.a))
+                        );
+                        ctx.stroke();
                     }
                 }
+                update() {
+                    if(this.invulnerable > 0) this.invulnerable--;
+
+                    // Rotation
+                    this.a += this.rot;
+
+                    // Thrust (Vector Math)
+                    if (this.thrusting) {
+                        this.dx += 0.1 * Math.cos(this.a);
+                        this.dy += 0.1 * Math.sin(this.a);
+                    } else {
+                        // Friction
+                        this.dx *= FRICTION;
+                        this.dy *= FRICTION;
+                    }
+
+                    // Move
+                    this.x += this.dx;
+                    this.y += this.dy;
+
+                    // Screen Wrap
+                    if (this.x < 0 - this.r) this.x = canvas.width + this.r;
+                    else if (this.x > canvas.width + this.r) this.x = 0 - this.r;
+                    if (this.y < 0 - this.r) this.y = canvas.height + this.r;
+                    else if (this.y > canvas.height + this.r) this.y = 0 - this.r;
+                }
             }
 
-            // AI Pathfinding (Greedy)
-            function getAIMove() {
-                let head = snake[0];
-                let bestDist = Infinity;
-                let bestMove = {dx: dx, dy: dy};
-                
-                let possibleMoves = [
-                    {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}
-                ];
-                let validMoves = possibleMoves.filter(m => !(m.dx === -dx && m.dy === -dy));
-
-                for (let m of validMoves) {
-                    let nx = head.x + m.dx, ny = head.y + m.dy;
-                    if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) continue;
-
-                    let collision = false;
-                    for (let i = 0; i < snake.length - 1; i++) {
-                        if (nx === snake[i].x && ny === snake[i].y) { collision = true; break; }
-                    }
-                    if (collision) continue;
-
-                    let dist = Math.abs(food.x - nx) + Math.abs(food.y - ny);
-                    if (dist < bestDist) {
-                        bestDist = dist;
-                        bestMove = m;
+            class Asteroid {
+                constructor(x, y, r, lvl) {
+                    this.x = x;
+                    this.y = y;
+                    this.r = r;
+                    this.lvl = lvl; // 3 = large, 2 = med, 1 = small
+                    this.a = Math.random() * Math.PI * 2; // direction
+                    
+                    // Velocity increases as they get smaller and level goes up
+                    let spd = (1 + level * 0.2) / this.lvl; 
+                    this.dx = spd * Math.cos(this.a);
+                    this.dy = spd * Math.sin(this.a);
+                    
+                    this.vert = Math.floor(Math.random() * 5 + 7); // jaggedness
+                    this.offs = [];
+                    for(let i=0; i<this.vert; i++) {
+                        this.offs.push(Math.random() * 0.4 + 0.8);
                     }
                 }
-                return bestMove;
+                draw() {
+                    ctx.strokeStyle = "white";
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    for(let j=0; j<this.vert; j++) {
+                        let angle = j * Math.PI * 2 / this.vert;
+                        let r = this.r * this.offs[j];
+                        let px = this.x + r * Math.cos(angle);
+                        let py = this.y + r * Math.sin(angle);
+                        if(j===0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+                update() {
+                    this.x += this.dx;
+                    this.y += this.dy;
+                    
+                    // Screen Wrap
+                    if (this.x < 0 - this.r) this.x = canvas.width + this.r;
+                    else if (this.x > canvas.width + this.r) this.x = 0 - this.r;
+                    if (this.y < 0 - this.r) this.y = canvas.height + this.r;
+                    else if (this.y > canvas.height + this.r) this.y = 0 - this.r;
+                }
+            }
+
+            class Bullet {
+                constructor(x, y, a) {
+                    this.x = x;
+                    this.y = y;
+                    this.dx = 6 * Math.cos(a);
+                    this.dy = 6 * Math.sin(a);
+                    this.life = 60; // 1 second
+                }
+                draw() {
+                    ctx.fillStyle = "white";
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                update() {
+                    this.x += this.dx;
+                    this.y += this.dy;
+                    this.life--;
+                    
+                    // Screen Wrap for bullets too
+                    if (this.x < 0) this.x = canvas.width;
+                    else if (this.x > canvas.width) this.x = 0;
+                    if (this.y < 0) this.y = canvas.height;
+                    else if (this.y > canvas.height) this.y = 0;
+                }
             }
 
             class Particle {
                 constructor(x, y) {
-                    this.x = x; this.y = y;
-                    this.vx = (Math.random() - 0.5) * 6;
-                    this.vy = (Math.random() - 0.5) * 6;
-                    this.life = 1.0;
-                    this.decay = Math.random() * 0.05 + 0.02;
-                    this.color = Math.random() > 0.5 ? '#ff4757' : '#ff7f50';
+                    this.x = x;
+                    this.y = y;
+                    this.dx = (Math.random() - 0.5) * 4;
+                    this.dy = (Math.random() - 0.5) * 4;
+                    this.life = Math.random() * 30 + 10;
                 }
-                update() { this.x += this.vx; this.y += this.vy; this.life -= this.decay; }
                 draw() {
-                    ctx.globalAlpha = Math.max(0, this.life);
-                    ctx.fillStyle = this.color;
-                    ctx.beginPath(); ctx.arc(this.x, this.y, 3, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "white";
+                    ctx.globalAlpha = this.life / 40;
+                    ctx.fillRect(this.x, this.y, 2, 2);
                     ctx.globalAlpha = 1.0;
+                }
+                update() {
+                    this.x += this.dx;
+                    this.y += this.dy;
+                    this.life--;
                 }
             }
 
-            function handleDeath() {
-                isPlaying = false;
-                clearInterval(gameInterval);
+            // --- Game Logic ---
+            function createAsteroids() {
+                asteroids = [];
+                let num = AST_ROIDS_NUM + level - 1;
+                for (let i = 0; i < num; i++) {
+                    let x, y;
+                    do {
+                        x = Math.random() * canvas.width;
+                        y = Math.random() * canvas.height;
+                    } while (distBetweenPoints(ship.x, ship.y, x, y) < AST_SIZE * 2 + ship.r); // safe spawn
+                    
+                    asteroids.push(new Asteroid(x, y, AST_SIZE / 2, 3));
+                }
+            }
+
+            function distBetweenPoints(x1, y1, x2, y2) {
+                return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            }
+
+            function explodeAsteroid(index) {
+                let a = asteroids[index];
+                
+                // Add Score
+                score += (4 - a.lvl) * 100;
+                updateUI();
+
+                // Particles
+                for(let i=0; i<10; i++) particles.push(new Particle(a.x, a.y));
+
+                // Split
+                if (a.lvl > 1) {
+                    asteroids.push(new Asteroid(a.x, a.y, a.r / 2, a.lvl - 1));
+                    asteroids.push(new Asteroid(a.x, a.y, a.r / 2, a.lvl - 1));
+                }
+                asteroids.splice(index, 1);
+                
+                // Level Clear Check
+                if (asteroids.length === 0) {
+                    level++;
+                    updateUI();
+                    setTimeout(createAsteroids, 1000); // 1 sec delay before next wave
+                }
+            }
+
+            function killShip() {
+                ship.isDead = true;
+                for(let i=0; i<30; i++) particles.push(new Particle(ship.x, ship.y));
                 lives--;
                 updateUI();
                 
-                // Screen Shake / Flash Effect
-                ctx.fillStyle = 'rgba(231, 76, 60, 0.4)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
                 if (lives > 0) {
                     setTimeout(() => {
-                        alert(`앗! 부딪혔습니다. 남은 목숨: ${lives}개\n확인을 누르면 이어서 시작합니다.`);
-                        resetBoard();
-                        isPlaying = true;
-                        gameInterval = setInterval(gameLoop, speed);
-                    }, 100);
+                        ship = new Ship(); // Respawn
+                    }, 1000);
                 } else {
-                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = '#ff7675';
-                    ctx.font = 'bold 30px "Segoe UI"';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2);
-                    ctx.fillStyle = '#fff';
-                    ctx.font = '16px "Segoe UI"';
-                    ctx.fillText(`최종 점수: ${score}`, canvas.width/2, canvas.height/2 + 30);
+                    isPlaying = false;
+                    setTimeout(() => alert(`💥 게임 오버!\n최종 점수: ${score}\n다시 도전하세요.`), 500);
                 }
             }
 
-            function update() {
-                if (isAI) {
-                    let move = getAIMove();
-                    dx = move.dx; dy = move.dy;
-                } else {
-                    dx = nextDx; dy = nextDy;
-                }
+            function initGame() {
+                level = 1;
+                score = 0;
+                lives = 3;
+                ship = new Ship();
+                bullets = [];
+                particles = [];
+                createAsteroids();
+                updateUI();
+            }
 
-                let head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            function updateUI() {
+                scoreEl.innerText = score;
+                levelEl.innerText = level;
+                livesEl.innerText = lives > 0 ? '🚀'.repeat(lives) : '💀';
+            }
 
-                // Collision: Walls
-                if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) return handleDeath();
-                // Collision: Body
-                for (let i = 0; i < snake.length; i++) {
-                    if (head.x === snake[i].x && head.y === snake[i].y) return handleDeath();
-                }
-
-                snake.unshift(head); 
-
-                // Eat Food
-                if (head.x === food.x && head.y === food.y) {
-                    score += 10;
-                    updateUI();
-                    for(let i=0; i<15; i++) particles.push(new Particle(food.x * TILE + TILE/2, food.y * TILE + TILE/2));
-                    placeFood();
-                    if(speed > 50) {
-                        speed -= 2;
-                        clearInterval(gameInterval);
-                        gameInterval = setInterval(gameLoop, speed);
-                    }
-                } else {
-                    snake.pop(); 
+            function shoot() {
+                if(ship.isDead) return;
+                let now = Date.now();
+                if (now - lastShot > 150) { // Fire rate limit
+                    bullets.push(new Bullet(
+                        ship.x + 4/3 * ship.r * Math.cos(ship.a),
+                        ship.y + 4/3 * ship.r * Math.sin(ship.a),
+                        ship.a
+                    ));
+                    lastShot = now;
                 }
             }
 
-            function draw() {
-                tickCount++;
-
-                // Background
-                ctx.fillStyle = '#c8d6e5';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Checkerboard pattern for cuteness
-                ctx.fillStyle = '#b2bec3';
-                ctx.globalAlpha = 0.2;
-                for(let r=0; r<ROWS; r++){
-                    for(let c=0; c<COLS; c++){
-                        if((r+c)%2===0) ctx.fillRect(c*TILE, r*TILE, TILE, TILE);
-                    }
-                }
-                ctx.globalAlpha = 1.0;
-
-                // Draw Food (Cute Apple)
-                let fx = food.x * TILE + TILE/2;
-                let fy = food.y * TILE + TILE/2;
-                let pulse = Math.sin(tickCount * 0.2) * 1.5;
-                
-                ctx.fillStyle = '#ff4757'; // Red apple
-                ctx.beginPath(); ctx.arc(fx, fy + 2, TILE/2 - 3 + pulse, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#2ed573'; // Green leaf
-                ctx.beginPath(); ctx.ellipse(fx + 3, fy - 5 + pulse, 5, 2.5, -Math.PI/4, 0, Math.PI*2); ctx.fill();
-
-                // Draw Snake Body (Tail to Head so Head overlaps)
-                for (let i = snake.length - 1; i >= 0; i--) {
-                    let seg = snake[i];
-                    let cx = seg.x * TILE + TILE/2;
-                    let cy = seg.y * TILE + TILE/2;
-
-                    // Body
-                    if (i !== 0) {
-                        ctx.fillStyle = (i % 2 === 0) ? '#1dd1a1' : '#10ac84'; // Alternate cute green
-                        ctx.beginPath(); ctx.arc(cx, cy, TILE/2 - 1, 0, Math.PI*2); ctx.fill();
-                    } 
-                    // Cute Head
-                    else {
-                        // Tongue (Animates in and out)
-                        if (Math.sin(tickCount * 0.5) > 0) {
-                            ctx.strokeStyle = '#ff6b81';
-                            ctx.lineWidth = 3;
-                            ctx.beginPath();
-                            ctx.moveTo(cx, cy);
-                            ctx.lineTo(cx + dx * (TILE/2 + 6), cy + dy * (TILE/2 + 6));
-                            ctx.stroke();
-                        }
-
-                        // Head Circle
-                        ctx.fillStyle = '#01a3a4';
-                        ctx.beginPath(); ctx.arc(cx, cy, TILE/2 + 1, 0, Math.PI*2); ctx.fill();
-
-                        // Cute Eyes & Blush offsets based on direction
-                        let e1x = cx, e1y = cy, e2x = cx, e2y = cy;
-                        let bx = cx, by = cy;
-
-                        if (dx === 1) { e1x=cx+3; e1y=cy-4; e2x=cx+3; e2y=cy+4; bx=cx; by=cy+6; }      // Right
-                        else if (dx === -1) { e1x=cx-3; e1y=cy-4; e2x=cx-3; e2y=cy+4; bx=cx; by=cy-6; }// Left
-                        else if (dy === 1) { e1x=cx-4; e1y=cy+3; e2x=cx+4; e2y=cy+3; bx=cx-6; by=cy; } // Down
-                        else if (dy === -1) { e1x=cx-4; e1y=cy-3; e2x=cx+4; e2y=cy-3; bx=cx+6; by=cy;} // Up
-
-                        // Eyes (White -> Black -> Highlight)
-                        const drawEye = (x, y) => {
-                            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI*2); ctx.fill();
-                            ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x + dx, y + dy, 2, 0, Math.PI*2); ctx.fill();
-                            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + dx - 0.5, y + dy - 0.5, 0.8, 0, Math.PI*2); ctx.fill();
-                        };
-                        drawEye(e1x, e1y); drawEye(e2x, e2y);
-
-                        // Blush
-                        ctx.fillStyle = 'rgba(255, 107, 129, 0.6)';
-                        if(dx !== 0) {
-                            ctx.beginPath(); ctx.ellipse(cx, cy-6, 2, 3, 0, 0, Math.PI*2); ctx.fill();
-                            ctx.beginPath(); ctx.ellipse(cx, cy+6, 2, 3, 0, 0, Math.PI*2); ctx.fill();
-                        } else {
-                            ctx.beginPath(); ctx.ellipse(cx-6, cy, 3, 2, 0, 0, Math.PI*2); ctx.fill();
-                            ctx.beginPath(); ctx.ellipse(cx+6, cy, 3, 2, 0, 0, Math.PI*2); ctx.fill();
-                        }
-                    }
-                }
-
-                // Particles
-                for (let i = particles.length - 1; i >= 0; i--) {
-                    particles[i].update();
-                    particles[i].draw();
-                    if (particles[i].life <= 0) particles.splice(i, 1);
-                }
-            }
-
+            // --- Main Loop ---
             function gameLoop() {
-                update();
-                draw();
+                if (!isPlaying) return;
+                
+                // Background
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Update & Draw Ship
+                if (!ship.isDead) {
+                    ship.update();
+                    ship.draw();
+                }
+
+                // Update & Draw Asteroids & Collision Check
+                for (let i = asteroids.length - 1; i >= 0; i--) {
+                    let a = asteroids[i];
+                    a.update();
+                    a.draw();
+                    
+                    // Ship vs Asteroid Collision
+                    if (!ship.isDead && ship.invulnerable === 0) {
+                        if (distBetweenPoints(ship.x, ship.y, a.x, a.y) < ship.r + a.r) {
+                            explodeAsteroid(i);
+                            killShip();
+                            continue;
+                        }
+                    }
+                }
+
+                // Update & Draw Bullets
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    let b = bullets[i];
+                    b.update();
+                    b.draw();
+                    if (b.life <= 0) {
+                        bullets.splice(i, 1);
+                        continue;
+                    }
+                    
+                    // Bullet vs Asteroid Collision
+                    for (let j = asteroids.length - 1; j >= 0; j--) {
+                        let a = asteroids[j];
+                        if (distBetweenPoints(b.x, b.y, a.x, a.y) < a.r) {
+                            bullets.splice(i, 1);
+                            explodeAsteroid(j);
+                            break; // one bullet, one hit
+                        }
+                    }
+                }
+
+                // Update & Draw Particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    let p = particles[i];
+                    p.update();
+                    p.draw();
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+
+                reqId = requestAnimationFrame(gameLoop);
             }
 
-            // --- Controls ---
-            document.getElementById('btn-snk-start').addEventListener('click', () => {
+            // --- Input Handling ---
+            const handleKey = (e, isDown) => {
+                if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space"].includes(e.code)) e.preventDefault();
+                if (ship.isDead) return;
+                
+                if (e.code === 'ArrowLeft') ship.rot = isDown ? -0.1 : 0;
+                if (e.code === 'ArrowRight') ship.rot = isDown ? 0.1 : 0;
+                if (e.code === 'ArrowUp') ship.thrusting = isDown;
+                if (e.code === 'Space' && isDown) shoot();
+            };
+
+            window.addEventListener('keydown', (e) => handleKey(e, true), { passive: false });
+            window.addEventListener('keyup', (e) => handleKey(e, false));
+
+            // Controls Buttons
+            document.getElementById('btn-ast-start').addEventListener('click', () => {
                 if (!isPlaying) {
-                    if (lives <= 0) initGame(true);
-                    else if (snake.length === 0) initGame(false);
+                    if (lives <= 0) initGame();
                     isPlaying = true;
-                    gameInterval = setInterval(gameLoop, speed);
+                    gameLoop();
                 }
             });
-
-            document.getElementById('btn-snk-pause').addEventListener('click', () => {
+            document.getElementById('btn-ast-pause').addEventListener('click', () => isPlaying = false);
+            document.getElementById('btn-ast-reset').addEventListener('click', () => {
                 isPlaying = false;
-                clearInterval(gameInterval);
+                cancelAnimationFrame(reqId);
+                initGame();
+                
+                // Draw initial frame
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ship.draw();
+                asteroids.forEach(a => a.draw());
             });
 
-            document.getElementById('btn-snk-ai').addEventListener('click', () => {
-                isAI = !isAI;
-                modeEl.innerText = isAI ? "AI AUTO-PILOT" : "HUMAN";
-                modeEl.style.color = isAI ? "#00b894" : "#fdcb6e";
-                
-                if(!isPlaying && lives > 0) {
-                    isPlaying = true;
-                    gameInterval = setInterval(gameLoop, speed);
-                }
-            });
+            // Mobile Controls
+            const btnLeft = document.getElementById('btn-ast-left');
+            const btnRight = document.getElementById('btn-ast-right');
+            const btnThrust = document.getElementById('btn-ast-thrust');
+            const btnShoot = document.getElementById('btn-ast-shoot');
 
-            window.addEventListener('keydown', (e) => {
-                if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) e.preventDefault();
-                if(isAI || !isPlaying) return; 
-                
-                if (e.code === 'ArrowLeft' && dx !== 1) { nextDx = -1; nextDy = 0; }
-                if (e.code === 'ArrowRight' && dx !== -1) { nextDx = 1; nextDy = 0; }
-                if (e.code === 'ArrowUp' && dy !== 1) { nextDx = 0; nextDy = -1; }
-                if (e.code === 'ArrowDown' && dy !== -1) { nextDx = 0; nextDy = 1; }
-            }, { passive: false });
-
-            const handleDir = (newDx, newDy) => {
-                if(isAI || !isPlaying) return;
-                if(newDx === -dx && newDy === -dy) return; 
-                nextDx = newDx; nextDy = newDy;
+            const addTouch = (elem, actDown, actUp) => {
+                elem.addEventListener('touchstart', (e) => { e.preventDefault(); actDown(); }, {passive: false});
+                elem.addEventListener('touchend', (e) => { e.preventDefault(); actUp(); }, {passive: false});
+                elem.addEventListener('mousedown', (e) => { e.preventDefault(); actDown(); });
+                elem.addEventListener('mouseup', (e) => { e.preventDefault(); actUp(); });
+                elem.addEventListener('mouseleave', (e) => { actUp(); });
             };
 
-            const addTouch = (id, ndx, ndy) => {
-                const btn = document.getElementById(id);
-                const action = (e) => { e.preventDefault(); handleDir(ndx, ndy); };
-                btn.addEventListener('touchstart', action, {passive: false});
-                btn.addEventListener('mousedown', action);
-            };
+            addTouch(btnLeft, () => {if(!ship.isDead) ship.rot = -0.1}, () => {if(!ship.isDead) ship.rot = 0});
+            addTouch(btnRight, () => {if(!ship.isDead) ship.rot = 0.1}, () => {if(!ship.isDead) ship.rot = 0});
+            addTouch(btnThrust, () => {if(!ship.isDead) ship.thrusting = true}, () => {if(!ship.isDead) ship.thrusting = false});
+            
+            // Shoot needs continuous firing on mobile hold
+            let shootInterval;
+            addTouch(btnShoot, 
+                () => { shoot(); shootInterval = setInterval(shoot, 200); }, 
+                () => { clearInterval(shootInterval); }
+            );
 
-            addTouch('btn-snk-left', -1, 0);
-            addTouch('btn-snk-right', 1, 0);
-            addTouch('btn-snk-up', 0, -1);
-            addTouch('btn-snk-down', 0, 1);
-
-            initGame(true);
-            draw();
+            // Initialize on load
+            initGame();
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ship.draw();
+            asteroids.forEach(a => a.draw());
+            
         })();
     </script>
 </div>
-<!-- End of Playable Cute Snake Game -->
+<!-- End of Playable Asteroids HTML5 Arcade Game -->
