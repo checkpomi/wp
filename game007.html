@@ -1,147 +1,371 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Classic Nonogram Online – Solving Retro Logic Puzzles Since 1987</title>
+<!-- Playable Super Mario Style Platformer -->
+<div id="mario-platformer-container" style="max-width: 500px; margin: 40px auto; background: #222; border-radius: 12px; padding: 20px; font-family: 'Press Start 2P', 'Segoe UI', Tahoma, sans-serif; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 4px solid #444; touch-action: none; user-select: none;">
+    
+    <!-- Game HUD -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; color: #fff;">
+        <div>
+            <h3 style="color: #e74c3c; margin: 0; font-size: 1.2rem; font-weight: bold; text-shadow: 2px 2px 0 #000;">JS BROS.</h3>
+            <div style="font-size: 0.9rem; color: #f1c40f; margin-top: 5px;">WORLD: <span id="sm-level">1</span></div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 0.9rem; color: #f1c40f; margin-bottom: 5px;">COINS: <span id="sm-score">0</span></div>
+            <div style="font-size: 0.9rem; color: #e74c3c;">LIVES: <span id="sm-lives">❤️❤️❤️</span></div>
+        </div>
+    </div>
+
+    <!-- Game Controls (Start, Pause, End) -->
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
+        <button id="btn-sm-start" class="sm-ctrl-btn" style="background: #2ecc71; color: #000;">▶ START</button>
+        <button id="btn-sm-pause" class="sm-ctrl-btn" style="background: #f1c40f; color: #000;">⏸ PAUSE</button>
+        <button id="btn-sm-reset" class="sm-ctrl-btn" style="background: #e74c3c; color: #fff;">⏹ RESET</button>
+    </div>
+
+    <!-- Canvas Container -->
+    <div style="position: relative; width: 100%; aspect-ratio: 5/4; background: #5c94fc; border-radius: 8px; border: 4px solid #000; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.3);">
+        <canvas id="sm-canvas" width="400" height="320" style="display: block; width: 100%; height: 100%;"></canvas>
+    </div>
+
+    <!-- Mobile Action Controls -->
+    <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-end;">
+        <div style="display: flex; gap: 10px;">
+            <button class="sm-dir-btn" id="btn-sm-left">◀</button>
+            <button class="sm-dir-btn" id="btn-sm-right">▶</button>
+        </div>
+        <button class="sm-dir-btn" id="btn-sm-jump" style="width: 70px; height: 70px; border-radius: 50%; background: #e74c3c; color: white; border-color: #c0392b; font-size: 1.1rem;">JUMP</button>
+    </div>
+
     <style>
-        :root { --bg: #f0f2f5; --dark: #2d3436; --accent: #0984e3; }
-        body { background: var(--bg); color: var(--dark); font-family: 'Inter', -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .nonogram-grid {
-            display: grid;
-            grid-template-columns: 80px repeat(5, 50px);
-            grid-template-rows: 80px repeat(5, 50px);
-            background: var(--dark); border: 4px solid var(--dark);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        .grid-item { background: white; border: 1px solid #dfe6e9; display: flex; align-items: center; justify-content: center; }
-        .hint { background: #dfe6e9; font-weight: 800; font-size: 15px; color: #636e72; }
-        .col-hint { flex-direction: column; line-height: 1.1; border-bottom: 2px solid var(--dark); }
-        .row-hint { justify-content: flex-end; padding-right: 10px; border-right: 2px solid var(--dark); }
-        .cell { cursor: pointer; user-select: none; -webkit-user-select: none; transition: 0.1s; }
-        .cell.filled { background: var(--dark); }
-        .cell.marked::after { content: "×"; color: #d63031; font-size: 32px; }
-        .controls { margin-top: 25px; display: flex; gap: 10px; }
-        .btn { padding: 12px 25px; border: 2px solid var(--dark); background: white; font-weight: bold; cursor: pointer; border-radius: 8px; transition: 0.2s; }
-        .btn:hover { background: var(--dark); color: white; }
-        .status { margin-top: 20px; font-weight: bold; height: 30px; font-size: 1.2rem; }
-        #level-info { color: var(--accent); margin-bottom: 5px; font-weight: bold; }
+        #mario-platformer-container .sm-ctrl-btn { border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.1s; font-family: inherit; font-size: 0.85rem; border: 2px solid #000; box-shadow: 0 4px 0 #000; }
+        #mario-platformer-container .sm-ctrl-btn:active { transform: translateY(4px); box-shadow: none; }
         
-        @media (max-width: 450px) {
-            .nonogram-grid {
-                grid-template-columns: 60px repeat(5, 45px);
-                grid-template-rows: 60px repeat(5, 45px);
-            }
-        }
+        #mario-platformer-container .sm-dir-btn { background: #ccc; color: #000; border: 3px solid #888; height: 50px; min-width: 60px; border-radius: 8px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 0 #666; touch-action: manipulation; font-weight: bold; }
+        #mario-platformer-container .sm-dir-btn:active { transform: translateY(5px); box-shadow: none; background: #aaa; }
     </style>
-</head>
-<body>
-
-    <div class="header">
-        <h1>NONOGRAM 1987</h1>
-        <div id="level-info">Level: Random Challenge</div>
-        <p style="font-size: 14px; margin: 0;">Left Click: Fill | Right Click: Mark (X)</p>
-    </div>
-
-    <div id="grid" class="nonogram-grid"></div>
-    <div id="status" class="status"></div>
-
-    <div class="controls">
-        <button class="btn" onclick="checkWin()">Check Answer</button>
-        <button class="btn" onclick="nextLevel()">New Game</button>
-    </div>
 
     <script>
-        const puzzleBank = [
-            { name: "Heart", solution: [[0,1,0,1,0],[1,1,1,1,1],[1,1,1,1,1],[0,1,1,1,0],[0,0,1,0,0]], r: [[1,1],[5],[5],[3],[1]], c: [[2],[4],[5],[4],[2]] },
-            { name: "Smile", solution: [[0,1,0,1,0],[0,0,0,0,0],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]], r: [[1,1],[0],[1,1],[3],[0]], c: [[1],[1,1],[1],[1,1],[1]] },
-            { name: "Window", solution: [[1,1,0,1,1],[1,1,0,1,1],[0,0,0,0,0],[1,1,0,1,1],[1,1,0,1,1]], r: [[2,2],[2,2],[0],[2,2],[2,2]], c: [[2,2],[2,2],[0],[2,2],[2,2]] },
-            { name: "Arrow", solution: [[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0]], r: [[1],[3],[5],[1],[1]], c: [[1],[2],[5],[2],[1]] },
-            { name: "Checkers", solution: [[1,0,1,0,1],[0,1,0,1,0],[1,0,1,0,1],[0,1,0,1,0],[1,0,1,0,1]], r: [[1,1,1],[1,1],[1,1,1],[1,1],[1,1,1]], c: [[1,1,1],[1,1],[1,1,1],[1,1],[1,1,1]] },
-            { name: "Letter A", solution: [[0,1,1,1,0],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1]], r: [[3],[1,1],[5],[1,1],[1,1]], c: [[4],[2,1],[2,1],[2,1],[4]] },
-            { name: "Umbrella", solution: [[0,1,1,1,0],[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,1,1,0,0]], r: [[3],[5],[1],[1],[2]], c: [[1],[2],[4],[2],[1]] },
-            { name: "Cross", solution: [[0,0,1,0,0],[0,0,1,0,0],[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0]], r: [[1],[1],[5],[1],[1]], c: [[1],[1],[5],[1],[1]] },
-            { name: "Letter H", solution: [[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1]], r: [[1,1],[1,1],[5],[1,1],[1,1]], c: [[5],[1],[1],[1],[5]] },
-            { name: "House", solution: [[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[1,1,0,1,1],[1,1,0,1,1]], r: [[1],[3],[5],[2,2],[2,2]], c: [[3],[4],[3],[4],[3]] },
-            { name: "Star", solution: [[0,0,1,0,0],[1,1,1,1,1],[0,1,1,1,0],[1,1,0,1,1],[0,0,0,0,0]], r: [[1],[5],[3],[2,2],[0]], c: [[1,1],[2,1],[3],[2,1],[1,1]] },
-            { name: "Stairs", solution: [[0,0,0,0,1],[0,0,0,1,1],[0,0,1,1,1],[0,1,1,1,1],[1,1,1,1,1]], r: [[1],[2],[3],[4],[5]], c: [[1],[2],[3],[4],[5]] },
-            { name: "Diamond", solution: [[0,0,1,0,0],[0,1,0,1,0],[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0]], r: [[1],[1,1],[1,1],[1,1],[1]], c: [[1],[1,1],[1,1],[1,1],[1]] },
-            { name: "Cup", solution: [[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[0,1,1,1,0],[0,0,0,0,0]], r: [[1,1],[1,1],[5],[3],[0]], c: [[3],[1],[1],[1],[3]] },
-            { name: "Tree", solution: [[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,0,1,0,0],[0,1,1,1,0]], r: [[1],[3],[5],[1],[3]], c: [[1],[2,1],[5],[2,1],[1]] },
-            { name: "Letter E", solution: [[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,1]], r: [[5],[1],[5],[1],[5]], c: [[5],[1,1,1],[1,1,1],[1,1,1],[1,1,1]] },
-            { name: "Mushroom", solution: [[0,1,1,1,0],[1,1,1,1,1],[1,1,1,1,1],[0,1,1,1,0],[0,1,1,1,0]], r: [[3],[5],[5],[3],[3]], c: [[2],[4],[5],[4],[2]] },
-            { name: "Chair", solution: [[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,1,0],[1,0,0,1,0]], r: [[1],[1],[4],[1,1],[1,1]], c: [[5],[1],[1],[3],[0]] },
-            { name: "Mountain", solution: [[0,0,0,0,0],[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,0,0,0,0]], r: [[0],[1],[3],[5],[0]], c: [[1],[2],[3],[2],[1]] },
-            { name: "Box", solution: [[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1]], r: [[5],[1,1],[1,1],[1,1],[5]], c: [[5],[1,1],[1,1],[1,1],[5]] }
-        ];
-
-        let currentPuzzle;
-        let userGrid;
-
-        function nextLevel() {
-            currentPuzzle = puzzleBank[Math.floor(Math.random() * puzzleBank.length)];
-            userGrid = Array(5).fill().map(() => Array(5).fill(0));
-            document.getElementById('status').innerText = "";
-            document.getElementById('level-info').innerText = `Mission: What is the hidden shape?`;
-            initGame();
-        }
-
-        function initGame() {
-            const gridElement = document.getElementById('grid');
-            gridElement.innerHTML = '';
+        (function() {
+            const canvas = document.getElementById('sm-canvas');
+            const ctx = canvas.getContext('2d');
             
-            const corner = document.createElement('div');
-            corner.className = 'grid-item hint';
-            gridElement.appendChild(corner);
+            // DOM
+            const scoreEl = document.getElementById('sm-score');
+            const levelEl = document.getElementById('sm-level');
+            const livesEl = document.getElementById('sm-lives');
 
-            for (let i = 0; i < 5; i++) {
-                const div = document.createElement('div');
-                div.className = 'grid-item hint col-hint';
-                div.innerHTML = currentPuzzle.c[i].join('<br>');
-                gridElement.appendChild(div);
+            // Game Constants
+            const TILE = 40;
+            const ROWS = 8;
+            let COLS = 25; // Expands per level
+            let reqId = null;
+            let isPlaying = false;
+            
+            let level = 1;
+            let score = 0;
+            let lives = 3;
+            let map = [];
+            let camX = 0;
+            let frameCount = 0;
+
+            let keys = { left: false, right: false, up: false };
+
+            // Player Object
+            const player = {
+                x: 50, y: 50, width: 24, height: 32,
+                dx: 0, dy: 0, accel: 0.6, friction: 0.8, gravity: 0.7, jumpPower: -12,
+                grounded: false, isDead: false, deathTimer: 0, facingRight: true
+            };
+
+            // Dynamic Map Generator (Concept 2: Tile-Based Level)
+            function generateMap(lvl) {
+                COLS = 20 + (lvl * 5); // 맵이 점점 길어짐
+                let newMap = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+                
+                // 바닥 생성 (중간중간 낙사 구간 추가)
+                for (let i = 0; i < COLS; i++) {
+                    newMap[ROWS - 1][i] = 1; // 1: Ground
+                    if (i > 5 && i < COLS - 5 && Math.random() < 0.15) {
+                        newMap[ROWS - 1][i] = 0; // Hole
+                    }
+                }
+                
+                // 블록 및 동전 생성
+                for (let i = 4; i < COLS - 4; i++) {
+                    if (newMap[ROWS - 1][i] === 1 && Math.random() < 0.3) {
+                        let h = Math.random() > 0.5 ? 4 : 5; 
+                        newMap[h][i] = 2; // 2: Brick
+                        if (Math.random() < 0.6) newMap[h - 1][i] = 3; // 3: Coin
+                    }
+                }
+                
+                // 깃발 (목표 지점)
+                newMap[ROWS - 2][COLS - 2] = 4; 
+                newMap[ROWS - 3][COLS - 2] = 4;
+                newMap[ROWS - 4][COLS - 2] = 4;
+                newMap[ROWS - 5][COLS - 2] = 5; // 5: Flag Top
+                
+                return newMap;
             }
 
-            for (let r = 0; r < 5; r++) {
-                const rHint = document.createElement('div');
-                rHint.className = 'grid-item hint row-hint';
-                rHint.innerHTML = currentPuzzle.r[r].join(' ');
-                gridElement.appendChild(rHint);
+            function initGame(fullReset = false) {
+                if (fullReset) {
+                    level = 1; score = 0; lives = 3;
+                }
+                map = generateMap(level);
+                resetPlayer();
+                updateUI();
+            }
 
-                for (let c = 0; c < 5; c++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'grid-item cell';
-                    cell.dataset.row = r; cell.dataset.col = c;
-                    cell.addEventListener('click', function() { handleAction(r, c, this, 'fill'); });
-                    cell.addEventListener('contextmenu', function(e) { e.preventDefault(); handleAction(r, c, this, 'mark'); });
-                    gridElement.appendChild(cell);
+            function resetPlayer() {
+                player.x = 50; player.y = 50;
+                player.dx = 0; player.dy = 0;
+                player.grounded = false; player.isDead = false;
+                camX = 0;
+            }
+
+            function updateUI() {
+                scoreEl.innerText = score * 100;
+                levelEl.innerText = level;
+                livesEl.innerText = lives > 0 ? '❤️'.repeat(lives) : '💀';
+            }
+
+            // --- Physics & Collision (Concept 1 & 3) ---
+            function checkMapCollision(x, y) {
+                let col = Math.floor(x / TILE);
+                let row = Math.floor(y / TILE);
+                if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return 0;
+                return map[row][col];
+            }
+
+            function collectCoin(col, row) {
+                if (map[row][col] === 3) {
+                    map[row][col] = 0;
+                    score++;
+                    updateUI();
                 }
             }
-        }
 
-        function handleAction(r, c, el, type) {
-            if (type === 'fill') {
-                if (el.classList.contains('filled')) { el.classList.remove('filled'); userGrid[r][c] = 0; }
-                else { el.classList.remove('marked'); el.classList.add('filled'); userGrid[r][c] = 1; }
-            } else {
-                if (el.classList.contains('marked')) { el.classList.remove('marked'); }
-                else { el.classList.remove('filled'); el.classList.add('marked'); userGrid[r][c] = 0; }
+            function updatePhysics() {
+                if (player.isDead) {
+                    player.dy += player.gravity;
+                    player.y += player.dy;
+                    if (player.y > canvas.height + 50) handleDeath();
+                    return;
+                }
+
+                // Horizontal Movement
+                if (keys.left) { player.dx -= player.accel; player.facingRight = false; }
+                if (keys.right) { player.dx += player.accel; player.facingRight = true; }
+                player.dx *= player.friction;
+                player.x += player.dx;
+
+                // X-Axis Collision
+                let left = Math.floor(player.x / TILE);
+                let right = Math.floor((player.x + player.width - 0.1) / TILE);
+                let top = Math.floor(player.y / TILE);
+                let bottom = Math.floor((player.y + player.height - 0.1) / TILE);
+
+                for (let r = top; r <= bottom; r++) {
+                    for (let c = left; c <= right; c++) {
+                        let tile = checkMapCollision(c * TILE, r * TILE);
+                        if (tile === 1 || tile === 2) {
+                            if (player.dx > 0) { player.x = c * TILE - player.width; player.dx = 0; }
+                            else if (player.dx < 0) { player.x = (c + 1) * TILE; player.dx = 0; }
+                        } else if (tile === 3) collectCoin(c, r);
+                        else if (tile === 4 || tile === 5) levelClear();
+                    }
+                }
+
+                // Vertical Movement (Gravity)
+                player.dy += player.gravity;
+                player.y += player.dy;
+                player.grounded = false;
+
+                // Y-Axis Collision
+                left = Math.floor(player.x / TILE);
+                right = Math.floor((player.x + player.width - 0.1) / TILE);
+                top = Math.floor(player.y / TILE);
+                bottom = Math.floor((player.y + player.height - 0.1) / TILE);
+
+                for (let r = top; r <= bottom; r++) {
+                    for (let c = left; c <= right; c++) {
+                        let tile = checkMapCollision(c * TILE, r * TILE);
+                        if (tile === 1 || tile === 2) {
+                            if (player.dy > 0) {
+                                player.y = r * TILE - player.height;
+                                player.dy = 0;
+                                player.grounded = true;
+                            } else if (player.dy < 0) {
+                                player.y = (r + 1) * TILE;
+                                player.dy = 0; // 머리 부딪힘 (Head-Bonk)
+                            }
+                        } else if (tile === 3) collectCoin(c, r);
+                        else if (tile === 4 || tile === 5) levelClear();
+                    }
+                }
+
+                // 낙사 처리
+                if (player.y > canvas.height) triggerDeath();
+
+                // Camera Logic (Concept 5: Culling & Scrolling)
+                camX = player.x - canvas.width / 2 + player.width / 2;
+                if (camX < 0) camX = 0;
+                if (camX > (COLS * TILE) - canvas.width) camX = (COLS * TILE) - canvas.width;
             }
-        }
 
-        function checkWin() {
-            const status = document.getElementById('status');
-            const win = currentPuzzle.solution.every((row, r) => row.every((val, c) => val === userGrid[r][c]));
-            if (win) {
-                status.innerText = `🎉 Correct! It's a [${currentPuzzle.name}]!`;
-                status.style.color = "#d63031";
-            } else {
-                status.innerText = "Not quite right yet!";
-                status.style.color = "#0984e3";
+            function triggerDeath() {
+                if(player.isDead) return;
+                player.isDead = true;
+                player.dy = -10; // 사망 시 위로 살짝 튀어오름
+                lives--;
+                updateUI();
             }
-        }
 
-        nextLevel();
+            function handleDeath() {
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+                if (lives <= 0) {
+                    setTimeout(() => alert(`💀 게임 오버!\n최종 코인: ${score * 100}\n다시 도전하세요.`), 100);
+                } else {
+                    resetPlayer();
+                    isPlaying = true;
+                    gameLoop();
+                }
+            }
+
+            function levelClear() {
+                if (!isPlaying) return;
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+                level++;
+                setTimeout(() => {
+                    alert(`🎉 월드 ${level - 1} 클리어!\n다음 월드로 이동합니다.`);
+                    initGame();
+                    isPlaying = true;
+                    gameLoop();
+                }, 100);
+            }
+
+            // --- Rendering ---
+            function draw() {
+                ctx.fillStyle = '#5c94fc'; // Sky Blue
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.save();
+                ctx.translate(-camX, 0);
+
+                // 화면에 보이는 타일만 렌더링 (Culling)
+                let startCol = Math.max(0, Math.floor(camX / TILE));
+                let endCol = Math.min(COLS, Math.ceil((camX + canvas.width) / TILE));
+
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = startCol; c < endCol; c++) {
+                        let t = map[r][c];
+                        let tx = c * TILE;
+                        let ty = r * TILE;
+
+                        if (t === 1) { // Ground
+                            ctx.fillStyle = '#6ab04c'; ctx.fillRect(tx, ty, TILE, TILE/4);
+                            ctx.fillStyle = '#d35400'; ctx.fillRect(tx, ty+TILE/4, TILE, TILE*0.75);
+                            ctx.strokeStyle = '#000'; ctx.strokeRect(tx, ty, TILE, TILE);
+                        } else if (t === 2) { // Brick
+                            ctx.fillStyle = '#e67e22'; ctx.fillRect(tx, ty, TILE, TILE);
+                            ctx.strokeStyle = '#000'; ctx.strokeRect(tx, ty, TILE, TILE);
+                            ctx.beginPath(); ctx.moveTo(tx, ty+TILE/2); ctx.lineTo(tx+TILE, ty+TILE/2); ctx.stroke();
+                        } else if (t === 3) { // Coin
+                            let pulse = Math.sin(frameCount * 0.1) * 2;
+                            ctx.fillStyle = '#f1c40f';
+                            ctx.beginPath(); ctx.arc(tx + TILE/2, ty + TILE/2, 10 + pulse, 0, Math.PI*2); ctx.fill();
+                            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1;
+                        } else if (t === 4) { // Flag pole
+                            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(tx + TILE/2 - 2, ty, 4, TILE);
+                        } else if (t === 5) { // Flag Top
+                            ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(tx + TILE/2, ty + TILE/2, 8, 0, Math.PI*2); ctx.fill();
+                        }
+                    }
+                }
+
+                // Draw Player (Sprite Simulation)
+                ctx.fillStyle = player.isDead ? '#555' : '#e74c3c';
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+                // Eyes indicating direction
+                ctx.fillStyle = '#fff';
+                let eyeX = player.facingRight ? player.x + 14 : player.x + 4;
+                ctx.fillRect(eyeX, player.y + 4, 6, 6);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(player.facingRight ? eyeX+2 : eyeX, player.y + 6, 4, 4);
+
+                ctx.restore();
+            }
+
+            function gameLoop() {
+                if (!isPlaying) return;
+                frameCount++;
+                updatePhysics();
+                draw();
+                reqId = requestAnimationFrame(gameLoop);
+            }
+
+            // --- Controls ---
+            document.getElementById('btn-sm-start').addEventListener('click', () => {
+                if (!isPlaying) {
+                    if(lives <= 0) initGame(true);
+                    isPlaying = true;
+                    gameLoop();
+                }
+            });
+            document.getElementById('btn-sm-pause').addEventListener('click', () => isPlaying = false);
+            document.getElementById('btn-sm-reset').addEventListener('click', () => {
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+                initGame(true);
+                draw();
+            });
+
+            // Keyboard
+            window.addEventListener('keydown', (e) => {
+                if (["ArrowLeft", "ArrowRight", "ArrowUp", "Space"].includes(e.code)) e.preventDefault();
+                if (e.code === 'ArrowLeft') keys.left = true;
+                if (e.code === 'ArrowRight') keys.right = true;
+                if ((e.code === 'ArrowUp' || e.code === 'Space') && player.grounded && !player.isDead) {
+                    player.dy = player.jumpPower; player.grounded = false;
+                }
+            }, { passive: false });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'ArrowLeft') keys.left = false;
+                if (e.code === 'ArrowRight') keys.right = false;
+            });
+
+            // Mobile Touch Controls
+            const btnLeft = document.getElementById('btn-sm-left');
+            const btnRight = document.getElementById('btn-sm-right');
+            const btnJump = document.getElementById('btn-sm-jump');
+
+            const addTouch = (elem, key) => {
+                elem.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; }, {passive: false});
+                elem.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; }, {passive: false});
+                elem.addEventListener('mousedown', (e) => { e.preventDefault(); keys[key] = true; });
+                elem.addEventListener('mouseup', (e) => { e.preventDefault(); keys[key] = false; });
+                elem.addEventListener('mouseleave', (e) => { keys[key] = false; });
+            };
+
+            addTouch(btnLeft, 'left');
+            addTouch(btnRight, 'right');
+            
+            // Jump uses special logic (impulse)
+            const handleJump = (e) => {
+                e.preventDefault();
+                if (player.grounded && !player.isDead && isPlaying) {
+                    player.dy = player.jumpPower; player.grounded = false;
+                }
+            };
+            btnJump.addEventListener('touchstart', handleJump, {passive: false});
+            btnJump.addEventListener('mousedown', handleJump);
+
+            // Initial Render
+            initGame(true);
+            draw();
+        })();
     </script>
-</body>
-</html>
+</div>
+<!-- End of Playable Super Mario Style Platformer -->
