@@ -1,0 +1,314 @@
+<!-- Playable Retro Pong HTML5 Game -->
+<div id="pong-game-container" style="max-width: 600px; margin: 40px auto; background: #111; border-radius: 12px; padding: 20px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 20px rgba(0,255,0,0.1); border: 2px solid #333; touch-action: none; user-select: none;">
+    
+    <!-- Game HUD -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; color: #fff;">
+        <div>
+            <h3 style="color: #00ff00; margin: 0; font-size: 1.3rem; font-weight: bold; text-shadow: 0 0 10px #00ff00;">JS PONG</h3>
+            <div style="font-size: 0.85rem; color: #aaa; margin-top: 5px; font-weight: bold;">
+                MODE: <span id="pong-mode" style="color: #fff;">1 PLAYER (vs AI)</span>
+            </div>
+        </div>
+        <div style="text-align: right; font-size: 1.5rem; color: #fff; font-weight: bold; letter-spacing: 5px;">
+            <span id="score-p1" style="color: #00ff00;">0</span>-<span id="score-p2" style="color: #ff00ff;">0</span>
+        </div>
+    </div>
+
+    <!-- Game Controls -->
+    <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+        <button id="btn-pong-start" class="pong-ctrl-btn" style="background: #00ff00; color: #000;">▶ START</button>
+        <button id="btn-pong-pause" class="pong-ctrl-btn" style="background: #fff; color: #000;">⏸ PAUSE</button>
+        <button id="btn-pong-end" class="pong-ctrl-btn" style="background: #e74c3c; color: #fff;">⏹ END</button>
+        <button id="btn-pong-toggle" class="pong-ctrl-btn" style="background: #3498db; color: #fff;">👥 1P / 2P</button>
+    </div>
+
+    <!-- Canvas Container -->
+    <div style="position: relative; width: 100%; aspect-ratio: 3/2; background: #000; border-radius: 8px; border: 4px solid #fff; overflow: hidden; margin-bottom: 15px;">
+        <!-- CRT Scanline Effect -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%); background-size: 100% 4px; pointer-events: none; z-index: 10;"></div>
+        <canvas id="pong-canvas" width="600" height="400" style="display: block; width: 100%; height: 100%;"></canvas>
+    </div>
+
+    <!-- Mobile Controls (Split for 2 Players) -->
+    <div style="display: flex; justify-content: space-between; gap: 10px;">
+        <!-- Player 1 Controls (Left) -->
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <div style="color: #00ff00; font-size: 0.7rem; text-align: center; font-weight: bold;">P1 (W/S)</div>
+            <button class="pong-dir-btn p1-btn" id="btn-p1-up">▲</button>
+            <button class="pong-dir-btn p1-btn" id="btn-p1-down">▼</button>
+        </div>
+        
+        <!-- Center Info -->
+        <div style="display: flex; align-items: center; justify-content: center; flex: 1; color: #555; font-size: 0.8rem; text-align: center;">
+            <span id="speed-indicator">SPEED: 100%</span>
+        </div>
+
+        <!-- Player 2 Controls (Right) -->
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <div style="color: #ff00ff; font-size: 0.7rem; text-align: center; font-weight: bold;" id="p2-label">AI</div>
+            <button class="pong-dir-btn p2-btn" id="btn-p2-up">▲</button>
+            <button class="pong-dir-btn p2-btn" id="btn-p2-down">▼</button>
+        </div>
+    </div>
+
+    <style>
+        #pong-game-container .pong-ctrl-btn { border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.1s; font-family: inherit; font-size: 0.8rem; flex: 1; min-width: 60px; text-transform: uppercase; }
+        #pong-game-container .pong-ctrl-btn:active { transform: scale(0.95); }
+        
+        #pong-game-container .pong-dir-btn { background: #222; color: #fff; border: 2px solid #555; width: 60px; height: 50px; border-radius: 8px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
+        #pong-game-container .p1-btn:active { background: #00ff00; color: #000; border-color: #00ff00; }
+        #pong-game-container .p2-btn:active { background: #ff00ff; color: #fff; border-color: #ff00ff; }
+    </style>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('pong-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const scoreP1El = document.getElementById('score-p1');
+            const scoreP2El = document.getElementById('score-p2');
+            const modeEl = document.getElementById('pong-mode');
+            const p2Label = document.getElementById('p2-label');
+            const speedIndicator = document.getElementById('speed-indicator');
+
+            let reqId = null;
+            let isPlaying = false;
+            let isTwoPlayer = false; // false = 1P vs AI, true = 1P vs 2P
+            
+            let scoreP1 = 0;
+            let scoreP2 = 0;
+            let initialBallSpeed = 5;
+
+            // Input Keys
+            let keys = { w: false, s: false, ArrowUp: false, ArrowDown: false };
+
+            // Game Objects
+            const paddleProps = { width: 10, height: 80, speed: 6 };
+            
+            let p1 = { x: 20, y: 160, score: 0 };
+            let p2 = { x: 570, y: 160, score: 0 };
+            
+            let ball = {
+                x: 300, y: 200, r: 8,
+                speed: initialBallSpeed,
+                dx: initialBallSpeed, dy: initialBallSpeed
+            };
+
+            function resetBall() {
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height / 2;
+                ball.speed = initialBallSpeed;
+                // Randomize serve direction
+                ball.dx = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
+                ball.dy = (Math.random() * 2 - 1) * ball.speed; 
+                if(ball.dy === 0) ball.dy = 1;
+                updateSpeedIndicator();
+            }
+
+            function initGame(fullReset = true) {
+                if (fullReset) {
+                    p1.score = 0;
+                    p2.score = 0;
+                    scoreP1El.innerText = p1.score;
+                    scoreP2El.innerText = p2.score;
+                }
+                p1.y = canvas.height/2 - paddleProps.height/2;
+                p2.y = canvas.height/2 - paddleProps.height/2;
+                resetBall();
+            }
+
+            function updateSpeedIndicator() {
+                let ratio = Math.round((ball.speed / initialBallSpeed) * 100);
+                speedIndicator.innerText = `SPEED: ${ratio}%`;
+                speedIndicator.style.color = ratio > 150 ? '#e74c3c' : (ratio > 100 ? '#f1c40f' : '#555');
+            }
+
+            function update() {
+                // P1 Movement
+                if (keys.w && p1.y > 0) p1.y -= paddleProps.speed;
+                if (keys.s && p1.y < canvas.height - paddleProps.height) p1.y += paddleProps.speed;
+
+                // P2 Movement
+                if (isTwoPlayer) {
+                    if (keys.ArrowUp && p2.y > 0) p2.y -= paddleProps.speed;
+                    if (keys.ArrowDown && p2.y < canvas.height - paddleProps.height) p2.y += paddleProps.speed;
+                } else {
+                    // Simple AI
+                    let aiCenter = p2.y + paddleProps.height / 2;
+                    let delay = 0.85; // AI imperfection
+                    if (aiCenter < ball.y - 10) p2.y += paddleProps.speed * delay;
+                    else if (aiCenter > ball.y + 10) p2.y -= paddleProps.speed * delay;
+                    
+                    // Clamp AI to screen
+                    if(p2.y < 0) p2.y = 0;
+                    if(p2.y > canvas.height - paddleProps.height) p2.y = canvas.height - paddleProps.height;
+                }
+
+                // Ball Movement
+                ball.x += ball.dx;
+                ball.y += ball.dy;
+
+                // Wall Collision (Top/Bottom)
+                if (ball.y - ball.r < 0) { ball.y = ball.r; ball.dy *= -1; }
+                if (ball.y + ball.r > canvas.height) { ball.y = canvas.height - ball.r; ball.dy *= -1; }
+
+                // Paddle Collision Logic (The Reflexive Logic)
+                let hitPaddle = null;
+                if (ball.dx < 0 && ball.x - ball.r < p1.x + paddleProps.width && ball.x + ball.r > p1.x && ball.y > p1.y && ball.y < p1.y + paddleProps.height) {
+                    hitPaddle = p1;
+                } else if (ball.dx > 0 && ball.x + ball.r > p2.x && ball.x - ball.r < p2.x + paddleProps.width && ball.y > p2.y && ball.y < p2.y + paddleProps.height) {
+                    hitPaddle = p2;
+                }
+
+                if (hitPaddle) {
+                    // Calculate hit position (-1 to 1)
+                    let collidePoint = (ball.y - (hitPaddle.y + paddleProps.height/2));
+                    collidePoint = collidePoint / (paddleProps.height/2);
+                    
+                    // Max angle = 45 degrees (PI/4)
+                    let angleRad = (Math.PI/4) * collidePoint;
+                    let direction = (hitPaddle === p1) ? 1 : -1;
+
+                    // Increase Speed by 5%
+                    ball.speed *= 1.05;
+                    updateSpeedIndicator();
+
+                    ball.dx = direction * ball.speed * Math.cos(angleRad);
+                    ball.dy = ball.speed * Math.sin(angleRad);
+                    
+                    // Prevent sticking
+                    if (hitPaddle === p1) ball.x = p1.x + paddleProps.width + ball.r;
+                    else ball.x = p2.x - ball.r;
+                }
+
+                // Scoring
+                if (ball.x - ball.r < 0) {
+                    p2.score++;
+                    scoreP2El.innerText = p2.score;
+                    checkWin(p2.score, isTwoPlayer ? "PLAYER 2" : "AI");
+                } else if (ball.x + ball.r > canvas.width) {
+                    p1.score++;
+                    scoreP1El.innerText = p1.score;
+                    checkWin(p1.score, "PLAYER 1");
+                }
+            }
+
+            function checkWin(score, winner) {
+                if (score >= 5) {
+                    isPlaying = false;
+                    cancelAnimationFrame(reqId);
+                    setTimeout(() => {
+                        alert(`🏆 ${winner} WINS THE MATCH!`);
+                        initGame(true);
+                        draw();
+                    }, 100);
+                } else {
+                    resetBall();
+                }
+            }
+
+            function draw() {
+                // Background
+                ctx.fillStyle = "#000";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Center Net
+                ctx.fillStyle = "#fff";
+                for (let i = 0; i <= canvas.height; i += 20) {
+                    ctx.fillRect(canvas.width/2 - 2, i, 4, 10);
+                }
+
+                // Draw Paddles
+                ctx.fillStyle = "#00ff00"; // P1
+                ctx.fillRect(p1.x, p1.y, paddleProps.width, paddleProps.height);
+                
+                ctx.fillStyle = isTwoPlayer ? "#ff00ff" : "#fff"; // P2 / AI
+                ctx.fillRect(p2.x, p2.y, paddleProps.width, paddleProps.height);
+
+                // Draw Ball
+                ctx.fillStyle = "#fff";
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            function gameLoop() {
+                if (!isPlaying) return;
+                update();
+                draw();
+                reqId = requestAnimationFrame(gameLoop);
+            }
+
+            // --- Button Listeners ---
+            document.getElementById('btn-pong-start').addEventListener('click', () => {
+                if (!isPlaying) {
+                    isPlaying = true;
+                    gameLoop();
+                }
+            });
+
+            document.getElementById('btn-pong-pause').addEventListener('click', () => {
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+            });
+
+            document.getElementById('btn-pong-end').addEventListener('click', () => {
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+                initGame(true);
+                draw();
+            });
+
+            document.getElementById('btn-pong-toggle').addEventListener('click', () => {
+                isTwoPlayer = !isTwoPlayer;
+                modeEl.innerText = isTwoPlayer ? "2 PLAYERS (LOCAL)" : "1 PLAYER (vs AI)";
+                p2Label.innerText = isTwoPlayer ? "P2 (▲/▼)" : "AI";
+                p2Label.style.color = isTwoPlayer ? "#ff00ff" : "#fff";
+                
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+                initGame(true);
+                draw();
+            });
+
+            // --- Keyboard Input ---
+            window.addEventListener('keydown', (e) => {
+                if(["ArrowUp","ArrowDown","w","s","W","S"," "].includes(e.key)) e.preventDefault();
+                if(e.key === 'w' || e.key === 'W') keys.w = true;
+                if(e.key === 's' || e.key === 'S') keys.s = true;
+                if(e.key === 'ArrowUp') keys.ArrowUp = true;
+                if(e.key === 'ArrowDown') keys.ArrowDown = true;
+            }, {passive: false});
+
+            window.addEventListener('keyup', (e) => {
+                if(e.key === 'w' || e.key === 'W') keys.w = false;
+                if(e.key === 's' || e.key === 'S') keys.s = false;
+                if(e.key === 'ArrowUp') keys.ArrowUp = false;
+                if(e.key === 'ArrowDown') keys.ArrowDown = false;
+            });
+
+            // --- Mobile Touch Input ---
+            const addTouch = (id, keyName) => {
+                const btn = document.getElementById(id);
+                const actDown = (e) => { e.preventDefault(); keys[keyName] = true; };
+                const actUp = (e) => { e.preventDefault(); keys[keyName] = false; };
+                
+                btn.addEventListener('touchstart', actDown, {passive: false});
+                btn.addEventListener('touchend', actUp, {passive: false});
+                btn.addEventListener('mousedown', actDown);
+                btn.addEventListener('mouseup', actUp);
+                btn.addEventListener('mouseleave', actUp);
+            };
+
+            addTouch('btn-p1-up', 'w');
+            addTouch('btn-p1-down', 's');
+            addTouch('btn-p2-up', 'ArrowUp');
+            addTouch('btn-p2-down', 'ArrowDown');
+
+            // Initial Render
+            initGame(true);
+            draw();
+        })();
+    </script>
+</div>
+<!-- End of Playable Retro Pong HTML5 Game -->
