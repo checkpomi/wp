@@ -1,5 +1,5 @@
-<!-- Interactive Pac-Man Maze Builder -->
-<div id="pacman-maze-builder" style="max-width: 600px; margin: 40px auto; background: #111; border-radius: 12px; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #333;">
+<!-- Interactive Pac-Man Maze Builder (Fixed Version) -->
+<div id="pacman-maze-builder" style="max-width: 600px; margin: 40px auto; background: #111; border-radius: 12px; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #333; touch-action: none;">
     
     <h3 style="color: #f1c40f; text-align: center; margin-top: 0; font-family: 'Press Start 2P', monospace, sans-serif; font-size: 1.2rem;">🛠️ Interactive Maze Builder</h3>
     <p style="color: #aaa; text-align: center; font-size: 0.9rem; margin-bottom: 20px;">
@@ -26,16 +26,16 @@
     </div>
 
     <style>
-        .tool-btn:hover { filter: brightness(1.2); }
-        .tool-btn.active { box-shadow: 0 0 10px rgba(255, 255, 255, 0.4); transform: scale(1.05); }
-        .maze-cell { aspect-ratio: 1; background: #000; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; }
-        .maze-cell:hover { opacity: 0.8; }
+        #pacman-maze-builder .tool-btn:hover { filter: brightness(1.2); }
+        #pacman-maze-builder .tool-btn.active { box-shadow: 0 0 10px rgba(255, 255, 255, 0.4); transform: scale(1.05); }
+        #pacman-maze-builder .maze-cell { aspect-ratio: 1; background: #000; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; user-select: none; }
+        #pacman-maze-builder .maze-cell:hover { opacity: 0.8; }
         
         /* State Classes */
-        .cell-wall { background: #1919A6; border: 2px solid #2020FF; }
-        .cell-pellet::after { content: ''; display: block; width: 25%; height: 25%; background: #FFAA88; border-radius: 50%; }
-        .cell-pacman { background: #FFFF00; width: 80%; height: 80%; border-radius: 50%; clip-path: polygon(100% 74%, 44% 48%, 100% 21%, 100% 0, 0 0, 0 100%, 100% 100%); animation: chomp 0.4s infinite alternate; }
-        .cell-empty { background: #000; }
+        #pacman-maze-builder .cell-wall { background: #1919A6; border: 2px solid #2020FF; box-sizing: border-box; }
+        #pacman-maze-builder .cell-pellet::after { content: ''; display: block; width: 25%; height: 25%; background: #FFAA88; border-radius: 50%; }
+        #pacman-maze-builder .cell-pacman { background: #FFFF00; width: 80%; height: 80%; border-radius: 50%; clip-path: polygon(100% 74%, 44% 48%, 100% 21%, 100% 0, 0 0, 0 100%, 100% 100%); animation: chomp 0.4s infinite alternate; }
+        #pacman-maze-builder .cell-empty { background: #000; }
 
         @keyframes chomp {
             0% { clip-path: polygon(100% 74%, 44% 48%, 100% 21%, 100% 0, 0 0, 0 100%, 100% 100%); }
@@ -44,9 +44,9 @@
     </style>
 
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const gridSize = 8;
+        (function() {
             let currentTool = 1; // Default to wall
+            let isDrawing = false;
             
             // Initial Map Setup
             let mapData = [
@@ -71,9 +71,9 @@
                         b.classList.remove('active');
                         b.style.borderColor = '#444';
                     });
-                    e.target.classList.add('active');
-                    e.target.style.borderColor = e.target.style.color === 'white' ? '#2020FF' : e.target.style.color;
-                    currentTool = parseInt(e.target.getAttribute('data-tool'));
+                    e.currentTarget.classList.add('active');
+                    e.currentTarget.style.borderColor = e.currentTarget.style.color === 'white' ? '#2020FF' : e.currentTarget.style.color;
+                    currentTool = parseInt(e.currentTarget.getAttribute('data-tool'));
                 });
             });
 
@@ -84,6 +84,8 @@
                     row.forEach((cellVal, x) => {
                         const cell = document.createElement('div');
                         cell.className = 'maze-cell';
+                        cell.setAttribute('data-x', x);
+                        cell.setAttribute('data-y', y);
                         
                         // Apply appropriate visual class based on value
                         if (cellVal === 1) cell.classList.add('cell-wall');
@@ -96,10 +98,14 @@
                             cell.classList.add('cell-empty');
                         }
 
-                        // Drawing Interaction
-                        cell.addEventListener('mousedown', () => updateCell(x, y));
-                        cell.addEventListener('mouseenter', (e) => {
-                            if (e.buttons === 1) updateCell(x, y); // Drag to draw
+                        // PC Mouse Events
+                        cell.addEventListener('mousedown', (e) => {
+                            e.preventDefault();
+                            isDrawing = true;
+                            updateCell(x, y);
+                        });
+                        cell.addEventListener('mouseenter', () => {
+                            if (isDrawing) updateCell(x, y);
                         });
 
                         gridContainer.appendChild(cell);
@@ -110,9 +116,9 @@
             }
 
             function updateCell(x, y) {
-                // If Pac-Man is selected, enforce only one Pac-Man on the board
                 if (currentTool === 2) {
-                    mapData = mapData.map(row => row.map(val => val === 2 ? 3 : val)); // Turn old Pac-Man to empty
+                    // Only one Pac-Man allowed
+                    mapData = mapData.map(row => row.map(val => val === 2 ? 3 : val)); 
                 }
                 mapData[y][x] = currentTool;
                 render();
@@ -124,16 +130,37 @@
                     codeStr += "  [" + row.join(", ") + "]";
                     codeStr += (i < mapData.length - 1) ? ",\n" : "\n";
                 });
-                codeStr += "];";
+                codeStr += "\n];";
                 codeOutput.textContent = codeStr;
             }
 
-            // Prevent default drag behaviors to make painting smoother
+            // Global Mouse Up
+            document.addEventListener('mouseup', () => { isDrawing = false; });
+
+            // Mobile Touch Events for continuous drawing
+            gridContainer.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Prevents screen scrolling while drawing
+                const touch = e.touches[0];
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                if(target && target.hasAttribute('data-x')){
+                    updateCell(parseInt(target.getAttribute('data-x')), parseInt(target.getAttribute('data-y')));
+                }
+            }, {passive: false});
+
+            gridContainer.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                if(target && target.hasAttribute('data-x')){
+                    updateCell(parseInt(target.getAttribute('data-x')), parseInt(target.getAttribute('data-y')));
+                }
+            }, {passive: false});
+
             gridContainer.addEventListener('dragstart', (e) => e.preventDefault());
 
             // Initial Render
             render();
-        });
+        })();
     </script>
 </div>
 <!-- End of Interactive Pac-Man Maze Builder -->
