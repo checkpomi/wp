@@ -1,0 +1,468 @@
+<!-- Playable Donkey Kong Style Retro Platformer -->
+<div id="dk-game-container" style="max-width: 500px; margin: 40px auto; background: #111; border-radius: 12px; padding: 20px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 4px solid #f1c40f; touch-action: none; user-select: none;">
+    
+    <!-- Game HUD -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; color: #fff;">
+        <div>
+            <h3 style="color: #f1c40f; margin: 0; font-size: 1.2rem; font-weight: bold; text-shadow: 2px 2px 0 #d35400;">JUMP BROS.</h3>
+            <div style="font-size: 0.85rem; color: #aaa; margin-top: 5px; font-weight: bold;">
+                LEVEL: <span id="dk-level" style="color: #fff;">1</span>
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 1.1rem; color: #fff; font-weight: bold;">SCORE: <span id="dk-score" style="color: #e74c3c;">0</span></div>
+            <div style="font-size: 0.8rem; color: #3498db; margin-top: 2px;">LIVES: <span id="dk-lives">❤️❤️❤️</span></div>
+        </div>
+    </div>
+
+    <!-- Game Controls -->
+    <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+        <button id="btn-dk-start" class="dk-ctrl-btn" style="background: #2ecc71; color: #000;">▶ START</button>
+        <button id="btn-dk-pause" class="dk-ctrl-btn" style="background: #fff; color: #000;">⏸ PAUSE</button>
+        <button id="btn-dk-end" class="dk-ctrl-btn" style="background: #e74c3c; color: #fff;">⏹ END</button>
+    </div>
+
+    <!-- Canvas Container -->
+    <div style="position: relative; width: 100%; aspect-ratio: 4/5; background: #000; border-radius: 8px; border: 4px solid #333; overflow: hidden; margin-bottom: 15px;">
+        <!-- CRT Effect -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%); background-size: 100% 4px; pointer-events: none; z-index: 10;"></div>
+        <canvas id="dk-canvas" width="400" height="500" style="display: block; width: 100%; height: 100%; image-rendering: pixelated;"></canvas>
+    </div>
+
+    <!-- Mobile Action Controls -->
+    <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-end;">
+        <div style="display: grid; grid-template-columns: 50px 50px 50px; gap: 5px;">
+            <div></div>
+            <button class="dk-dir-btn" id="btn-dk-up">▲</button>
+            <div></div>
+            <button class="dk-dir-btn" id="btn-dk-left">◀</button>
+            <button class="dk-dir-btn" id="btn-dk-down">▼</button>
+            <button class="dk-dir-btn" id="btn-dk-right">▶</button>
+        </div>
+        <button class="dk-dir-btn" id="btn-dk-jump" style="width: 70px; height: 70px; border-radius: 50%; background: #e74c3c; color: white; border-color: #c0392b; font-size: 1.1rem;">JUMP</button>
+    </div>
+
+    <style>
+        #dk-game-container .dk-ctrl-btn { border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.1s; font-family: inherit; font-size: 0.8rem; box-shadow: 0 4px 0 rgba(0,0,0,0.5); flex: 1; }
+        #dk-game-container .dk-ctrl-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        #dk-game-container .dk-dir-btn { background: #333; color: #fff; border: 2px solid #555; height: 50px; border-radius: 8px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 0 #111; touch-action: manipulation; font-weight: bold; }
+        #dk-game-container .dk-dir-btn:active { background: #555; transform: translateY(5px); box-shadow: none; border-color: #f1c40f; color: #f1c40f; }
+    </style>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('dk-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const scoreEl = document.getElementById('dk-score');
+            const livesEl = document.getElementById('dk-lives');
+            const levelEl = document.getElementById('dk-level');
+
+            let reqId = null;
+            let isPlaying = false;
+            
+            let level = 1;
+            let score = 0;
+            let lives = 3;
+            let frameCount = 0;
+
+            let keys = { left: false, right: false, up: false, down: false };
+
+            // Physics Constants
+            const GRAVITY = 0.5;
+            const JUMP_POWER = -8.5;
+            const MOVE_SPEED = 2.5;
+            const CLIMB_SPEED = 2;
+
+            // Map Data (Girders: x1, y1, x2, y2)
+            const girders = [
+                {x1: 0, y1: 480, x2: 400, y2: 480}, // Floor
+                {x1: 50, y1: 390, x2: 400, y2: 410}, // Slope down-right
+                {x1: 0, y1: 320, x2: 350, y2: 300},  // Slope down-left
+                {x1: 50, y1: 210, x2: 400, y2: 230}, // Slope down-right
+                {x1: 0, y1: 140, x2: 350, y2: 120},  // Slope down-left
+                {x1: 150, y1: 50, x2: 300, y2: 50}   // Top Platform
+            ];
+
+            // Ladders (x, y1, y2)
+            const ladders = [
+                {x: 350, y1: 405, y2: 480},
+                {x: 80, y1: 308, y2: 393},
+                {x: 320, y1: 226, y2: 305},
+                {x: 80, y1: 128, y2: 213},
+                {x: 250, y1: 50, y2: 130}
+            ];
+
+            // Objects
+            let player = {
+                x: 30, y: 440, w: 16, h: 24,
+                dx: 0, dy: 0,
+                state: 'idle', // idle, walk, jump, climb
+                grounded: false
+            };
+
+            let barrels = [];
+            let goal = { x: 180, y: 20, w: 20, h: 30 }; // Rescue Target
+
+            function initGame(fullReset = true) {
+                if (fullReset) {
+                    level = 1;
+                    score = 0;
+                    lives = 3;
+                }
+                resetLevel();
+                updateUI();
+            }
+
+            function resetLevel() {
+                player.x = 30; player.y = 440;
+                player.dx = 0; player.dy = 0;
+                player.state = 'idle';
+                player.grounded = true;
+                barrels = [];
+                frameCount = 0;
+            }
+
+            function updateUI() {
+                scoreEl.innerText = score;
+                levelEl.innerText = level;
+                livesEl.innerText = lives > 0 ? '❤️'.repeat(lives) : '💀';
+            }
+
+            // Interpolation for angled girders
+            function getFloorY(x) {
+                let highestFloor = 9999;
+                for (let g of girders) {
+                    if (x >= g.x1 && x <= g.x2) {
+                        // Linear interpolation (y = mx + b)
+                        let slope = (g.y2 - g.y1) / (g.x2 - g.x1);
+                        let y = g.y1 + slope * (x - g.x1);
+                        // Return the highest floor below the player
+                        if (y >= player.y + player.h * 0.5 && y < highestFloor) {
+                            highestFloor = y;
+                        }
+                    }
+                }
+                return highestFloor;
+            }
+
+            function isNearLadder(p) {
+                for (let l of ladders) {
+                    if (Math.abs((p.x + p.w/2) - l.x) < 12 && p.y + p.h >= l.y1 && p.y <= l.y2) {
+                        return l;
+                    }
+                }
+                return null;
+            }
+
+            function spawnBarrel() {
+                barrels.push({
+                    x: 50, y: 110, r: 8,
+                    dx: (1.5 + level * 0.2), dy: 0,
+                    grounded: false, scored: false
+                });
+            }
+
+            function handleDeath() {
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+                lives--;
+                updateUI();
+                
+                // Screen Flash
+                ctx.fillStyle = 'rgba(231, 76, 60, 0.5)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                if (lives > 0) {
+                    setTimeout(() => {
+                        alert(`앗! 술통에 맞았습니다.\n남은 생명: ${lives}`);
+                        resetLevel();
+                        isPlaying = true;
+                        gameLoop();
+                    }, 100);
+                } else {
+                    setTimeout(() => alert(`💥 게임 오버!\n최종 점수: ${score}\n다시 도전하세요.`), 100);
+                }
+            }
+
+            function checkLevelClear() {
+                if (player.x + player.w > goal.x && player.x < goal.x + goal.w && player.y < goal.y + goal.h) {
+                    isPlaying = false;
+                    cancelAnimationFrame(reqId);
+                    score += 1000;
+                    level++;
+                    updateUI();
+                    setTimeout(() => {
+                        alert(`🎉 구출 성공!\n레벨 ${level} 시작! (술통이 더 빨라집니다)`);
+                        resetLevel();
+                        isPlaying = true;
+                        gameLoop();
+                    }, 100);
+                }
+            }
+
+            function update() {
+                frameCount++;
+                
+                // Barrel Spawner
+                let spawnRate = Math.max(60, 150 - (level * 10)); // Faster spawns per level
+                if (frameCount % spawnRate === 0) spawnBarrel();
+
+                // Player Movement
+                let activeLadder = isNearLadder(player);
+
+                if (player.state === 'climb') {
+                    player.dx = 0;
+                    if (keys.up) player.dy = -CLIMB_SPEED;
+                    else if (keys.down) player.dy = CLIMB_SPEED;
+                    else player.dy = 0;
+
+                    // Fall off ladder if we climb too high/low or move sideways
+                    if (!activeLadder || keys.left || keys.right) {
+                        player.state = 'jump';
+                    } else {
+                        player.x = activeLadder.x - player.w / 2; // Snap to ladder
+                    }
+                } else {
+                    // Horizontal Walk
+                    if (keys.left) player.dx = -MOVE_SPEED;
+                    else if (keys.right) player.dx = MOVE_SPEED;
+                    else player.dx = 0;
+
+                    // Apply Gravity
+                    player.dy += GRAVITY;
+
+                    // Ladder Interaction
+                    if (activeLadder && (keys.up || keys.down)) {
+                        player.state = 'climb';
+                        player.x = activeLadder.x - player.w / 2;
+                        player.dx = 0;
+                    }
+                }
+
+                // Apply Player Physics
+                player.x += player.dx;
+                player.y += player.dy;
+
+                // Screen bounds
+                if (player.x < 0) player.x = 0;
+                if (player.x > canvas.width - player.w) player.x = canvas.width - player.w;
+
+                // Floor Collision
+                if (player.state !== 'climb') {
+                    let floorY = getFloorY(player.x + player.w / 2);
+                    if (player.y + player.h >= floorY) {
+                        player.y = floorY - player.h;
+                        player.dy = 0;
+                        player.grounded = true;
+                        player.state = player.dx === 0 ? 'idle' : 'walk';
+                    } else {
+                        player.grounded = false;
+                        player.state = 'jump';
+                    }
+                }
+
+                // Update Barrels
+                for (let i = barrels.length - 1; i >= 0; i--) {
+                    let b = barrels[i];
+                    
+                    b.dy += GRAVITY;
+                    b.x += b.dx;
+                    b.y += b.dy;
+
+                    let bFloor = getFloorY(b.x);
+                    if (b.y + b.r >= bFloor) {
+                        b.y = bFloor - b.r;
+                        b.dy = 0;
+                        
+                        // Roll direction based on slope
+                        // A simple heuristic: check floor height slightly left and right
+                        let fLeft = getFloorY(b.x - 5);
+                        let fRight = getFloorY(b.x + 5);
+                        
+                        if (fLeft < fRight) b.dx = Math.abs(b.dx); // slope down right
+                        else if (fRight < fLeft) b.dx = -Math.abs(b.dx); // slope down left
+                    }
+
+                    // Fall off edges
+                    if (b.x < 0 || b.x > canvas.width) b.dx *= -1; // bounce walls loosely
+
+                    // Cleanup
+                    if (b.y > canvas.height) {
+                        barrels.splice(i, 1);
+                        continue;
+                    }
+
+                    // Collision: Death
+                    let distX = (player.x + player.w/2) - b.x;
+                    let distY = (player.y + player.h/2) - b.y;
+                    if (Math.abs(distX) < player.w/2 + b.r - 2 && Math.abs(distY) < player.h/2 + b.r - 2) {
+                        return handleDeath();
+                    }
+
+                    // Collision: Jump-over Score
+                    if (!b.scored && player.state === 'jump' && player.y + player.h < b.y) {
+                        if (Math.abs(player.x - b.x) < 20) {
+                            score += 100;
+                            b.scored = true;
+                            updateUI();
+                        }
+                    }
+                }
+
+                checkLevelClear();
+            }
+
+            function draw() {
+                // Background
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw Girders
+                ctx.lineWidth = 8;
+                ctx.strokeStyle = '#d35400';
+                for (let g of girders) {
+                    ctx.beginPath();
+                    ctx.moveTo(g.x1, g.y1);
+                    ctx.lineTo(g.x2, g.y2);
+                    ctx.stroke();
+                    // Inner line for retro look
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#e67e22';
+                    ctx.stroke();
+                    ctx.lineWidth = 8;
+                    ctx.strokeStyle = '#d35400';
+                }
+
+                // Draw Ladders
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#3498db';
+                for (let l of ladders) {
+                    ctx.beginPath();
+                    ctx.moveTo(l.x - 8, l.y1); ctx.lineTo(l.x - 8, l.y2);
+                    ctx.moveTo(l.x + 8, l.y1); ctx.lineTo(l.x + 8, l.y2);
+                    ctx.stroke();
+                    for(let y = l.y1 + 10; y < l.y2; y += 15) {
+                        ctx.beginPath(); ctx.moveTo(l.x - 8, y); ctx.lineTo(l.x + 8, y); ctx.stroke();
+                    }
+                }
+
+                // Draw Goal (Princess/Trophy)
+                ctx.fillStyle = '#f1c40f';
+                ctx.fillRect(goal.x, goal.y, goal.w, goal.h);
+                ctx.fillStyle = '#fff';
+                ctx.fillText('👸', goal.x + 2, goal.y + 20);
+
+                // Draw Player
+                ctx.fillStyle = '#e74c3c'; // Red shirt
+                ctx.fillRect(player.x, player.y + 8, player.w, player.h - 8);
+                ctx.fillStyle = '#3498db'; // Blue overalls
+                ctx.fillRect(player.x + 2, player.y + 14, player.w - 4, player.h - 14);
+                ctx.fillStyle = '#f1c40f'; // Face
+                ctx.fillRect(player.x + 2, player.y, player.w - 4, 8);
+
+                // Draw Barrels
+                ctx.fillStyle = '#8e44ad'; // Donkey Kong throwing area
+                ctx.fillRect(0, 50, 40, 40);
+                ctx.fillStyle = '#fff';
+                ctx.fillText('🦍', 10, 75);
+
+                for (let b of barrels) {
+                    ctx.fillStyle = '#e67e22';
+                    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = '#8b4513';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // Rolling animation line
+                    ctx.beginPath();
+                    ctx.moveTo(b.x - b.r + 2, b.y); ctx.lineTo(b.x + b.r - 2, b.y);
+                    ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.x * 0.1); ctx.stroke(); ctx.restore();
+                }
+            }
+
+            function gameLoop() {
+                if (!isPlaying) return;
+                update();
+                draw();
+                reqId = requestAnimationFrame(gameLoop);
+            }
+
+            // --- Controls ---
+            document.getElementById('btn-dk-start').addEventListener('click', () => {
+                if (!isPlaying) {
+                    if (lives <= 0) initGame(true);
+                    isPlaying = true;
+                    gameLoop();
+                }
+            });
+
+            document.getElementById('btn-dk-pause').addEventListener('click', () => {
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+            });
+
+            document.getElementById('btn-dk-end').addEventListener('click', () => {
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+                initGame(true);
+                draw();
+            });
+
+            // Keyboard
+            window.addEventListener('keydown', (e) => {
+                if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) e.preventDefault();
+                if (!isPlaying) return;
+                
+                if (e.code === 'ArrowLeft') keys.left = true;
+                if (e.code === 'ArrowRight') keys.right = true;
+                if (e.code === 'ArrowUp') keys.up = true;
+                if (e.code === 'ArrowDown') keys.down = true;
+                if ((e.code === 'Space' || e.code === 'ArrowUp') && player.grounded && player.state !== 'climb') {
+                    player.dy = JUMP_POWER;
+                    player.grounded = false;
+                }
+            }, { passive: false });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'ArrowLeft') keys.left = false;
+                if (e.code === 'ArrowRight') keys.right = false;
+                if (e.code === 'ArrowUp') keys.up = false;
+                if (e.code === 'ArrowDown') keys.down = false;
+            });
+
+            // Mobile
+            const addTouch = (id, keyName) => {
+                const btn = document.getElementById(id);
+                const actDown = (e) => { e.preventDefault(); keys[keyName] = true; };
+                const actUp = (e) => { e.preventDefault(); keys[keyName] = false; };
+                btn.addEventListener('touchstart', actDown, {passive: false});
+                btn.addEventListener('touchend', actUp, {passive: false});
+                btn.addEventListener('mousedown', actDown);
+                btn.addEventListener('mouseup', actUp);
+                btn.addEventListener('mouseleave', actUp);
+            };
+
+            addTouch('btn-dk-left', 'left');
+            addTouch('btn-dk-right', 'right');
+            addTouch('btn-dk-up', 'up');
+            addTouch('btn-dk-down', 'down');
+
+            const btnJump = document.getElementById('btn-dk-jump');
+            const doJump = (e) => {
+                e.preventDefault();
+                if (player.grounded && player.state !== 'climb' && isPlaying) {
+                    player.dy = JUMP_POWER;
+                    player.grounded = false;
+                }
+            };
+            btnJump.addEventListener('touchstart', doJump, {passive: false});
+            btnJump.addEventListener('mousedown', doJump);
+
+            // Init Render
+            initGame(true);
+            draw();
+        })();
+    </script>
+</div>
+<!-- End of Playable Donkey Kong Style Retro Platformer -->
