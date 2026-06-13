@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>pomiai 운세</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root{
+  /* 배경 — 차갑지 않은 따뜻한 딥 네이비 */
+  --bg:#07070e;--surface:#0e0e1c;--surface2:#131326;--surface3:#1a1a30;--surface4:#212140;
+  --border:#202038;--border2:#2c2c4c;--border3:#383860;
+  /* 골드 — 더 따뜻하고 부드럽게 */
+  --gold:#c9963a;--gold2:#e8b84b;--gold3:rgba(201,150,58,.13);--gold4:rgba(232,184,75,.07);
+  /* 보라 — 신비롭고 포근하게 */
+  --violet:#7c5ce8;--violet2:#9f82f5;--violet3:rgba(124,92,232,.15);--violet4:rgba(159,130,245,.07);
+  /* 포인트 컬러 */
+  --rose:#d96b99;--rose3:rgba(217,107,153,.12);
+  --teal:#3ac9b0;--amber:#d4863a;
+  /* 텍스트 — 읽기 편한 크림화이트 계열 */
+  --text:#eeeaf8;--text2:#9b96b8;--text3:#58546e;--text4:#3a3850;
+  /* 그림자 */
+  --glow-v:0 4px 32px rgba(124,92,232,.25);
+  --glow-g:0 4px 32px rgba(201,150,58,.2);
+  --shadow-card:0 2px 20px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{overflow-y:scroll;overflow-x:hidden;min-height:100%}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;
+  overflow:visible;min-height:100vh;width:100%}
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1;opacity:.45}
+#app{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:0 16px 160px;overflow:visible}
+
+/* ── HEADER ── */
+#header{text-align:center;padding:48px 0 28px;position:relative}
+.header-orb{position:absolute;top:-20px;left:50%;transform:translateX(-50%);width:280px;height:280px;
+  border-radius:50%;background:radial-gradient(circle,rgba(124,92,232,.2) 0%,rgba(201,150,58,.08) 50%,transparent 70%);
+  filter:blur(50px);pointer-events:none}
+#logo-main{font-size:11px;font-weight:500;letter-spacing:7px;color:var(--gold);
+  text-transform:uppercase;margin-bottom:14px;display:block;opacity:.85}
+#title-main{font-family:'Noto Serif KR',serif;font-size:28px;font-weight:400;
+  background:linear-gradient(150deg,var(--gold2) 0%,var(--violet2) 55%,var(--rose) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1.5;margin-bottom:10px;word-break:keep-all}
+#subtitle-main{font-size:11px;color:var(--text3);letter-spacing:2.5px;line-height:1.8}
+#today-bar{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;
+  background:linear-gradient(135deg,var(--surface),var(--surface2));
+  border:1px solid var(--border2);border-radius:40px;
+  padding:10px 24px;margin:20px auto 0;width:fit-content;
+  font-size:12px;color:var(--text2);box-shadow:var(--shadow-card)}
+#today-bar .dot{width:3px;height:3px;border-radius:50%;background:var(--gold);opacity:.6}
+#today-lunar{color:var(--gold2);font-family:'Noto Serif KR',serif;font-size:12px}
+
+/* ── 신상 입력 카드 ── */
+#profile-card{
+  background:linear-gradient(145deg,var(--surface) 0%,var(--surface2) 100%);
+  border:1px solid var(--border2);border-radius:22px;padding:24px 22px;
+  margin:24px 0 20px;position:relative;
+  box-shadow:var(--shadow-card)}
+#profile-card::before{content:'';position:absolute;top:-40px;right:-30px;
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(var(--gold3),transparent 70%);pointer-events:none}
+#profile-card::after{content:'';position:absolute;bottom:-30px;left:-20px;
+  width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(var(--violet4),transparent 70%);pointer-events:none}
+.pc-title{font-family:'Noto Serif KR',serif;font-size:15px;color:var(--gold2);
+  margin-bottom:18px;display:flex;align-items:center;gap:9px;font-weight:500}
+.pc-title::before{content:'';width:3px;height:16px;
+  background:linear-gradient(var(--gold2),var(--violet2));border-radius:2px}
+.pc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.pc-group{display:flex;flex-direction:column;gap:6px}
+.pc-group.wide{grid-column:span 2}
+.pc-group.full{grid-column:1/-1}
+.pc-label{font-size:10px;color:var(--text3);letter-spacing:1.5px;font-weight:600;
+  text-transform:uppercase}
+.pc-input,.pc-select{
+  background:var(--surface3);border:1px solid var(--border3);color:var(--text);
+  border-radius:10px;padding:11px 13px;font-size:14px;font-family:'DM Sans',sans-serif;
+  outline:none;transition:.18s;width:100%;-webkit-appearance:none}
+.pc-input:focus,.pc-select:focus{
+  border-color:var(--violet2);background:var(--surface4);
+  box-shadow:0 0 0 3px rgba(159,130,245,.12)}
+.pc-input::placeholder{color:var(--text4)}
+#profile-status{margin-top:14px;padding:11px 16px;border-radius:12px;font-size:13px;
+  background:linear-gradient(135deg,rgba(124,92,232,.1),rgba(201,150,58,.06));
+  border:1px solid rgba(159,130,245,.25);color:var(--violet2);
+  display:none;align-items:center;gap:8px;line-height:1.6}
+#profile-status.show{display:flex}
+#profile-status .ps-name{font-weight:700;color:var(--gold2);font-size:14px}
+
+/* ── 탭 ── */
+#tabs{display:flex;flex-wrap:wrap;gap:7px;padding:2px 2px 6px;margin-bottom:18px}
+.tab{flex-shrink:0;padding:9px 17px;font-size:12px;font-weight:600;color:var(--text3);
+  background:var(--surface);border:1px solid var(--border2);border-radius:30px;
+  cursor:pointer;transition:.2s;letter-spacing:.3px}
+.tab:hover{color:var(--text2);border-color:var(--border3);background:var(--surface2)}
+.tab.active{
+  background:linear-gradient(135deg,var(--violet3),var(--gold4));
+  color:var(--violet2);border-color:var(--violet);
+  box-shadow:var(--glow-v)}
+
+/* ── 서비스 패널 ── */
+.sec{display:none}
+.sec.active{display:block;animation:fadeIn .25s ease;overflow:visible;height:auto;position:relative;z-index:1}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── 서비스 카드 ── */
+.card{
+  background:linear-gradient(160deg,var(--surface) 0%,var(--surface2) 100%);
+  border:1px solid var(--border2);border-radius:22px;
+  padding:24px 22px;margin-bottom:14px;
+  overflow:visible;height:auto;
+  position:relative;z-index:1;
+  box-shadow:var(--shadow-card)}
+.card-head{display:flex;flex-direction:row;align-items:flex-start;
+  justify-content:space-between;gap:10px;margin-bottom:20px}
+.card-title{font-family:'Noto Serif KR',serif;font-size:16px;color:var(--gold2);
+  display:flex;align-items:center;gap:9px;font-weight:500;flex:1;min-width:0}
+.card-title::before{content:'';width:3px;height:16px;
+  background:linear-gradient(var(--gold2),var(--violet2));border-radius:2px;flex-shrink:0}
+.profile-hint{flex-shrink:0;font-size:11px;color:var(--text3);background:var(--surface3);
+  border:1px solid var(--border2);border-radius:20px;padding:4px 10px;
+  white-space:nowrap;max-width:100px;overflow:hidden;text-overflow:ellipsis}
+.profile-hint.ok{color:var(--teal);border-color:rgba(58,201,176,.3);background:rgba(58,201,176,.07)}
+
+/* ── 폼 공통 ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.form-full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:10px;color:var(--text3);letter-spacing:1.5px;font-weight:600;text-transform:uppercase}
+.form-input,.form-select{
+  background:var(--surface3);border:1px solid var(--border3);color:var(--text);
+  border-radius:10px;padding:11px 13px;font-size:14px;
+  font-family:'DM Sans',sans-serif;outline:none;transition:.18s;width:100%;
+  -webkit-appearance:none}
+.form-input:focus,.form-select:focus{
+  border-color:var(--violet2);background:var(--surface4);
+  box-shadow:0 0 0 3px rgba(159,130,245,.1)}
+.form-input::placeholder{color:var(--text4)}
+
+/* ── 버튼 ── */
+.btn-main{
+  width:100%;background:linear-gradient(135deg,var(--violet) 0%,#5b21b6 100%);
+  border:none;color:#fff;border-radius:13px;padding:15px;
+  font-size:15px;font-weight:600;cursor:pointer;transition:.22s;
+  font-family:'DM Sans',sans-serif;letter-spacing:.5px;
+  position:relative;z-index:2;
+  box-shadow:0 4px 20px rgba(124,92,232,.3)}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,92,232,.45);filter:brightness(1.07)}
+.btn-main:active{transform:translateY(0);box-shadow:0 2px 10px rgba(124,92,232,.3);filter:brightness(.96)}
+.btn-gold{
+  background:linear-gradient(135deg,var(--gold2) 0%,var(--gold) 100%);
+  box-shadow:0 4px 20px rgba(201,150,58,.25)}
+.btn-gold:hover{box-shadow:0 8px 28px rgba(201,150,58,.4)}
+.btn-rose{
+  background:linear-gradient(135deg,var(--rose) 0%,#a8185c 100%);
+  box-shadow:0 4px 20px rgba(217,107,153,.25)}
+.btn-rose:hover{box-shadow:0 8px 28px rgba(217,107,153,.4)}
+
+/* ── 결과 박스 ── */
+.result-box{
+  background:linear-gradient(160deg,var(--surface2),var(--surface3));
+  border:1px solid var(--border3);border-radius:18px;
+  padding:24px 22px;margin-top:20px;display:none;
+  overflow-y:auto;overflow-x:hidden;
+  max-height:560px;
+  scrollbar-width:thin;scrollbar-color:var(--border3) transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.result-box::-webkit-scrollbar{width:4px}
+.result-box::-webkit-scrollbar-thumb{background:var(--border3);border-radius:4px}
+.result-box::-webkit-scrollbar-track{background:transparent}
+.result-box.show{display:block;animation:fadeIn .4s ease}
+.result-loading{text-align:center;padding:32px 16px;color:var(--text2)}
+.loading-dots{display:inline-flex;gap:7px;margin-top:12px}
+.loading-dots span{width:8px;height:8px;border-radius:50%;background:var(--violet2);animation:bounce .9s ease infinite}
+.loading-dots span:nth-child(2){animation-delay:.18s}
+.loading-dots span:nth-child(3){animation-delay:.36s}
+@keyframes bounce{0%,100%{transform:translateY(0);opacity:.35}50%{transform:translateY(-7px);opacity:1}}
+.result-content{
+  font-family:'Noto Serif KR',serif;font-size:15px;line-height:2.05;color:var(--text);
+  word-break:keep-all;overflow-wrap:break-word;white-space:normal;
+  display:block;width:100%;height:auto;max-height:none;overflow:visible}
+.result-content h3{
+  font-size:14px;font-weight:600;color:var(--gold2);
+  margin:22px 0 10px;padding:8px 12px;
+  background:linear-gradient(135deg,var(--gold4),transparent);
+  border-left:3px solid var(--gold2);border-radius:0 8px 8px 0;display:block}
+.result-content p{margin:.6em 0;line-height:2.05}
+.result-content strong{color:var(--violet2);font-weight:600}
+.cursor-blink{display:inline-block;color:var(--violet2);
+  animation:blink .65s step-end infinite;font-weight:300}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── 사주 시각화 ── */
+.saju-pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.pillar{background:var(--surface3);border:1px solid var(--border2);border-radius:11px;padding:12px 6px;text-align:center}
+.pillar-label{font-size:10px;color:var(--text3);letter-spacing:1px;margin-bottom:7px}
+.pillar-gan{font-family:'Noto Serif KR',serif;font-size:20px;color:var(--gold2);font-weight:600;line-height:1}
+.pillar-ji{font-family:'Noto Serif KR',serif;font-size:17px;color:var(--violet2);margin-top:5px}
+.pillar-emoji{font-size:16px;margin-top:4px}
+.ohaeng-wrap{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}
+.ohaeng-item{flex:1;min-width:52px;background:var(--surface3);border-radius:9px;padding:8px 5px;text-align:center}
+.ohaeng-name{font-size:10px;color:var(--text3);margin-bottom:5px}
+.ohaeng-bar{height:3px;border-radius:2px;margin:0 auto;transition:.5s}
+.ohaeng-val{font-size:12px;font-weight:600;margin-top:4px}
+
+/* ── 타로 ── */
+.tarot-deck{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:16px 0}
+.tarot-card-wrap{cursor:pointer;perspective:800px}
+.tarot-card{width:88px;height:144px;border-radius:11px;position:relative;
+  transform-style:preserve-3d;transition:transform .55s}
+.tarot-card.flipped{transform:rotateY(180deg)}
+.tarot-front,.tarot-back{position:absolute;inset:0;border-radius:11px;backface-visibility:hidden;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px}
+.tarot-back{background:linear-gradient(150deg,#140820,#251545,#1a0d30);border:1px solid var(--violet2);font-size:28px;box-shadow:inset 0 0 20px rgba(124,92,232,.2)}
+.tarot-back::after{content:'☽ ✦ ☾';position:absolute;bottom:8px;font-size:9px;color:var(--violet2);letter-spacing:3px}
+.tarot-front{background:linear-gradient(150deg,var(--surface3),var(--surface4),#211a38);
+  border:1px solid var(--gold);padding:10px;transform:rotateY(180deg);text-align:center}
+.tarot-front .t-num{font-size:10px;color:var(--gold);letter-spacing:1px}
+.tarot-front .t-icon{font-size:28px;margin:3px 0}
+.tarot-front .t-name{font-family:'Noto Serif KR',serif;font-size:10px;color:var(--text2);line-height:1.4}
+
+/* ── 별자리 그리드 ── */
+.zodiac-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:14px}
+.zodiac-item{background:var(--surface2);border:1px solid var(--border);border-radius:11px;
+  padding:9px 3px;text-align:center;cursor:pointer;transition:.15s}
+.zodiac-item:hover,.zodiac-item.sel{border-color:var(--gold);background:var(--gold3)}
+.zodiac-item .z-icon{font-size:18px;display:block;margin-bottom:2px}
+.zodiac-item .z-name{font-size:9px;color:var(--text3)}
+.zodiac-item.sel .z-name{color:var(--gold2)}
+
+/* ── 꿈해몽 태그 ── */
+.dream-tags{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0}
+.dream-tag{background:var(--surface3);border:1px solid var(--border2);border-radius:18px;
+  padding:5px 13px;font-size:12px;color:var(--text2);cursor:pointer;transition:.15s;letter-spacing:.2px}
+.dream-tag:hover{border-color:var(--violet2);color:var(--violet2)}
+
+/* ── 궁합: 상대 입력만 ── */
+.partner-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:14px}
+.partner-label{grid-column:1/-1;font-size:11px;color:var(--rose);font-weight:600;letter-spacing:1px;margin-bottom:4px}
+
+/* ── 반응형 ── */
+@media(max-width:580px){
+  #app{padding:0 12px 140px}
+  #header{padding:36px 0 20px}
+  #title-main{font-size:23px}
+  #subtitle-main{font-size:10px;letter-spacing:1.5px}
+  #today-bar{padding:8px 16px;font-size:11px;gap:10px}
+  #profile-card{padding:20px 16px;border-radius:18px}
+  .pc-grid{grid-template-columns:1fr 1fr}
+  .pc-group.wide{grid-column:span 2}
+  .pc-input,.pc-select{font-size:14px;padding:10px 11px}
+  .card{padding:18px 16px;border-radius:18px}
+  .card-title{font-size:15px}
+  .form-grid{grid-template-columns:1fr}
+  .form-input,.form-select{font-size:14px;padding:11px 12px}
+  .btn-main{padding:14px;font-size:14px;border-radius:12px}
+  .result-box{padding:18px 16px;max-height:480px}
+  .result-content{font-size:14px;line-height:1.95}
+  .result-content h3{font-size:13px;padding:7px 10px}
+  .zodiac-grid{grid-template-columns:repeat(4,1fr);gap:6px}
+  .zodiac-item{padding:8px 2px}
+  .zodiac-item .z-icon{font-size:16px}
+  .zodiac-item .z-name{font-size:9px}
+  .tarot-card{width:76px;height:124px}
+  .tarot-front .t-icon{font-size:24px}
+  .saju-pillars{gap:6px}
+  .pillar{padding:10px 4px}
+  .pillar-gan{font-size:18px}
+  .pillar-ji{font-size:15px}
+  .tab{padding:8px 13px;font-size:11px}
+  .partner-grid{grid-template-columns:1fr}
+}
+@media(max-width:380px){
+  #title-main{font-size:20px}
+  .zodiac-grid{grid-template-columns:repeat(3,1fr)}
+  .tarot-card{width:66px;height:108px}
+}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div id="app">
+
+  <!-- 헤더 -->
+  <div id="header">
+    <div class="header-orb"></div>
+    <span id="logo-main">pomiai · fortune</span>
+    <h1 id="title-main">신비로운 빛이 당신의<br>행복을 응원해요</h1>
+    <p id="subtitle-main">사주 · 오늘운세 · 타로 · 별자리 · 꿈해몽 · 이름풀이</p>
+    <div id="today-bar">
+      <span id="today-solar"></span>
+      <span class="dot"></span>
+      <span id="today-lunar">음력</span>
+      <span class="dot"></span>
+      <span id="today-gan"></span>
+    </div>
+  </div>
+
+  <!-- ★ 신상 입력 (한 번만) ★ -->
+  <div id="profile-card">
+    <div class="pc-title">나의 정보 입력</div>
+    <div class="pc-grid">
+      <div class="pc-group">
+        <label class="pc-label">이름</label>
+        <input class="pc-input" id="p-name" placeholder="홍길동" oninput="updateProfile()">
+      </div>
+      <div class="pc-group">
+        <label class="pc-label">성별</label>
+        <select class="pc-select" id="p-gender" onchange="updateProfile()">
+          <option value="남">남성</option>
+          <option value="여">여성</option>
+        </select>
+      </div>
+      <div class="pc-group">
+        <label class="pc-label">생년월일</label>
+        <input class="pc-input" id="p-date" type="date" onchange="updateProfile()">
+      </div>
+      <div class="pc-group">
+        <label class="pc-label">태어난 시</label>
+        <select class="pc-select" id="p-time" onchange="updateProfile()">
+          <option value="모름">모름</option>
+          <option value="子시(23~01)">子시 23~01시</option>
+          <option value="丑시(01~03)">丑시 01~03시</option>
+          <option value="寅시(03~05)">寅시 03~05시</option>
+          <option value="卯시(05~07)">卯시 05~07시</option>
+          <option value="辰시(07~09)">辰시 07~09시</option>
+          <option value="巳시(09~11)">巳시 09~11시</option>
+          <option value="午시(11~13)">午시 11~13시</option>
+          <option value="未시(13~15)">未시 13~15시</option>
+          <option value="申시(15~17)">申시 15~17시</option>
+          <option value="酉시(17~19)">酉시 17~19시</option>
+          <option value="戌시(19~21)">戌시 19~21시</option>
+          <option value="亥시(21~23)">亥시 21~23시</option>
+        </select>
+      </div>
+      <div class="pc-group">
+        <label class="pc-label">별자리</label>
+        <select class="pc-select" id="p-zodiac" onchange="updateProfile()">
+          <option value="">선택 안 함</option>
+          <option>양자리</option><option>황소자리</option><option>쌍둥이자리</option>
+          <option>게자리</option><option>사자자리</option><option>처녀자리</option>
+          <option>천칭자리</option><option>전갈자리</option><option>사수자리</option>
+          <option>염소자리</option><option>물병자리</option><option>물고기자리</option>
+        </select>
+      </div>
+    </div>
+    <div id="profile-status">
+      <span>✦</span>
+      <span id="ps-text"></span>
+    </div>
+  </div>
+
+  <!-- 탭 -->
+  <div id="tabs">
+    <button class="tab active" onclick="showSec('saju')">☯ 사주팔자</button>
+    <button class="tab" onclick="showSec('today')">🌙 오늘운세</button>
+    <button class="tab" onclick="showSec('compat')">♾ 궁합</button>
+    <button class="tab" onclick="showSec('tarot')">🎴 타로</button>
+    <button class="tab" onclick="showSec('zodiac')">✦ 별자리</button>
+    <button class="tab" onclick="showSec('dream')">🌊 꿈해몽</button>
+    <button class="tab" onclick="showSec('name')">書 이름풀이</button>
+    <button class="tab" onclick="showSec('newyear')">🐍 신년운세</button>
+  </div>
+
+  <!-- ① 사주팔자 -->
+  <div class="sec active" id="sec-saju">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">사주팔자 분석</div>
+        <span class="profile-hint" id="sj-hint">신상 입력 후 분석</span>
+      </div>
+      <div id="sj-pillars-wrap" style="display:none">
+        <div class="saju-pillars" id="sj-pillars"></div>
+        <div class="ohaeng-wrap" id="sj-ohaeng"></div>
+      </div>
+      <button class="btn-main btn-gold" onclick="doSaju()">✦ 사주 분석하기</button>
+      <div class="result-box" id="sj-result"></div>
+    </div>
+  </div>
+
+  <!-- ② 오늘의 운세 -->
+  <div class="sec" id="sec-today">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">오늘의 운세</div>
+        <span class="profile-hint" id="td-hint">신상 입력 후 분석</span>
+      </div>
+      <button class="btn-main" onclick="doToday()">🌙 오늘의 운세 보기</button>
+      <div class="result-box" id="td-result"></div>
+    </div>
+  </div>
+
+  <!-- ③ 궁합 -->
+  <div class="sec" id="sec-compat">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">사주 궁합</div>
+        <span class="profile-hint" id="cp-hint">신상 입력 후 분석</span>
+      </div>
+      <div class="partner-grid">
+        <div class="partner-label">♾ 상대방 정보</div>
+        <div class="form-group">
+          <label class="form-label">상대 이름</label>
+          <input class="form-input" id="cp-name2" placeholder="이름">
+        </div>
+        <div class="form-group">
+          <label class="form-label">상대 생년월일</label>
+          <input class="form-input" id="cp-date2" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">상대 성별</label>
+          <select class="form-select" id="cp-gen2">
+            <option value="여">여성</option><option value="남">남성</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-main btn-rose" onclick="doCompat()">♾ 궁합 보기</button>
+      <div class="result-box" id="cp-result"></div>
+    </div>
+  </div>
+
+  <!-- ④ 타로 -->
+  <div class="sec" id="sec-tarot">
+    <div class="card">
+      <div class="card-title">타로 카드 리딩</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div class="form-group">
+          <label class="form-label">질문 (선택)</label>
+          <input class="form-input" id="tr-question" placeholder="마음속 질문...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">리딩 방식</label>
+          <select class="form-select" id="tr-spread">
+            <option value="1">원 카드 (현재)</option>
+            <option value="3" selected>쓰리 카드 (과거·현재·미래)</option>
+            <option value="5">파이브 카드 (심층)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-main" style="background:linear-gradient(135deg,#4c1d95,var(--violet))" onclick="shuffleTarot()">🎴 카드 뽑기</button>
+      <div id="tr-deck" style="display:none">
+        <div class="tarot-deck" id="tr-cards"></div>
+        <button class="btn-main" style="margin-top:8px;background:linear-gradient(135deg,var(--violet),#4c1d95)" onclick="revealTarot()" id="tr-reveal-btn">✦ 카드 해석하기</button>
+      </div>
+      <div class="result-box" id="tr-result"></div>
+    </div>
+  </div>
+
+  <!-- ⑤ 별자리 -->
+  <div class="sec" id="sec-zodiac">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">별자리 운세</div>
+        <span class="profile-hint" id="zd-hint">신상의 별자리 사용</span>
+      </div>
+      <div class="zodiac-grid" id="zodiac-grid"></div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">기간</label>
+        <select class="form-select" id="zd-period">
+          <option value="오늘">오늘</option>
+          <option value="이번 주">이번 주</option>
+          <option value="이번 달">이번 달</option>
+        </select>
+      </div>
+      <button class="btn-main" style="background:linear-gradient(135deg,#1e3a5f,#2563eb)" onclick="doZodiac()">✦ 별자리 운세 보기</button>
+      <div class="result-box" id="zd-result"></div>
+    </div>
+  </div>
+
+  <!-- ⑥ 꿈해몽 -->
+  <div class="sec" id="sec-dream">
+    <div class="card">
+      <div class="card-title">꿈해몽</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">꿈 내용</label>
+        <textarea class="form-input" id="dm-content" rows="3"
+          placeholder="꾼 꿈의 내용을 적어주세요..." style="resize:vertical;min-height:80px"></textarea>
+      </div>
+      <div class="dream-tags" id="dream-tags"></div>
+      <button class="btn-main" style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid var(--violet)" onclick="doDream()">🌊 꿈해몽 보기</button>
+      <div class="result-box" id="dm-result"></div>
+    </div>
+  </div>
+
+  <!-- ⑦ 이름풀이 -->
+  <div class="sec" id="sec-name">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">이름풀이 · 작명</div>
+        <span class="profile-hint" id="nm-hint">신상 입력 후 분석</span>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">서비스 선택</label>
+        <select class="form-select" id="nm-type">
+          <option value="풀이">이름풀이 (내 이름 분석)</option>
+          <option value="작명">작명 추천 (새 이름 제안)</option>
+        </select>
+      </div>
+      <button class="btn-main btn-gold" onclick="doName()">書 이름풀이 보기</button>
+      <div class="result-box" id="nm-result"></div>
+    </div>
+  </div>
+
+  <!-- ⑧ 신년운세 -->
+  <div class="sec" id="sec-newyear">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">신년운세</div>
+          <div id="ny-year-sub" style="font-size:12px;color:var(--text3);margin-top:5px;padding-left:12px"></div>
+        </div>
+        <span class="profile-hint" id="ny-hint">신상 입력 후 분석</span>
+      </div>
+      <button class="btn-main btn-gold" onclick="doNewYear()">🐍 신년운세 보기</button>
+      <div class="result-box" id="ny-result"></div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+/* ── 배경 파티클 ── */
+(function(){
+  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
+  let W,H,stars=[];
+  function resize(){W=c.width=innerWidth;H=c.height=innerHeight;
+    stars=Array.from({length:100},()=>({x:Math.random()*W,y:Math.random()*H,
+      r:Math.random()*1.2+.3,a:Math.random(),da:.002+Math.random()*.003,
+      vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.12}));}
+  resize();window.addEventListener('resize',resize);
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(s=>{
+      s.x+=s.vx;s.y+=s.vy;s.a+=s.da;
+      if(s.x<0)s.x=W;if(s.x>W)s.x=0;if(s.y<0)s.y=H;if(s.y>H)s.y=0;
+      const a=.3+.5*Math.abs(Math.sin(s.a));
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(167,139,250,${a})`;ctx.fill();
+    });
+    for(let i=0;i<stars.length;i+=7){
+      const j=(i+7)%stars.length;
+      const dx=stars[j].x-stars[i].x,dy=stars[j].y-stars[i].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<140){ctx.beginPath();ctx.moveTo(stars[i].x,stars[i].y);ctx.lineTo(stars[j].x,stars[j].y);
+        ctx.strokeStyle=`rgba(139,92,246,${(1-dist/140)*.1})`;ctx.lineWidth=.5;ctx.stroke();}
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── 역학 상수 ── */
+const GAN=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const JI=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const ANIMALS=['쥐','소','호랑이','토끼','용','뱀','말','양','원숭이','닭','개','돼지'];
+const ANIMAL_EMOJI=['🐭','🐮','🐯','🐰','🐲','🐍','🐴','🐑','🐵','🐔','🐶','🐷'];
+const OHAENG_COLOR={목:'#4ade80',화:'#f87171',토:'#f59e0b',금:'#e2e8f0',수:'#60a5fa'};
+
+function getGanJi(year){
+  const g=((year-4)%10+10)%10,j=((year-4)%12+12)%12;
+  return{gan:GAN[g],ji:JI[j],animal:ANIMALS[j],emoji:ANIMAL_EMOJI[j]};
+}
+function getSaju(year,month,day){
+  const yg=((year-4)%10+10)%10,yj=((year-4)%12+12)%12;
+  const mj=(month+1)%12,mg=((year*12+month)%10+10)%10;
+  const jd=Math.floor(year*365.25)+Math.floor(month*30.6)+day;
+  const dg=(jd%10+10)%10,dj=(jd%12+12)%12;
+  return[
+    {label:'년주',gan:GAN[yg],ji:JI[yj],emoji:ANIMAL_EMOJI[yj]},
+    {label:'월주',gan:GAN[mg],ji:JI[mj],emoji:'🌙'},
+    {label:'일주',gan:GAN[dg],ji:JI[dj],emoji:'☀️'},
+    {label:'시주',gan:GAN[(dg+2)%10],ji:JI[(dj+2)%12],emoji:'⭐'},
+  ];
+}
+function getOhaeng(pillars){
+  const map={甲:'목',乙:'목',丙:'화',丁:'화',戊:'토',己:'토',庚:'금',辛:'금',壬:'수',癸:'수',
+    子:'수',丑:'토',寅:'목',卯:'목',辰:'토',巳:'화',午:'화',未:'토',申:'금',酉:'금',戌:'토',亥:'수'};
+  const cnt={목:0,화:0,토:0,금:0,수:0};
+  pillars.forEach(p=>{cnt[map[p.gan]]=(cnt[map[p.gan]]||0)+2;cnt[map[p.ji]]=(cnt[map[p.ji]]||0)+1;});
+  return cnt;
+}
+
+/* ── 오늘 날짜 ── */
+const NOW=new Date();
+const YEAR=NOW.getFullYear();
+const NEXTYEAR=NOW.getMonth()>=10?YEAR+1:YEAR; // 11월 이후면 내년
+const WD=['일','월','화','수','목','금','토'];
+(function(){
+  document.getElementById('today-solar').textContent=
+    `${YEAR}년 ${NOW.getMonth()+1}월 ${NOW.getDate()}일 (${WD[NOW.getDay()]})`;
+  const gj=getGanJi(YEAR);
+  document.getElementById('today-gan').textContent=`${gj.gan}${gj.ji}년 ${gj.emoji}${gj.animal}의 해`;
+  const lunarOffset=NOW.getMonth()*29.5+NOW.getDate()-15;
+  const lm=Math.max(1,Math.floor((lunarOffset%354)/29.5)+1);
+  const ld=Math.max(1,Math.floor(lunarOffset%29.5)+1);
+  document.getElementById('today-lunar').textContent=`음력 ${lm}월 ${ld}일`;
+  // 신년운세 부제목 동적 설정
+  const nyGj=getGanJi(NEXTYEAR);
+  const nySubEl=document.getElementById('ny-year-sub');
+  if(nySubEl) nySubEl.textContent=`${NEXTYEAR}년 ${nyGj.gan}${nyGj.ji}년 (${nyGj.animal}의 해)`;
+})();
+
+/* ── 신상 프로필 ── */
+let profile={name:'',gender:'남',date:'',time:'모름',zodiac:'',ddi:'',pillars:null,ohaeng:null,birthDate:null};
+
+function updateProfile(){
+  profile.name=document.getElementById('p-name').value.trim();
+  profile.gender=document.getElementById('p-gender').value;
+  profile.date=document.getElementById('p-date').value;
+  profile.time=document.getElementById('p-time').value;
+  profile.zodiac=document.getElementById('p-zodiac').value;
+
+  if(profile.date){
+    const d=new Date(profile.date);
+    profile.birthDate=d;
+    const gj=getGanJi(d.getFullYear());
+    profile.ddi=gj.animal+'띠';
+    profile.pillars=getSaju(d.getFullYear(),d.getMonth()+1,d.getDate());
+    profile.ohaeng=getOhaeng(profile.pillars);
+    // 별자리 자동 설정 (생년월일로 추정)
+    if(!profile.zodiac) autoSetZodiac(d.getMonth()+1,d.getDate());
+  }
+
+  const ready=profile.name&&profile.date;
+  const status=document.getElementById('profile-status');
+  const psText=document.getElementById('ps-text');
+  if(ready){
+    status.className='show';
+    const gj=profile.birthDate?getGanJi(profile.birthDate.getFullYear()):null;
+    psText.innerHTML=`<span class="ps-name">${profile.name}</span>님 · ${profile.ddi} ${gj?gj.emoji:''} · ${profile.zodiac||''}`;
+    // 사주 시각화 업데이트
+    updateSajuViz();
+    // 힌트 업데이트
+    ['sj','td','cp','zd','nm','ny'].forEach(id=>{
+      const el=document.getElementById(id+'-hint');
+      if(el){el.className='profile-hint ok';el.textContent=profile.name+'님 준비됨 ✓';}
+    });
+    // 별자리 자동 선택
+    if(profile.zodiac) autoSelectZodiac(profile.zodiac);
+  }else{
+    status.className='';
+  }
+}
+
+function autoSetZodiac(m,d){
+  const dates=[[21,4,19],[20,5,20],[21,6,20],[21,7,22],[23,8,22],[23,9,22],
+    [23,10,22],[23,11,21],[22,12,21],[22,1,19],[20,2,18],[19,3,20]];
+  const names=['양자리','황소자리','쌍둥이자리','게자리','사자자리','처녀자리',
+    '천칭자리','전갈자리','사수자리','염소자리','물병자리','물고기자리'];
+  for(let i=0;i<12;i++){
+    const [sd,em,ed]=dates[i];
+    if((m===i+1&&d>=sd)||(m===(em===i+2?i+2:em)&&d<=ed)){
+      profile.zodiac=names[i];
+      document.getElementById('p-zodiac').value=names[i];
+      return;
+    }
+  }
+}
+
+function updateSajuViz(){
+  if(!profile.pillars)return;
+  const pw=document.getElementById('sj-pillars-wrap');
+  const pe=document.getElementById('sj-pillars');
+  const oe=document.getElementById('sj-ohaeng');
+  pe.innerHTML=profile.pillars.map(p=>`
+    <div class="pillar">
+      <div class="pillar-label">${p.label}</div>
+      <div class="pillar-gan">${p.gan}</div>
+      <div class="pillar-ji">${p.ji}</div>
+      <div class="pillar-emoji">${p.emoji}</div>
+    </div>`).join('');
+  const total=Object.values(profile.ohaeng).reduce((a,b)=>a+b,0)||1;
+  oe.innerHTML=Object.entries(profile.ohaeng).map(([k,v])=>`
+    <div class="ohaeng-item">
+      <div class="ohaeng-name">${k}</div>
+      <div class="ohaeng-bar" style="width:${Math.max(6,v/total*56)}px;background:${OHAENG_COLOR[k]}"></div>
+      <div class="ohaeng-val" style="color:${OHAENG_COLOR[k]}">${v}</div>
+    </div>`).join('');
+  pw.style.display='block';
+}
+
+/* ── 탭 전환 ── */
+const SECS=['saju','today','compat','tarot','zodiac','dream','name','newyear'];
+function showSec(id){
+  SECS.forEach(s=>document.getElementById('sec-'+s).classList.toggle('active',s===id));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',SECS[i]===id));
+}
+
+/* ── Claude API ── */
+async function callClaude(prompt,resultEl){
+  resultEl.className='result-box show';
+  resultEl.innerHTML=`<div class="result-loading">
+    <div style="font-size:30px;margin-bottom:8px">🔮</div>
+    <div style="font-family:'Noto Serif KR',serif;font-size:13px;color:var(--violet2)">운명의 실을 읽는 중...</div>
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+  </div>`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:8000,
+        stream:true,
+        system:`당신은 한국의 전통 역학과 운세를 깊이 이해하는 전문 역술가입니다.
+사주팔자, 음양오행, 궁합, 타로, 별자리, 꿈해몽, 이름풀이 등 동서양 운세를 종합하여
+신비롭고 통찰력 있는 해석을 제공합니다.
+답변은 반드시 한국어로, 따뜻하고 시적인 문체로 작성하세요.
+섹션 제목은 【 】로 표시하고, 중요한 키워드는 ★로 강조하세요.
+부정적인 내용은 희망적인 방향으로 전환하되 솔직하게 표현하세요.`,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+
+    /* 스트리밍 처리 — 텍스트가 실시간으로 표시됨 */
+    const reader=res.body.getReader();
+    const decoder=new TextDecoder();
+    let fullText='';
+    /* 고유 id로 충돌 방지 */
+    const uid='sc-'+Date.now();
+    resultEl.innerHTML='<div class="result-content" id="'+uid+'"></div>';
+    const streamEl=document.getElementById(uid);
+
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      const chunk=decoder.decode(value,{stream:true});
+      const lines=chunk.split('\n');
+      for(const line of lines){
+        if(!line.startsWith('data:'))continue;
+        const data=line.slice(5).trim();
+        if(data==='[DONE]')break;
+        try{
+          const parsed=JSON.parse(data);
+          if(parsed.type==='content_block_delta'&&parsed.delta?.type==='text_delta'){
+            fullText+=parsed.delta.text;
+            streamEl.innerHTML=renderHTML(fullText)+'<span class="cursor-blink">|</span>';
+            resultEl.scrollTop=resultEl.scrollHeight;
+          }
+        }catch(e){}
+      }
+    }
+    /* 커서 제거 후 최종 렌더링 */
+    streamEl.innerHTML=renderHTML(fullText);
+    setTimeout(()=>resultEl.scrollIntoView({behavior:'smooth',block:'nearest'}),120);
+
+  }catch(e){
+    resultEl.innerHTML=`<div class="result-content">⚠️ 운세를 불러오지 못했습니다.<br><small style="color:var(--text3)">${e.message}</small></div>`;
+  }
+}
+
+/* 텍스트 → HTML 변환 */
+function renderHTML(text){
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\u3010([^\u3011]+)\u3011/g,'<h3>$1</h3>')
+    .replace(/(\u2605+)/g,'<span style="color:var(--gold);letter-spacing:2px">$1</span>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/\n\n+/g,'</p><p>')
+    .replace(/\n/g,'<br>');
+}
+function renderResult(text,el){
+  el.innerHTML='<div class="result-content"><p>'+renderHTML(text)+'</p></div>';
+}
+
+function checkProfile(el){
+  if(!profile.name||!profile.date){
+    el.className='result-box show';
+    el.innerHTML='<div class="result-content" style="color:var(--gold)">⚠️ 상단의 <strong>나의 정보</strong>를 먼저 입력해주세요.</div>';
+    document.getElementById('profile-card').scrollIntoView({behavior:'smooth',block:'start'});
+    return false;
+  }
+  return true;
+}
+
+function pInfo(){
+  // 공통 신상 정보 텍스트
+  const d=profile.birthDate;
+  return `이름: ${profile.name} / 성별: ${profile.gender}
+생년월일: ${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일
+띠: ${profile.ddi} / 태어난 시각: ${profile.time}
+사주: ${profile.pillars.map(p=>p.gan+p.ji).join(' ')}
+오행: ${Object.entries(profile.ohaeng).map(([k,v])=>k+'('+v+')').join(', ')}`;
+}
+
+/* ── ① 사주팔자 ── */
+function doSaju(){
+  const el=document.getElementById('sj-result');
+  if(!checkProfile(el))return;
+  callClaude(`다음 사주팔자를 전통 역학에 근거해 종합 분석해주세요.
+
+【의뢰인 정보】
+${pInfo()}
+
+다음 항목을 순서대로 분석해주세요:
+【사주 총평】 타고난 기질과 운명의 흐름
+【성격과 적성】 강점과 주의할 점
+【올해 운세】 ${YEAR}년 운의 흐름
+【인연과 결혼운】 인간관계와 사랑
+【재물과 직업운】 경제와 커리어
+【건강】 주의사항과 관리법
+【인생 조언】 개운법과 방향
+
+각 항목은 【 】 제목으로 구분하고 500자 이상 작성해주세요.`,el);
+}
+
+/* ── ② 오늘의 운세 ── */
+function doToday(){
+  const el=document.getElementById('td-result');
+  if(!checkProfile(el))return;
+  const gj=getGanJi(YEAR);
+  callClaude(`오늘(${YEAR}년 ${NOW.getMonth()+1}월 ${NOW.getDate()}일 ${WD[NOW.getDay()]}요일)의 운세를 봐주세요.
+
+【의뢰인 정보】
+${pInfo()}
+현재의 해: ${gj.gan}${gj.ji}년 ${gj.emoji}
+
+다음 항목으로 오늘의 운세를 알려주세요:
+【오늘 총운】 ★ 별점(1~5개)과 총평
+【애정운】 연애·인간관계
+【재물운】 금전·사업
+【건강운】 몸과 마음
+【직업·학업운】 일과 공부
+【행운 아이템】 색상·숫자·방위
+【오늘의 한마디】 핵심 조언
+
+300자 이상 생동감 있게 작성해주세요.`,el);
+}
+
+/* ── ③ 궁합 ── */
+function doCompat(){
+  const el=document.getElementById('cp-result');
+  if(!checkProfile(el))return;
+  const n2=document.getElementById('cp-name2').value||'상대방';
+  const d2=document.getElementById('cp-date2').value;
+  const g2=document.getElementById('cp-gen2').value;
+  if(!d2){el.className='result-box show';el.innerHTML='<div class="result-content" style="color:var(--gold)">⚠️ 상대방의 생년월일을 입력해주세요.</div>';return;}
+  const dt2=new Date(d2);
+  const gj2=getGanJi(dt2.getFullYear());
+  const p2=getSaju(dt2.getFullYear(),dt2.getMonth()+1,dt2.getDate());
+  callClaude(`두 사람의 사주 궁합을 전통 역학으로 분석해주세요.
+
+【나 (${profile.name})】
+${pInfo()}
+
+【상대방 (${n2})】
+이름: ${n2} / 성별: ${g2}
+생년월일: ${dt2.getFullYear()}년 ${dt2.getMonth()+1}월 ${dt2.getDate()}일
+띠: ${gj2.animal}띠 / 사주: ${p2.map(p=>p.gan+p.ji).join(' ')}
+
+다음 항목으로 궁합을 분석해주세요:
+【궁합 총점】 100점 만점 점수와 총평
+【기운의 조화】 천간합·지지합 분석
+【애정 궁합】 사랑의 흐름
+【성격 궁합】 서로의 특성
+【재물 궁합】 경제적 조화
+【결혼·동거운】 함께하는 미래
+【두 사람에게】 특별한 조언
+
+500자 이상 구체적으로 작성해주세요.`,el);
+}
+
+/* ── ④ 타로 ── */
+const MAJOR_ARCANA=[
+  {num:'0',name:'광대',icon:'🃏'},{num:'I',name:'마법사',icon:'🎩'},{num:'II',name:'여사제',icon:'🌙'},
+  {num:'III',name:'황후',icon:'👑'},{num:'IV',name:'황제',icon:'⚔️'},{num:'V',name:'교황',icon:'✝️'},
+  {num:'VI',name:'연인',icon:'💕'},{num:'VII',name:'전차',icon:'🏆'},{num:'VIII',name:'힘',icon:'🦁'},
+  {num:'IX',name:'은둔자',icon:'🕯️'},{num:'X',name:'운명의 수레바퀴',icon:'☸️'},{num:'XI',name:'정의',icon:'⚖️'},
+  {num:'XII',name:'매달린 사람',icon:'🔮'},{num:'XIII',name:'죽음',icon:'🥀'},{num:'XIV',name:'절제',icon:'🏺'},
+  {num:'XV',name:'악마',icon:'😈'},{num:'XVI',name:'탑',icon:'⚡'},{num:'XVII',name:'별',icon:'⭐'},
+  {num:'XVIII',name:'달',icon:'🌕'},{num:'XIX',name:'태양',icon:'☀️'},{num:'XX',name:'심판',icon:'🎺'},
+  {num:'XXI',name:'세계',icon:'🌍'},
+];
+let drawnCards=[];
+
+function shuffleTarot(){
+  const count=parseInt(document.getElementById('tr-spread').value);
+  drawnCards=[...MAJOR_ARCANA].sort(()=>Math.random()-.5).slice(0,count)
+    .map(c=>({...c,reversed:Math.random()>.5}));
+  const labels=count===1?['현재']:count===3?['과거','현재','미래']:['현재','도전','과거','미래','결과'];
+  document.getElementById('tr-cards').innerHTML=drawnCards.map((c,i)=>`
+    <div class="tarot-card-wrap" onclick="flipCard(${i})">
+      <div class="tarot-card" id="tc-${i}">
+        <div class="tarot-back">🌟</div>
+        <div class="tarot-front">
+          <div class="t-num">${c.num}</div>
+          <div class="t-icon">${c.icon}</div>
+          <div class="t-name">${c.name}${c.reversed?'\n↓역방향':''}</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:3px">${labels[i]||''}</div>
+        </div>
+      </div>
+    </div>`).join('');
+  document.getElementById('tr-deck').style.display='block';
+  document.getElementById('tr-result').className='result-box';
+  document.getElementById('tr-reveal-btn').style.display='block';
+}
+function flipCard(i){document.getElementById('tc-'+i).classList.toggle('flipped');}
+function revealTarot(){
+  const q=document.getElementById('tr-question').value;
+  const spread=document.getElementById('tr-spread').value;
+  const sname=spread==='1'?'원 카드':spread==='3'?'쓰리 카드':'파이브 카드';
+  const labels=spread==='1'?['현재']:spread==='3'?['과거','현재','미래']:['현재','도전','과거','미래','결과'];
+  const desc=drawnCards.map((c,i)=>`${labels[i]}: ${c.name}(${c.num}) ${c.reversed?'역방향':'정방향'}`).join('\n');
+  document.getElementById('tr-reveal-btn').style.display='none';
+  callClaude(`타로 ${sname} 리딩을 해주세요.${q?'\n질문: "'+q+'"':''}
+${profile.name?'\n의뢰인: '+profile.name+' / '+profile.ddi:''}
+
+뽑힌 카드:
+${desc}
+
+각 카드의 의미와 카드들 사이의 연결고리, 전체 흐름을 깊이 해석해주세요.
+마지막에 종합 조언을 포함해주세요. (400자 이상)`,document.getElementById('tr-result'));
+}
+
+/* ── ⑤ 별자리 ── */
+const ZODIACS=[
+  {name:'양자리',icon:'♈',date:'3/21~4/19'},{name:'황소자리',icon:'♉',date:'4/20~5/20'},
+  {name:'쌍둥이자리',icon:'♊',date:'5/21~6/20'},{name:'게자리',icon:'♋',date:'6/21~7/22'},
+  {name:'사자자리',icon:'♌',date:'7/23~8/22'},{name:'처녀자리',icon:'♍',date:'8/23~9/22'},
+  {name:'천칭자리',icon:'♎',date:'9/23~10/22'},{name:'전갈자리',icon:'♏',date:'10/23~11/21'},
+  {name:'사수자리',icon:'♐',date:'11/22~12/21'},{name:'염소자리',icon:'♑',date:'12/22~1/19'},
+  {name:'물병자리',icon:'♒',date:'1/20~2/18'},{name:'물고기자리',icon:'♓',date:'2/19~3/20'},
+];
+let selZodiac=null;
+
+(function(){
+  document.getElementById('zodiac-grid').innerHTML=ZODIACS.map((z,i)=>`
+    <div class="zodiac-item" onclick="selectZodiac(${i})" id="zi-${i}">
+      <span class="z-icon">${z.icon}</span>
+      <div class="z-name">${z.name.replace('자리','')}</div>
+    </div>`).join('');
+})();
+
+function selectZodiac(i){
+  selZodiac=ZODIACS[i];
+  document.querySelectorAll('.zodiac-item').forEach((el,j)=>el.classList.toggle('sel',j===i));
+}
+function autoSelectZodiac(name){
+  const i=ZODIACS.findIndex(z=>z.name===name);
+  if(i>=0){selZodiac=ZODIACS[i];document.querySelectorAll('.zodiac-item').forEach((el,j)=>el.classList.toggle('sel',j===i));}
+}
+
+function doZodiac(){
+  const el=document.getElementById('zd-result');
+  // 신상의 별자리 자동 사용
+  if(!selZodiac&&profile.zodiac) autoSelectZodiac(profile.zodiac);
+  if(!selZodiac){el.className='result-box show';el.innerHTML='<div class="result-content" style="color:var(--gold)">⚠️ 별자리를 선택하거나 신상에 생년월일을 입력해주세요.</div>';return;}
+  const period=document.getElementById('zd-period').value;
+  callClaude(`${selZodiac.name}(${selZodiac.date})의 ${period} 운세를 알려주세요.
+오늘: ${YEAR}년 ${NOW.getMonth()+1}월 ${NOW.getDate()}일
+${profile.name?'의뢰인: '+profile.name+' / '+profile.ddi:''}
+
+다음 항목으로 운세를 분석해주세요:
+【총운】 ★ 별점(1~5개)과 총평
+【애정운】 사랑과 인간관계
+【재물·사업운】 금전과 커리어
+【건강·에너지】 몸과 마음
+【행운 아이템】 색상·숫자
+【핵심 메시지】 이 시기의 조언
+
+시적이고 감성적으로 300자 이상 작성해주세요.`,el);
+}
+
+/* ── ⑥ 꿈해몽 ── */
+const DREAM_TAGS=['용','뱀','물','불','하늘을 날다','이빨','돌아가신 분','집','돈','결혼','시험','쫓기다','물고기','꽃','아기'];
+document.getElementById('dream-tags').innerHTML=DREAM_TAGS.map(t=>`
+  <span class="dream-tag" onclick="addDreamTag('${t}')">${t}</span>`).join('');
+function addDreamTag(t){const el=document.getElementById('dm-content');el.value=(el.value?el.value+', ':'')+t;}
+function doDream(){
+  const el=document.getElementById('dm-result');
+  const content=document.getElementById('dm-content').value;
+  if(!content.trim()){el.className='result-box show';el.innerHTML='<div class="result-content" style="color:var(--gold)">⚠️ 꿈 내용을 입력해주세요.</div>';return;}
+  callClaude(`다음 꿈을 해몽해주세요.
+꿈 내용: "${content}"
+${profile.name?'꿈을 꾼 사람: '+profile.name+' / '+profile.ddi:''}
+
+다음 항목으로 꿈해몽을 알려주세요:
+【꿈의 의미】 전반적인 해석
+【상징 분석】 주요 요소들의 의미
+【길흉 판단】 좋은 꿈인지 나쁜 꿈인지
+【현실 메시지】 실생활 조언
+【예고하는 것】 앞으로의 암시
+
+300자 이상 구체적으로 작성해주세요.`,el);
+}
+
+/* ── ⑦ 이름풀이 — 신상 이름 자동 사용 ── */
+function doName(){
+  const el=document.getElementById('nm-result');
+  if(!checkProfile(el))return;
+  const type=document.getElementById('nm-type').value;
+  const d=profile.birthDate;
+  let prompt;
+  if(type==='풀이'){
+    prompt=`이름 "${profile.name}"을 성명학으로 풀이해주세요.
+
+의뢰인 정보:
+이름: ${profile.name} / 성별: ${profile.gender}
+생년월일: ${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일
+사주: ${profile.pillars.map(p=>p.gan+p.ji).join(' ')}
+
+다음 항목으로 이름을 분석해주세요:
+【글자 분석】 각 글자의 한자 의미와 획수
+【오행 분석】 이름의 오행(목·화·토·금·수) 구성
+【성명학 판단】 획수에 의한 길흉
+【이름의 기운】 이 이름이 가진 특성과 에너지
+【삶에 미치는 영향】 성격·운명·대인관계
+【종합 평가】 총평과 조언
+
+300자 이상 상세하게 작성해주세요.`;
+  }else{
+    const lastName=profile.name.charAt(0);
+    prompt=`성명학에 근거하여 "${lastName}"씨 성을 가진 분을 위한 좋은 이름 3가지를 추천해주세요.
+
+의뢰인 정보:
+성별: ${profile.gender}
+생년월일: ${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일
+사주: ${profile.pillars.map(p=>p.gan+p.ji).join(' ')}
+오행: ${Object.entries(profile.ohaeng).map(([k,v])=>k+'('+v+')').join(', ')}
+
+각 추천 이름에 대해:
+【추천 이름 1/2/3】 이름과 한자
+- 획수와 오행 구성
+- 이름의 의미와 기운
+- 이 이름이 가져다 줄 운
+
+사주의 오행 균형을 고려하여 400자 이상 상세하게 추천해주세요.`;
+  }
+  callClaude(prompt,el);
+}
+
+/* ── ⑧ 신년운세 — 현재 연도 기준 ── */
+function doNewYear(){
+  const el=document.getElementById('ny-result');
+  if(!checkProfile(el))return;
+  const nyGj=getGanJi(NEXTYEAR);
+  callClaude(`${NEXTYEAR}년 ${nyGj.gan}${nyGj.ji}년(${nyGj.animal}의 해) 신년운세를 봐주세요.
+
+【의뢰인 정보】
+${pInfo()}
+
+다음 항목으로 ${NEXTYEAR}년 신년운세를 분석해주세요:
+【${NEXTYEAR}년 총운】 ★ 별점(1~5개)과 총평
+【상반기 운세】 1~6월의 흐름
+【하반기 운세】 7~12월의 흐름
+【애정운】 사랑과 인연
+【재물·직업운】 금전과 커리어
+【건강운】 주의할 점
+【주의 시기】 특히 조심해야 할 달
+【개운법】 운을 높이는 방법과 행운 아이템
+
+600자 이상 상세하게 작성해주세요.`,el);
+}
+</script>
+</body>
+</html>
