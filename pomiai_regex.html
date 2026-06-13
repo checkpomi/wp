@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>pomiai Regex 테스터</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);--ac4:rgba(108,92,232,.08);
+  --go:#d4924a;--go2:#f0b060;--go3:rgba(212,146,74,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re2:#ff8080;--re3:rgba(224,85,85,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+  /* 매치 하이라이트 색상 */
+  --hl0:rgba(108,92,232,.45);--hl1:rgba(40,196,160,.4);--hl2:rgba(240,176,96,.4);
+  --hl3:rgba(224,85,85,.35);--hl4:rgba(155,143,245,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+
+#header{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 18px;
+  display:flex;align-items:center;gap:10px;height:52px;position:sticky;top:0;z-index:50}
+#logo{font-size:14px;font-weight:600;color:var(--ac2);letter-spacing:1px}
+#logo span{color:var(--tx3);font-weight:400}
+.h-sep{width:1px;height:20px;background:var(--bd2);flex-shrink:0}
+#match-badge{background:var(--te3);border:1px solid var(--te);color:var(--te2);
+  border-radius:12px;padding:3px 12px;font-size:12px;font-weight:600;font-family:'DM Mono',monospace}
+#err-badge{background:var(--re3);border:1px solid var(--re);color:var(--re2);
+  border-radius:12px;padding:3px 12px;font-size:12px;display:none}
+
+#app{max-width:900px;margin:0 auto;padding:20px 16px 80px;display:flex;flex-direction:column;gap:0}
+
+/* ── 정규식 입력 박스 ── */
+#regex-bar{background:var(--s1);border:1px solid var(--bd2);border-radius:16px;
+  padding:14px 16px;margin-bottom:14px;box-shadow:var(--sh)}
+#regex-bar.err{border-color:var(--re)}
+#regex-bar.ok{border-color:var(--te)}
+.regex-row{display:flex;align-items:center;gap:8px}
+.regex-slash{font-size:22px;color:var(--tx3);font-family:'DM Mono',monospace;flex-shrink:0;line-height:1}
+#regex-input{flex:1;background:transparent;border:none;color:var(--ac2);
+  font-family:'DM Mono',monospace;font-size:18px;outline:none;min-width:0;line-height:1.4}
+#regex-input::placeholder{color:var(--tx4)}
+#regex-flags-input{background:transparent;border:none;color:var(--go2);
+  font-family:'DM Mono',monospace;font-size:18px;outline:none;width:60px}
+.flag-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.flag-btn{padding:5px 11px;font-size:11px;font-weight:600;font-family:'DM Mono',monospace;
+  border:1px solid var(--bd2);color:var(--tx3);background:transparent;
+  border-radius:16px;cursor:pointer;transition:.15s}
+.flag-btn:hover{color:var(--tx2)}
+.flag-btn.on{background:var(--go3);color:var(--go2);border-color:var(--go)}
+.flag-desc{font-size:11px;color:var(--tx3);margin-left:auto;align-self:center}
+
+/* ── 테스트 문자열 ── */
+#test-wrap{position:relative;margin-bottom:14px}
+#test-bg{position:absolute;top:0;left:0;right:0;bottom:0;padding:14px 16px;
+  font-family:'DM Mono',monospace;font-size:14px;line-height:1.8;
+  white-space:pre-wrap;word-break:break-all;pointer-events:none;
+  border-radius:14px;overflow:hidden;color:transparent;border:1px solid transparent}
+#test-input{width:100%;background:var(--s1);border:1px solid var(--bd2);color:var(--tx);
+  border-radius:14px;padding:14px 16px;font-family:'DM Mono',monospace;
+  font-size:14px;line-height:1.8;outline:none;resize:vertical;min-height:160px;
+  caret-color:var(--ac2);transition:.15s;position:relative;background:transparent;
+  box-shadow:var(--sh)}
+#test-input:focus{border-color:var(--ac)}
+#test-input::placeholder{color:var(--tx4)}
+#test-bg-real{position:absolute;inset:0;padding:14px 16px;
+  font-family:'DM Mono',monospace;font-size:14px;line-height:1.8;
+  white-space:pre-wrap;word-break:break-all;pointer-events:none;
+  border-radius:14px;overflow:hidden;z-index:0}
+#test-input-real{position:relative;z-index:1;background:transparent}
+
+/* ── 결과 패널 ── */
+.result-panel{background:var(--s1);border:1px solid var(--bd);border-radius:16px;
+  padding:18px;margin-bottom:14px;box-shadow:var(--sh)}
+.rp-title{font-size:12px;font-weight:600;color:var(--tx3);letter-spacing:1px;
+  text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.rp-title::before{content:'';width:3px;height:12px;background:linear-gradient(var(--ac2),var(--te));border-radius:2px}
+
+/* 매치 목록 */
+#match-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:var(--bd2) transparent}
+#match-list::-webkit-scrollbar{width:3px}
+#match-list::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+.match-item{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;
+  padding:10px 12px;cursor:pointer;transition:.15s}
+.match-item:hover{border-color:var(--bd3)}
+.mi-header{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.mi-idx{font-size:10px;font-weight:600;color:var(--tx3);background:var(--s3);
+  border-radius:4px;padding:1px 6px;font-family:'DM Mono',monospace}
+.mi-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mi-pos{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;flex-shrink:0}
+.mi-groups{margin-top:4px;display:flex;gap:5px;flex-wrap:wrap}
+.mi-grp{font-size:10px;background:var(--ac4);border:1px solid var(--bd3);
+  border-radius:4px;padding:1px 7px;font-family:'DM Mono',monospace;color:var(--ac2)}
+.hl-color{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* 바꾸기 */
+.replace-row{display:flex;gap:8px;margin-bottom:10px}
+#replace-input{flex:1;background:var(--s3);border:1px solid var(--bd2);color:var(--tx);
+  border-radius:9px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:13px;outline:none;transition:.15s}
+#replace-input:focus{border-color:var(--ac)}
+#replace-result{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;
+  padding:12px;font-family:'DM Mono',monospace;font-size:13px;color:var(--te2);
+  line-height:1.7;white-space:pre-wrap;word-break:break-all;min-height:60px;display:none}
+
+/* 정규식 설명 */
+#explain-box{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:14px;
+  font-size:13px;line-height:1.8;color:var(--tx2);display:none}
+.token{display:inline-block;background:var(--s3);border:1px solid var(--bd2);
+  border-radius:4px;padding:0px 6px;font-family:'DM Mono',monospace;font-size:12px;
+  color:var(--ac2);margin:1px}
+.token-desc{color:var(--tx3)}
+
+/* 라이브러리 (프리셋) */
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.preset{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;
+  padding:11px 13px;cursor:pointer;transition:.15s}
+.preset:hover{border-color:var(--ac);background:var(--ac4)}
+.pre-name{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:4px}
+.pre-regex{font-family:'DM Mono',monospace;font-size:11px;color:var(--ac2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px}
+.pre-desc{font-size:10px;color:var(--tx3)}
+
+/* 치트시트 */
+.cs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.cs-item{background:var(--s2);border:1px solid var(--bd2);border-radius:9px;padding:10px 12px;cursor:pointer;transition:.15s}
+.cs-item:hover{border-color:var(--bd3)}
+.cs-token{font-family:'DM Mono',monospace;font-size:13px;color:var(--go2);font-weight:500;margin-bottom:3px}
+.cs-desc{font-size:11px;color:var(--tx3)}
+
+/* 탭 -->
+#result-tabs{display:flex;gap:4px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+#result-tabs::-webkit-scrollbar{display:none}
+.rtab{padding:7px 14px;font-size:12px;font-weight:500;color:var(--tx3);
+  background:var(--s2);border:1px solid var(--bd2);border-radius:20px;cursor:pointer;transition:.15s;white-space:nowrap}
+.rtab:hover{color:var(--tx2)}
+.rtab.on{background:var(--ac3);color:var(--ac2);border-color:var(--ac)}
+.rtab-sec{display:none}.rtab-sec.on{display:block}
+
+#toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--bd2);color:var(--te2);border-radius:20px;padding:8px 18px;font-size:12px;opacity:0;transition:.22s;pointer-events:none;z-index:999;white-space:nowrap;box-shadow:var(--sh)}
+#toast.show{opacity:1}
+@media(max-width:600px){
+  #app{padding:14px 12px 60px}
+  #regex-input{font-size:15px}
+  .preset-grid,.cs-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div id="header">
+  <span id="logo">pomiai <span>regex</span></span>
+  <div class="h-sep"></div>
+  <span id="match-badge">0 매치</span>
+  <span id="err-badge"></span>
+</div>
+
+<div id="app">
+
+<!-- 정규식 입력 -->
+<div id="regex-bar">
+  <div class="regex-row">
+    <span class="regex-slash">/</span>
+    <input id="regex-input" placeholder="정규식을 입력하세요..." spellcheck="false" autocomplete="off" oninput="runRegex()">
+    <span class="regex-slash">/</span>
+    <input id="regex-flags-input" value="g" placeholder="gim" spellcheck="false" autocomplete="off" maxlength="6" oninput="syncFlags();runRegex()">
+  </div>
+  <div class="flag-row">
+    <button class="flag-btn on" id="fb-g" onclick="toggleFlag('g')" title="전체 매치">g <span style="font-weight:400;font-size:10px">global</span></button>
+    <button class="flag-btn" id="fb-i" onclick="toggleFlag('i')" title="대소문자 무시">i <span style="font-weight:400;font-size:10px">ignore</span></button>
+    <button class="flag-btn" id="fb-m" onclick="toggleFlag('m')" title="여러 줄">m <span style="font-weight:400;font-size:10px">multiline</span></button>
+    <button class="flag-btn" id="fb-s" onclick="toggleFlag('s')" title=". 줄바꿈 포함">s <span style="font-weight:400;font-size:10px">dotall</span></button>
+    <button class="flag-btn" id="fb-u" onclick="toggleFlag('u')" title="유니코드">u <span style="font-weight:400;font-size:10px">unicode</span></button>
+    <span class="flag-desc" id="match-time"></span>
+  </div>
+</div>
+
+<!-- 테스트 문자열 -->
+<div style="position:relative;margin-bottom:14px">
+  <div id="test-bg-real" aria-hidden="true"></div>
+  <textarea id="test-input" placeholder="테스트할 텍스트를 입력하세요..."
+    style="background:var(--s1);border:1px solid var(--bd2);color:var(--tx);border-radius:14px;padding:14px 16px;font-family:'DM Mono',monospace;font-size:14px;line-height:1.8;outline:none;resize:vertical;min-height:160px;width:100%;box-shadow:var(--sh);position:relative;z-index:1;caret-color:var(--ac2)"
+    oninput="runRegex()" spellcheck="false"></textarea>
+</div>
+
+<!-- 결과 탭 -->
+<div id="result-tabs">
+  <button class="rtab on" onclick="rTab('matches')">📋 매치 목록</button>
+  <button class="rtab" onclick="rTab('replace')">🔄 바꾸기</button>
+  <button class="rtab" onclick="rTab('explain')">💡 설명</button>
+  <button class="rtab" onclick="rTab('presets')">📚 프리셋</button>
+  <button class="rtab" onclick="rTab('cheat')">📖 치트시트</button>
+</div>
+
+<!-- 매치 목록 -->
+<div class="result-panel rtab-sec on" id="rt-matches">
+  <div class="rp-title">매치 결과</div>
+  <div id="match-list"><div style="font-size:13px;color:var(--tx4)">정규식을 입력하면 매치 결과가 표시돼요</div></div>
+</div>
+
+<!-- 바꾸기 -->
+<div class="result-panel rtab-sec" id="rt-replace">
+  <div class="rp-title">바꾸기</div>
+  <div class="replace-row">
+    <input id="replace-input" placeholder="바꿀 텍스트 ($1, $2로 그룹 참조)" oninput="runReplace()">
+    <button style="background:var(--ac);border:none;color:#fff;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" onclick="copyReplace()">복사</button>
+    <button style="background:var(--te3);border:1px solid var(--te);color:var(--te2);border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" onclick="applyReplace()">적용</button>
+  </div>
+  <div id="replace-result"></div>
+</div>
+
+<!-- 설명 -->
+<div class="result-panel rtab-sec" id="rt-explain">
+  <div class="rp-title">정규식 분석</div>
+  <div id="explain-box"></div>
+  <div style="margin-top:10px;font-size:12px;color:var(--tx4)">정규식을 입력하면 각 토큰의 의미를 분석해요</div>
+</div>
+
+<!-- 프리셋 -->
+<div class="result-panel rtab-sec" id="rt-presets">
+  <div class="rp-title">자주 쓰는 정규식</div>
+  <div class="preset-grid" id="preset-grid"></div>
+</div>
+
+<!-- 치트시트 -->
+<div class="result-panel rtab-sec" id="rt-cheat">
+  <div class="rp-title">정규식 치트시트</div>
+  <div class="cs-grid" id="cs-grid"></div>
+</div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+let toastTid;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTid);toastTid=setTimeout(()=>t.classList.remove('show'),2200);}
+function copy(t){navigator.clipboard?.writeText(t).then(()=>toast('✅ 복사됨'))||fallbackCopy(t);}
+function fallbackCopy(t){const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('✅ 복사됨');}
+
+/* ── 플래그 관리 ── */
+let flags=new Set(['g']);
+function toggleFlag(f){
+  flags.has(f)?flags.delete(f):flags.add(f);
+  document.querySelectorAll('.flag-btn').forEach(b=>{const bf=b.id.replace('fb-','');b.classList.toggle('on',flags.has(bf));});
+  $('regex-flags-input').value=[...flags].join('');
+  runRegex();
+}
+function syncFlags(){
+  const v=$('regex-flags-input').value;
+  flags=new Set([...v].filter(c=>'gimsuy'.includes(c)));
+  document.querySelectorAll('.flag-btn').forEach(b=>{const bf=b.id.replace('fb-','');b.classList.toggle('on',flags.has(bf));});
+  runRegex();
+}
+
+/* ── 메인 실행 ── */
+const HL_COLORS=['var(--hl0)','var(--hl1)','var(--hl2)','var(--hl3)','var(--hl4)'];
+let lastMatches=[];
+
+function runRegex(){
+  const pat=$('regex-input').value;
+  const text=$('test-input').value;
+  const bar=$('regex-bar');
+  const badge=$('match-badge'),err=$('err-badge');
+
+  if(!pat){
+    bar.className='';badge.textContent='0 매치';err.style.display='none';
+    clearHighlight();$('match-list').innerHTML='<div style="font-size:13px;color:var(--tx4)">정규식을 입력하면 매치 결과가 표시돼요</div>';
+    $('explain-box').style.display='none';lastMatches=[];return;
+  }
+
+  let re;
+  try{
+    re=new RegExp(pat,[...flags].join(''));
+    bar.className='ok';err.style.display='none';
+  }catch(e){
+    bar.className='err';err.textContent=e.message;err.style.display='block';
+    badge.textContent='오류';clearHighlight();
+    $('match-list').innerHTML=`<div style="font-size:13px;color:var(--re2)">${e.message}</div>`;
+    return;
+  }
+
+  const t0=performance.now();
+  const matches=[];
+  if(flags.has('g')){
+    let m;re.lastIndex=0;
+    while((m=re.exec(text))!==null){matches.push(m);if(m[0].length===0)re.lastIndex++;}
+  }else{
+    const m=re.exec(text);if(m)matches.push(m);
+  }
+  const elapsed=(performance.now()-t0).toFixed(2);
+  lastMatches=matches;
+
+  badge.textContent=matches.length+' 매치';
+  $('match-time').textContent=elapsed+'ms';
+
+  // 하이라이트
+  renderHighlight(text,matches);
+
+  // 매치 목록
+  const list=$('match-list');
+  if(!matches.length){list.innerHTML='<div style="font-size:13px;color:var(--tx3)">매치 없음</div>';return;}
+  list.innerHTML=matches.map((m,i)=>{
+    const color=HL_COLORS[i%HL_COLORS.length];
+    const groups=m.slice(1).map((g,gi)=>g!=null?`<span class="mi-grp">$${gi+1}: ${escHtml(g.slice(0,30))}</span>`:'').join('');
+    return`<div class="match-item" onclick="selectMatch(${m.index},${m.index+m[0].length})">
+      <div class="mi-header">
+        <span class="hl-color" style="background:${color}"></span>
+        <span class="mi-idx">#${i+1}</span>
+        <span class="mi-val" style="color:${color}">${escHtml(m[0].slice(0,60))}${m[0].length>60?'…':''}</span>
+        <span class="mi-pos">[${m.index}:${m.index+m[0].length}]</span>
+      </div>
+      ${groups?`<div class="mi-groups">${groups}</div>`:''}
+    </div>`;
+  }).join('');
+
+  // 바꾸기 결과 업데이트
+  runReplace();
+  // 설명 업데이트
+  explainRegex(pat);
+}
+
+/* 하이라이트 오버레이 */
+function renderHighlight(text,matches){
+  const bg=$('test-bg-real');
+  if(!matches.length){bg.innerHTML='';return;}
+  let html='',pos=0;
+  matches.forEach((m,i)=>{
+    if(m.index>pos)html+=escHtml(text.slice(pos,m.index));
+    const col=HL_COLORS[i%HL_COLORS.length];
+    html+=`<span style="background:${col};border-radius:3px">${escHtml(m[0])}</span>`;
+    pos=m.index+m[0].length;
+  });
+  if(pos<text.length)html+=escHtml(text.slice(pos));
+  // textarea와 동일한 스타일 적용
+  bg.innerHTML=html;
+  bg.style.cssText=`position:absolute;inset:0;padding:14px 16px;font-family:'DM Mono',monospace;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-all;pointer-events:none;border-radius:14px;overflow:hidden;z-index:0;color:transparent;border:1px solid transparent;background:var(--s1)`;
+}
+function clearHighlight(){$('test-bg-real').innerHTML='';}
+
+function selectMatch(s,e){$('test-input').setSelectionRange(s,e);$('test-input').focus();}
+
+/* 바꾸기 */
+function runReplace(){
+  const pat=$('regex-input').value,text=$('test-input').value;
+  const rep=$('replace-input').value;
+  const rr=$('replace-result');
+  if(!pat||!lastMatches.length){rr.style.display='none';return;}
+  try{
+    const re=new RegExp(pat,[...flags].join(''));
+    const result=text.replace(re,rep);
+    rr.textContent=result;rr.style.display='block';
+  }catch(e){rr.style.display='none';}
+}
+function copyReplace(){const v=$('replace-result').textContent;if(v)copy(v);}
+function applyReplace(){
+  const v=$('replace-result').textContent;
+  if(v){$('test-input').value=v;runRegex();toast('✅ 적용됨');}
+}
+
+/* 정규식 설명 */
+const TOKENS=[
+  [/^\./,'임의의 문자 1개 (줄바꿈 제외)'],
+  [/^\^/,'문자열 시작'],
+  [/^\$/,'문자열 끝'],
+  [/^\*/,'앞 요소 0번 이상 반복'],
+  [/^\+/,'앞 요소 1번 이상 반복'],
+  [/^\?/,'앞 요소 0번 또는 1번'],
+  [/^\|/,'또는 (OR)'],
+  [/^\(/,'그룹 시작'],
+  [/^\)/,'그룹 끝'],
+  [/^\[/,'문자 클래스 시작'],
+  [/^\]/,'문자 클래스 끝'],
+  [/^\{(\d+),?(\d*)\}/,'수량자 {n,m}'],
+  [/^\\d/,'숫자 [0-9]'],
+  [/^\\D/,'숫자가 아닌 문자'],
+  [/^\\w/,'단어 문자 [a-zA-Z0-9_]'],
+  [/^\\W/,'단어가 아닌 문자'],
+  [/^\\s/,'공백 문자'],
+  [/^\\S/,'공백이 아닌 문자'],
+  [/^\\b/,'단어 경계'],
+  [/^\\B/,'단어 경계가 아닌 곳'],
+  [/^\\n/,'줄바꿈 문자'],
+  [/^\\t/,'탭 문자'],
+  [/^\(\?:/,'비캡처 그룹 (?:...)'],
+  [/^\(\?=/,'긍정적 전방탐색 (?=...)'],
+  [/^\(\?!/,'부정적 전방탐색 (?!...)'],
+  [/^\(\?<=/,'긍정적 후방탐색 (?<=...)'],
+  [/^\(\?<!/,'부정적 후방탐색 (?<!...)'],
+  [/^\(\?<[^>]+>/,'명명된 캡처 그룹'],
+];
+function explainRegex(pat){
+  const box=$('explain-box');
+  if(!pat){box.style.display='none';return;}
+  // 간단 토큰 분해
+  const parts=[];let i=0;
+  while(i<pat.length){
+    let matched=false;
+    for(const [re,desc] of TOKENS){
+      const m=pat.slice(i).match(re);
+      if(m){parts.push({tok:m[0],desc});i+=m[0].length;matched=true;break;}
+    }
+    if(!matched){parts.push({tok:pat[i],desc:'리터럴 문자'});i++;}
+  }
+  box.innerHTML=parts.map(p=>`<span class="token" title="${p.desc}">${escHtml(p.tok)}</span> <span class="token-desc">${p.desc}</span>  `).join('');
+  box.style.display='block';
+}
+
+/* 탭 전환 */
+function rTab(id){
+  const ids=['matches','replace','explain','presets','cheat'];
+  document.querySelectorAll('.rtab').forEach((t,i)=>t.classList.toggle('on',ids[i]===id));
+  document.querySelectorAll('.rtab-sec').forEach(s=>s.classList.remove('on'));
+  $('rt-'+id).classList.add('on');
+}
+
+/* 프리셋 */
+const PRESETS=[
+  {name:'이메일',regex:'^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$',flags:'i',desc:'이메일 주소 검증'},
+  {name:'URL',regex:'https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&\\/=]*)',flags:'gi',desc:'HTTP/HTTPS URL'},
+  {name:'한국 전화번호',regex:'0(?:2|[3-9][0-9])[-\\s]?\\d{3,4}[-\\s]?\\d{4}|01[016789][-\\s]?\\d{3,4}[-\\s]?\\d{4}',flags:'g',desc:'유선/휴대폰 번호'},
+  {name:'IP 주소',regex:'\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b',flags:'g',desc:'IPv4 주소'},
+  {name:'날짜 (YYYY-MM-DD)',regex:'\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])',flags:'g',desc:'ISO 날짜 형식'},
+  {name:'한국 날짜',regex:'\\d{4}[.년-]\\s?(?:0?[1-9]|1[0-2])[.월-]\\s?(?:0?[1-9]|[12]\\d|3[01])일?',flags:'g',desc:'한국식 날짜'},
+  {name:'시간 (HH:MM)',regex:'([01]?[0-9]|2[0-3]):[0-5][0-9]',flags:'g',desc:'24시간 형식'},
+  {name:'16진수 색상',regex:'#(?:[0-9a-fA-F]{3}){1,2}',flags:'g',desc:'CSS 색상 코드'},
+  {name:'우편번호 (한국)',regex:'\\b[0-9]{5}\\b',flags:'g',desc:'5자리 우편번호'},
+  {name:'HTML 태그',regex:'<[^>]+>',flags:'gi',desc:'HTML 태그 전체'},
+  {name:'줄 시작 공백',regex:'^\\s+',flags:'gm',desc:'각 줄 앞 공백'},
+  {name:'중복 공백',regex:'\\s{2,}',flags:'g',desc:'연속된 공백 2개 이상'},
+  {name:'빈 줄',regex:'^\\s*$',flags:'gm',desc:'공백만 있는 줄'},
+  {name:'한글',regex:'[가-힣]+',flags:'g',desc:'한글 문자'},
+  {name:'영문만',regex:'[a-zA-Z]+',flags:'g',desc:'영문자'},
+  {name:'숫자만',regex:'\\d+',flags:'g',desc:'숫자 시퀀스'},
+  {name:'특수문자',regex:'[^a-zA-Z0-9가-힣\\s]',flags:'g',desc:'특수문자'},
+  {name:'비밀번호 강도',regex:'^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$',flags:'',desc:'대소문자+숫자+특수문자 8자 이상'},
+  {name:'신용카드',regex:'\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\\b',flags:'g',desc:'Visa/MC/Amex'},
+  {name:'마크다운 볼드',regex:'\\*\\*(.+?)\\*\\*',flags:'g',desc:'**텍스트** 형식'},
+];
+(function initPresets(){
+  const grid=$('preset-grid');
+  PRESETS.forEach(p=>{
+    const el=document.createElement('div');el.className='preset';
+    el.innerHTML=`<div class="pre-name">${p.name}</div><div class="pre-regex">${escHtml(p.regex)}</div><div class="pre-desc">${p.desc}</div>`;
+    el.onclick=()=>{
+      $('regex-input').value=p.regex;
+      flags=new Set([...p.flags]);
+      $('regex-flags-input').value=p.flags;
+      document.querySelectorAll('.flag-btn').forEach(b=>{const bf=b.id.replace('fb-','');b.classList.toggle('on',flags.has(bf));});
+      runRegex();rTab('matches');toast('✅ '+p.name+' 적용됨');
+    };
+    grid.appendChild(el);
+  });
+})();
+
+/* 치트시트 */
+const CHEATSHEET=[
+  {t:'.',d:'임의 문자 1개'},{t:'^',d:'시작'},{t:'$',d:'끝'},{t:'*',d:'0번 이상'},{t:'+',d:'1번 이상'},
+  {t:'?',d:'0 또는 1번'},{t:'{n}',d:'정확히 n번'},{t:'{n,}',d:'n번 이상'},{t:'{n,m}',d:'n~m번'},
+  {t:'[abc]',d:'a 또는 b 또는 c'},{t:'[^abc]',d:'a,b,c 제외'},{t:'[a-z]',d:'a부터 z'},
+  {t:'(abc)',d:'캡처 그룹'},{t:'(?:abc)',d:'비캡처 그룹'},{t:'a|b',d:'a 또는 b'},
+  {t:'\\d',d:'숫자'},{t:'\\D',d:'숫자 아님'},{t:'\\w',d:'단어 문자'},{t:'\\W',d:'단어 아님'},
+  {t:'\\s',d:'공백'},{t:'\\S',d:'공백 아님'},{t:'\\b',d:'단어 경계'},{t:'\\n',d:'줄바꿈'},
+  {t:'(?=...)',d:'전방탐색'},{t:'(?!...)',d:'부정 전방탐색'},{t:'(?<=...)',d:'후방탐색'},
+  {t:'$1',d:'첫번째 그룹'},{t:'$&',d:'매치 전체'},{t:"$'",d:'매치 이후 텍스트'},
+];
+(function initCheat(){
+  const grid=$('cs-grid');
+  CHEATSHEET.forEach(c=>{
+    const el=document.createElement('div');el.className='cs-item';
+    el.innerHTML=`<div class="cs-token">${escHtml(c.t)}</div><div class="cs-desc">${c.d}</div>`;
+    el.onclick=()=>{
+      const cur=$('regex-input');const pos=cur.selectionStart;const v=cur.value;
+      cur.value=v.slice(0,pos)+c.t+v.slice(pos);cur.setSelectionRange(pos+c.t.length,pos+c.t.length);
+      cur.focus();runRegex();toast('✅ 삽입됨: '+c.t);
+    };
+    grid.appendChild(el);
+  });
+})();
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// 초기 예제 텍스트
+$('test-input').value=`안녕하세요! 이메일은 test@example.com 이고
+전화번호는 010-1234-5678 입니다.
+오늘 날짜: 2025-06-11
+웹사이트: https://checkpomi.com
+색상코드: #6c5ce8, #ffffff, #ff0000
+IP: 192.168.1.1`;
+$('regex-input').value='[\\w.-]+@[\\w.-]+\\.[a-z]{2,}';
+runRegex();
+</script>
+</body>
+</html>

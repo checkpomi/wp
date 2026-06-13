@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>pomiai 여권 사진 메이커</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);--ac4:rgba(108,92,232,.08);
+  --go:#d4924a;--go2:#f0b060;--go3:rgba(212,146,74,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re3:rgba(224,85,85,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif}
+#header{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 18px;
+  display:flex;align-items:center;gap:10px;height:52px;position:sticky;top:0;z-index:50}
+#logo{font-size:14px;font-weight:600;color:var(--ac2);letter-spacing:1px}
+#logo span{color:var(--tx3);font-weight:400}
+#app{max-width:860px;margin:0 auto;padding:24px 16px 80px}
+.sec-title{font-size:20px;font-weight:600;margin-bottom:5px}
+.sec-sub{font-size:13px;color:var(--tx2);margin-bottom:22px;line-height:1.6}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:18px;padding:22px;margin-bottom:14px;box-shadow:var(--sh)}
+.card-title{font-size:13px;font-weight:600;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';width:3px;height:13px;background:linear-gradient(var(--ac2),var(--te));border-radius:2px}
+.fl{font-size:10px;color:var(--tx3);font-weight:600;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:block}
+.fi,.fs{background:var(--s3);border:1px solid var(--bd2);color:var(--tx);border-radius:10px;padding:10px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:.15s;width:100%;-webkit-appearance:none}
+.fi:focus,.fs:focus{border-color:var(--ac)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.btn{background:linear-gradient(135deg,var(--ac),#4a38c0);border:none;color:#fff;border-radius:11px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(108,92,232,.28)}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn.full{width:100%}
+.btn.go{background:linear-gradient(135deg,var(--te),#1a8c72);box-shadow:0 4px 16px rgba(40,196,160,.22)}
+.btn.outline{background:transparent;border:1px solid var(--bd2);color:var(--tx2);box-shadow:none}
+.btn.outline:hover{border-color:var(--ac);color:var(--ac2);filter:none;transform:none;background:var(--ac4)}
+.btn.sm{padding:8px 14px;font-size:12px;border-radius:8px}
+input[type="range"]{-webkit-appearance:none;height:4px;background:var(--bd2);border-radius:2px;outline:none;cursor:pointer;width:100%}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--ac2);cursor:pointer}
+.sr-row{display:flex;align-items:center;gap:10px}
+.sr-val{font-size:12px;color:var(--ac2);font-family:'DM Mono',monospace;min-width:38px;text-align:right}
+
+/* 국가 규격 */
+.country-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;margin-bottom:14px}
+.cty{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:10px 12px;cursor:pointer;transition:.15s;text-align:center}
+.cty:hover{border-color:var(--bd3)}
+.cty.on{border-color:var(--ac);background:var(--ac3)}
+.cty-flag{font-size:22px;display:block;margin-bottom:4px}
+.cty-name{font-size:11px;font-weight:600;color:var(--tx2)}
+.cty-size{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace}
+
+/* 캔버스 영역 */
+#workspace{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px}
+#canvas-wrap{position:relative;background:#000;border-radius:12px;overflow:hidden;flex-shrink:0;max-width:100%}
+#main-canvas{display:block;max-width:100%}
+#crop-overlay{position:absolute;top:0;left:0;pointer-events:none}
+#face-guide{position:absolute;top:0;left:0;pointer-events:none}
+.controls-side{flex:1;min-width:200px;display:flex;flex-direction:column;gap:10px}
+.ctrl-group{background:var(--s2);border:1px solid var(--bd2);border-radius:12px;padding:14px}
+.ctrl-label{font-size:11px;color:var(--tx2);font-weight:600;margin-bottom:8px}
+
+/* 프리셋 시트 */
+#sheet-preview{margin-top:14px;text-align:center;display:none}
+#sheet-canvas{border-radius:10px;max-width:100%;border:1px solid var(--bd2)}
+
+/* 배경 색상 */
+.bg-swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.bgsw{width:32px;height:32px;border-radius:7px;cursor:pointer;border:2px solid transparent;transition:.15s;flex-shrink:0}
+.bgsw.on{border-color:var(--ac2);transform:scale(1.1)}
+.bgsw:hover{transform:scale(1.05)}
+
+#toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--bd2);color:var(--te2);border-radius:20px;padding:8px 18px;font-size:12px;opacity:0;transition:.22s;pointer-events:none;z-index:999;white-space:nowrap;box-shadow:var(--sh)}
+#toast.show{opacity:1}
+@media(max-width:600px){
+  #app{padding:16px 12px 60px}
+  .g2,.g3{grid-template-columns:1fr 1fr}
+  .country-grid{grid-template-columns:repeat(3,1fr)}
+  #workspace{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div id="header"><span id="logo">pomiai <span>passport</span></span></div>
+<div id="app">
+<div class="sec-title">여권 사진 메이커</div>
+<div class="sec-sub">한국·미국·EU·일본·영국 등 주요국 규격 자동 적용 · 배경 교체 · 얼굴 가이드 · A4 인쇄 시트</div>
+
+<!-- 국가 규격 -->
+<div class="card">
+  <div class="card-title">국가 / 규격 선택</div>
+  <div class="country-grid" id="country-grid"></div>
+  <div class="g3" id="custom-size" style="display:none">
+    <div><span class="fl">너비 (mm)</span><input class="fi" id="cs-w" type="number" value="35" min="20" max="100"></div>
+    <div><span class="fl">높이 (mm)</span><input class="fi" id="cs-h" type="number" value="45" min="20" max="120"></div>
+    <div><span class="fl">해상도 (DPI)</span><select class="fs" id="cs-dpi"><option value="300">300 DPI (인쇄용)</option><option value="600">600 DPI (고품질)</option><option value="150">150 DPI (화면용)</option></select></div>
+  </div>
+  <!-- 현재 규격 정보 -->
+  <div id="spec-info" style="background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:12px;margin-top:12px;font-size:13px;color:var(--tx2)"></div>
+</div>
+
+<!-- 사진 업로드 + 편집 -->
+<div class="card">
+  <div class="card-title">사진 편집</div>
+  <!-- 업로드 -->
+  <div id="upload-zone" style="border:2px dashed var(--bd2);border-radius:14px;padding:36px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:16px" onclick="$('photo-fi').click()">
+    <div style="font-size:38px;margin-bottom:10px;opacity:.5">📷</div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px">사진을 드래그하거나 클릭해서 업로드</div>
+    <div style="font-size:12px;color:var(--tx3)">JPG · PNG · HEIC · WebP</div>
+    <button class="btn sm" style="margin-top:12px" onclick="event.stopPropagation();$('photo-fi').click()">사진 선택</button>
+  </div>
+  <input type="file" id="photo-fi" accept="image/*" style="display:none">
+
+  <div id="workspace">
+    <div>
+      <div id="canvas-wrap">
+        <canvas id="main-canvas" width="300" height="380"></canvas>
+        <canvas id="crop-overlay" width="300" height="380"></canvas>
+        <canvas id="face-guide" width="300" height="380"></canvas>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn outline sm" onclick="toggleGuide()">👤 가이드</button>
+        <button class="btn outline sm" onclick="resetCrop()">↺ 초기화</button>
+      </div>
+    </div>
+    <div class="controls-side">
+      <!-- 배경색 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">배경색</div>
+        <div class="bg-swatches" id="bg-swatches"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+          <input type="color" id="bg-custom" value="#ffffff" style="width:32px;height:32px;border:1px solid var(--bd2);border-radius:7px;padding:2px;background:var(--s3);cursor:pointer;-webkit-appearance:none" onchange="setBgColor(this.value)">
+          <span style="font-size:11px;color:var(--tx3)">직접 선택</span>
+        </div>
+      </div>
+      <!-- 조정 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">밝기 · 대비</div>
+        <span class="fl" style="margin-top:4px">밝기</span>
+        <div class="sr-row"><input type="range" id="adj-bright" min="50" max="150" value="100" oninput="$('abv').textContent=this.value;redraw()"><span class="sr-val" id="abv">100</span></div>
+        <span class="fl" style="margin-top:8px">대비</span>
+        <div class="sr-row"><input type="range" id="adj-contrast" min="50" max="150" value="100" oninput="$('acv').textContent=this.value;redraw()"><span class="sr-val" id="acv">100</span></div>
+        <span class="fl" style="margin-top:8px">채도</span>
+        <div class="sr-row"><input type="range" id="adj-sat" min="0" max="200" value="100" oninput="$('asv').textContent=this.value;redraw()"><span class="sr-val" id="asv">100</span></div>
+      </div>
+      <!-- 이동/크기 -->
+      <div class="ctrl-group">
+        <div class="ctrl-label">얼굴 위치</div>
+        <span class="fl">확대/축소</span>
+        <div class="sr-row"><input type="range" id="img-scale" min="50" max="300" value="100" oninput="$('isv').textContent=this.value+'%';redraw()"><span class="sr-val" id="isv">100%</span></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px">
+          <button class="btn outline sm" onclick="moveImg(-10,0)">←</button>
+          <button class="btn outline sm" onclick="moveImg(0,-10)">↑</button>
+          <button class="btn outline sm" onclick="moveImg(10,0)">→</button>
+          <button class="btn outline sm" style="grid-column:2" onclick="moveImg(0,10)">↓</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 출력 -->
+<div class="card">
+  <div class="card-title">저장 / 인쇄</div>
+  <div class="g2" style="margin-bottom:14px">
+    <div><span class="fl">출력 포맷</span>
+      <select class="fs" id="out-fmt">
+        <option value="image/jpeg">JPG (인쇄용)</option>
+        <option value="image/png">PNG (투명 배경)</option>
+      </select></div>
+    <div><span class="fl">DPI (인쇄 품질)</span>
+      <select class="fs" id="out-dpi">
+        <option value="300" selected>300 DPI (인쇄용)</option>
+        <option value="600">600 DPI (고품질)</option>
+        <option value="150">150 DPI (웹용)</option>
+      </select></div>
+  </div>
+  <div class="g2" style="margin-bottom:14px">
+    <button class="btn go" onclick="savePhoto()">⬇ 사진 저장</button>
+    <button class="btn" onclick="makeSheet()">🖨 A4 인쇄 시트 만들기</button>
+  </div>
+  <div id="sheet-preview">
+    <div style="font-size:12px;color:var(--tx3);margin-bottom:8px">A4 인쇄 시트 (6장) — 클릭하면 다운로드</div>
+    <canvas id="sheet-canvas" onclick="dlSheet()"></canvas>
+  </div>
+</div>
+
+<!-- 규격 안내 -->
+<div class="card">
+  <div class="card-title">주요국 여권 사진 규격</div>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="border-bottom:1px solid var(--bd2)">
+        <th style="text-align:left;padding:8px;color:var(--tx3)">국가</th>
+        <th style="padding:8px;color:var(--tx3)">크기</th>
+        <th style="padding:8px;color:var(--tx3)">얼굴 크기</th>
+        <th style="padding:8px;color:var(--tx3)">배경</th>
+        <th style="padding:8px;color:var(--tx3)">특이사항</th>
+      </tr></thead>
+      <tbody id="spec-table"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+<div id="toast"></div>
+<script>
+const $=id=>document.getElementById(id);
+let toastTid;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTid);toastTid=setTimeout(()=>t.classList.remove('show'),2600);}
+
+/* ── 국가 규격 데이터 ── */
+const COUNTRIES=[
+  {id:'kr', flag:'🇰🇷', name:'한국', w:35, h:45, faceMin:60, faceMax:80, bg:'white', dpi:300, note:'흰색 배경, 무배경'},
+  {id:'us', flag:'🇺🇸', name:'미국', w:51, h:51, faceMin:70, faceMax:80, bg:'white', dpi:300, note:'흰색/연회색 배경'},
+  {id:'eu', flag:'🇪🇺', name:'EU/쉥겐', w:35, h:45, faceMin:70, faceMax:80, bg:'white', dpi:300, note:'흰색~연회색'},
+  {id:'jp', flag:'🇯🇵', name:'일본', w:35, h:45, faceMin:60, faceMax:80, bg:'white', dpi:300, note:'흰색 배경'},
+  {id:'gb', flag:'🇬🇧', name:'영국', w:35, h:45, faceMin:60, faceMax:80, bg:'cream', dpi:300, note:'밝은 회색/크림'},
+  {id:'cn', flag:'🇨🇳', name:'중국', w:33, h:48, faceMin:60, faceMax:75, bg:'white', dpi:300, note:'흰색 배경'},
+  {id:'ca', flag:'🇨🇦', name:'캐나다', w:50, h:70, faceMin:70, faceMax:80, bg:'white', dpi:300, note:'흰색 배경'},
+  {id:'au', flag:'🇦🇺', name:'호주', w:35, h:45, faceMin:70, faceMax:80, bg:'white', dpi:300, note:'흰색/연색'},
+  {id:'sg', flag:'🇸🇬', name:'싱가포르', w:35, h:45, faceMin:60, faceMax:80, bg:'white', dpi:300, note:'흰색 배경'},
+  {id:'th', flag:'🇹🇭', name:'태국', w:35, h:45, faceMin:60, faceMax:75, bg:'white', dpi:300, note:'흰색 배경'},
+  {id:'in', flag:'🇮🇳', name:'인도', w:51, h:51, faceMin:70, faceMax:80, bg:'white', dpi:300, note:'흰색 배경'},
+  {id:'custom', flag:'⚙️', name:'직접입력', w:35, h:45, faceMin:65, faceMax:80, bg:'white', dpi:300, note:''},
+];
+const BG_COLORS=['#ffffff','#f5f5f0','#e8e8e8','#d6e4f7','#f0f8ff','#fafaf8'];
+const BG_NAMES=['흰색','크림','연회색','연파랑','아이스블루','오프화이트'];
+
+let selCountry=COUNTRIES[0];
+let photoImg=null;
+let imgX=0,imgY=0,imgScale=1;
+let bgColor='#ffffff';
+let showGuide=true;
+let isDragging=false,dragStartX=0,dragStartY=0,imgStartX=0,imgStartY=0;
+
+/* ── 국가 그리드 ── */
+(function initCountries(){
+  const grid=$('country-grid');
+  COUNTRIES.forEach((c,i)=>{
+    const el=document.createElement('div');el.className='cty'+(i===0?' on':'');
+    el.innerHTML=`<span class="cty-flag">${c.flag}</span><div class="cty-name">${c.name}</div><div class="cty-size">${c.w}×${c.h}mm</div>`;
+    el.onclick=()=>selectCountry(i);
+    grid.appendChild(el);
+  });
+  // 규격 테이블
+  const tb=$('spec-table');
+  COUNTRIES.filter(c=>c.id!=='custom').forEach(c=>{
+    const tr=document.createElement('tr');tr.style.borderBottom='1px solid var(--bd)';
+    tr.innerHTML=`<td style="padding:8px;color:var(--tx)">${c.flag} ${c.name}</td>
+      <td style="padding:8px;text-align:center;font-family:DM Mono,monospace;color:var(--te2)">${c.w}×${c.h}mm</td>
+      <td style="padding:8px;text-align:center;color:var(--tx2)">${c.faceMin}~${c.faceMax}%</td>
+      <td style="padding:8px;text-align:center;color:var(--tx2)">${c.bg==='white'?'흰색':'밝은색'}</td>
+      <td style="padding:8px;color:var(--tx3)">${c.note}</td>`;
+    tb.appendChild(tr);
+  });
+  // 배경 스와치
+  const sw=$('bg-swatches');
+  BG_COLORS.forEach((col,i)=>{
+    const el=document.createElement('div');el.className='bgsw'+(i===0?' on':'');
+    el.style.background=col;el.title=BG_NAMES[i];
+    el.onclick=()=>{document.querySelectorAll('.bgsw').forEach(b=>b.classList.remove('on'));el.classList.add('on');setBgColor(col);};
+    sw.appendChild(el);
+  });
+  updateSpecInfo();
+})();
+
+function selectCountry(i){
+  selCountry=COUNTRIES[i];
+  document.querySelectorAll('.cty').forEach((el,j)=>el.classList.toggle('on',j===i));
+  $('custom-size').style.display=selCountry.id==='custom'?'grid':'none';
+  updateSpecInfo();redraw();
+}
+function updateSpecInfo(){
+  const c=selCountry;
+  $('spec-info').innerHTML=`<span style="color:var(--te2);font-family:DM Mono,monospace;font-weight:600">${c.flag} ${c.name}</span>
+    &nbsp;·&nbsp; 크기: <b style="color:var(--tx)">${c.w}×${c.h}mm</b>
+    &nbsp;·&nbsp; 얼굴: <b style="color:var(--tx)">${c.faceMin}~${c.faceMax}%</b>
+    &nbsp;·&nbsp; 배경: <b style="color:var(--tx)">${c.bg}</b>
+    ${c.note?`&nbsp;·&nbsp; <span style="color:var(--tx3)">${c.note}</span>`:''}`;
+}
+function setBgColor(col){bgColor=col;redraw();}
+
+/* ── 사진 업로드 ── */
+$('photo-fi').addEventListener('change',e=>{loadPhoto(e.target.files[0]);e.target.value='';});
+const uz=$('upload-zone');
+uz.addEventListener('dragover',e=>e.preventDefault());
+uz.addEventListener('drop',e=>{e.preventDefault();loadPhoto(e.dataTransfer.files[0]);});
+function loadPhoto(f){
+  if(!f||!f.type.startsWith('image/'))return;
+  const fr=new FileReader();
+  fr.onload=ev=>{
+    photoImg=new Image();photoImg.onload=()=>{
+      imgScale=1;imgX=0;imgY=0;
+      uz.style.display='none';redraw();
+      toast('✅ 사진 로드됨');
+    };photoImg.src=ev.target.result;
+  };fr.readAsDataURL(f);
+}
+
+/* ── 캔버스 렌더링 ── */
+function getSpec(){
+  if(selCountry.id==='custom'){
+    return{w:parseFloat($('cs-w').value)||35,h:parseFloat($('cs-h').value)||45,
+      faceMin:selCountry.faceMin,faceMax:selCountry.faceMax};
+  }
+  return selCountry;
+}
+const CANVAS_SIZE=300;
+function redraw(){
+  const spec=getSpec();const ratio=spec.w/spec.h;
+  const cw=CANVAS_SIZE,ch=Math.round(CANVAS_SIZE/ratio);
+  const mc=$('main-canvas'),oc=$('crop-overlay'),fg=$('face-guide');
+  [mc,oc,fg].forEach(c=>{c.width=cw;c.height=ch;c.style.width=cw+'px';c.style.height=ch+'px';});
+  const ctx=mc.getContext('2d');
+  // 배경
+  ctx.fillStyle=bgColor;ctx.fillRect(0,0,cw,ch);
+  // 사진
+  if(photoImg){
+    const s=imgScale/100;
+    const pw=photoImg.naturalWidth*s*(cw/photoImg.naturalWidth)*1.2;
+    const ph=photoImg.naturalHeight*s*(ch/photoImg.naturalHeight)*1.2;
+    ctx.filter=`brightness(${$('adj-bright').value}%) contrast(${$('adj-contrast').value}%) saturate(${$('adj-sat').value}%)`;
+    ctx.drawImage(photoImg,(cw-pw)/2+imgX,(ch-ph)/2+imgY,pw,ph);
+    ctx.filter='none';
+  }
+  // 오버레이 테두리
+  const octx=oc.getContext('2d');octx.clearRect(0,0,cw,ch);
+  octx.strokeStyle='rgba(155,143,245,.6)';octx.lineWidth=2;octx.setLineDash([4,4]);octx.strokeRect(1,1,cw-2,ch-2);
+  // 얼굴 가이드
+  if(showGuide){
+    const fctx=fg.getContext('2d');fctx.clearRect(0,0,cw,ch);
+    const spec=getSpec();
+    const faceH=ch*(spec.faceMin/100+spec.faceMax/100)/2;
+    const faceW=faceH*0.75;
+    const fx=(cw-faceW)/2,fy=ch*0.1;
+    fctx.strokeStyle='rgba(78,221,184,.7)';fctx.lineWidth=1.5;fctx.setLineDash([3,3]);
+    fctx.beginPath();fctx.ellipse(cw/2,fy+faceH/2,faceW/2,faceH/2,0,0,Math.PI*2);fctx.stroke();
+    fctx.setLineDash([]);
+    // 상단 여백 라인
+    fctx.strokeStyle='rgba(240,176,96,.5)';fctx.lineWidth=1;
+    fctx.beginPath();fctx.moveTo(0,ch*0.05);fctx.lineTo(cw,ch*0.05);fctx.stroke();
+    // 텍스트
+    fctx.fillStyle='rgba(78,221,184,.8)';fctx.font='10px DM Sans,sans-serif';
+    fctx.textAlign='center';fctx.fillText('얼굴 위치 가이드',cw/2,fy+faceH+14);
+  }
+}
+
+/* 드래그로 사진 이동 */
+const mc=$('main-canvas');
+mc.addEventListener('mousedown',e=>{if(!photoImg)return;isDragging=true;dragStartX=e.clientX;dragStartY=e.clientY;imgStartX=imgX;imgStartY=imgY;});
+document.addEventListener('mousemove',e=>{if(!isDragging)return;imgX=imgStartX+(e.clientX-dragStartX);imgY=imgStartY+(e.clientY-dragStartY);redraw();});
+document.addEventListener('mouseup',()=>isDragging=false);
+mc.addEventListener('touchstart',e=>{if(!photoImg)return;isDragging=true;const t=e.touches[0];dragStartX=t.clientX;dragStartY=t.clientY;imgStartX=imgX;imgStartY=imgY;},{passive:true});
+document.addEventListener('touchmove',e=>{if(!isDragging)return;const t=e.touches[0];imgX=imgStartX+(t.clientX-dragStartX);imgY=imgStartY+(t.clientY-dragStartY);redraw();},{passive:true});
+document.addEventListener('touchend',()=>isDragging=false);
+
+// 핀치 줌
+let lastDist=0;
+mc.addEventListener('touchstart',e=>{if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;lastDist=Math.sqrt(dx*dx+dy*dy);}},{passive:true});
+mc.addEventListener('touchmove',e=>{if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;const d=Math.sqrt(dx*dx+dy*dy);const sl=$('img-scale');sl.value=Math.min(300,Math.max(50,parseInt(sl.value)+(d-lastDist)*0.5));$('isv').textContent=sl.value+'%';lastDist=d;redraw();}},{passive:true});
+
+function moveImg(dx,dy){imgX+=dx;imgY+=dy;redraw();}
+function resetCrop(){imgX=0;imgY=0;$('img-scale').value=100;$('isv').textContent='100%';$('adj-bright').value=100;$('abv').textContent='100';$('adj-contrast').value=100;$('acv').textContent='100';$('adj-sat').value=100;$('asv').textContent='100';redraw();}
+function toggleGuide(){showGuide=!showGuide;redraw();toast(showGuide?'가이드 표시':'가이드 숨김');}
+
+/* ── 고해상도 렌더링 (저장용) ── */
+function renderHighRes(scale){
+  const spec=getSpec();const ratio=spec.w/spec.h;
+  const dpi=parseInt($('out-dpi').value)||300;
+  const px=Math.round(spec.w/25.4*dpi*scale);
+  const py=Math.round(spec.h/25.4*dpi*scale);
+  const c=document.createElement('canvas');c.width=px;c.height=py;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle=bgColor;ctx.fillRect(0,0,px,py);
+  if(photoImg){
+    const cs=CANVAS_SIZE;const ch=Math.round(cs/ratio);
+    const s=(parseInt($('img-scale').value)||100)/100;
+    const pw=photoImg.naturalWidth*s*(cs/photoImg.naturalWidth)*1.2;
+    const ph=photoImg.naturalHeight*s*(ch/photoImg.naturalHeight)*1.2;
+    const sx=(cs-pw)/2+imgX,sy=(ch-ph)/2+imgY;
+    const scaleX=px/cs,scaleY=py/ch;
+    ctx.filter=`brightness(${$('adj-bright').value}%) contrast(${$('adj-contrast').value}%) saturate(${$('adj-sat').value}%)`;
+    ctx.drawImage(photoImg,sx*scaleX,sy*scaleY,pw*scaleX,ph*scaleY);ctx.filter='none';
+  }
+  return c;
+}
+
+function savePhoto(){
+  if(!photoImg){toast('⚠️ 사진을 먼저 업로드하세요');return;}
+  const c=renderHighRes(1);
+  const fmt=$('out-fmt').value;
+  const ext=fmt==='image/png'?'png':'jpg';
+  const a=document.createElement('a');a.href=c.toDataURL(fmt,.95);a.download=`passport_${selCountry.id}.${ext}`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('✅ 저장 완료!');
+}
+
+function makeSheet(){
+  if(!photoImg){toast('⚠️ 사진을 먼저 업로드하세요');return;}
+  const spec=getSpec();
+  const dpi=300;const scale=0.4; // 화면 표시용
+  const pxW=Math.round(spec.w/25.4*dpi);
+  const pxH=Math.round(spec.h/25.4*dpi);
+  // A4 = 210×297mm @ 300dpi = 2480×3508px
+  const a4w=2480,a4h=3508;const pad=80;
+  const cols=Math.floor((a4w-pad*2+10)/(pxW+10));
+  const rows=Math.floor((a4h-pad*2+10)/(pxH+10));
+  const total=cols*rows;
+  const sc=document.createElement('canvas');sc.width=a4w;sc.height=a4h;
+  const sctx=sc.getContext('2d');
+  sctx.fillStyle='#ffffff';sctx.fillRect(0,0,a4w,a4h);
+  const photo=renderHighRes(1);
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const x=pad+c*(pxW+10),y=pad+r*(pxH+10);
+    sctx.drawImage(photo,x,y,pxW,pxH);
+    // 절취선
+    sctx.strokeStyle='#cccccc';sctx.lineWidth=1;sctx.setLineDash([4,4]);
+    sctx.strokeRect(x-.5,y-.5,pxW+1,pxH+1);
+  }
+  // 정보 텍스트
+  sctx.setLineDash([]);sctx.fillStyle='#999';sctx.font='28px sans-serif';sctx.textAlign='center';
+  sctx.fillText(`${spec.flag||''} ${spec.w}×${spec.h}mm · ${total}장 · pomiai`,a4w/2,a4h-30);
+  // 화면 표시용 축소
+  const sv=$('sheet-canvas');sv.width=Math.round(a4w*scale);sv.height=Math.round(a4h*scale);
+  const svctx=sv.getContext('2d');svctx.drawImage(sc,0,0,sv.width,sv.height);
+  $('sheet-preview').style.display='block';
+  // 원본 저장
+  sv._full=sc;
+  toast(`✅ ${total}장 시트 생성 완료! 클릭해서 다운로드`);
+}
+function dlSheet(){
+  const sv=$('sheet-canvas');if(!sv._full)return;
+  const a=document.createElement('a');a.href=sv._full.toDataURL('image/jpeg',.92);a.download='passport_sheet.jpg';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('✅ 인쇄 시트 저장됨');
+}
+redraw();
+</script>
+</body>
+</html>

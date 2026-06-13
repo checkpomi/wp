@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>pomiai Health Tools</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);
+  --go:#c9963a;--go2:#e8b84b;--go3:rgba(201,150,58,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re2:#ff9090;--re3:rgba(224,85,85,.12);
+  --or:#e07840;--or3:rgba(224,120,64,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif}
+#header{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 18px;display:flex;align-items:center;gap:10px;height:52px;position:sticky;top:0;z-index:50}
+#logo{font-size:14px;font-weight:600;color:var(--ac2);letter-spacing:1px}
+#logo span{color:var(--tx3);font-weight:400}
+.h-sep{width:1px;height:20px;background:var(--bd2);flex-shrink:0}
+#htabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+#htabs::-webkit-scrollbar{display:none}
+.htab{padding:8px 14px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-radius:8px;transition:.15s;white-space:nowrap;flex-shrink:0}
+.htab:hover{color:var(--tx2);background:var(--s3)}
+.htab.on{color:var(--ac2);background:var(--ac3)}
+#app{max-width:860px;margin:0 auto;padding:24px 16px 80px}
+.sec{display:none}.sec.on{display:block;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sec-title{font-size:20px;font-weight:600;margin-bottom:5px}
+.sec-sub{font-size:13px;color:var(--tx2);margin-bottom:22px;line-height:1.6}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:18px;padding:22px;margin-bottom:14px;box-shadow:var(--sh)}
+.card-title{font-size:13px;font-weight:600;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';width:3px;height:13px;background:linear-gradient(var(--ac2),var(--te));border-radius:2px}
+.fl{font-size:10px;color:var(--tx3);font-weight:600;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:block}
+.fi,.fs{background:var(--s3);border:1px solid var(--bd2);color:var(--tx);border-radius:10px;padding:10px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:.15s;width:100%;-webkit-appearance:none}
+.fi:focus,.fs:focus{border-color:var(--ac)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.btn{background:linear-gradient(135deg,var(--ac),#4a38c0);border:none;color:#fff;border-radius:11px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(108,92,232,.28)}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn.full{width:100%}
+.res-box{background:var(--s2);border:1px solid var(--bd2);border-radius:14px;padding:18px;margin-top:14px;display:none}
+.res-box.show{display:block;animation:fi .25s ease}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bd)}
+.res-row:last-child{border-bottom:none}
+.res-label{font-size:13px;color:var(--tx2)}
+.res-val{font-size:15px;font-weight:600;font-family:'DM Mono',monospace;color:var(--te2)}
+/* BMI 게이지 */
+.bmi-gauge{position:relative;height:28px;border-radius:14px;overflow:hidden;margin:14px 0;
+  background:linear-gradient(90deg,#4eddb8 0%,#e8b84b 40%,#e07840 60%,#e05555 80%,#a83232 100%)}
+.bmi-pointer{position:absolute;top:2px;width:4px;height:24px;background:#fff;border-radius:2px;transform:translateX(-50%);transition:.5s;box-shadow:0 0 6px rgba(0,0,0,.5)}
+.bmi-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--tx3);margin-top:4px}
+/* 만 나이 */
+.age-result-big{text-align:center;padding:20px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;margin-top:14px}
+.age-big{font-size:52px;font-weight:700;color:var(--go2);font-family:'DM Mono',monospace;line-height:1}
+.age-unit{font-size:14px;color:var(--tx2);margin-top:6px}
+.age-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.age-item{background:var(--s2);border:1px solid var(--bd2);border-radius:12px;padding:14px;text-align:center}
+.age-item-val{font-size:18px;font-weight:600;color:var(--ac2);font-family:'DM Mono',monospace}
+.age-item-lbl{font-size:11px;color:var(--tx3);margin-top:3px}
+/* 칼로리 */
+.macro-bars{margin-top:14px}
+.macro-row{margin-bottom:10px}
+.macro-header{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px}
+.macro-name{color:var(--tx2)}
+.macro-val{color:var(--te2);font-family:'DM Mono',monospace;font-weight:500}
+.macro-bar-bg{height:6px;background:var(--bd2);border-radius:3px;overflow:hidden}
+.macro-bar-fill{height:100%;border-radius:3px;transition:.5s}
+/* 활동 레벨 */
+.act-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px;margin-bottom:14px}
+.act-item{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:10px 12px;cursor:pointer;transition:.15s;text-align:center}
+.act-item:hover{border-color:var(--bd3)}
+.act-item.on{border-color:var(--ac);background:var(--ac3)}
+.act-item .act-icon{font-size:20px;display:block;margin-bottom:4px}
+.act-item .act-name{font-size:11px;font-weight:600;color:var(--tx2)}
+.act-item .act-desc{font-size:10px;color:var(--tx3);margin-top:2px}
+#toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--bd2);color:var(--te2);border-radius:20px;padding:8px 18px;font-size:12px;opacity:0;transition:.22s;pointer-events:none;z-index:999;white-space:nowrap;box-shadow:var(--sh)}
+#toast.show{opacity:1}
+@media(max-width:580px){
+  .g2,.g3{grid-template-columns:1fr 1fr}
+  .age-grid{grid-template-columns:1fr 1fr}
+  #app{padding:16px 12px 60px}
+}
+</style>
+</head>
+<body>
+<div id="header">
+  <span id="logo">pomiai <span>health</span></span>
+  <div class="h-sep"></div>
+  <div id="htabs">
+    <div class="htab on"  onclick="goTab('bmi')">💪 BMI</div>
+    <div class="htab"     onclick="goTab('cal')">🔥 Calories</div>
+    <div class="htab"     onclick="goTab('age')">🎂 Age</div>
+  </div>
+</div>
+<div id="app">
+
+<!-- ══ BMI ══ -->
+<div class="sec on" id="tab-bmi">
+  <div class="sec-title">BMI Calculator</div>
+  <div class="sec-sub">Body Mass Index · Ideal weight range · Weight status — supports metric & imperial</div>
+  <div class="card">
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn full" id="unit-metric" onclick="setUnit('metric')">Metric (cm / kg)</button>
+      <button class="btn full" style="background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);box-shadow:none" id="unit-imperial" onclick="setUnit('imperial')">Imperial (ft·in / lb)</button>
+    </div>
+    <div class="g3" style="margin-bottom:14px">
+      <div><span class="fl" id="height-lbl">Height (cm)</span>
+        <div style="display:flex;gap:6px">
+          <input class="fi" id="bmi-h1" type="number" placeholder="170" oninput="calcBmi()" style="flex:1">
+          <input class="fi" id="bmi-h2" type="number" placeholder="in" oninput="calcBmi()" style="width:64px;display:none">
+        </div></div>
+      <div><span class="fl" id="weight-lbl">Weight (kg)</span>
+        <input class="fi" id="bmi-w" type="number" placeholder="65" oninput="calcBmi()"></div>
+      <div><span class="fl">Age</span>
+        <input class="fi" id="bmi-age" type="number" placeholder="30" min="1" max="120" oninput="calcBmi()"></div>
+    </div>
+    <div><span class="fl">Sex</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn full" id="sex-m" onclick="setSex('M')">Male</button>
+        <button class="btn full" style="background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);box-shadow:none" id="sex-f" onclick="setSex('F')">Female</button>
+      </div></div>
+    <div class="res-box" id="bmi-result">
+      <div style="text-align:center;padding:10px 0">
+        <div style="font-size:52px;font-weight:700;font-family:'DM Mono',monospace;color:var(--te2)" id="bmi-val">—</div>
+        <div style="font-size:16px;font-weight:600;margin-top:4px" id="bmi-status">—</div>
+      </div>
+      <div class="bmi-gauge"><div class="bmi-pointer" id="bmi-ptr" style="left:0%"></div></div>
+      <div class="bmi-labels"><span>Underweight<br>&lt;18.5</span><span>Normal<br>18.5–24.9</span><span>Overweight<br>25–29.9</span><span>Obese<br>≥30</span></div>
+      <div id="bmi-details" style="margin-top:14px"></div>
+    </div>
+  </div>
+  <!-- BMI 기준표 -->
+  <div class="card">
+    <div class="card-title">BMI Classification (WHO)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:7px">
+      <div style="background:var(--te3);border:1px solid var(--te);border-radius:10px;padding:10px 12px"><div style="font-size:11px;color:var(--te2);font-weight:600">Underweight</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--tx);margin-top:3px">&lt; 18.5</div></div>
+      <div style="background:var(--ac3);border:1px solid var(--ac);border-radius:10px;padding:10px 12px"><div style="font-size:11px;color:var(--ac2);font-weight:600">Normal weight</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--tx);margin-top:3px">18.5 – 24.9</div></div>
+      <div style="background:var(--go3);border:1px solid var(--go);border-radius:10px;padding:10px 12px"><div style="font-size:11px;color:var(--go2);font-weight:600">Overweight</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--tx);margin-top:3px">25.0 – 29.9</div></div>
+      <div style="background:var(--or3);border:1px solid var(--or);border-radius:10px;padding:10px 12px"><div style="font-size:11px;color:var(--or);font-weight:600">Obese Class I</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--tx);margin-top:3px">30.0 – 34.9</div></div>
+      <div style="background:var(--re3);border:1px solid var(--re);border-radius:10px;padding:10px 12px"><div style="font-size:11px;color:var(--re2);font-weight:600">Obese Class II</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--tx);margin-top:3px">35.0 – 39.9</div></div>
+      <div style="background:rgba(168,50,50,.15);border:1px solid #a83232;border-radius:10px;padding:10px 12px"><div style="font-size:11px;color:#ff6060;font-weight:600">Obese Class III</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--tx);margin-top:3px">≥ 40.0</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CALORIES ══ -->
+<div class="sec" id="tab-cal">
+  <div class="sec-title">Calorie & Nutrition Calculator</div>
+  <div class="sec-sub">BMR · TDEE · daily calorie target · macro breakdown — Mifflin–St Jeor formula</div>
+  <div class="card">
+    <div class="g3" style="margin-bottom:14px">
+      <div><span class="fl">Age</span><input class="fi" id="cal-age" type="number" placeholder="25" min="1" oninput="calcCal()"></div>
+      <div><span class="fl">Height (cm)</span><input class="fi" id="cal-h" type="number" placeholder="170" oninput="calcCal()"></div>
+      <div><span class="fl">Weight (kg)</span><input class="fi" id="cal-w" type="number" placeholder="65" oninput="calcCal()"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn full" id="csex-m" onclick="setCalSex('M')">Male</button>
+      <button class="btn full" style="background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);box-shadow:none" id="csex-f" onclick="setCalSex('F')">Female</button>
+    </div>
+    <span class="fl">Activity Level</span>
+    <div class="act-grid">
+      <div class="act-item on" onclick="setAct(1.2,this)"><span class="act-icon">🛋️</span><span class="act-name">Sedentary</span><span class="act-desc">Little/no exercise</span></div>
+      <div class="act-item" onclick="setAct(1.375,this)"><span class="act-icon">🚶</span><span class="act-name">Light</span><span class="act-desc">1–3 days/week</span></div>
+      <div class="act-item" onclick="setAct(1.55,this)"><span class="act-icon">🏃</span><span class="act-name">Moderate</span><span class="act-desc">3–5 days/week</span></div>
+      <div class="act-item" onclick="setAct(1.725,this)"><span class="act-icon">🏋️</span><span class="act-name">Active</span><span class="act-desc">6–7 days/week</span></div>
+      <div class="act-item" onclick="setAct(1.9,this)"><span class="act-icon">🔥</span><span class="act-name">Very Active</span><span class="act-desc">Athlete / manual job</span></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <span class="fl">Goal</span>
+      <select class="fs" id="cal-goal" onchange="calcCal()">
+        <option value="0">Maintain weight</option>
+        <option value="-500">Lose weight (−500 kcal/day)</option>
+        <option value="-1000">Lose weight fast (−1000 kcal/day)</option>
+        <option value="500">Gain weight (+500 kcal/day)</option>
+        <option value="250">Lean bulk (+250 kcal/day)</option>
+      </select>
+    </div>
+    <div class="res-box" id="cal-result">
+      <div id="cal-summary"></div>
+      <div class="macro-bars" id="macro-bars"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AGE ══ -->
+<div class="sec" id="tab-age">
+  <div class="sec-title">Age Calculator</div>
+  <div class="sec-sub">Exact age · Korean age (만/세는 나이) · next birthday · zodiac · birthstone</div>
+  <div class="card">
+    <div class="g2" style="margin-bottom:14px">
+      <div><span class="fl">Date of Birth</span><input class="fi" id="age-dob" type="date" onchange="calcAge()"></div>
+      <div><span class="fl">As of Date</span><input class="fi" id="age-asof" type="date" onchange="calcAge()"></div>
+    </div>
+    <div id="age-result-wrap" style="display:none">
+      <div class="age-result-big">
+        <div class="age-big" id="age-main">—</div>
+        <div class="age-unit" id="age-unit-txt">years old</div>
+      </div>
+      <div class="age-grid" id="age-grid"></div>
+      <div class="res-box show" id="age-extras" style="margin-top:14px"></div>
+    </div>
+  </div>
+</div>
+
+</div>
+<div id="toast"></div>
+<script>
+const $=id=>document.getElementById(id);
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+function goTab(id){
+  ['bmi','cal','age'].forEach(t=>$('tab-'+t).classList.toggle('on',t===id));
+  document.querySelectorAll('.htab').forEach((t,i)=>t.classList.toggle('on',['bmi','cal','age'][i]===id));
+}
+
+/* ════ BMI ════ */
+let bmiUnit='metric',bmiSex='M';
+function setUnit(u){bmiUnit=u;
+  const m=u==='metric';
+  $('unit-metric').style.cssText=m?'':'background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);box-shadow:none';
+  $('unit-imperial').style.cssText=m?'background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);box-shadow:none':'';
+  $('height-lbl').textContent=m?'Height (cm)':'Height (ft)';
+  $('weight-lbl').textContent=m?'Weight (kg)':'Weight (lb)';
+  $('bmi-h2').style.display=m?'none':'block';
+  calcBmi();
+}
+function setSex(s){bmiSex=s;
+  $('sex-m').style.cssText=s==='M'?'':'background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);box-shadow:none';
+  $('sex-f').style.cssText=s==='F'?'':'background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);box-shadow:none';
+  calcBmi();
+}
+function calcBmi(){
+  let h=parseFloat($('bmi-h1').value)||0;
+  let w=parseFloat($('bmi-w').value)||0;
+  if(!h||!w)return;
+  if(bmiUnit==='imperial'){
+    const inch=(h*12)+(parseFloat($('bmi-h2').value)||0);
+    h=inch*2.54;w=w*0.453592;
+  }
+  const hm=h/100;const bmi=w/(hm*hm);
+  const age=parseInt($('bmi-age').value)||30;
+  const bmiRound=Math.round(bmi*10)/10;
+  let status,color;
+  if(bmi<18.5){status='Underweight';color='var(--te2)';}
+  else if(bmi<25){status='Normal weight';color='var(--ac2)';}
+  else if(bmi<30){status='Overweight';color='var(--go2)';}
+  else if(bmi<35){status='Obese Class I';color='var(--or)';}
+  else if(bmi<40){status='Obese Class II';color='var(--re2)';}
+  else{status='Obese Class III';color='#ff6060';}
+  $('bmi-val').textContent=bmiRound;$('bmi-val').style.color=color;
+  $('bmi-status').textContent=status;$('bmi-status').style.color=color;
+  // 게이지 포인터 (BMI 10~45 범위)
+  const pct=Math.min(100,Math.max(0,(bmi-10)/35*100));
+  $('bmi-ptr').style.left=pct+'%';
+  // 이상 체중 범위
+  const ideal_low=18.5*hm*hm,ideal_high=24.9*hm*hm;
+  const bfp=bmiSex==='M'?(1.2*bmi+0.23*age-16.2):(1.2*bmi+0.23*age-5.4);
+  $('bmi-result').className='res-box show';
+  $('bmi-details').innerHTML=`
+    <div class="res-row"><span class="res-label">Ideal weight range</span><span class="res-val">${ideal_low.toFixed(1)} – ${ideal_high.toFixed(1)} kg</span></div>
+    <div class="res-row"><span class="res-label">Body Fat % (est.)</span><span class="res-val">${Math.max(0,bfp).toFixed(1)}%</span></div>
+    <div class="res-row"><span class="res-label">Weight to lose for Normal</span><span class="res-val">${bmi>25?(w-ideal_high).toFixed(1)+' kg':'✓ Already normal'}</span></div>
+    <div class="res-row"><span class="res-label">BMI Category</span><span class="res-val" style="color:${color}">${status}</span></div>`;
+}
+setUnit('metric');setSex('M');
+
+/* ════ CALORIES ════ */
+let calSex='M',actMult=1.2;
+function setCalSex(s){calSex=s;
+  $('csex-m').style.cssText=s==='M'?'':'background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);box-shadow:none';
+  $('csex-f').style.cssText=s==='F'?'':'background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);box-shadow:none';
+  calcCal();
+}
+function setAct(mult,el){actMult=mult;document.querySelectorAll('.act-item').forEach(e=>e.classList.remove('on'));el.classList.add('on');calcCal();}
+function calcCal(){
+  const age=parseInt($('cal-age').value)||0;
+  const h=parseFloat($('cal-h').value)||0;
+  const w=parseFloat($('cal-w').value)||0;
+  if(!age||!h||!w)return;
+  // Mifflin–St Jeor
+  const bmr=calSex==='M'?(10*w+6.25*h-5*age+5):(10*w+6.25*h-5*age-161);
+  const tdee=Math.round(bmr*actMult);
+  const goal=parseInt($('cal-goal').value)||0;
+  const target=tdee+goal;
+  // 매크로 (단백질 30%, 탄수화물 40%, 지방 30%)
+  const protein=Math.round(target*0.30/4);
+  const carbs=Math.round(target*0.40/4);
+  const fat=Math.round(target*0.30/9);
+  $('cal-result').className='res-box show';
+  $('cal-summary').innerHTML=`
+    <div class="res-row"><span class="res-label">BMR (Basal Metabolic Rate)</span><span class="res-val">${Math.round(bmr)} kcal</span></div>
+    <div class="res-row"><span class="res-label">TDEE (Total Daily Energy)</span><span class="res-val">${tdee} kcal</span></div>
+    <div class="res-row"><span class="res-label">Daily Target</span><span class="res-val" style="color:var(--go2);font-size:20px">${target} kcal</span></div>`;
+  $('macro-bars').innerHTML=`
+    <div style="font-size:11px;color:var(--tx3);margin-bottom:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase">Recommended Macros</div>
+    ${macroBar('Protein','#4eddb8',protein,'g',protein*4,target)}
+    ${macroBar('Carbohydrates','#9b8ff5',carbs,'g',carbs*4,target)}
+    ${macroBar('Fat','#e8b84b',fat,'g',fat*9,target)}`;
+}
+function macroBar(name,color,g,unit,kcal,total){
+  const pct=total?Math.round(kcal/total*100):0;
+  return`<div class="macro-row">
+    <div class="macro-header"><span class="macro-name">${name}</span><span class="macro-val">${g}${unit} &nbsp;·&nbsp; ${kcal} kcal &nbsp;·&nbsp; ${pct}%</span></div>
+    <div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+  </div>`;
+}
+
+/* ════ AGE ════ */
+const ZODIAC_WEST=['Capricorn','Aquarius','Pisces','Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn'];
+const ZODIAC_W_DATES=[20,19,20,20,21,21,22,23,23,23,22,22];
+const ZODIAC_CH=['Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Pig'];
+const BIRTHSTONE=['Garnet','Amethyst','Aquamarine','Diamond','Emerald','Pearl','Ruby','Peridot','Sapphire','Opal','Topaz','Turquoise'];
+const BIRTHSTONE_KR=['가넷','자수정','아쿠아마린','다이아몬드','에메랄드','진주','루비','페리도트','사파이어','오팔','토파즈','터키석'];
+(function(){
+  const t=new Date();
+  $('age-asof').value=t.toISOString().slice(0,10);
+})();
+function calcAge(){
+  const dob=new Date($('age-dob').value);const asof=new Date($('age-asof').value);
+  if(isNaN(dob)||isNaN(asof))return;
+  // 만 나이
+  let years=asof.getFullYear()-dob.getFullYear();
+  let months=asof.getMonth()-dob.getMonth();
+  let days=asof.getDate()-dob.getDate();
+  if(days<0){months--;days+=new Date(asof.getFullYear(),asof.getMonth(),0).getDate();}
+  if(months<0){years--;months+=12;}
+  // 세는 나이 (한국)
+  const koreanAge=asof.getFullYear()-dob.getFullYear()+1;
+  // 연 나이 (한국, 당해 생일 전까지 -1)
+  const yearAge=asof.getFullYear()-dob.getFullYear();
+  // 다음 생일
+  const nextBday=new Date(asof.getFullYear(),dob.getMonth(),dob.getDate());
+  if(nextBday<=asof)nextBday.setFullYear(nextBday.getFullYear()+1);
+  const daysToB=Math.ceil((nextBday-asof)/(1000*60*60*24));
+  // 총 일수
+  const totalDays=Math.floor((asof-dob)/(1000*60*60*24));
+  // 서양 별자리
+  const m=dob.getMonth(),d=dob.getDate();
+  const zodiacW=d<ZODIAC_W_DATES[m]?ZODIAC_WEST[m]:ZODIAC_WEST[m+1];
+  // 중국 띠
+  const zodiacCh=ZODIAC_CH[((dob.getFullYear()-4)%12+12)%12];
+  const bs=BIRTHSTONE[dob.getMonth()];
+  $('age-main').textContent=years;
+  $('age-unit-txt').textContent='years, '+months+' months, '+days+' days old';
+  $('age-grid').innerHTML=`
+    <div class="age-item"><div class="age-item-val">${koreanAge}</div><div class="age-item-lbl">Korean Age (세는)</div></div>
+    <div class="age-item"><div class="age-item-val">${yearAge}</div><div class="age-item-lbl">Year Age (연 나이)</div></div>
+    <div class="age-item"><div class="age-item-val">${daysToB}</div><div class="age-item-lbl">Days to Birthday</div></div>
+    <div class="age-item"><div class="age-item-val">${totalDays.toLocaleString()}</div><div class="age-item-lbl">Total Days Lived</div></div>
+    <div class="age-item"><div class="age-item-val">${(totalDays*24).toLocaleString()}</div><div class="age-item-lbl">Hours Lived</div></div>
+    <div class="age-item"><div class="age-item-val">${Math.floor(totalDays/7).toLocaleString()}</div><div class="age-item-lbl">Weeks Lived</div></div>`;
+  $('age-extras').innerHTML=`
+    <div class="res-row"><span class="res-label">♈ Western Zodiac</span><span class="res-val">${zodiacW}</span></div>
+    <div class="res-row"><span class="res-label">🐉 Chinese Zodiac</span><span class="res-val">${zodiacCh}띠</span></div>
+    <div class="res-row"><span class="res-label">💎 Birthstone</span><span class="res-val">${bs} (${BIRTHSTONE_KR[dob.getMonth()]})</span></div>
+    <div class="res-row"><span class="res-label">🎂 Next Birthday</span><span class="res-val">${nextBday.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</span></div>
+    <div class="res-row"><span class="res-label">📅 Day of Week Born</span><span class="res-val">${dob.toLocaleDateString('en-US',{weekday:'long'})}</span></div>`;
+  $('age-result-wrap').style.display='block';
+}
+</script>
+</body>
+</html>

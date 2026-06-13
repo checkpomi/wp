@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>pomiai Dev Tools 2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);--ac4:rgba(108,92,232,.08);
+  --go:#c9963a;--go2:#e8b84b;--go3:rgba(201,150,58,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re3:rgba(224,85,85,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif}
+#header{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 18px;display:flex;align-items:center;gap:10px;height:52px;position:sticky;top:0;z-index:50}
+#logo{font-size:14px;font-weight:600;color:var(--ac2);letter-spacing:1px}
+#logo span{color:var(--tx3);font-weight:400}
+.h-sep{width:1px;height:20px;background:var(--bd2);flex-shrink:0}
+#htabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex-wrap:wrap}
+#htabs::-webkit-scrollbar{display:none}
+.htab{padding:8px 12px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-radius:8px;transition:.15s;white-space:nowrap;flex-shrink:0}
+.htab:hover{color:var(--tx2);background:var(--s3)}
+.htab.on{color:var(--ac2);background:var(--ac3)}
+#app{max-width:900px;margin:0 auto;padding:24px 16px 80px}
+.sec{display:none}.sec.on{display:block;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sec-title{font-size:20px;font-weight:600;margin-bottom:5px}
+.sec-sub{font-size:13px;color:var(--tx2);margin-bottom:22px;line-height:1.6}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:18px;padding:22px;margin-bottom:14px;box-shadow:var(--sh)}
+.card-title{font-size:13px;font-weight:600;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';width:3px;height:13px;background:linear-gradient(var(--ac2),var(--te));border-radius:2px}
+.fl{font-size:10px;color:var(--tx3);font-weight:600;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:block}
+.fi,.fs{background:var(--s3);border:1px solid var(--bd2);color:var(--tx);border-radius:10px;padding:10px 13px;font-size:13px;font-family:'DM Mono',monospace;outline:none;transition:.15s;width:100%;-webkit-appearance:none;line-height:1.6}
+.fi:focus,.fs:focus{border-color:var(--ac);background:var(--s4)}
+.fi::placeholder{color:var(--tx4)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.btn{background:linear-gradient(135deg,var(--ac),#4a38c0);border:none;color:#fff;border-radius:11px;padding:11px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(108,92,232,.28)}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn.full{width:100%}
+.btn.go{background:linear-gradient(135deg,var(--te),#1a8c72);box-shadow:0 4px 16px rgba(40,196,160,.22)}
+.btn.sm{padding:7px 13px;font-size:12px;border-radius:8px}
+.btn.outline{background:transparent;border:1px solid var(--bd2);color:var(--tx2);box-shadow:none}
+.btn.outline:hover{border-color:var(--ac);color:var(--ac2);filter:none;transform:none;background:var(--ac4)}
+.res-area{background:var(--s2);border:1px solid var(--bd2);color:var(--te2);border-radius:10px;padding:14px;font-family:'DM Mono',monospace;font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-all;min-height:80px;resize:vertical;outline:none;width:100%}
+.res-area:focus{border-color:var(--ac)}
+.err-msg{color:var(--re);font-size:12px;margin-top:6px;display:none}
+.err-msg.show{display:block}
+.acts{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+/* CSS Gradient */
+.grad-preview{height:90px;border-radius:12px;margin-bottom:14px;transition:.3s}
+.stop-row{display:flex;gap:7px;align-items:center;margin-bottom:8px}
+.stop-row input[type="color"]{width:36px;height:36px;border:1px solid var(--bd2);border-radius:7px;padding:2px;background:var(--s3);cursor:pointer;flex-shrink:0}
+.stop-row input[type="range"]{flex:1;-webkit-appearance:none;height:4px;background:var(--bd2);border-radius:2px;cursor:pointer}
+.stop-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--ac2);cursor:pointer}
+.stop-pos{font-size:11px;color:var(--ac2);font-family:'DM Mono',monospace;min-width:32px;text-align:right}
+/* Timezone */
+.tz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:14px}
+.tz-card{background:var(--s2);border:1px solid var(--bd2);border-radius:12px;padding:14px;text-align:center}
+.tz-city{font-size:12px;color:var(--tx3);margin-bottom:4px}
+.tz-time{font-family:'DM Mono',monospace;font-size:20px;font-weight:600;color:var(--tx)}
+.tz-date{font-size:11px;color:var(--tx3);margin-top:3px}
+.tz-offset{font-size:10px;color:var(--ac2);margin-top:2px}
+/* Lorem */
+.lorem-tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.ltag{padding:5px 12px;font-size:11px;font-weight:600;border:1px solid var(--bd2);color:var(--tx3);background:transparent;border-radius:16px;cursor:pointer;transition:.15s}
+.ltag:hover{color:var(--tx2)}
+.ltag.on{background:var(--ac3);color:var(--ac2);border-color:var(--ac)}
+#toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--bd2);color:var(--te2);border-radius:20px;padding:8px 18px;font-size:12px;opacity:0;transition:.22s;pointer-events:none;z-index:999;white-space:nowrap;box-shadow:var(--sh)}
+#toast.show{opacity:1}
+@media(max-width:620px){
+  #app{padding:16px 12px 60px}
+  .g2,.g3{grid-template-columns:1fr}
+  .htab{padding:7px 9px;font-size:11px}
+}
+</style>
+</head>
+<body>
+<div id="header">
+  <span id="logo">pomiai <span>dev2</span></span>
+  <div class="h-sep"></div>
+  <div id="htabs">
+    <div class="htab on"  onclick="goTab('conv')">⇄ Data Convert</div>
+    <div class="htab"     onclick="goTab('grad')">🎨 CSS Gradient</div>
+    <div class="htab"     onclick="goTab('cron')">⏰ Cron</div>
+    <div class="htab"     onclick="goTab('tz')">🌍 Timezone</div>
+    <div class="htab"     onclick="goTab('lorem')">📝 Lorem Ipsum</div>
+  </div>
+</div>
+<div id="app">
+
+<!-- ══ DATA CONVERTER ══ -->
+<div class="sec on" id="tab-conv">
+  <div class="sec-title">Data Format Converter</div>
+  <div class="sec-sub">JSON ↔ CSV ↔ XML ↔ YAML — instant conversion · local processing · no upload</div>
+  <div class="card">
+    <div style="display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap">
+      <select class="fs" id="conv-from" style="flex:1;min-width:100px;font-family:'DM Mono',monospace">
+        <option value="json">JSON</option><option value="csv">CSV</option>
+        <option value="xml">XML</option><option value="yaml">YAML</option>
+      </select>
+      <button class="btn sm" onclick="swapConv()">⇄ Swap</button>
+      <select class="fs" id="conv-to" style="flex:1;min-width:100px;font-family:'DM Mono',monospace">
+        <option value="csv">CSV</option><option value="json">JSON</option>
+        <option value="xml">XML</option><option value="yaml">YAML</option>
+      </select>
+    </div>
+    <span class="fl">Input</span>
+    <textarea class="fi" id="conv-in" rows="8" placeholder="Paste your data here..." style="resize:vertical;min-height:140px;margin-bottom:10px"></textarea>
+    <div class="acts">
+      <button class="btn go" onclick="doConvert()">⚡ Convert</button>
+      <button class="btn outline sm" onclick="loadSample()">Load Sample</button>
+      <button class="btn outline sm" onclick="$('conv-in').value=''">Clear</button>
+    </div>
+    <div class="err-msg" id="conv-err"></div>
+    <div style="margin-top:12px">
+      <span class="fl">Output</span>
+      <textarea class="res-area" id="conv-out" readonly rows="8" style="min-height:140px"></textarea>
+      <div class="acts">
+        <button class="btn outline sm" onclick="copyOut('conv-out')">📋 Copy</button>
+        <button class="btn outline sm" onclick="dlOut('conv-out')">⬇ Download</button>
+        <button class="btn outline sm" onclick="applyOut('conv-out','conv-in')">↑ Use as Input</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CSS GRADIENT ══ -->
+<div class="sec" id="tab-grad">
+  <div class="sec-title">CSS Gradient Generator</div>
+  <div class="sec-sub">Linear · Radial · Conic — live preview · copy CSS · stops editor</div>
+  <div class="card">
+    <div class="grad-preview" id="grad-preview"></div>
+    <div class="g3" style="margin-bottom:14px">
+      <div><span class="fl">Type</span>
+        <select class="fs" id="grad-type" onchange="renderGrad()">
+          <option value="linear">Linear</option>
+          <option value="radial">Radial</option>
+          <option value="conic">Conic</option>
+        </select></div>
+      <div id="angle-wrap"><span class="fl">Angle</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" id="grad-angle" min="0" max="360" value="135" style="-webkit-appearance:none;height:4px;background:var(--bd2);border-radius:2px;cursor:pointer;flex:1;outline:none" oninput="$('grad-angle-v').textContent=this.value+'°';renderGrad()">
+          <span style="font-size:12px;color:var(--ac2);font-family:'DM Mono',monospace;min-width:36px" id="grad-angle-v">135°</span>
+        </div></div>
+      <div><span class="fl">Preset</span>
+        <select class="fs" id="grad-preset" onchange="loadGradPreset()">
+          <option value="">Custom</option>
+          <option value="sunset">🌅 Sunset</option>
+          <option value="ocean">🌊 Ocean</option>
+          <option value="forest">🌲 Forest</option>
+          <option value="candy">🍬 Candy</option>
+          <option value="night">🌃 Night</option>
+          <option value="gold">✨ Gold</option>
+          <option value="pomiai">💜 pomiai</option>
+        </select></div>
+    </div>
+    <div class="card-title">Color Stops</div>
+    <div id="grad-stops"></div>
+    <button class="btn outline sm" style="margin-bottom:14px" onclick="addStop()">+ Add Stop</button>
+    <span class="fl">CSS Output</span>
+    <textarea class="res-area" id="grad-out" readonly rows="3" style="min-height:60px"></textarea>
+    <div class="acts">
+      <button class="btn outline sm" onclick="copyOut('grad-out')">📋 Copy CSS</button>
+      <button class="btn outline sm" onclick="copyBg()">📋 Copy background</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CRON ══ -->
+<div class="sec" id="tab-cron">
+  <div class="sec-title">Cron Expression Generator</div>
+  <div class="sec-sub">Build cron expressions visually — supports standard 5-field & extended 6-field formats</div>
+  <div class="card">
+    <!-- 사람말 → Cron -->
+    <div class="card-title">Builder → Expression</div>
+    <div class="g3" style="margin-bottom:10px">
+      <div><span class="fl">Minute (0–59)</span><input class="fi" id="cr-min" value="0" oninput="buildCron()"></div>
+      <div><span class="fl">Hour (0–23)</span><input class="fi" id="cr-hr" value="9" oninput="buildCron()"></div>
+      <div><span class="fl">Day of Month (1–31)</span><input class="fi" id="cr-dom" value="*" oninput="buildCron()"></div>
+      <div><span class="fl">Month (1–12)</span><input class="fi" id="cr-mon" value="*" oninput="buildCron()"></div>
+      <div><span class="fl">Day of Week (0–7)</span><input class="fi" id="cr-dow" value="*" oninput="buildCron()"></div>
+      <div><span class="fl">Second (optional)</span><input class="fi" id="cr-sec" value="" placeholder="leave blank" oninput="buildCron()"></div>
+    </div>
+    <div style="background:var(--s3);border:1px solid var(--bd2);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center">
+      <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--ac2);letter-spacing:3px" id="cron-expr">0 9 * * *</div>
+      <div style="font-size:13px;color:var(--tx2);margin-top:8px" id="cron-desc">Every day at 09:00</div>
+    </div>
+    <div class="acts">
+      <button class="btn outline sm" onclick="copyOut2('cron-expr')">📋 Copy</button>
+    </div>
+
+    <!-- 프리셋 -->
+    <div class="card-title" style="margin-top:16px">Quick Presets</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px">
+      <!-- JS로 채워짐 -->
+    </div>
+    <div id="cron-presets" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:7px"></div>
+
+    <!-- 역방향: Expression → 설명 -->
+    <div class="card-title" style="margin-top:16px">Expression → Description</div>
+    <div style="display:flex;gap:7px;margin-bottom:8px">
+      <input class="fi" id="cron-parse-in" placeholder="e.g.  */5 * * * *" style="flex:1">
+      <button class="btn sm" onclick="parseCron()">⚡ Parse</button>
+    </div>
+    <div style="background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:12px 14px;min-height:42px;display:none" id="cron-parse-wrap">
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase">Meaning</div>
+      <div style="font-size:14px;color:var(--te2);font-weight:500" id="cron-parse-out"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TIMEZONE ══ -->
+<div class="sec" id="tab-tz">
+  <div class="sec-title">Timezone Converter</div>
+  <div class="sec-sub">Convert time across global timezones — meeting planner · world clock</div>
+  <div class="card">
+    <div class="g2" style="margin-bottom:14px">
+      <div><span class="fl">Date & Time</span>
+        <input class="fi" id="tz-dt" type="datetime-local" oninput="convertTz()" style="font-family:'DM Sans',sans-serif"></div>
+      <div><span class="fl">From Timezone</span>
+        <select class="fs" id="tz-from" onchange="convertTz()" style="font-family:'DM Sans',sans-serif"></select></div>
+    </div>
+    <span class="fl">Convert To</span>
+    <div id="tz-targets" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px"></div>
+    <div class="tz-grid" id="tz-result"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">World Clock</div>
+    <div class="tz-grid" id="world-clock"></div>
+  </div>
+</div>
+
+<!-- ══ LOREM IPSUM ══ -->
+<div class="sec" id="tab-lorem">
+  <div class="sec-title">Lorem Ipsum Generator</div>
+  <div class="sec-sub">English · Korean · Japanese · Chinese · Emoji — paragraphs, sentences, words</div>
+  <div class="card">
+    <div class="lorem-tag-row" id="lorem-lang-row">
+      <button class="ltag on" onclick="setLoremLang('en',this)">English</button>
+      <button class="ltag" onclick="setLoremLang('ko',this)">한국어</button>
+      <button class="ltag" onclick="setLoremLang('ja',this)">日本語</button>
+      <button class="ltag" onclick="setLoremLang('zh',this)">中文</button>
+      <button class="ltag" onclick="setLoremLang('emoji',this)">Emoji 🎉</button>
+    </div>
+    <div class="lorem-tag-row" id="lorem-type-row">
+      <button class="ltag on" onclick="setLoremType('paragraphs',this)">Paragraphs</button>
+      <button class="ltag" onclick="setLoremType('sentences',this)">Sentences</button>
+      <button class="ltag" onclick="setLoremType('words',this)">Words</button>
+      <button class="ltag" onclick="setLoremType('html',this)">HTML</button>
+    </div>
+    <div class="g2" style="margin-bottom:14px">
+      <div><span class="fl">Count</span>
+        <input class="fi" id="lorem-n" type="number" value="3" min="1" max="100" style="font-family:'DM Sans',sans-serif"></div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn go full" onclick="genLorem()">⚡ Generate</button>
+      </div>
+    </div>
+    <textarea class="res-area" id="lorem-out" readonly rows="10" style="min-height:200px"></textarea>
+    <div class="acts">
+      <button class="btn outline sm" onclick="copyOut('lorem-out')">📋 Copy</button>
+      <button class="btn outline sm" onclick="genLorem()">🔄 Refresh</button>
+    </div>
+  </div>
+</div>
+
+</div>
+<div id="toast"></div>
+<script>
+const $=id=>document.getElementById(id);
+let toastTid;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTid);toastTid=setTimeout(()=>t.classList.remove('show'),2400);}
+function goTab(id){
+  ['conv','grad','cron','tz','lorem'].forEach(t=>$('tab-'+t).classList.toggle('on',t===id));
+  document.querySelectorAll('.htab').forEach((t,i)=>t.classList.toggle('on',['conv','grad','cron','tz','lorem'][i]===id));
+}
+function copyOut(id){const v=$(id).value;if(!v)return;if(navigator.clipboard)navigator.clipboard.writeText(v).then(()=>toast('✅ Copied'));else{const ta=document.createElement('textarea');ta.value=v;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('✅ Copied');}}
+function copyOut2(id){const v=$(id).textContent;navigator.clipboard?.writeText(v).then(()=>toast('✅ Copied'));}
+function dlOut(id){const v=$(id).value;if(!v)return;const t=$('conv-to').value;const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(v);a.download='converted.'+t;document.body.appendChild(a);a.click();document.body.removeChild(a);}
+function applyOut(fromId,toId){$(toId).value=$(fromId).value;}
+
+/* ════ DATA CONVERTER ════ */
+function swapConv(){const f=$('conv-from').value,t=$('conv-to').value;$('conv-from').value=t;$('conv-to').value=f;}
+
+const SAMPLES={
+  json:`[\n  {"name":"Alice","age":30,"city":"Seoul"},\n  {"name":"Bob","age":25,"city":"Tokyo"},\n  {"name":"Carol","age":35,"city":"London"}\n]`,
+  csv:`name,age,city\nAlice,30,Seoul\nBob,25,Tokyo\nCarol,35,London`,
+  xml:`<?xml version="1.0"?>\n<root>\n  <item><name>Alice</name><age>30</age><city>Seoul</city></item>\n  <item><name>Bob</name><age>25</age><city>Tokyo</city></item>\n</root>`,
+  yaml:`- name: Alice\n  age: 30\n  city: Seoul\n- name: Bob\n  age: 25\n  city: Tokyo`,
+};
+function loadSample(){$('conv-in').value=SAMPLES[$('conv-from').value]||'';}
+
+function doConvert(){
+  const from=$('conv-from').value,to=$('conv-to').value;
+  const input=$('conv-in').value.trim();
+  const err=$('conv-err');err.className='err-msg';
+  if(!input){err.textContent='⚠️ Please enter input data';err.className='err-msg show';return;}
+  try{
+    // 1. 입력 파싱
+    let data;
+    if(from==='json') data=JSON.parse(input);
+    else if(from==='csv') data=csvToJson(input);
+    else if(from==='xml') data=xmlToJson(input);
+    else if(from==='yaml') data=yamlToJson(input);
+    // 2. 출력 변환
+    let out;
+    if(to==='json') out=JSON.stringify(data,null,2);
+    else if(to==='csv') out=jsonToCsv(data);
+    else if(to==='xml') out=jsonToXml(data);
+    else if(to==='yaml') out=jsonToYaml(data);
+    $('conv-out').value=out;
+    toast('✅ Converted successfully');
+  }catch(e){err.textContent='❌ '+e.message;err.className='err-msg show';}
+}
+
+function csvToJson(csv){
+  const lines=csv.trim().split('\n').filter(l=>l.trim());
+  const headers=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(l=>{
+    const vals=l.match(/(".*?"|[^,]+|(?<=,)(?=,)|^(?=,)|(?<=,)$)/g)||l.split(',');
+    const obj={};headers.forEach((h,i)=>obj[h]=(vals[i]||'').trim().replace(/^"|"$/g,''));return obj;
+  });
+}
+function jsonToCsv(data){
+  const arr=Array.isArray(data)?data:[data];
+  const keys=Object.keys(arr[0]||{});
+  const esc=v=>{
+    const s=v==null?'':String(v);
+    return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`:s;
+  };
+  return[keys.join(','),...arr.map(r=>keys.map(k=>esc(r[k]??'')).join(','))].join('\n');
+}
+function xmlToJson(xml){
+  const parse=node=>{
+    if(node.nodeType===3)return node.nodeValue.trim();
+    const obj={};[...node.childNodes].forEach(c=>{const v=parse(c);if(v!==''){const k=c.nodeName;obj[k]=obj[k]?Array.isArray(obj[k])?[...obj[k],v]:[obj[k],v]:v;}});
+    return Object.keys(obj).length?obj:node.nodeValue;
+  };
+  const doc=new DOMParser().parseFromString(xml,'text/xml');
+  const root=doc.documentElement;
+  const children=[...root.childNodes].filter(n=>n.nodeType===1);
+  return children.length>1?children.map(parse):parse(root);
+}
+function jsonToXml(data,tag='root'){
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const toXml=(v,k)=>{
+    if(Array.isArray(v))return v.map(i=>toXml(i,'item')).join('\n');
+    if(typeof v==='object'&&v)return`<${k}>\n${Object.entries(v).map(([ck,cv])=>toXml(cv,ck)).join('\n')}\n</${k}>`;
+    return`<${k}>${esc(v)}</${k}>`;
+  };
+  return`<?xml version="1.0" encoding="UTF-8"?>\n<root>\n${(Array.isArray(data)?data:[data]).map(i=>toXml(i,'item')).join('\n')}\n</root>`;
+}
+function yamlToJson(yaml){
+  // 단순 YAML 파서 (배열·객체 지원)
+  const lines=yaml.split('\n');
+  const result=[];let cur=null;
+  lines.forEach(l=>{
+    if(l.startsWith('-')){
+      if(cur)result.push(cur);cur={};
+      const rest=l.slice(1).trim();
+      if(rest.includes(':')&&!rest.startsWith('"')){const[k,...vp]=rest.split(':');cur[k.trim()]=vp.join(':').trim().replace(/^['"]|['"]$/g,'');}
+    }else if(l.trim().includes(':')&&cur!==null){
+      const[k,...vp]=l.trim().split(':');cur[k.trim()]=vp.join(':').trim().replace(/^['"]|['"]$/g,'');
+    }
+  });
+  if(cur)result.push(cur);
+  return result.length?result:JSON.parse('{}');
+}
+function jsonToYaml(data){
+  const arr=Array.isArray(data)?data:[data];
+  return arr.map(obj=>'- '+Object.entries(obj).map(([k,v],i)=>(i===0?'':  '  ')+k+': '+v).join('\n  ')).join('\n');
+}
+
+/* ════ CSS GRADIENT ════ */
+let gradStops=[{color:'#6c5ce8',pos:0},{color:'#4eddb8',pos:100}];
+const GRAD_PRESETS={
+  sunset:[{color:'#ff6b6b',pos:0},{color:'#feca57',pos:50},{color:'#ff9ff3',pos:100}],
+  ocean:[{color:'#0984e3',pos:0},{color:'#00cec9',pos:50},{color:'#55efc4',pos:100}],
+  forest:[{color:'#00b894',pos:0},{color:'#00cec9',pos:50},{color:'#55efc4',pos:100}],
+  candy:[{color:'#fd79a8',pos:0},{color:'#a29bfe',pos:50},{color:'#74b9ff',pos:100}],
+  night:[{color:'#0f0c29',pos:0},{color:'#302b63',pos:50},{color:'#24243e',pos:100}],
+  gold:[{color:'#f9ca24',pos:0},{color:'#f0932b',pos:50},{color:'#e55039',pos:100}],
+  pomiai:[{color:'#6c5ce8',pos:0},{color:'#9b8ff5',pos:50},{color:'#4eddb8',pos:100}],
+};
+function loadGradPreset(){const p=$('grad-preset').value;if(!p)return;gradStops=GRAD_PRESETS[p].map(s=>({...s}));renderGrad();}
+function renderStops(){
+  const c=$('grad-stops');c.innerHTML='';
+  gradStops.forEach((s,i)=>{
+    const row=document.createElement('div');row.className='stop-row';
+    row.innerHTML=`
+      <input type="color" value="${s.color}" onchange="gradStops[${i}].color=this.value;renderGrad()">
+      <input type="range" min="0" max="100" value="${s.pos}" oninput="gradStops[${i}].pos=+this.value;$('gsp${i}').textContent=this.value+'%';renderGrad()">
+      <span class="stop-pos" id="gsp${i}">${s.pos}%</span>
+      <button class="btn outline sm" onclick="rmStop(${i})">✕</button>`;
+    c.appendChild(row);
+  });
+}
+function addStop(){gradStops.push({color:'#ffffff',pos:50});renderGrad();}
+function rmStop(i){if(gradStops.length<=2)return;gradStops.splice(i,1);renderGrad();}
+function renderGrad(){
+  renderStops();
+  const type=$('grad-type').value;
+  const angle=$('grad-angle').value;
+  const stops=[...gradStops].sort((a,b)=>a.pos-b.pos).map(s=>`${s.color} ${s.pos}%`).join(', ');
+  let css;
+  if(type==='linear')css=`linear-gradient(${angle}deg, ${stops})`;
+  else if(type==='radial')css=`radial-gradient(circle, ${stops})`;
+  else css=`conic-gradient(from ${angle}deg, ${stops})`;
+  $('grad-preview').style.background=css;
+  $('grad-out').value=`background: ${css};`;
+  $('angle-wrap').style.display=type==='radial'?'none':'block';
+}
+function copyBg(){const v=$('grad-out').value.replace('background: ','').replace(';','');if(navigator.clipboard)navigator.clipboard.writeText(v).then(()=>toast('✅ Copied'));} 
+(function(){renderGrad();})();
+
+/* ════ CRON ════ */
+const CRON_PRESETS=[
+  {label:'Every minute',expr:'* * * * *'},
+  {label:'Every 5 minutes',expr:'*/5 * * * *'},
+  {label:'Every hour',expr:'0 * * * *'},
+  {label:'Daily at 9am',expr:'0 9 * * *'},
+  {label:'Daily at midnight',expr:'0 0 * * *'},
+  {label:'Every Monday 9am',expr:'0 9 * * 1'},
+  {label:'Weekdays at 9am',expr:'0 9 * * 1-5'},
+  {label:'Every Sunday midnight',expr:'0 0 * * 0'},
+  {label:'1st of month',expr:'0 0 1 * *'},
+  {label:'Every 15 minutes',expr:'*/15 * * * *'},
+  {label:'Twice daily',expr:'0 9,18 * * *'},
+  {label:'Every year Jan 1',expr:'0 0 1 1 *'},
+];
+(function(){
+  const c=$('cron-presets');
+  CRON_PRESETS.forEach(p=>{
+    const el=document.createElement('div');
+    el.style.cssText='background:var(--s2);border:1px solid var(--bd2);border-radius:9px;padding:9px 12px;cursor:pointer;transition:.15s';
+    el.innerHTML=`<div style="font-size:11px;color:var(--tx2);font-weight:600;margin-bottom:3px">${p.label}</div><div style="font-family:DM Mono,monospace;font-size:12px;color:var(--ac2)">${p.expr}</div>`;
+    el.onmouseenter=()=>el.style.borderColor='var(--ac)';
+    el.onmouseleave=()=>el.style.borderColor='var(--bd2)';
+    el.onclick=()=>{const parts=p.expr.split(' ');$('cr-min').value=parts[0];$('cr-hr').value=parts[1];$('cr-dom').value=parts[2];$('cr-mon').value=parts[3];$('cr-dow').value=parts[4];buildCron();toast('✅ '+p.label);};
+    c.appendChild(el);
+  });
+  buildCron();
+})();
+
+function buildCron(){
+  const min=$('cr-min').value||'*',hr=$('cr-hr').value||'*',dom=$('cr-dom').value||'*',mon=$('cr-mon').value||'*',dow=$('cr-dow').value||'*',sec=$('cr-sec').value;
+  const expr=sec?`${sec} ${min} ${hr} ${dom} ${mon} ${dow}`:`${min} ${hr} ${dom} ${mon} ${dow}`;
+  $('cron-expr').textContent=expr;
+  $('cron-desc').textContent=describeCron(min,hr,dom,mon,dow);
+}
+function describeCron(min,hr,dom,mon,dow){
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const mons=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  let d='';
+  if(min==='*'&&hr==='*')d='Every minute';
+  else if(min.startsWith('*/')&&hr==='*')d=`Every ${min.slice(2)} minutes`;
+  else if(hr.startsWith('*/')&&min==='0')d=`Every ${hr.slice(2)} hours`;
+  else if(hr!=='*'&&min!=='*')d=`At ${String(hr).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+  else if(hr!=='*')d=`At ${String(hr).padStart(2,'0')}:00`;
+  else d='At minute '+min;
+  if(dom!=='*')d+=` on day ${dom} of the month`;
+  if(mon!=='*')d+=` in ${mons[(parseInt(mon)||1)-1]||'month '+mon}`;
+  if(dow==='1-5')d+=' (Weekdays)';
+  else if(dow==='6,0'||dow==='0,6')d+=' (Weekends)';
+  else if(dow!=='*')d+=` on ${dow.split(',').map(d=>days[parseInt(d)]||d).join(', ')}`;
+  return d;
+}
+function parseCron(){
+  const v=$('cron-parse-in').value.trim();
+  if(!v)return;
+  const parts=v.split(/\s+/);
+  const [min,hr,dom,mon,dow]=parts.length>=5?parts:['*','*','*','*','*'];
+  const desc=describeCron(min,hr,dom,mon,dow);
+  $('cron-parse-out').textContent=desc;
+  $('cron-parse-wrap').style.display='block';
+}
+
+/* ════ TIMEZONE ════ */
+const TZ_LIST=[
+  {id:'America/New_York',city:'New York',flag:'🇺🇸'},
+  {id:'America/Los_Angeles',city:'Los Angeles',flag:'🇺🇸'},
+  {id:'America/Chicago',city:'Chicago',flag:'🇺🇸'},
+  {id:'Europe/London',city:'London',flag:'🇬🇧'},
+  {id:'Europe/Paris',city:'Paris',flag:'🇫🇷'},
+  {id:'Europe/Berlin',city:'Berlin',flag:'🇩🇪'},
+  {id:'Asia/Seoul',city:'Seoul',flag:'🇰🇷'},
+  {id:'Asia/Tokyo',city:'Tokyo',flag:'🇯🇵'},
+  {id:'Asia/Shanghai',city:'Shanghai',flag:'🇨🇳'},
+  {id:'Asia/Singapore',city:'Singapore',flag:'🇸🇬'},
+  {id:'Asia/Dubai',city:'Dubai',flag:'🇦🇪'},
+  {id:'Asia/Kolkata',city:'Mumbai',flag:'🇮🇳'},
+  {id:'Australia/Sydney',city:'Sydney',flag:'🇦🇺'},
+  {id:'Pacific/Auckland',city:'Auckland',flag:'🇳🇿'},
+  {id:'America/Sao_Paulo',city:'São Paulo',flag:'🇧🇷'},
+];
+let selTzTargets=new Set(['America/New_York','Europe/London','Asia/Seoul','Asia/Tokyo']);
+
+(function initTz(){
+  const fromSel=$('tz-from');
+  TZ_LIST.forEach(tz=>{
+    const o=document.createElement('option');o.value=tz.id;o.textContent=`${tz.flag} ${tz.city}`;fromSel.appendChild(o);
+  });
+  fromSel.value='Asia/Seoul';
+  // 체크박스 타겟 선택
+  const tgt=$('tz-targets');
+  TZ_LIST.forEach(tz=>{
+    const btn=document.createElement('button');
+    btn.className='btn outline sm'+(selTzTargets.has(tz.id)?' on':'');
+    btn.textContent=`${tz.flag} ${tz.city}`;
+    if(selTzTargets.has(tz.id))btn.style.cssText='background:var(--ac3);border-color:var(--ac);color:var(--ac2)';
+    btn.onclick=()=>{
+      if(selTzTargets.has(tz.id)){selTzTargets.delete(tz.id);btn.style.cssText='';}
+      else{selTzTargets.add(tz.id);btn.style.cssText='background:var(--ac3);border-color:var(--ac);color:var(--ac2)';}
+      convertTz();
+    };
+    tgt.appendChild(btn);
+  });
+  // 현재 시간 기본값
+  const now=new Date();
+  const local=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  $('tz-dt').value=local;
+  convertTz();
+  renderWorldClock();
+  setInterval(renderWorldClock,1000);
+})();
+
+function convertTz(){
+  const dt=$('tz-dt').value;if(!dt)return;
+  const from=$('tz-from').value;
+  const inputDt=new Date(dt);
+  const result=$('tz-result');result.innerHTML='';
+  [...selTzTargets].forEach(tz=>{
+    const info=TZ_LIST.find(t=>t.id===tz)||{city:tz,flag:'🌍'};
+    try{
+      const fmt=new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'short',year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+      const parts=fmt.formatToParts(inputDt);
+      const time=parts.find(p=>p.type==='hour')?.value+':'+parts.find(p=>p.type==='minute')?.value;
+      const date=parts.find(p=>p.type==='weekday')?.value+', '+parts.find(p=>p.type==='month')?.value+' '+parts.find(p=>p.type==='day')?.value;
+      const offset=getOffset(tz,inputDt);
+      const card=document.createElement('div');card.className='tz-card';
+      card.innerHTML=`<div class="tz-city">${info.flag} ${info.city}</div><div class="tz-time">${time}</div><div class="tz-date">${date}</div><div class="tz-offset">UTC${offset}</div>`;
+      result.appendChild(card);
+    }catch(e){}
+  });
+}
+function getOffset(tz,dt){
+  try{
+    const utc=dt.getTime();const local=new Date(dt.toLocaleString('en-US',{timeZone:tz})).getTime();
+    const off=Math.round((local-utc)/60000);const h=Math.floor(Math.abs(off)/60),m=Math.abs(off)%60;
+    return`${off>=0?'+':'-'}${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }catch(e){return'+00:00';}
+}
+function renderWorldClock(){
+  const wc=$('world-clock');wc.innerHTML='';
+  const now=new Date();
+  TZ_LIST.slice(0,8).forEach(tz=>{
+    try{
+      const fmt=new Intl.DateTimeFormat('en-US',{timeZone:tz.id,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+      const dfmt=new Intl.DateTimeFormat('en-US',{timeZone:tz.id,weekday:'short',month:'short',day:'numeric'});
+      const card=document.createElement('div');card.className='tz-card';
+      card.innerHTML=`<div class="tz-city">${tz.flag} ${tz.city}</div><div class="tz-time">${fmt.format(now)}</div><div class="tz-date">${dfmt.format(now)}</div><div class="tz-offset">UTC${getOffset(tz.id,now)}</div>`;
+      wc.appendChild(card);
+    }catch(e){}
+  });
+}
+
+/* ════ LOREM IPSUM ════ */
+let loremLang='en',loremType='paragraphs';
+const LOREM={
+  en:{
+    words:['lorem','ipsum','dolor','sit','amet','consectetur','adipiscing','elit','sed','do','eiusmod','tempor','incididunt','ut','labore','et','dolore','magna','aliqua','enim','ad','minim','veniam','quis','nostrud','exercitation','ullamco','laboris','nisi','aliquip','ex','ea','commodo','consequat','duis','aute','irure','in','reprehenderit','voluptate','velit','esse','cillum','fugiat','nulla','pariatur','excepteur','sint','occaecat','cupidatat','non','proident','sunt','culpa','qui','officia','deserunt','mollit','anim','est','laborum'],
+  },
+  ko:{
+    words:['가나다','라마바','사아자','차카타','파하구','두루미','나비야','봄날에','꽃이핀','산위에','강물이','흘러가','하늘이','파랗고','바람이','솔솔부','아침이','밝아와','새들이','노래해','들판에','풀이나','숲속에','나무가','자라고','달빛이','내리어','별빛이','반짝여','이슬이','맺히고','꿈결에','님생각','그리워','가슴이','두근두','마음이','설레어','오늘도','내일도','희망을','품으며','살아가','우리들','이야기','언제나','함께해','손잡고','걸어가','행복한','세상을','만들자'],
+  },
+  ja:{
+    words:['ある日','どこか','の森で','ハーモニカ','を吹く','男がいた','彼の名前は','太郎という','若者で','毎朝','川のほとり','で練習を','していた','青い空と','白い雲が','彼の音楽を','包んでいた','村人たちは','その音色に','聞き惚れ','遠くからも','人が集まった','春の風が','そっと吹いて','桜の花びらが','舞い踊った','自然と人が','一体となる','素晴らしい','瞬間だった'],
+  },
+  zh:{
+    words:['春天','来了','花开了','鸟儿','在歌唱','河水','在流淌','天空','一片蔚蓝','白云','飘动','风儿','轻轻吹','阳光','明媚','大地','充满生机','人们','走出家门','感受','美好时光','努力','学习','工作','创造','美好','未来','和谐','社会','共同','建设'],
+  },
+  emoji:{
+    words:['🎉','🌟','💫','🎊','✨','🌈','🦋','🌸','🌺','🎵','🎶','🌙','⭐','🌊','🏔️','🌿','🍀','🦄','🎯','🎨','🎭','🎪','🌅','🌄','🌠','💎','🔮','🎸','🎹','🎺','🦁','🐬','🦅','🌻','🍁','🍂','🌾','🌴','🎋','🎍'],
+  }
+};
+function setLoremLang(l,el){loremLang=l;document.querySelectorAll('#lorem-lang-row .ltag').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function setLoremType(t,el){loremType=t;document.querySelectorAll('#lorem-type-row .ltag').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function rnd(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function genSentence(lang){
+  const w=LOREM[lang]?.words||LOREM.en.words;
+  const len=5+Math.floor(Math.random()*10);
+  const words=Array.from({length:len},()=>rnd(w));
+  const s=words.join(lang==='ko'||lang==='zh'?' ':' ');
+  if(lang==='en')return s.charAt(0).toUpperCase()+s.slice(1)+'.';
+  if(lang==='ko')return s+'다.';
+  if(lang==='ja')return s+'。';
+  if(lang==='zh')return s+'。';
+  return s+' ✨';
+}
+function genPara(lang){return Array.from({length:4+Math.floor(Math.random()*3)},()=>genSentence(lang)).join(' ');}
+function genLorem(){
+  const n=Math.min(100,parseInt($('lorem-n').value)||3);
+  let out='';
+  if(loremType==='paragraphs')out=Array.from({length:n},()=>genPara(loremLang)).join('\n\n');
+  else if(loremType==='sentences')out=Array.from({length:n},()=>genSentence(loremLang)).join(' ');
+  else if(loremType==='words'){const w=LOREM[loremLang]?.words||LOREM.en.words;out=Array.from({length:n},()=>rnd(w)).join(' ');}
+  else if(loremType==='html')out=Array.from({length:n},()=>`<p>${genPara(loremLang)}</p>`).join('\n');
+  $('lorem-out').value=out;
+}
+(function(){genLorem();})();
+</script>
+</body>
+</html>

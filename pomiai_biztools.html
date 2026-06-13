@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>pomiai Business Tools</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);--ac4:rgba(108,92,232,.08);
+  --go:#c9963a;--go2:#e8b84b;--go3:rgba(201,150,58,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re3:rgba(224,85,85,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+#header{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 18px;display:flex;align-items:center;gap:10px;height:52px;position:sticky;top:0;z-index:50}
+#logo{font-size:14px;font-weight:600;color:var(--ac2);letter-spacing:1px}
+#logo span{color:var(--tx3);font-weight:400}
+.h-sep{width:1px;height:20px;background:var(--bd2);flex-shrink:0}
+#htabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+#htabs::-webkit-scrollbar{display:none}
+.htab{padding:8px 14px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-radius:8px;transition:.15s;white-space:nowrap;flex-shrink:0}
+.htab:hover{color:var(--tx2);background:var(--s3)}
+.htab.on{color:var(--ac2);background:var(--ac3)}
+#app{max-width:900px;margin:0 auto;padding:24px 16px 80px}
+.sec{display:none}.sec.on{display:block;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sec-title{font-size:20px;font-weight:600;margin-bottom:5px}
+.sec-sub{font-size:13px;color:var(--tx2);margin-bottom:22px;line-height:1.6}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:18px;padding:22px;margin-bottom:14px;box-shadow:var(--sh)}
+.card-title{font-size:13px;font-weight:600;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';width:3px;height:13px;background:linear-gradient(var(--ac2),var(--te));border-radius:2px}
+.fl{font-size:10px;color:var(--tx3);font-weight:600;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:block}
+.fi,.fs{background:var(--s3);border:1px solid var(--bd2);color:var(--tx);border-radius:10px;padding:10px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:.15s;width:100%;-webkit-appearance:none}
+.fi:focus,.fs:focus{border-color:var(--ac);background:var(--s4)}
+.fi::placeholder{color:var(--tx4)}
+.fi.mono{font-family:'DM Mono',monospace}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.gf{grid-column:1/-1}
+.btn{background:linear-gradient(135deg,var(--ac),#4a38c0);border:none;color:#fff;border-radius:11px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(108,92,232,.28)}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn.full{width:100%}
+.btn.go{background:linear-gradient(135deg,var(--te),#1a8c72);box-shadow:0 4px 16px rgba(40,196,160,.22)}
+.btn.gold{background:linear-gradient(135deg,var(--go2),var(--go));box-shadow:0 4px 16px rgba(201,150,58,.25)}
+.btn.sm{padding:8px 14px;font-size:12px;border-radius:8px}
+.btn.outline{background:transparent;border:1px solid var(--bd2);color:var(--tx2);box-shadow:none}
+.btn.outline:hover{border-color:var(--ac);color:var(--ac2);filter:none;transform:none;background:var(--ac4)}
+/* 결과 박스 */
+.res-box{background:var(--s2);border:1px solid var(--bd2);border-radius:14px;padding:18px;margin-top:14px;display:none}
+.res-box.show{display:block;animation:fi .25s ease}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bd)}
+.res-row:last-child{border-bottom:none}
+.res-label{font-size:13px;color:var(--tx2)}
+.res-val{font-size:15px;font-weight:600;font-family:'DM Mono',monospace;color:var(--te2)}
+.res-val.big{font-size:20px;color:var(--go2)}
+.res-val.total{font-size:22px;color:var(--ac2)}
+/* 인보이스 */
+.inv-header{display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.inv-logo-area{width:90px;height:90px;background:var(--s3);border:1px dashed var(--bd2);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:24px;transition:.15s}
+.inv-logo-area:hover{border-color:var(--ac)}
+.inv-logo-area img{width:100%;height:100%;object-fit:contain;border-radius:12px}
+.item-row{display:grid;grid-template-columns:1fr 80px 90px 90px 32px;gap:7px;align-items:center;margin-bottom:7px}
+.item-row .fi{padding:8px 10px;font-size:13px}
+.del-btn{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:16px;padding:4px;border-radius:6px;transition:.12s}
+.del-btn:hover{color:var(--re);background:var(--re3)}
+.inv-total-box{background:var(--s3);border:1px solid var(--bd2);border-radius:12px;padding:16px;margin-top:12px}
+.inv-total-row{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;color:var(--tx2)}
+.inv-total-row.grand{font-size:18px;font-weight:700;color:var(--go2);border-top:1px solid var(--bd2);margin-top:8px;padding-top:10px}
+/* 차트 */
+.pie-wrap{display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.pie-legend{display:flex;flex-direction:column;gap:6px;font-size:12px}
+.pie-legend-item{display:flex;align-items:center;gap:7px}
+.pie-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+/* amort table */
+.amort-wrap{max-height:280px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bd2) transparent;margin-top:10px}
+.amort-wrap::-webkit-scrollbar{width:4px}
+.amort-wrap::-webkit-scrollbar-thumb{background:var(--bd2)}
+.amort-table{width:100%;border-collapse:collapse;font-size:12px}
+.amort-table th{padding:7px 10px;text-align:right;color:var(--tx3);font-weight:600;background:var(--s3);position:sticky;top:0}
+.amort-table th:first-child{text-align:center}
+.amort-table td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--bd);color:var(--tx2);font-family:'DM Mono',monospace}
+.amort-table td:first-child{text-align:center;color:var(--tx3)}
+/* 토스트 */
+#toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--bd2);color:var(--te2);border-radius:20px;padding:8px 18px;font-size:12px;opacity:0;transition:.22s;pointer-events:none;z-index:999;white-space:nowrap;box-shadow:var(--sh)}
+#toast.show{opacity:1}
+@media(max-width:640px){
+  .g2,.g3,.g4{grid-template-columns:1fr 1fr}
+  .item-row{grid-template-columns:1fr 70px 80px 32px}
+  .item-row .qty-wrap{display:none}
+  #app{padding:16px 12px 60px}
+  .inv-header{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div id="header">
+  <span id="logo">pomiai <span>biz</span></span>
+  <div class="h-sep"></div>
+  <div id="htabs">
+    <div class="htab on"   onclick="goTab('inv')">🧾 Invoice</div>
+    <div class="htab"      onclick="goTab('tax')">🧮 Tax Calc</div>
+    <div class="htab"      onclick="goTab('loan')">🏦 Loan Calc</div>
+  </div>
+</div>
+<div id="app">
+
+<!-- ══ INVOICE ══ -->
+<div class="sec on" id="tab-inv">
+  <div class="sec-title">Invoice Generator</div>
+  <div class="sec-sub">Create professional invoices instantly — no signup required · PDF download · multi-currency</div>
+
+  <!-- 통화 + 로고 -->
+  <div class="card">
+    <div class="g2" style="margin-bottom:14px">
+      <div><span class="fl">Currency</span>
+        <select class="fs" id="inv-currency" onchange="calcInv()">
+          <option value="USD">🇺🇸 USD — US Dollar</option>
+          <option value="EUR">🇪🇺 EUR — Euro</option>
+          <option value="KRW">🇰🇷 KRW — Korean Won</option>
+          <option value="JPY">🇯🇵 JPY — Japanese Yen</option>
+          <option value="GBP">🇬🇧 GBP — British Pound</option>
+          <option value="CNY">🇨🇳 CNY — Chinese Yuan</option>
+          <option value="CAD">🇨🇦 CAD — Canadian Dollar</option>
+          <option value="AUD">🇦🇺 AUD — Australian Dollar</option>
+          <option value="SGD">🇸🇬 SGD — Singapore Dollar</option>
+          <option value="INR">🇮🇳 INR — Indian Rupee</option>
+        </select></div>
+      <div><span class="fl">Invoice Language</span>
+        <select class="fs" id="inv-lang">
+          <option value="en">English</option>
+          <option value="ko">한국어</option>
+          <option value="ja">日本語</option>
+          <option value="zh">中文</option>
+        </select></div>
+    </div>
+    <!-- 발신/수신 -->
+    <div class="g2">
+      <div>
+        <span class="fl">From (Your Business)</span>
+        <input class="fi" id="inv-from-name" placeholder="Your Company Name" style="margin-bottom:6px">
+        <textarea class="fi" id="inv-from-addr" placeholder="Address, City, Country&#10;Email | Phone" rows="3" style="resize:none;font-size:12px"></textarea>
+      </div>
+      <div>
+        <span class="fl">Bill To (Client)</span>
+        <input class="fi" id="inv-to-name" placeholder="Client Name / Company" style="margin-bottom:6px">
+        <textarea class="fi" id="inv-to-addr" placeholder="Client Address, City&#10;Email | Phone" rows="3" style="resize:none;font-size:12px"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 인보이스 정보 -->
+  <div class="card">
+    <div class="g4">
+      <div><span class="fl">Invoice #</span><input class="fi mono" id="inv-num" value="INV-001"></div>
+      <div><span class="fl">Issue Date</span><input class="fi" id="inv-date" type="date"></div>
+      <div><span class="fl">Due Date</span><input class="fi" id="inv-due" type="date"></div>
+      <div><span class="fl">PO Number</span><input class="fi mono" id="inv-po" placeholder="Optional"></div>
+    </div>
+  </div>
+
+  <!-- 항목 -->
+  <div class="card">
+    <div class="card-title">Line Items</div>
+    <div style="display:grid;grid-template-columns:1fr 80px 90px 90px 32px;gap:7px;margin-bottom:8px">
+      <span class="fl">Description</span><span class="fl">Qty</span><span class="fl">Unit Price</span><span class="fl">Amount</span><span></span>
+    </div>
+    <div id="inv-items"></div>
+    <button class="btn outline sm" style="margin-top:8px" onclick="addInvItem()">+ Add Item</button>
+
+    <!-- 소계/세금/합계 -->
+    <div class="inv-total-box">
+      <div class="g2" style="margin-bottom:14px">
+        <div><span class="fl">Tax Rate (%)</span><input class="fi mono" id="inv-tax" type="number" value="0" min="0" max="100" step=".1" oninput="calcInv()"></div>
+        <div><span class="fl">Discount (%)</span><input class="fi mono" id="inv-disc" type="number" value="0" min="0" max="100" step=".1" oninput="calcInv()"></div>
+      </div>
+      <div class="inv-total-row"><span>Subtotal</span><span id="it-sub" class="mono">0.00</span></div>
+      <div class="inv-total-row"><span>Discount</span><span id="it-disc" class="mono">-0.00</span></div>
+      <div class="inv-total-row"><span>Tax</span><span id="it-tax" class="mono">+0.00</span></div>
+      <div class="inv-total-row grand"><span>TOTAL</span><span id="it-total" class="mono">0.00</span></div>
+    </div>
+  </div>
+
+  <!-- 메모 -->
+  <div class="card">
+    <div class="g2">
+      <div><span class="fl">Notes</span><textarea class="fi" id="inv-notes" placeholder="Payment instructions, thank you message..." rows="3" style="resize:none"></textarea></div>
+      <div><span class="fl">Terms & Conditions</span><textarea class="fi" id="inv-terms" placeholder="e.g. Payment due within 30 days..." rows="3" style="resize:none"></textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn go full" onclick="printInvoice()">🖨 Download / Print PDF</button>
+      <button class="btn outline sm" onclick="clearInvoice()">Clear</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAX CALC ══ -->
+<div class="sec" id="tab-tax">
+  <div class="sec-title">Tax Calculator</div>
+  <div class="sec-sub">VAT · GST · Sales Tax — add/remove tax instantly · supports 150+ countries</div>
+
+  <div class="card">
+    <div class="g2" style="margin-bottom:14px">
+      <div><span class="fl">Country / Tax Type</span>
+        <select class="fs" id="tax-preset" onchange="applyTaxPreset()">
+          <option value="10">🇰🇷 Korea — VAT 10%</option>
+          <option value="20">🇬🇧 UK — VAT 20%</option>
+          <option value="19">🇩🇪 Germany — VAT 19%</option>
+          <option value="20">🇫🇷 France — VAT 20%</option>
+          <option value="10">🇦🇺 Australia — GST 10%</option>
+          <option value="5">🇨🇦 Canada — GST 5%</option>
+          <option value="18">🇮🇳 India — GST 18%</option>
+          <option value="10">🇯🇵 Japan — CT 10%</option>
+          <option value="9">🇸🇬 Singapore — GST 9%</option>
+          <option value="7">🇹🇭 Thailand — VAT 7%</option>
+          <option value="0">🇦🇪 UAE — VAT 5% (custom)</option>
+          <option value="custom">⚙️ Custom Rate</option>
+        </select></div>
+      <div><span class="fl">Tax Rate (%)</span>
+        <input class="fi mono" id="tax-rate" type="number" value="10" min="0" max="100" step=".1" oninput="calcTax()"></div>
+    </div>
+    <div class="g2" style="margin-bottom:14px">
+      <div><span class="fl">Amount</span>
+        <input class="fi mono" id="tax-amount" type="number" placeholder="0.00" oninput="calcTax()"></div>
+      <div><span class="fl">Currency</span>
+        <select class="fs" id="tax-cur">
+          <option>USD</option><option>EUR</option><option selected>KRW</option>
+          <option>JPY</option><option>GBP</option><option>AUD</option>
+          <option>CAD</option><option>SGD</option><option>INR</option>
+        </select></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn full" onclick="setTaxMode('excl')">Price EXCL. Tax → Add Tax</button>
+      <button class="btn full go" onclick="setTaxMode('incl')">Price INCL. Tax → Extract Tax</button>
+    </div>
+    <div class="res-box show" id="tax-result">
+      <div class="res-row"><span class="res-label">Pre-tax Amount</span><span class="res-val" id="tr-pretax">—</span></div>
+      <div class="res-row"><span class="res-label">Tax Amount</span><span class="res-val" id="tr-tax">—</span></div>
+      <div class="res-row"><span class="res-label">Total (incl. tax)</span><span class="res-val big" id="tr-total">—</span></div>
+      <div class="res-row"><span class="res-label">Effective Rate</span><span class="res-val" id="tr-rate">—</span></div>
+    </div>
+  </div>
+
+  <!-- 세율 빠른 참조 -->
+  <div class="card">
+    <div class="card-title">Quick Reference — Global VAT/GST Rates</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">
+      <!-- JS로 채워짐 -->
+    </div>
+    <div id="vat-refs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:7px"></div>
+  </div>
+</div>
+
+<!-- ══ LOAN CALC ══ -->
+<div class="sec" id="tab-loan">
+  <div class="sec-title">Loan Calculator</div>
+  <div class="sec-sub">Monthly payment · total interest · amortization schedule — mortgage · auto · personal loan</div>
+
+  <div class="card">
+    <div class="g3" style="margin-bottom:14px">
+      <div><span class="fl">Loan Amount</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <select class="fs" id="loan-cur" style="width:75px">
+            <option>USD</option><option>EUR</option><option selected>KRW</option>
+            <option>JPY</option><option>GBP</option><option>AUD</option>
+          </select>
+          <input class="fi mono" id="loan-amt" type="number" placeholder="100,000" oninput="calcLoan()">
+        </div></div>
+      <div><span class="fl">Annual Interest Rate (%)</span>
+        <input class="fi mono" id="loan-rate" type="number" value="4.5" step=".1" min="0" max="100" oninput="calcLoan()"></div>
+      <div><span class="fl">Loan Term</span>
+        <div style="display:flex;gap:6px">
+          <input class="fi mono" id="loan-term" type="number" value="30" min="1" oninput="calcLoan()" style="flex:1">
+          <select class="fs" id="loan-term-unit" style="width:85px" onchange="calcLoan()">
+            <option value="years">Years</option>
+            <option value="months">Months</option>
+          </select>
+        </div></div>
+    </div>
+    <div class="g2" style="margin-bottom:14px">
+      <div><span class="fl">Loan Type</span>
+        <select class="fs" id="loan-type" onchange="calcLoan()">
+          <option value="equal">Equal Payment (원리금균등)</option>
+          <option value="principal">Equal Principal (원금균등)</option>
+          <option value="bullet">Bullet / Interest-Only</option>
+        </select></div>
+      <div><span class="fl">Start Date</span>
+        <input class="fi" id="loan-start" type="date" onchange="calcLoan()"></div>
+    </div>
+
+    <div class="res-box show" id="loan-result">
+      <div id="loan-summary"></div>
+      <!-- 파이 차트 -->
+      <div class="pie-wrap">
+        <canvas id="loan-pie" width="130" height="130"></canvas>
+        <div class="pie-legend" id="loan-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상환 일정 -->
+  <div class="card" id="amort-card" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:0">Amortization Schedule</div>
+      <button class="btn outline sm" onclick="downloadAmort()">⬇ CSV</button>
+    </div>
+    <div class="amort-wrap">
+      <table class="amort-table">
+        <thead><tr>
+          <th style="text-align:center">#</th>
+          <th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th>
+        </tr></thead>
+        <tbody id="amort-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+<div id="toast"></div>
+<script>
+const $=id=>document.getElementById(id);
+let toastTid;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTid);toastTid=setTimeout(()=>t.classList.remove('show'),2400);}
+function goTab(id){
+  ['inv','tax','loan'].forEach(t=>{$('tab-'+t).classList.toggle('on',t===id);});
+  document.querySelectorAll('.htab').forEach((t,i)=>t.classList.toggle('on',['inv','tax','loan'][i]===id));
+}
+
+/* ── 통화 포맷 ── */
+const CUR_SYM={USD:'$',EUR:'€',KRW:'₩',JPY:'¥',GBP:'£',CNY:'¥',CAD:'CA$',AUD:'A$',SGD:'S$',INR:'₹'};
+const CUR_DEC={KRW:0,JPY:0};
+function fmtCur(n,cur){
+  const dec=CUR_DEC[cur]??2;
+  if(!isFinite(n))return'—';
+  return(CUR_SYM[cur]||cur+' ')+n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+
+/* ════════════════════════════════
+   INVOICE
+════════════════════════════════ */
+let invItems=[];
+// 날짜 기본값
+(function(){
+  const t=new Date(),d=new Date(t);d.setDate(d.getDate()+30);
+  $('inv-date').value=t.toISOString().slice(0,10);
+  $('inv-due').value=d.toISOString().slice(0,10);
+  addInvItem();addInvItem();
+})();
+
+function addInvItem(){
+  const id='item-'+Date.now()+Math.random().toString(36).slice(2,5);
+  invItems.push({id,desc:'',qty:1,price:0});
+  renderItems();
+}
+function renderItems(){
+  const container=$('inv-items');container.innerHTML='';
+  invItems.forEach((item,i)=>{
+    const row=document.createElement('div');row.className='item-row';
+    row.innerHTML=`
+      <input class="fi" placeholder="Description" value="${item.desc}" oninput="invItems[${i}].desc=this.value">
+      <input class="fi mono qty-wrap" type="number" value="${item.qty}" min="0" step="any" oninput="invItems[${i}].qty=+this.value;calcInv()">
+      <input class="fi mono" type="number" value="${item.price}" min="0" step="any" oninput="invItems[${i}].price=+this.value;calcInv()">
+      <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--te2);text-align:right;padding:0 4px" id="item-amt-${i}">0.00</span>
+      <button class="del-btn" onclick="removeItem(${i})">✕</button>`;
+    container.appendChild(row);
+  });
+  calcInv();
+}
+function removeItem(i){invItems.splice(i,1);if(!invItems.length)addInvItem();renderItems();}
+function calcInv(){
+  const cur=$('inv-currency').value;
+  const dec=CUR_DEC[cur]??2;
+  let sub=0;
+  invItems.forEach((item,i)=>{
+    const amt=item.qty*item.price;sub+=amt;
+    const el=$('item-amt-'+i);if(el)el.textContent=amt.toFixed(dec);
+  });
+  const disc=sub*(parseFloat($('inv-disc').value)||0)/100;
+  const tax=(sub-disc)*(parseFloat($('inv-tax').value)||0)/100;
+  const total=sub-disc+tax;
+  const s=CUR_SYM[cur]||'';const fmt=n=>(s+n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}));
+  $('it-sub').textContent=fmt(sub);
+  $('it-disc').textContent='-'+fmt(disc);
+  $('it-tax').textContent='+'+fmt(tax);
+  $('it-total').textContent=fmt(total);
+}
+function clearInvoice(){invItems=[];addInvItem();addInvItem();['inv-from-name','inv-from-addr','inv-to-name','inv-to-addr','inv-notes','inv-terms'].forEach(id=>{const el=$(id);if(el)el.value='';});$('inv-tax').value=0;$('inv-disc').value=0;calcInv();}
+
+const INV_LABELS={
+  en:{invoice:'INVOICE',from:'From',to:'Bill To',num:'Invoice #',date:'Date',due:'Due Date',
+    po:'PO#',desc:'Description',qty:'Qty',unit:'Unit Price',amount:'Amount',
+    sub:'Subtotal',disc:'Discount',tax:'Tax',total:'TOTAL',notes:'Notes',terms:'Terms'},
+  ko:{invoice:'청구서',from:'발신',to:'수신',num:'청구서 번호',date:'발행일',due:'납부기한',
+    po:'주문번호',desc:'항목',qty:'수량',unit:'단가',amount:'금액',
+    sub:'소계',disc:'할인',tax:'세금',total:'합계',notes:'메모',terms:'약관'},
+  ja:{invoice:'請求書',from:'請求元',to:'請求先',num:'番号',date:'発行日',due:'支払期限',
+    po:'注文番号',desc:'品目',qty:'数量',unit:'単価',amount:'金額',
+    sub:'小計',disc:'割引',tax:'税',total:'合計',notes:'備考',terms:'条件'},
+  zh:{invoice:'发票',from:'发件方',to:'收件方',num:'发票号',date:'日期',due:'到期日',
+    po:'订单号',desc:'描述',qty:'数量',unit:'单价',amount:'金额',
+    sub:'小计',disc:'折扣',tax:'税',total:'合计',notes:'备注',terms:'条款'},
+};
+function printInvoice(){
+  const lang=$('inv-lang').value;const L=INV_LABELS[lang]||INV_LABELS.en;
+  const cur=$('inv-currency').value;const dec=CUR_DEC[cur]??2;
+  const s=CUR_SYM[cur]||'';const fmt=n=>s+n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+  let sub=0;
+  const itemRows=invItems.map(it=>{const a=it.qty*it.price;sub+=a;return`<tr><td>${it.desc||'—'}</td><td style="text-align:center">${it.qty}</td><td style="text-align:right">${fmt(it.price)}</td><td style="text-align:right">${fmt(a)}</td></tr>`;}).join('');
+  const disc=sub*(parseFloat($('inv-disc').value)||0)/100;
+  const tax=(sub-disc)*(parseFloat($('inv-tax').value)||0)/100;
+  const total=sub-disc+tax;
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${L.invoice}</title>
+  <style>body{font-family:system-ui,sans-serif;margin:0;padding:32px;color:#111;font-size:14px}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px}
+  .title{font-size:28px;font-weight:700;color:#111}
+  .meta{text-align:right;font-size:13px;color:#555}
+  .parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px}
+  .party-label{font-size:10px;font-weight:700;letter-spacing:1px;color:#888;text-transform:uppercase;margin-bottom:5px}
+  .party-name{font-size:15px;font-weight:600;margin-bottom:4px}
+  .party-info{font-size:12px;color:#555;line-height:1.6;white-space:pre-wrap}
+  table{width:100%;border-collapse:collapse;margin-bottom:20px}
+  th{background:#f5f5f5;padding:10px 12px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#555}
+  td{padding:9px 12px;border-bottom:1px solid #eee}
+  .totals{margin-left:auto;width:260px}
+  .tot-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px;border-bottom:1px solid #eee;color:#555}
+  .tot-grand{font-size:18px;font-weight:700;color:#111;border-bottom:none;padding-top:10px}
+  .footer{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:12px;color:#777}
+  .footer-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:4px}
+  @media print{body{padding:16px}}</style></head><body>
+  <div class="header">
+    <div><div class="title">${L.invoice}</div><div style="font-size:13px;color:#888;margin-top:4px">#${$('inv-num').value||'001'}</div></div>
+    <div class="meta">
+      <div>${L.date}: <strong>${$('inv-date').value||'—'}</strong></div>
+      <div>${L.due}: <strong>${$('inv-due').value||'—'}</strong></div>
+      ${$('inv-po').value?`<div>${L.po}: ${$('inv-po').value}</div>`:''}
+    </div>
+  </div>
+  <div class="parties">
+    <div><div class="party-label">${L.from}</div><div class="party-name">${$('inv-from-name').value||'—'}</div><div class="party-info">${$('inv-from-addr').value||''}</div></div>
+    <div><div class="party-label">${L.to}</div><div class="party-name">${$('inv-to-name').value||'—'}</div><div class="party-info">${$('inv-to-addr').value||''}</div></div>
+  </div>
+  <table><thead><tr><th>${L.desc}</th><th style="text-align:center">${L.qty}</th><th style="text-align:right">${L.unit}</th><th style="text-align:right">${L.amount}</th></tr></thead>
+  <tbody>${itemRows}</tbody></table>
+  <div class="totals">
+    <div class="tot-row"><span>${L.sub}</span><span>${fmt(sub)}</span></div>
+    ${disc>0?`<div class="tot-row"><span>${L.disc}</span><span>-${fmt(disc)}</span></div>`:''}
+    ${tax>0?`<div class="tot-row"><span>${L.tax} (${$('inv-tax').value}%)</span><span>+${fmt(tax)}</span></div>`:''}
+    <div class="tot-row tot-grand"><span>${L.total}</span><span>${fmt(total)}</span></div>
+  </div>
+  ${$('inv-notes').value||$('inv-terms').value?`<div class="footer">
+    ${$('inv-notes').value?`<div><div class="footer-label">${L.notes}</div>${$('inv-notes').value}</div>`:''}
+    ${$('inv-terms').value?`<div><div class="footer-label">${L.terms}</div>${$('inv-terms').value}</div>`:''}
+  </div>`:''}
+  <script>window.onload=function(){window.print();}<\/script></body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();
+  toast('✅ PDF ready — use browser Print to save');
+}
+
+/* ════════════════════════════════
+   TAX CALCULATOR
+════════════════════════════════ */
+let taxMode='excl';
+function setTaxMode(m){taxMode=m;calcTax();}
+function applyTaxPreset(){
+  const v=$('tax-preset').value;
+  if(v!=='custom')$('tax-rate').value=v;
+  calcTax();
+}
+function calcTax(){
+  const amt=parseFloat($('tax-amount').value)||0;
+  const rate=parseFloat($('tax-rate').value)||0;
+  const cur=$('tax-cur').value;
+  let pre,taxAmt,total;
+  if(taxMode==='excl'){pre=amt;taxAmt=pre*rate/100;total=pre+taxAmt;}
+  else{total=amt;pre=total/(1+rate/100);taxAmt=total-pre;}
+  $('tr-pretax').textContent=fmtCur(pre,cur);
+  $('tr-tax').textContent=fmtCur(taxAmt,cur);
+  $('tr-total').textContent=fmtCur(total,cur);
+  $('tr-rate').textContent=rate+'%';
+}
+// VAT 참조표
+(function(){
+  const refs=[
+    ['🇰🇷','Korea','10%'],['🇺🇸','US (avg)','~8%'],['🇬🇧','UK','20%'],['🇩🇪','Germany','19%'],
+    ['🇫🇷','France','20%'],['🇯🇵','Japan','10%'],['🇨🇳','China','13%'],['🇦🇺','Australia','10%'],
+    ['🇨🇦','Canada','5%'],['🇮🇳','India','18%'],['🇸🇬','Singapore','9%'],['🇦🇪','UAE','5%'],
+    ['🇧🇷','Brazil','17%'],['🇲🇽','Mexico','16%'],['🇷🇺','Russia','20%'],['🇮🇩','Indonesia','11%'],
+  ];
+  const c=$('vat-refs');
+  refs.forEach(([f,n,r])=>{
+    const el=document.createElement('div');
+    el.style.cssText='background:var(--s2);border:1px solid var(--bd2);border-radius:9px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer';
+    el.innerHTML=`<span style="font-size:12px;color:var(--tx2)">${f} ${n}</span><span style="font-family:DM Mono,monospace;font-size:13px;color:var(--te2);font-weight:600">${r}</span>`;
+    el.onclick=()=>{$('tax-rate').value=parseFloat(r);calcTax();toast('✅ '+n+' rate applied');};
+    c.appendChild(el);
+  });
+})();
+calcTax();
+
+/* ════════════════════════════════
+   LOAN CALCULATOR
+════════════════════════════════ */
+(function(){$('loan-start').value=new Date().toISOString().slice(0,10);calcLoan();})();
+
+function calcLoan(){
+  const amt=parseFloat($('loan-amt').value)||0;
+  if(!amt)return;
+  const annualRate=parseFloat($('loan-rate').value)||0;
+  const termUnit=$('loan-term-unit').value;
+  const termVal=parseInt($('loan-term').value)||1;
+  const months=termUnit==='years'?termVal*12:termVal;
+  const r=annualRate/100/12;
+  const cur=$('loan-cur').value;
+  const type=$('loan-type').value;
+  const fmt=n=>fmtCur(n,cur);
+
+  let monthlyPay,totalPay,totalInt;
+  if(type==='bullet'){
+    monthlyPay=amt*r;totalPay=monthlyPay*months+amt;totalInt=monthlyPay*months;
+  }else if(type==='equal'){
+    if(r===0){monthlyPay=amt/months;totalPay=amt;totalInt=0;}
+    else{monthlyPay=amt*r*Math.pow(1+r,months)/(Math.pow(1+r,months)-1);totalPay=monthlyPay*months;totalInt=totalPay-amt;}
+  }else{// principal
+    const pp=amt/months;totalInt=0;
+    for(let i=1;i<=months;i++){totalInt+=(amt-(i-1)*pp)*r;}
+    totalPay=amt+totalInt;monthlyPay=totalPay/months;
+  }
+
+  const res=$('loan-result');res.className='res-box show';
+  $('loan-summary').innerHTML=`
+    <div class="res-row"><span class="res-label">Monthly Payment</span><span class="res-val big">${fmt(monthlyPay)}</span></div>
+    <div class="res-row"><span class="res-label">Total Payment</span><span class="res-val">${fmt(totalPay)}</span></div>
+    <div class="res-row"><span class="res-label">Total Interest</span><span class="res-val">${fmt(totalInt)}</span></div>
+    <div class="res-row"><span class="res-label">Principal</span><span class="res-val">${fmt(amt)}</span></div>
+    <div class="res-row"><span class="res-label">Loan Period</span><span class="res-val">${months} months</span></div>`;
+
+  // 파이 차트
+  drawPie($('loan-pie'),[amt,totalInt],['#28c4a0','#6c5ce8']);
+  $('loan-legend').innerHTML=`
+    <div class="pie-legend-item"><span class="pie-dot" style="background:#28c4a0"></span><span>Principal: ${fmt(amt)}</span></div>
+    <div class="pie-legend-item"><span class="pie-dot" style="background:#6c5ce8"></span><span>Interest: ${fmt(totalInt)}</span></div>`;
+
+  // 상환 일정
+  buildAmort(amt,r,months,type,monthlyPay,cur);
+  $('amort-card').style.display='block';
+}
+
+function buildAmort(amt,r,months,type,monthlyPay,cur){
+  const fmt=n=>fmtCur(n,cur);
+  const tbody=$('amort-body');tbody.innerHTML='';
+  let bal=amt;
+  const pp=amt/months;
+  for(let i=1;i<=months&&i<=360;i++){
+    const int=bal*r;
+    let prin,pay;
+    if(type==='bullet'){prin=(i===months?bal:0);pay=int+(i===months?bal:0);}
+    else if(type==='equal'){prin=monthlyPay-int;pay=monthlyPay;}
+    else{prin=pp;pay=pp+int;}
+    bal=Math.max(0,bal-prin);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i}</td><td>${fmt(pay)}</td><td>${fmt(prin)}</td><td>${fmt(int)}</td><td>${fmt(bal)}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function downloadAmort(){
+  const rows=[['#','Payment','Principal','Interest','Balance']];
+  document.querySelectorAll('#amort-body tr').forEach((tr,i)=>{
+    rows.push([...tr.querySelectorAll('td')].map(td=>td.textContent));
+  });
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='amortization.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+function drawPie(canvas,vals,colors){
+  const ctx=canvas.getContext('2d');const w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const total=vals.reduce((a,b)=>a+b,0);if(!total)return;
+  let start=0;const cx=w/2,cy=h/2,r=Math.min(cx,cy)-4;
+  vals.forEach((v,i)=>{
+    const slice=v/total*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,start+slice);ctx.closePath();
+    ctx.fillStyle=colors[i];ctx.fill();
+    start+=slice;
+  });
+  // 도넛 구멍
+  ctx.beginPath();ctx.arc(cx,cy,r*.55,0,Math.PI*2);ctx.fillStyle='var(--s1)';ctx.fill();
+}
+</script>
+</body>
+</html>

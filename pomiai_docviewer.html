@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pomiai 문서 뷰어</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --bg:#0e0e10;--panel:#16161a;--border:#242428;--accent:#7F77DD;--accent2:#5DCAA5;
+  --text:#e2e2e8;--text2:#888;--text3:#444;
+  --toolbar-h:52px;--sidebar-w:250px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif}
+
+/* TOOLBAR */
+#toolbar{height:var(--toolbar-h);background:var(--panel);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:6px;padding:0 12px;flex-shrink:0;overflow:hidden}
+#logo{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:1px;white-space:nowrap;margin-right:2px}
+#logo span{color:var(--text2);font-weight:400}
+.tb-sep{width:1px;height:22px;background:var(--border);flex-shrink:0;margin:0 2px}
+.tb-btn{display:flex;align-items:center;gap:4px;background:transparent;border:1px solid var(--border);
+  color:var(--text2);border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer;
+  transition:.15s;white-space:nowrap;flex-shrink:0}
+.tb-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(127,119,221,.08)}
+#search-wrap{flex:1;max-width:260px;min-width:80px;position:relative;display:flex;align-items:center}
+#search-input{width:100%;background:#0a0a0d;border:1px solid var(--border);color:var(--text);
+  border-radius:6px;padding:5px 60px 5px 9px;font-size:12px;outline:none;transition:.15s}
+#search-input:focus{border-color:var(--accent)}
+#search-input::placeholder{color:var(--text3)}
+#search-nav{position:absolute;right:4px;display:flex;gap:1px}
+.snav-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:3px 4px;font-size:11px}
+.snav-btn:hover{color:var(--accent)}
+#search-count{font-size:11px;color:var(--text3);white-space:nowrap;min-width:36px;flex-shrink:0}
+#file-name{font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+#zoom-wrap{display:flex;align-items:center;gap:3px;flex-shrink:0}
+.zoom-btn{background:none;border:1px solid var(--border);color:var(--text2);border-radius:4px;
+  width:24px;height:24px;cursor:pointer;font-size:14px;transition:.15s;display:flex;align-items:center;justify-content:center}
+.zoom-btn:hover{border-color:var(--accent);color:var(--accent)}
+#zoom-val{font-size:11px;color:var(--text2);min-width:34px;text-align:center}
+
+/* LAYOUT */
+#body{display:flex;height:calc(100% - var(--toolbar-h));overflow:hidden}
+
+/* SIDEBAR */
+#sidebar{width:var(--sidebar-w);min-width:0;background:var(--panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width .2s}
+#sidebar.collapsed{width:0!important;min-width:0}
+#sb-head{padding:9px 11px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#sb-title{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:1.5px;text-transform:uppercase}
+#sb-toggle{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:1px 4px}
+#sb-toggle:hover{color:var(--accent)}
+#toc-list{flex:1;overflow-y:auto;padding:6px 0;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+#toc-list::-webkit-scrollbar{width:3px}
+#toc-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.toc-item{padding:5px 12px;font-size:12px;color:var(--text2);cursor:pointer;transition:.1s;
+  border-left:2px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.toc-item:hover{background:#1e1e24;color:var(--text);border-left-color:var(--border)}
+.toc-item.toc-active{color:var(--accent);border-left-color:var(--accent);background:rgba(127,119,221,.06)}
+.toc-h1{font-weight:600}
+.toc-h2{padding-left:22px;font-size:11px}
+.toc-h3{padding-left:32px;font-size:11px;color:var(--text3)}
+#sb-info{padding:9px 11px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);line-height:1.9;flex-shrink:0}
+#sb-info b{color:var(--text2)}
+
+/* VIEWER */
+#viewer-wrap{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;
+  padding:32px 20px;background:var(--bg);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+#viewer-wrap::-webkit-scrollbar{width:6px}
+#viewer-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* DROP ZONE */
+#drop-zone{width:100%;max-width:520px;border:2px dashed var(--border);border-radius:14px;
+  padding:60px 40px;text-align:center;cursor:pointer;transition:.2s;
+  display:flex;flex-direction:column;align-items:center;gap:14px}
+#drop-zone:hover,#drop-zone.drag{border-color:var(--accent);background:rgba(127,119,221,.04)}
+#drop-zone .dz-icon{font-size:46px;opacity:.35}
+#drop-zone h2{font-size:17px;font-weight:600;color:var(--text)}
+#drop-zone p{font-size:13px;color:var(--text2);line-height:1.7}
+.dz-formats{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+.fmt-badge{background:var(--panel);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:11px;color:var(--text2)}
+.fmt-badge.word{border-color:rgba(127,119,221,.5);color:var(--accent)}
+.fmt-badge.hwp{border-color:rgba(93,202,165,.5);color:var(--accent2)}
+#open-btn-dz{background:var(--accent);border:none;color:#fff;border-radius:7px;
+  padding:9px 26px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+#open-btn-dz:hover{background:#6d65cc}
+
+/* LOADING */
+#loading{display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;padding:60px;color:var(--text2);font-size:13px}
+.spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ERROR */
+#error-box{display:none;padding:22px;background:#180e0e;border:1px solid #3a1515;
+  border-radius:8px;color:#f08080;font-size:13px;line-height:1.75;max-width:480px}
+
+/* SEARCH HIGHLIGHT */
+mark.hl{background:#ffea00;color:#111;border-radius:2px;padding:0 1px}
+mark.hl.cur{background:#ff7800;color:#fff}
+
+/* ── 문서 페이지 ── */
+#doc-page{
+  display:none;
+  width:794px;
+  max-width:100%;
+  background:#fff;
+  color:#1a1a1a;
+  border-radius:4px;
+  box-shadow:0 4px 32px rgba(0,0,0,.55);
+  padding:68px 76px;
+  min-height:500px;
+  /* zoom으로 크기 조절 — transform과 달리 레이아웃 공간도 함께 변경됨 */
+  transform-origin:top center;
+  font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',serif;
+  font-size:14.5px;
+  line-height:1.85;
+  /* 인라인 스타일이 외부 색상 변수를 침범하지 못하도록 격리 */
+  color-scheme:light;
+}
+
+/* ── 문서 내부 요소 — !important로 Word 인라인 스타일 완전 우선 적용 ── */
+#doc-page h1,#doc-page h2,#doc-page h3,
+#doc-page h4,#doc-page h5,#doc-page h6,
+#doc-page p,#doc-page li,#doc-page td,#doc-page th{
+  max-width:100%;word-break:break-word;overflow-wrap:break-word;
+}
+#doc-page h1{font-size:22px!important;font-weight:700!important;
+  margin:1.4em 0 .5em!important;color:#111!important;line-height:1.35!important;
+  border-bottom:2px solid #e4e4ec;padding-bottom:.28em}
+#doc-page h2{font-size:18px!important;font-weight:700!important;
+  margin:1.2em 0 .4em!important;color:#1a1a1a!important;line-height:1.35!important}
+#doc-page h3{font-size:15.5px!important;font-weight:600!important;
+  margin:1em 0 .3em!important;color:#222!important}
+#doc-page h4,#doc-page h5,#doc-page h6{
+  font-size:14px!important;font-weight:600!important;margin:.8em 0 .2em!important;color:#333!important}
+#doc-page p{margin:.45em 0;line-height:1.85}
+#doc-page p:empty{min-height:0;margin:.1em 0}
+
+/* 목록 */
+#doc-page ul{list-style:disc outside;margin:.4em 0 .4em 1.7em;padding:0}
+#doc-page ol{list-style:decimal outside;margin:.4em 0 .4em 1.7em;padding:0}
+#doc-page li{margin:.2em 0;line-height:1.75}
+#doc-page li>ul{list-style:circle outside;margin:.15em 0 .15em 1.4em}
+#doc-page li>ul>li>ul{list-style:square outside}
+
+/* ── 표 ── */
+/* 래퍼: 넘칠 때 가로 스크롤 */
+#doc-page .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:1.1em 0;border-radius:5px}
+#doc-page table{
+  border-collapse:collapse;
+  width:100%;
+  min-width:320px;
+  font-size:13px;
+  line-height:1.55;
+  table-layout:auto;   /* auto = 내용 기반 자연 분배 (fixed보다 자연스러움) */
+  background:#fff;
+}
+#doc-page colgroup,#doc-page col{width:auto!important} /* Word col 너비 강제 초기화 */
+#doc-page thead tr{background:#eeeef6}
+#doc-page th{
+  background:#eeeef6!important;color:#222!important;
+  font-weight:600!important;font-size:12.5px!important;
+  padding:8px 11px!important;border:1px solid #ccccd8!important;
+  text-align:left!important;vertical-align:top!important;white-space:normal!important;
+}
+#doc-page td{
+  padding:7px 11px!important;border:1px solid #ccccd8!important;
+  text-align:left!important;vertical-align:top!important;
+  background:#fff!important;  /* Word 셀 배경색 덮어쓰기 */
+}
+#doc-page tr:nth-child(even) td{background:#f7f7fc!important}
+#doc-page td p,#doc-page th p{margin:0!important;line-height:1.55!important}
+/* 중첩 표 */
+#doc-page td .tw{margin:.2em 0}
+#doc-page td table th,#doc-page td table td{font-size:12px!important;padding:5px 8px!important}
+
+/* ── 이미지 ── */
+#doc-page img{max-width:100%!important;height:auto!important;display:block;
+  margin:.7em auto;border-radius:3px;box-shadow:0 2px 10px rgba(0,0,0,.1)}
+
+/* ── 기타 인라인 ── */
+#doc-page a{color:#4444bb;text-decoration:underline}
+#doc-page a:hover{color:#6666dd}
+#doc-page strong,#doc-page b{font-weight:700!important}
+#doc-page em,#doc-page i{font-style:italic!important}
+#doc-page u{text-decoration:underline}
+#doc-page s,#doc-page del{text-decoration:line-through;color:#888}
+#doc-page sup{font-size:.72em;vertical-align:super}
+#doc-page sub{font-size:.72em;vertical-align:sub}
+#doc-page blockquote{border-left:3px solid #aaa;margin:.7em 0;padding:.35em 1.1em;
+  color:#555;background:#f8f8fc;border-radius:0 4px 4px 0}
+#doc-page hr{border:none;border-top:1px solid #ddd;margin:1.4em 0}
+#doc-page pre{background:#f3f3f8;border:1px solid #e0e0ea;border-radius:4px;
+  padding:11px 14px;overflow-x:auto;font-size:12.5px;line-height:1.55;
+  font-family:'Consolas','D2Coding','Courier New',monospace}
+#doc-page code{font-family:'Consolas','D2Coding','Courier New',monospace;
+  font-size:12.5px;background:#f3f3f8;padding:1px 4px;border-radius:3px}
+#doc-page pre code{background:none;padding:0}
+#doc-page .page-break{border-top:1px dashed #ccc;margin:2em 0;position:relative;text-align:center}
+#doc-page .page-break::after{content:'── 페이지 나누기 ──';font-size:10px;color:#bbb;
+  position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:#fff;padding:0 8px}
+
+/* TOAST */
+#toast{position:fixed;bottom:18px;right:18px;background:#111;border:1px solid var(--border);
+  border-radius:8px;padding:7px 13px;font-size:12px;color:var(--accent2);
+  opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999}
+#toast.show{opacity:1}
+
+/* 반응형 */
+@media(max-width:680px){
+  #sidebar{display:none}
+  #doc-page{padding:36px 20px;font-size:13.5px}
+  #search-wrap{max-width:140px}
+  .tb-btn span{display:none}
+}
+@media print{
+  #toolbar,#sidebar,#toast{display:none!important}
+  body,html{overflow:visible!important;height:auto!important}
+  #body{display:block;height:auto;overflow:visible}
+  #viewer-wrap{overflow:visible;padding:0;background:#fff;display:block}
+  #doc-page{box-shadow:none;border-radius:0;max-width:none;width:100%;padding:15mm 18mm;
+    zoom:1!important;transform:none!important}
+  mark.hl{background:transparent!important;color:inherit!important}
+}
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <span id="logo">pomiai <span>viewer</span></span>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="btn-sidebar" onclick="toggleSidebar()" title="목차">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <span>목차</span>
+  </button>
+  <button class="tb-btn" onclick="document.getElementById('fi-main').click()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <span>열기</span>
+  </button>
+  <input type="file" id="fi-main" accept=".docx,.hwpx,.hwp" style="display:none">
+  <div class="tb-sep"></div>
+  <div id="search-wrap">
+    <input id="search-input" type="text" placeholder="🔍 검색..." autocomplete="off">
+    <div id="search-nav">
+      <button class="snav-btn" onclick="searchNav(-1)" title="이전 ▲">▲</button>
+      <button class="snav-btn" onclick="searchNav(1)" title="다음 ▼">▼</button>
+    </div>
+  </div>
+  <span id="search-count"></span>
+  <div class="tb-sep"></div>
+  <div id="zoom-wrap">
+    <button class="zoom-btn" onclick="setZoom(zoomLevel-10)">−</button>
+    <span id="zoom-val">100%</span>
+    <button class="zoom-btn" onclick="setZoom(zoomLevel+10)">+</button>
+    <button class="zoom-btn" onclick="setZoom(100)" style="width:auto;padding:0 5px;font-size:10px">맞춤</button>
+  </div>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="copyText()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    <span>복사</span>
+  </button>
+  <button class="tb-btn" onclick="doPrint()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    <span>인쇄</span>
+  </button>
+  <button class="tb-btn" onclick="doPDF()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span>PDF</span>
+  </button>
+  <span id="file-name">파일을 열어주세요</span>
+</div>
+
+<div id="body">
+  <div id="sidebar">
+    <div id="sb-head">
+      <span id="sb-title">목차</span>
+      <button id="sb-toggle" onclick="toggleSidebar()">✕</button>
+    </div>
+    <div id="toc-list"></div>
+    <div id="sb-info"></div>
+  </div>
+
+  <div id="viewer-wrap">
+    <div id="drop-zone">
+      <div class="dz-icon">📄</div>
+      <h2>문서를 열어주세요</h2>
+      <p>파일을 이곳에 드래그하거나<br>아래 버튼을 클릭해 선택하세요</p>
+      <div class="dz-formats">
+        <span class="fmt-badge word">Word .docx</span>
+        <span class="fmt-badge hwp">한컴 .hwpx</span>
+        <span class="fmt-badge">최대 50MB</span>
+      </div>
+      <button id="open-btn-dz" onclick="document.getElementById('fi-dz').click()">파일 선택</button>
+      <input type="file" id="fi-dz" accept=".docx,.hwpx,.hwp" style="display:none">
+    </div>
+    <div id="loading"><div class="spinner"></div><span id="loading-msg">불러오는 중...</span></div>
+    <div id="error-box"></div>
+    <div id="doc-page"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ── 상태 ── */
+let zoomLevel=100, searchMatches=[], searchIdx=0, tocItems=[];
+let toastTid=null;
+
+/* ── 파일 입력 ── */
+['fi-main','fi-dz'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',e=>{
+    if(e.target.files[0])loadFile(e.target.files[0]);
+    e.target.value='';
+  });
+});
+
+/* 드래그 앤 드롭 */
+let dc=0;
+document.addEventListener('dragenter',e=>{e.preventDefault();dc++;document.getElementById('drop-zone').classList.add('drag');});
+document.addEventListener('dragleave',()=>{dc--;if(dc<=0){dc=0;document.getElementById('drop-zone').classList.remove('drag');}});
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{
+  e.preventDefault();dc=0;document.getElementById('drop-zone').classList.remove('drag');
+  if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);
+});
+
+/* ── 파일 로드 ── */
+function loadFile(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  showLoading('문서를 불러오는 중...');
+  if(ext==='docx') loadDocx(file);
+  else if(ext==='hwpx') loadHwpx(file);
+  else if(ext==='hwp') showError('.hwp(구버전) 파일은 지원되지 않습니다.<br>한글 프로그램에서 .hwpx로 다시 저장하거나<br>Word(.docx)로 변환 후 열어주세요.');
+  else showError('지원하지 않는 파일 형식입니다.<br>(.docx · .hwpx 만 지원)');
+}
+
+/* ── DOCX (mammoth.js) ── */
+function loadDocx(file){
+  const fr=new FileReader();
+  fr.onload=async e=>{
+    try{
+      const result=await mammoth.convertToHtml(
+        {arrayBuffer:e.target.result},
+        {
+          styleMap:[
+            "p[style-name='제목 1'] => h1:fresh",
+            "p[style-name='제목 2'] => h2:fresh",
+            "p[style-name='제목 3'] => h3:fresh",
+            "p[style-name='제목 4'] => h4:fresh",
+            "p[style-name='Heading 1'] => h1:fresh",
+            "p[style-name='Heading 2'] => h2:fresh",
+            "p[style-name='Heading 3'] => h3:fresh",
+            "p[style-name='Heading 4'] => h4:fresh",
+            "p[style-name='List Paragraph'] => p:fresh",
+            "p[style-name='Quote'] => blockquote:fresh",
+            "p[style-name='Intense Quote'] => blockquote:fresh",
+            "p[style-name='Code'] => pre:fresh",
+            "r[style-name='Code Char'] => code",
+            "r[style-name='강조'] => strong",
+            "r[style-name='Emphasis'] => em",
+          ],
+          convertImage:mammoth.images.imgElement(img=>
+            img.read('base64').then(data=>({src:`data:${img.contentType};base64,${data}`}))
+          ),
+          ignoreEmptyParagraphs:false,
+        }
+      );
+      showDocument(postProcess(result.value), file.name, 'docx');
+    }catch(err){showError('Word 파일을 열 수 없습니다.<br>'+escHtml(err.message));}
+  };
+  fr.readAsArrayBuffer(file);
+}
+
+/* 후처리: 표 래퍼 추가 + Word 인라인 스타일 정리 */
+function postProcess(html){
+  /* 1. 표에 래퍼 div 추가 */
+  html=html.replace(/<table(\s|>)/g,'<div class="tw"><table$1');
+  html=html.replace(/<\/table>/g,'</table></div>');
+  /* 2. Word 흰색 배경 인라인 스타일 제거 → 짙은 테마에서 흰 덩어리로 보이는 문제 */
+  html=html.replace(/background(-color)?\s*:\s*(white|#fff(fff)?)\s*;?\s*/gi,'');
+  /* 3. Word 글꼴 색상 black/auto 제거 → CSS 컬러 적용되도록 */
+  html=html.replace(/color\s*:\s*(black|#000(000)?|windowtext)\s*;?\s*/gi,'');
+  /* 4. 지나치게 작은 폰트 제거 */
+  html=html.replace(/font-size\s*:\s*[0-5](\.\d+)?(px|pt)\s*;?\s*/gi,'');
+  /* 5. style="" 빈 속성 정리 */
+  html=html.replace(/\s*style\s*=\s*""\s*/g,' ');
+  /* 6. 연속 빈 단락 3개 이상 → 1개 축소 */
+  html=html.replace(/(<p[^>]*>\s*<\/p>\s*){3,}/g,'<p></p>');
+  return html;
+}
+
+/* ── HWPX (JSZip + XML) ── */
+async function loadHwpx(file){
+  try{
+    showLoading('한컴 문서 파싱 중...');
+    const zip=await JSZip.loadAsync(await file.arrayBuffer());
+    const secs=[];
+    zip.forEach((path,f)=>{
+      if(/Contents\/[Ss]ection\d+\.xml$/i.test(path)) secs.push({path,f});
+    });
+    if(!secs.length){
+      /* 대체 경로 탐색 */
+      zip.forEach((path,f)=>{
+        if(/section\d*\.xml$/i.test(path)) secs.push({path,f});
+      });
+    }
+    if(!secs.length){showError('한컴 문서 구조를 인식할 수 없습니다.<br>(.hwpx 파일이 올바른지 확인하세요)');return;}
+    secs.sort((a,b)=>a.path.localeCompare(b.path));
+    let html='';
+    for(const {f} of secs) html+=parseHwpx(await f.async('string'));
+    if(!html.trim()) html='<p style="color:#888">내용을 추출할 수 없습니다. 그림·수식만 있는 문서일 수 있습니다.</p>';
+    showDocument(html, file.name, 'hwpx');
+  }catch(err){showError('한컴 파일을 열 수 없습니다.<br>'+escHtml(err.message));}
+}
+
+function parseHwpx(xmlStr){
+  const doc=new DOMParser().parseFromString(xmlStr,'application/xml');
+  let html='';
+  function ga(el,...ns){for(const n of ns){const v=el.getAttribute(n)||el.getAttribute(n.toLowerCase());if(v!==null)return v;}return '';}
+
+  /* 단락 처리 */
+  /* hwpx 네임스페이스 다양: hp:p, hh:p, hp3:p ... → localName으로 매칭 */
+  const allEls=doc.getElementsByTagName('*');
+  const paras=[],tbls=[];
+  for(const el of allEls){
+    const ln=el.localName.toLowerCase();
+    if(ln==='p') paras.push(el);
+    if(ln==='tbl'||ln==='table') tbls.push(el);
+  }
+
+  paras.forEach(para=>{
+    const sid=ga(para,'styleId','StyleId')||'';
+    const snm=ga(para,'styleName','StyleName')||'';
+    const comb=(sid+snm).toLowerCase();
+    let tag='p';
+    if(/제목\s*1|heading.?1|h1/.test(comb)) tag='h1';
+    else if(/제목\s*2|heading.?2|h2/.test(comb)) tag='h2';
+    else if(/제목\s*3|heading.?3|h3/.test(comb)) tag='h3';
+    else if(/제목\s*4|heading.?4|h4/.test(comb)) tag='h4';
+
+    /* 텍스트 런 추출 — localName 't' */
+    let txt='';
+    const runs=para.getElementsByTagName('*');
+    let hasT=false;
+    for(const r of runs){if(r.localName.toLowerCase()==='t'){txt+=r.textContent;hasT=true;}}
+    if(!hasT) txt=para.textContent;
+    txt=txt.replace(/\n/g,' ').trim();
+    if(txt) html+=`<${tag}>${escHtml(txt)}</${tag}>\n`;
+  });
+
+  /* 표 처리 — 단락과 별도로 항상 처리 */
+  tbls.forEach(tbl=>{
+    html+='<div class="tw"><table>\n';
+    const rows=[...tbl.getElementsByTagName('*')].filter(e=>e.localName.toLowerCase()==='tr');
+    rows.forEach((row,ri)=>{
+      html+='<tr>';
+      const cells=[...row.getElementsByTagName('*')].filter(e=>['td','th','tc'].includes(e.localName.toLowerCase()));
+      cells.forEach(cell=>{
+        const ct=ri===0?'th':'td';
+        const t=cell.textContent.replace(/\n/g,' ').trim();
+        html+=`<${ct}>${escHtml(t)}</${ct}>`;
+      });
+      html+='</tr>\n';
+    });
+    html+='</table></div>\n';
+  });
+  return html;
+}
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ── 문서 표시 ── */
+function showDocument(html, name, type){
+  clearSearch();
+  const page=document.getElementById('doc-page');
+  page.innerHTML=html;
+  page.style.display='block';
+  document.getElementById('drop-zone').style.display='none';
+  document.getElementById('loading').style.display='none';
+  document.getElementById('error-box').style.display='none';
+  document.getElementById('file-name').textContent=name;
+  document.title=name+' — pomiai viewer';
+  buildTOC(page);
+  const wc=page.textContent.replace(/\s+/g,' ').trim().split(' ').filter(w=>w).length;
+  const cc=page.textContent.replace(/\s/g,'').length;
+  document.getElementById('sb-info').innerHTML=
+    `<b>형식</b> ${type==='docx'?'Word .docx':'한컴 .hwpx'}<br><b>단어</b> ${wc.toLocaleString()}<br><b>글자</b> ${cc.toLocaleString()}`;
+  document.getElementById('sidebar').classList.remove('collapsed');
+  hideLoading();
+  toast('✅ 문서를 불러왔습니다');
+}
+
+/* ── 목차 ── */
+function buildTOC(page){
+  const list=document.getElementById('toc-list');
+  list.innerHTML='';tocItems=[];
+  const hs=page.querySelectorAll('h1,h2,h3,h4');
+  if(!hs.length){list.innerHTML='<div style="padding:12px 14px;font-size:11px;color:#444">목차 없음</div>';return;}
+  hs.forEach((h,i)=>{
+    h.id='hd-'+i;
+    const d=document.createElement('div');
+    const lv=parseInt(h.tagName[1]);
+    d.className='toc-item toc-h'+Math.min(lv,3);
+    d.textContent=h.textContent.trim().slice(0,48)||'(제목 없음)';
+    d.title=h.textContent.trim();
+    d.addEventListener('click',()=>{
+      h.scrollIntoView({behavior:'smooth',block:'start'});
+      document.querySelectorAll('.toc-item').forEach(x=>x.classList.remove('toc-active'));
+      d.classList.add('toc-active');
+    });
+    list.appendChild(d);
+    tocItems.push({d,h});
+  });
+  const vw=document.getElementById('viewer-wrap');
+  vw.onscroll=()=>{
+    const top=vw.scrollTop+100;
+    let act=null;
+    tocItems.forEach(({d,h})=>{if(h.offsetTop<=top)act=d;});
+    if(act){document.querySelectorAll('.toc-item').forEach(x=>x.classList.remove('toc-active'));act.classList.add('toc-active');}
+  };
+}
+
+/* ── 검색 ── */
+const si=document.getElementById('search-input');
+let st=null;
+si.addEventListener('input',()=>{clearTimeout(st);st=setTimeout(doSearch,200);});
+si.addEventListener('keydown',e=>{if(e.key==='Enter')searchNav(e.shiftKey?-1:1);});
+
+function doSearch(){
+  clearSearch();
+  const q=si.value.trim();
+  if(!q){document.getElementById('search-count').textContent='';return;}
+  const page=document.getElementById('doc-page');
+  /* TreeWalker로 텍스트 노드 수집 — mark 요소 내부는 제외 */
+  const walker=document.createTreeWalker(page,NodeFilter.SHOW_TEXT,{
+    acceptNode:n=>n.parentElement.tagName==='MARK'?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT
+  });
+  const nodes=[];let nd;
+  while((nd=walker.nextNode()))nodes.push(nd);
+  const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+  nodes.forEach(tn=>{
+    const txt=tn.nodeValue;let m;re.lastIndex=0;
+    const frags=[];let last=0;
+    while((m=re.exec(txt))!==null){
+      if(m.index>last)frags.push(document.createTextNode(txt.slice(last,m.index)));
+      const mk=document.createElement('mark');mk.className='hl';mk.textContent=m[0];
+      frags.push(mk);searchMatches.push(mk);last=m.index+m[0].length;
+    }
+    if(frags.length){
+      if(last<txt.length)frags.push(document.createTextNode(txt.slice(last)));
+      const parent=tn.parentNode;frags.forEach(f=>parent.insertBefore(f,tn));parent.removeChild(tn);
+    }
+  });
+  searchIdx=0;updateCount();if(searchMatches.length)setCur();
+}
+
+function clearSearch(){
+  /* mark를 textNode로 되돌리기 */
+  document.querySelectorAll('mark.hl').forEach(m=>{
+    const t=document.createTextNode(m.textContent);
+    m.parentNode.replaceChild(t,m);
+  });
+  /* 인접 textNode 병합 */
+  document.getElementById('doc-page').normalize();
+  searchMatches=[];
+  document.getElementById('search-count').textContent='';
+}
+function searchNav(dir){
+  if(!searchMatches.length)return;
+  searchMatches[searchIdx].classList.remove('cur');
+  searchIdx=(searchIdx+dir+searchMatches.length)%searchMatches.length;
+  setCur();updateCount();
+}
+function setCur(){
+  if(!searchMatches.length)return;
+  const m=searchMatches[searchIdx];m.classList.add('cur');
+  m.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function updateCount(){
+  document.getElementById('search-count').textContent=
+    searchMatches.length?`${searchIdx+1}/${searchMatches.length}`:'없음';
+}
+
+/* ── 줌 — zoom 속성 사용 (레이아웃 공간도 함께 변경) ── */
+function setZoom(v){
+  zoomLevel=Math.max(50,Math.min(200,v));
+  const page=document.getElementById('doc-page');
+  page.style.zoom=zoomLevel/100;
+  /* Firefox는 zoom 미지원 → transform fallback */
+  if(getComputedStyle(page).zoom===''){
+    page.style.zoom='';
+    page.style.transform=`scale(${zoomLevel/100})`;
+    page.style.transformOrigin='top center';
+  }
+  document.getElementById('zoom-val').textContent=zoomLevel+'%';
+}
+
+/* ── 복사 ── */
+function copyText(){
+  const t=document.getElementById('doc-page').textContent;
+  if(!t.trim()){toast('⚠️ 문서를 먼저 열어주세요');return;}
+  navigator.clipboard.writeText(t).then(()=>toast('✅ 텍스트 복사 완료'));
+}
+
+/* ── 인쇄 / PDF ── */
+function openPrintWindow(autoPrint){
+  const page=document.getElementById('doc-page');
+  if(!page.textContent.trim()){toast('⚠️ 문서를 먼저 열어주세요');return;}
+
+  const docHTML=page.innerHTML;
+  const docTitle=document.getElementById('file-name').textContent||'문서';
+
+  /* 인쇄 전용 스타일 — 문서 스타일을 그대로 복사 */
+  const printCSS=`
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#fff;color:#1a1a1a;
+      font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',serif;
+      font-size:14px;line-height:1.85;padding:15mm 18mm}
+    h1{font-size:22px;font-weight:700;margin:1.2em 0 .5em;color:#111;
+      border-bottom:2px solid #e4e4ec;padding-bottom:.25em}
+    h2{font-size:18px;font-weight:700;margin:1em 0 .4em;color:#1a1a1a}
+    h3{font-size:15px;font-weight:600;margin:.9em 0 .3em;color:#222}
+    h4,h5,h6{font-size:14px;font-weight:600;margin:.7em 0 .2em}
+    p{margin:.4em 0;line-height:1.85}
+    p:empty{min-height:0;margin:.05em 0}
+    ul{list-style:disc outside;margin:.4em 0 .4em 1.6em;padding:0}
+    ol{list-style:decimal outside;margin:.4em 0 .4em 1.6em;padding:0}
+    li{margin:.2em 0}
+    .tw{overflow:visible;margin:1em 0}
+    table{border-collapse:collapse;width:100%;font-size:12.5px;table-layout:auto}
+    th{background:#eeeef6!important;color:#222!important;font-weight:600;
+      padding:6px 10px;border:1px solid #bbbbc8;text-align:left;vertical-align:top}
+    td{padding:6px 10px;border:1px solid #bbbbc8;text-align:left;vertical-align:top;background:#fff!important}
+    tr:nth-child(even) td{background:#f7f7fc!important}
+    td p,th p{margin:0!important}
+    img{max-width:100%;height:auto;display:block;margin:.5em auto}
+    a{color:#4444bb}
+    strong,b{font-weight:700}
+    em,i{font-style:italic}
+    blockquote{border-left:3px solid #aaa;margin:.6em 0;padding:.3em 1em;color:#555;background:#f8f8fc}
+    hr{border:none;border-top:1px solid #ddd;margin:1.2em 0}
+    pre{background:#f3f3f8;border:1px solid #e0e0ea;border-radius:3px;
+      padding:10px 13px;font-size:12px;line-height:1.5;
+      font-family:'Consolas','Courier New',monospace;white-space:pre-wrap;word-break:break-all}
+    code{font-family:'Consolas','Courier New',monospace;font-size:12px;
+      background:#f3f3f8;padding:1px 3px;border-radius:2px}
+    pre code{background:none;padding:0}
+    .page-break{page-break-after:always;border-top:1px dashed #ccc;margin:1.5em 0}
+    mark.hl{background:transparent!important;color:inherit!important}
+    @media print{
+      body{padding:0}
+      @page{margin:15mm 18mm}
+    }
+  `;
+
+  const win=window.open('','_blank','width=900,height=700,scrollbars=yes,resizable=yes');
+  if(!win){
+    toast('⚠️ 팝업이 차단되었습니다. 브라우저에서 팝업 허용 후 다시 시도하세요.');
+    return;
+  }
+  win.document.write(`<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>${docTitle}</title>
+<style>${printCSS}</style>
+</head>
+<body>${docHTML}</body>
+</html>`);
+  win.document.close();
+
+  if(autoPrint){
+    /* 이미지 로드 완료 후 인쇄 */
+    win.onload=()=>{ win.focus(); win.print(); };
+    /* onload 미발생 대비 */
+    setTimeout(()=>{ try{win.focus();win.print();}catch(e){} },800);
+  }
+}
+
+function doPrint(){openPrintWindow(true);}
+function doPDF(){
+  openPrintWindow(false);
+  toast('🖨️ 열린 창에서 Ctrl+P → "PDF로 저장"을 선택하세요');
+}
+
+/* ── 사이드바 ── */
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
+
+/* ── UI 헬퍼 ── */
+function showLoading(msg){
+  ['drop-zone','error-box'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('doc-page').style.display='none';
+  document.getElementById('loading').style.display='flex';
+  document.getElementById('loading-msg').textContent=msg||'불러오는 중...';
+}
+function hideLoading(){document.getElementById('loading').style.display='none';}
+function showError(msg){
+  hideLoading();
+  ['drop-zone','doc-page'].forEach(id=>document.getElementById(id).style.display='none');
+  const eb=document.getElementById('error-box');eb.style.display='block';eb.innerHTML='⚠️ '+msg;
+}
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  if(toastTid)clearTimeout(toastTid);
+  toastTid=setTimeout(()=>t.classList.remove('show'),2800);
+}
+</script>
+</body>
+</html>

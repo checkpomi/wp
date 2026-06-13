@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>pomiai calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap');
+
+:root{
+  --bg:#08080f;--surface:#0f0f1a;--surface2:#161624;--surface3:#1e1e30;
+  --border:#252538;--border2:#2e2e48;
+  --accent:#8b82f0;--accent2:#c8c4f8;--accent-glow:rgba(139,130,240,.25);
+  --amber:#f5c842;--amber2:#fde68a;
+  --red:#f87171;--green:#6ee7b7;
+  --text:#f0f0f8;--text2:#9090b8;--text3:#4a4a6a;
+  --btn-num:#181828;--btn-op:#1e1832;--btn-fn:#121220;
+  --r:14px;--r-sm:10px;--r-xs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow:hidden}
+
+/* ── LAYOUT ── */
+#app{display:flex;height:100%;max-width:960px;margin:0 auto;padding:16px;gap:12px}
+#calc-panel{display:flex;flex-direction:column;width:340px;flex-shrink:0;gap:10px}
+#side-panel{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0;overflow:hidden}
+
+/* ── HEADER ── */
+#header{display:flex;align-items:center;justify-content:space-between;padding:0 2px}
+#logo{font-size:13px;font-weight:600;color:var(--accent2);letter-spacing:1.5px}
+#logo span{color:var(--text3);font-weight:400}
+#theme-tog{background:none;border:1px solid var(--border2);color:var(--text3);border-radius:20px;
+  padding:4px 10px;font-size:11px;cursor:pointer;transition:.2s}
+#theme-tog:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── DISPLAY ── */
+#display{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 20px 14px;position:relative;overflow:hidden}
+#display::before{content:'';position:absolute;top:-40px;right:-20px;width:120px;height:120px;
+  background:radial-gradient(circle,var(--accent-glow),transparent 70%);pointer-events:none}
+#expr{font-size:13px;color:var(--text3);font-family:'DM Mono',monospace;min-height:18px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;margin-bottom:6px;
+  transition:all .15s}
+#result{font-family:'DM Mono',monospace;font-weight:500;text-align:right;
+  font-size:38px;color:var(--text);line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  transition:all .15s;cursor:default}
+#result.small{font-size:26px}
+#result.tiny{font-size:18px}
+#result.error{color:var(--red)!important}
+#result.flash{animation:flash .12s ease-out}
+@keyframes flash{0%{opacity:.4}100%{opacity:1}}
+#memory-ind{position:absolute;top:10px;left:14px;font-size:10px;color:var(--amber);
+  background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.2);border-radius:4px;
+  padding:1px 6px;display:none}
+#memory-ind.show{display:block}
+#mode-badge{position:absolute;top:10px;right:14px;font-size:10px;color:var(--accent);
+  background:var(--accent-glow);border:1px solid rgba(139,130,240,.3);border-radius:4px;padding:1px 6px}
+
+/* ── TABS ── */
+#tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:4px}
+.tab{flex:1;padding:6px 4px;font-size:12px;font-weight:500;color:var(--text3);
+  background:transparent;border:none;border-radius:var(--r-xs);cursor:pointer;transition:.18s;
+  white-space:nowrap}
+.tab:hover{color:var(--text2);background:var(--surface2)}
+.tab.active{background:var(--surface3);color:var(--accent2);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+
+/* ── KEYPAD ── */
+#keypad-area{flex:1}
+.keypad{display:none;grid-gap:7px}
+.keypad.show{display:grid}
+/* 기본: 4열 5행 */
+#kp-basic{grid-template-columns:repeat(4,1fr)}
+/* 공학: 5열 */
+#kp-sci{grid-template-columns:repeat(5,1fr)}
+/* 단위변환 / 환율: 별도 레이아웃 */
+#kp-unit,#kp-fx{display:none;flex-direction:column;gap:10px}
+#kp-unit.show,#kp-fx.show{display:flex}
+
+/* ── BUTTON ── */
+.btn{position:relative;overflow:hidden;border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:0;height:52px;font-family:'DM Sans',sans-serif;
+  font-size:15px;font-weight:500;cursor:pointer;transition:all .12s;
+  display:flex;align-items:center;justify-content:center;gap:3px}
+.btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn:active{transform:translateY(0) scale(.97);filter:brightness(.95)}
+.btn-num{background:var(--btn-num);color:var(--text)}
+.btn-op{background:var(--btn-op);color:var(--accent2);font-size:18px}
+.btn-fn{background:var(--btn-fn);color:var(--text2);font-size:13px}
+.btn-eq{background:linear-gradient(135deg,var(--accent),#6d64e8);color:#fff;
+  font-size:22px;border-color:transparent;box-shadow:0 4px 16px var(--accent-glow)}
+.btn-eq:hover{box-shadow:0 6px 20px var(--accent-glow);filter:brightness(1.1)}
+.btn-clear{background:#1e1020;color:var(--red);border-color:rgba(248,113,113,.2)}
+.btn-special{background:rgba(245,200,66,.07);color:var(--amber);border-color:rgba(245,200,66,.2)}
+.btn-span2{grid-column:span 2}
+.btn-span3{grid-column:span 3}
+/* 리플 */
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.18);
+  transform:scale(0);animation:rip .45s ease-out forwards;pointer-events:none}
+@keyframes rip{to{transform:scale(4);opacity:0}}
+
+/* ── SIDE PANEL ── */
+.side-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  display:flex;flex-direction:column;overflow:hidden}
+.side-head{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;justify-content:space-between;flex-shrink:0}
+.side-head-title{font-size:12px;font-weight:600;color:var(--text2);letter-spacing:1px;text-transform:uppercase}
+.side-head-btn{background:none;border:1px solid var(--border2);color:var(--text3);
+  border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;transition:.15s}
+.side-head-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* 히스토리 */
+#hist-list{flex:1;overflow-y:auto;padding:6px 0;scrollbar-width:thin;scrollbar-color:var(--border) transparent;max-height:260px}
+#hist-list::-webkit-scrollbar{width:3px}
+#hist-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.hist-item{padding:8px 14px;cursor:pointer;transition:.1s;border-bottom:1px solid rgba(255,255,255,.03)}
+.hist-item:hover{background:var(--surface2)}
+.hist-expr{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-res{font-size:14px;font-weight:500;color:var(--accent2);font-family:'DM Mono',monospace}
+.hist-memo{font-size:10px;color:var(--amber);margin-top:2px;font-style:italic}
+.hist-time{font-size:10px;color:var(--text3);float:right;margin-top:2px}
+#hist-empty{padding:24px;text-align:center;color:var(--text3);font-size:12px}
+
+/* 메모 */
+#memo-wrap{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
+#memo-input{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  border-radius:var(--r-xs);padding:7px 10px;font-size:12px;font-family:'DM Sans',sans-serif;
+  outline:none;resize:none;height:52px;transition:.15s}
+#memo-input:focus{border-color:var(--accent);background:var(--surface3)}
+#memo-input::placeholder{color:var(--text3)}
+#memo-save{margin-top:6px;width:100%;background:linear-gradient(135deg,var(--accent),#6d64e8);
+  border:none;color:#fff;border-radius:var(--r-xs);padding:7px;font-size:12px;font-weight:600;
+  cursor:pointer;transition:.15s}
+#memo-save:hover{filter:brightness(1.1)}
+
+/* ── 단위 변환 ── */
+.conv-group{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px}
+.conv-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.conv-row:last-child{margin-bottom:0}
+.conv-select{flex:1;background:var(--surface3);border:1px solid var(--border2);color:var(--text);
+  border-radius:var(--r-xs);padding:7px 9px;font-size:13px;outline:none;cursor:pointer}
+.conv-input{flex:1;background:var(--surface3);border:1px solid var(--border2);color:var(--text);
+  border-radius:var(--r-xs);padding:7px 9px;font-size:14px;font-family:'DM Mono',monospace;outline:none;
+  transition:.15s;min-width:0}
+.conv-input:focus{border-color:var(--accent)}
+.conv-arrow{color:var(--text3);font-size:16px;flex-shrink:0}
+.conv-result{font-size:22px;font-weight:500;font-family:'DM Mono',monospace;color:var(--accent2);
+  text-align:center;padding:10px 0 4px;min-height:40px}
+.conv-type-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.conv-type{padding:5px 10px;font-size:11px;font-weight:500;border:1px solid var(--border2);
+  color:var(--text3);background:transparent;border-radius:20px;cursor:pointer;transition:.15s}
+.conv-type:hover{color:var(--text2);border-color:var(--accent)}
+.conv-type.active{background:var(--accent-glow);color:var(--accent2);border-color:var(--accent)}
+
+/* ── 환율 ── */
+.fx-row{display:flex;gap:8px;align-items:center}
+.fx-flag{font-size:20px;flex-shrink:0}
+.fx-select{flex:1;background:var(--surface3);border:1px solid var(--border2);color:var(--text);
+  border-radius:var(--r-xs);padding:7px 9px;font-size:13px;outline:none;cursor:pointer}
+.fx-input{width:100%;background:var(--surface3);border:1px solid var(--border2);color:var(--text);
+  border-radius:var(--r-xs);padding:9px 12px;font-size:18px;font-family:'DM Mono',monospace;
+  outline:none;text-align:right;transition:.15s;margin-top:8px}
+.fx-input:focus{border-color:var(--accent)}
+.fx-result{font-size:28px;font-weight:500;font-family:'DM Mono',monospace;color:var(--accent2);
+  text-align:center;padding:14px 0 6px}
+.fx-rate{font-size:11px;color:var(--text3);text-align:center;margin-bottom:4px}
+#fx-update{font-size:11px;color:var(--text3);text-align:center;margin-top:6px}
+#fx-refresh{background:none;border:1px solid var(--border2);color:var(--text3);border-radius:6px;
+  padding:5px 12px;font-size:12px;cursor:pointer;transition:.15s;width:100%;margin-top:8px}
+#fx-refresh:hover{border-color:var(--accent2);color:var(--accent2)}
+.fx-loading{color:var(--text3);text-align:center;padding:20px;font-size:13px}
+
+/* ── 애니메이션 ── */
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.slide-up{animation:slideUp .18s ease-out}
+
+/* ── 반응형 ── */
+@media(max-width:660px){
+  #app{flex-direction:column;padding:10px;gap:8px;overflow-y:auto;height:auto}
+  #calc-panel{width:100%}
+  #side-panel{max-height:340px}
+  #hist-list{max-height:160px}
+  .btn{height:46px;font-size:14px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 왼쪽: 계산기 본체 -->
+  <div id="calc-panel">
+    <div id="header">
+      <span id="logo">pomiai <span>calc</span></span>
+    </div>
+
+    <!-- 디스플레이 -->
+    <div id="display">
+      <div id="memory-ind">M</div>
+      <div id="mode-badge">기본</div>
+      <div id="expr"></div>
+      <div id="result">0</div>
+    </div>
+
+    <!-- 탭 -->
+    <div id="tabs">
+      <button class="tab active" data-tab="basic" onclick="switchTab('basic')">기본</button>
+      <button class="tab" data-tab="sci" onclick="switchTab('sci')">공학</button>
+      <button class="tab" data-tab="unit" onclick="switchTab('unit')">단위</button>
+      <button class="tab" data-tab="fx" onclick="switchTab('fx')">환율</button>
+    </div>
+
+    <!-- 키패드 영역 -->
+    <div id="keypad-area">
+
+      <!-- 기본 키패드 -->
+      <div class="keypad show" id="kp-basic">
+        <button class="btn btn-fn" onclick="calcFn('mc')">MC</button>
+        <button class="btn btn-fn" onclick="calcFn('mr')">MR</button>
+        <button class="btn btn-fn" onclick="calcFn('m+')">M+</button>
+        <button class="btn btn-fn" onclick="calcFn('m-')">M−</button>
+        <button class="btn btn-clear" onclick="clearAll()">AC</button>
+        <button class="btn btn-fn" onclick="toggleSign()">+/−</button>
+        <button class="btn btn-fn" onclick="calcFn('pct')">%</button>
+        <button class="btn btn-op" onclick="inputOp('/')">÷</button>
+        <button class="btn btn-num" onclick="inputNum('7')">7</button>
+        <button class="btn btn-num" onclick="inputNum('8')">8</button>
+        <button class="btn btn-num" onclick="inputNum('9')">9</button>
+        <button class="btn btn-op" onclick="inputOp('*')">×</button>
+        <button class="btn btn-num" onclick="inputNum('4')">4</button>
+        <button class="btn btn-num" onclick="inputNum('5')">5</button>
+        <button class="btn btn-num" onclick="inputNum('6')">6</button>
+        <button class="btn btn-op" onclick="inputOp('-')">−</button>
+        <button class="btn btn-num" onclick="inputNum('1')">1</button>
+        <button class="btn btn-num" onclick="inputNum('2')">2</button>
+        <button class="btn btn-num" onclick="inputNum('3')">3</button>
+        <button class="btn btn-op" onclick="inputOp('+')">+</button>
+        <button class="btn btn-num btn-span2" onclick="inputNum('0')">0</button>
+        <button class="btn btn-num" onclick="inputDot()">.</button>
+        <button class="btn btn-eq" onclick="calculate()">=</button>
+      </div>
+
+      <!-- 공학 키패드 -->
+      <div class="keypad" id="kp-sci">
+        <button class="btn btn-fn" onclick="sciFn('sin')" style="font-size:12px">sin</button>
+        <button class="btn btn-fn" onclick="sciFn('cos')" style="font-size:12px">cos</button>
+        <button class="btn btn-fn" onclick="sciFn('tan')" style="font-size:12px">tan</button>
+        <button class="btn btn-fn" onclick="sciFn('log')" style="font-size:12px">log</button>
+        <button class="btn btn-fn" onclick="sciFn('ln')" style="font-size:12px">ln</button>
+        <button class="btn btn-fn" onclick="sciFn('asin')" style="font-size:11px">sin⁻¹</button>
+        <button class="btn btn-fn" onclick="sciFn('acos')" style="font-size:11px">cos⁻¹</button>
+        <button class="btn btn-fn" onclick="sciFn('atan')" style="font-size:11px">tan⁻¹</button>
+        <button class="btn btn-fn" onclick="sciFn('sqrt')" style="font-size:13px">√</button>
+        <button class="btn btn-fn" onclick="sciFn('sq')" style="font-size:12px">x²</button>
+        <button class="btn btn-fn" onclick="sciFn('pi')" style="font-size:14px">π</button>
+        <button class="btn btn-fn" onclick="sciFn('e')" style="font-size:14px">e</button>
+        <button class="btn btn-fn" onclick="sciFn('pow')" style="font-size:12px">xʸ</button>
+        <button class="btn btn-fn" onclick="sciFn('fact')" style="font-size:12px">n!</button>
+        <button class="btn btn-fn" onclick="sciFn('inv')" style="font-size:12px">1/x</button>
+        <button class="btn btn-clear" onclick="clearAll()">AC</button>
+        <button class="btn btn-fn" onclick="backspace()">⌫</button>
+        <button class="btn btn-fn" onclick="calcFn('pct')">%</button>
+        <button class="btn btn-op btn-span2" onclick="inputOp('/')">÷</button>
+        <button class="btn btn-num" onclick="inputNum('7')">7</button>
+        <button class="btn btn-num" onclick="inputNum('8')">8</button>
+        <button class="btn btn-num" onclick="inputNum('9')">9</button>
+        <button class="btn btn-op btn-span2" onclick="inputOp('*')">×</button>
+        <button class="btn btn-num" onclick="inputNum('4')">4</button>
+        <button class="btn btn-num" onclick="inputNum('5')">5</button>
+        <button class="btn btn-num" onclick="inputNum('6')">6</button>
+        <button class="btn btn-op btn-span2" onclick="inputOp('-')">−</button>
+        <button class="btn btn-num" onclick="inputNum('1')">1</button>
+        <button class="btn btn-num" onclick="inputNum('2')">2</button>
+        <button class="btn btn-num" onclick="inputNum('3')">3</button>
+        <button class="btn btn-op btn-span2" onclick="inputOp('+')">+</button>
+        <button class="btn btn-num btn-span2" onclick="inputNum('0')">0</button>
+        <button class="btn btn-num" onclick="inputDot()">.</button>
+        <button class="btn btn-eq btn-span2" onclick="calculate()">=</button>
+      </div>
+
+      <!-- 단위변환 -->
+      <div class="keypad" id="kp-unit">
+        <div class="conv-type-tabs" id="conv-type-tabs"></div>
+        <div class="conv-group">
+          <div class="conv-row">
+            <select class="conv-select" id="conv-from" onchange="doConvert()"></select>
+            <input class="conv-input" id="conv-val" type="number" value="1" oninput="doConvert()" placeholder="값">
+          </div>
+          <div class="conv-row">
+            <select class="conv-select" id="conv-to" onchange="doConvert()"></select>
+            <span class="conv-arrow">→</span>
+          </div>
+          <div class="conv-result" id="conv-result">—</div>
+        </div>
+      </div>
+
+      <!-- 환율 -->
+      <div class="keypad" id="kp-fx">
+        <div class="conv-group">
+          <div class="fx-row">
+            <span class="fx-flag" id="fx-flag1">🇺🇸</span>
+            <select class="fx-select" id="fx-from" onchange="doFx()"></select>
+          </div>
+          <input class="fx-input" id="fx-val" type="number" value="1" oninput="doFx()" placeholder="금액">
+          <div class="fx-result" id="fx-result">—</div>
+          <div class="fx-row" style="margin-top:4px">
+            <span class="fx-flag" id="fx-flag2">🇰🇷</span>
+            <select class="fx-select" id="fx-to" onchange="doFx()"></select>
+          </div>
+          <div class="fx-rate" id="fx-rate"></div>
+          <button id="fx-refresh" onclick="fetchRates()">🔄 환율 업데이트</button>
+          <div id="fx-update">환율 정보를 불러오는 중...</div>
+        </div>
+      </div>
+
+    </div><!-- /keypad-area -->
+  </div><!-- /calc-panel -->
+
+  <!-- 오른쪽: 히스토리 + 메모 -->
+  <div id="side-panel">
+
+    <!-- 히스토리 -->
+    <div class="side-card" style="flex:1;overflow:hidden">
+      <div class="side-head">
+        <span class="side-head-title">기록</span>
+        <button class="side-head-btn" onclick="clearHistory()">지우기</button>
+      </div>
+      <div id="hist-list"><div id="hist-empty">계산 기록이 여기에 표시됩니다</div></div>
+      <div id="memo-wrap">
+        <textarea id="memo-input" placeholder="다음 계산에 메모를 추가하세요..."></textarea>
+        <button id="memo-save" onclick="saveMemo()">메모 저장</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ── 계산기 상태 ── */
+let current = '0';
+let expr = '';
+let op = null;
+let prev = null;
+let justCalc = false;
+let memory = 0;
+let hasMemory = false;
+let degMode = true; // true=deg, false=rad
+let pendingMemo = '';
+const history = [];
+
+/* ── 디스플레이 ── */
+function updateDisplay(animate){
+  const res = document.getElementById('result');
+  const exprEl = document.getElementById('expr');
+  const txt = formatNum(current);
+  res.textContent = txt;
+  res.className = txt.length > 14 ? 'tiny' : txt.length > 10 ? 'small' : '';
+  if(animate){ res.classList.remove('flash'); void res.offsetWidth; res.classList.add('flash'); }
+  exprEl.textContent = expr;
+}
+
+function formatNum(n){
+  if(n === 'Error') return 'Error';
+  const num = parseFloat(n);
+  if(isNaN(num)) return n;
+  if(!isFinite(num)) return num > 0 ? '∞' : '-∞';
+  if(Math.abs(num) > 1e15 || (Math.abs(num) < 1e-10 && num !== 0))
+    return num.toExponential(6).replace(/\.?0+e/, 'e');
+  // 소수점 최대 10자리
+  const s = parseFloat(num.toPrecision(12)).toString();
+  return s;
+}
+
+/* ── 리플 효과 ── */
+function addRipple(btn, e){
+  const r = document.createElement('span');
+  r.className = 'ripple';
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  r.style.cssText = `width:${size}px;height:${size}px;left:${(e.clientX||rect.left+rect.width/2)-rect.left-size/2}px;top:${(e.clientY||rect.top+rect.height/2)-rect.top-size/2}px`;
+  btn.appendChild(r);
+  r.addEventListener('animationend', ()=>r.remove());
+}
+document.querySelectorAll('.btn').forEach(btn=>{
+  btn.addEventListener('click', e=>addRipple(btn, e));
+});
+
+/* ── 숫자 입력 ── */
+function inputNum(n){
+  if(current === 'Error'){ current='0'; expr=''; }
+  if(justCalc){ current='0'; expr=''; justCalc=false; }
+  if(current === '0') current = n;
+  else if(current.length < 16) current += n;
+  updateDisplay();
+}
+function inputDot(){
+  if(justCalc){ current='0'; justCalc=false; }
+  if(!current.includes('.')) current += '.';
+  updateDisplay();
+}
+function backspace(){
+  if(current.length > 1) current = current.slice(0,-1);
+  else current = '0';
+  updateDisplay();
+}
+function toggleSign(){
+  if(current !== '0') current = (parseFloat(current) * -1).toString();
+  updateDisplay();
+}
+
+/* ── 연산자 ── */
+function inputOp(o){
+  if(current === 'Error') return;
+  const opSymbols = {'/':'÷','*':'×','-':'−','+':'+'};
+  if(prev !== null && !justCalc){
+    const r = compute(prev, parseFloat(current), op);
+    current = r.toString(); prev = parseFloat(r);
+  } else {
+    prev = parseFloat(current);
+  }
+  op = o;
+  expr = formatNum(current) + ' ' + opSymbols[o];
+  justCalc = false;
+  current = '0';
+  updateDisplay();
+}
+
+function compute(a, b, o){
+  switch(o){
+    case '+': return roundResult(a+b);
+    case '-': return roundResult(a-b);
+    case '*': return roundResult(a*b);
+    case '/': return b===0 ? 'Error' : roundResult(a/b);
+    case 'pow': return roundResult(Math.pow(a,b));
+    default: return b;
+  }
+}
+
+function roundResult(n){
+  if(!isFinite(n)) return n;
+  return parseFloat(n.toPrecision(14));
+}
+
+/* ── = ── */
+function calculate(){
+  if(op === null || prev === null){ justCalc=true; return; }
+  const b = parseFloat(current);
+  const fullExpr = expr + ' ' + formatNum(current);
+  const r = compute(prev, b, op);
+  const rStr = r.toString();
+  addHistory(fullExpr, rStr, pendingMemo);
+  pendingMemo = '';
+  document.getElementById('memo-input').value = '';
+  expr = fullExpr + ' =';
+  current = rStr;
+  prev = null; op = null; justCalc = true;
+  updateDisplay(true);
+  if(r === 'Error') document.getElementById('result').classList.add('error');
+  else document.getElementById('result').classList.remove('error');
+}
+
+/* ── 클리어 ── */
+function clearAll(){
+  current='0'; expr=''; op=null; prev=null; justCalc=false;
+  document.getElementById('result').classList.remove('error');
+  updateDisplay();
+}
+
+/* ── 퍼센트·메모리 ── */
+function calcFn(fn){
+  switch(fn){
+    case 'pct':
+      if(prev !== null && op) current = (roundResult(prev * parseFloat(current) / 100)).toString();
+      else current = (roundResult(parseFloat(current)/100)).toString();
+      updateDisplay(); break;
+    case 'mc': memory=0; hasMemory=false; updateMemBadge(); break;
+    case 'mr':
+      if(hasMemory){ current=memory.toString(); justCalc=true; updateDisplay(); } break;
+    case 'm+':
+      memory = roundResult(memory + parseFloat(current)); hasMemory=true; updateMemBadge(); break;
+    case 'm-':
+      memory = roundResult(memory - parseFloat(current)); hasMemory=true; updateMemBadge(); break;
+  }
+}
+function updateMemBadge(){
+  document.getElementById('memory-ind').className = hasMemory ? 'show' : '';
+}
+
+/* ── 공학 함수 ── */
+function toRad(d){ return degMode ? d * Math.PI / 180 : d; }
+function fromRad(r){ return degMode ? r * 180 / Math.PI : r; }
+
+function sciFn(fn){
+  if(current === 'Error') return;
+  const n = parseFloat(current);
+  let r;
+  switch(fn){
+    case 'sin': r=roundResult(Math.sin(toRad(n))); addHistory(`sin(${n})`,r.toString()); break;
+    case 'cos': r=roundResult(Math.cos(toRad(n))); addHistory(`cos(${n})`,r.toString()); break;
+    case 'tan': r=roundResult(Math.tan(toRad(n))); addHistory(`tan(${n})`,r.toString()); break;
+    case 'asin': r=roundResult(fromRad(Math.asin(n))); addHistory(`sin⁻¹(${n})`,r.toString()); break;
+    case 'acos': r=roundResult(fromRad(Math.acos(n))); addHistory(`cos⁻¹(${n})`,r.toString()); break;
+    case 'atan': r=roundResult(fromRad(Math.atan(n))); addHistory(`tan⁻¹(${n})`,r.toString()); break;
+    case 'log': r=n>0?roundResult(Math.log10(n)):'Error'; addHistory(`log(${n})`,r.toString()); break;
+    case 'ln':  r=n>0?roundResult(Math.log(n)):'Error'; addHistory(`ln(${n})`,r.toString()); break;
+    case 'sqrt':r=n>=0?roundResult(Math.sqrt(n)):'Error'; addHistory(`√(${n})`,r.toString()); break;
+    case 'sq':  r=roundResult(n*n); addHistory(`${n}²`,r.toString()); break;
+    case 'pi':  current=Math.PI.toString(); justCalc=true; updateDisplay(); return;
+    case 'e':   current=Math.E.toString(); justCalc=true; updateDisplay(); return;
+    case 'pow': prev=n; op='pow'; expr=formatNum(n)+'ʸ'; current='0'; updateDisplay(); return;
+    case 'fact':
+      if(n<0||!Number.isInteger(n)||n>170){ r='Error'; }
+      else{ r=1; for(let i=2;i<=n;i++)r*=i; r=roundResult(r); }
+      addHistory(`${n}!`,r.toString()); break;
+    case 'inv': r=n!==0?roundResult(1/n):'Error'; addHistory(`1/${n}`,r.toString()); break;
+    default: return;
+  }
+  current=r.toString(); justCalc=true;
+  updateDisplay(true);
+  if(r==='Error') document.getElementById('result').classList.add('error');
+  else document.getElementById('result').classList.remove('error');
+}
+
+/* ── 히스토리 ── */
+function addHistory(expression, result, memo){
+  const now = new Date();
+  const time = now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  const item = {expression, result, memo: memo||'', time};
+  history.unshift(item);
+  if(history.length > 60) history.pop();
+  renderHistory();
+}
+function renderHistory(){
+  const list = document.getElementById('hist-list');
+  const empty = document.getElementById('hist-empty');
+  if(!history.length){ list.innerHTML=''; list.appendChild(empty); return; }
+  list.innerHTML = '';
+  history.forEach((h,i)=>{
+    const d = document.createElement('div');
+    d.className = 'hist-item slide-up';
+    d.style.animationDelay = i===0 ? '0ms' : '0ms';
+    d.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="hist-expr">${h.expression}</div>
+        <div class="hist-time">${h.time}</div>
+      </div>
+      <div class="hist-res">= ${h.result}</div>
+      ${h.memo ? `<div class="hist-memo">📝 ${h.memo}</div>` : ''}`;
+    d.addEventListener('click',()=>{
+      current = h.result; justCalc = true; updateDisplay(true);
+    });
+    list.appendChild(d);
+  });
+}
+function clearHistory(){ history.length=0; renderHistory(); }
+
+/* ── 메모 ── */
+function saveMemo(){
+  const v = document.getElementById('memo-input').value.trim();
+  if(v){ pendingMemo = v; showToast('메모가 다음 계산에 추가됩니다 📝'); }
+}
+function showToast(msg){
+  let t = document.getElementById('toast-msg');
+  if(!t){ t=document.createElement('div'); t.id='toast-msg';
+    t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e1e30;border:1px solid #2e2e48;color:#c8c4f8;padding:8px 16px;border-radius:20px;font-size:12px;z-index:999;pointer-events:none;opacity:0;transition:opacity .2s';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(t._tid); t._tid=setTimeout(()=>t.style.opacity='0',2200);
+}
+
+/* ── 탭 전환 ── */
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.getElementById('kp-basic').classList.toggle('show', tab==='basic');
+  document.getElementById('kp-sci').classList.toggle('show', tab==='sci');
+  document.getElementById('kp-unit').classList.toggle('show', tab==='unit');
+  document.getElementById('kp-fx').classList.toggle('show', tab==='fx');
+  const badges = {basic:'기본',sci:'공학',unit:'단위변환',fx:'환율'};
+  document.getElementById('mode-badge').textContent = badges[tab];
+}
+
+/* ── 단위 변환 ── */
+const unitTypes = {
+  '길이':{ m:1, km:1e-3, cm:100, mm:1000, mi:6.2137e-4, ft:3.28084, inch:39.3701, yd:1.09361 },
+  '무게':{ kg:1, g:1000, mg:1e6, lb:2.20462, oz:35.274, t:0.001 },
+  '온도':'special',
+  '넓이':{ 'm2':1, 'km2':1e-6, 'cm2':1e4, 'ft2':10.7639, '에이커':2.47105e-4, '평':0.3025 },
+  '부피':{ L:1, mL:1000, 'm3':0.001, 'gal(US)':0.264172, 'fl oz':33.814, 'cup':4.22675 },
+  '속도':{ 'm/s':1, 'km/h':3.6, mph:2.23694, knot:1.94384 },
+  '시간':{ s:1, min:1/60, h:1/3600, day:1/86400, ms:1000, us:1e6 },
+  '데이터':{ B:1, KB:1/1024, MB:1/1048576, GB:1/1073741824, TB:1/1099511627776 },
+};
+let convType = '길이';
+
+function initConv(){
+  const tabs = document.getElementById('conv-type-tabs');
+  tabs.innerHTML = '';
+  Object.keys(unitTypes).forEach(k=>{
+    const b = document.createElement('button');
+    b.className = 'conv-type' + (k===convType?' active':'');
+    b.textContent = k;
+    b.onclick = ()=>{ convType=k; document.querySelectorAll('.conv-type').forEach(x=>x.classList.toggle('active',x.textContent===k)); populateConvSelects(); doConvert(); };
+    tabs.appendChild(b);
+  });
+  populateConvSelects();
+}
+function populateConvSelects(){
+  const from = document.getElementById('conv-from');
+  const to = document.getElementById('conv-to');
+  const units = unitTypes[convType];
+  const keys = units==='special'?['°C','°F','K']:Object.keys(units);
+  [from,to].forEach((sel,i)=>{
+    sel.innerHTML='';
+    keys.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k; sel.appendChild(o); });
+    if(i===1&&keys.length>1) sel.selectedIndex=1;
+  });
+  doConvert();
+}
+function doConvert(){
+  const from = document.getElementById('conv-from').value;
+  const to = document.getElementById('conv-to').value;
+  const val = parseFloat(document.getElementById('conv-val').value)||0;
+  const units = unitTypes[convType];
+  let result;
+  if(units==='special'){
+    // 온도 변환
+    let c;
+    if(from==='°C') c=val;
+    else if(from==='°F') c=(val-32)*5/9;
+    else c=val-273.15;
+    if(to==='°C') result=c;
+    else if(to==='°F') result=c*9/5+32;
+    else result=c+273.15;
+  } else {
+    const base = val/units[from]; result = base*units[to];
+  }
+  result = parseFloat(result.toPrecision(10));
+  document.getElementById('conv-result').textContent = `${result} ${to}`;
+}
+
+/* ── 환율 ── */
+const currencies = {
+  USD:['🇺🇸','미국 달러'],KRW:['🇰🇷','한국 원'],EUR:['🇪🇺','유로'],
+  JPY:['🇯🇵','일본 엔'],CNY:['🇨🇳','중국 위안'],GBP:['🇬🇧','영국 파운드'],
+  HKD:['🇭🇰','홍콩 달러'],SGD:['🇸🇬','싱가포르 달러'],AUD:['🇦🇺','호주 달러'],
+  CAD:['🇨🇦','캐나다 달러'],CHF:['🇨🇭','스위스 프랑'],THB:['🇹🇭','태국 바트'],
+  MXN:['🇲🇽','멕시코 페소'],BRL:['🇧🇷','브라질 헤알'],INR:['🇮🇳','인도 루피'],
+};
+let fxRates = {};
+let fxUpdated = '';
+
+function initFx(){
+  const from = document.getElementById('fx-from');
+  const to = document.getElementById('fx-to');
+  Object.entries(currencies).forEach(([code,[flag,name]])=>{
+    [from,to].forEach(sel=>{
+      const o=document.createElement('option');o.value=code;o.textContent=`${flag} ${code} — ${name}`;sel.appendChild(o);
+    });
+  });
+  from.value='USD'; to.value='KRW';
+  from.addEventListener('change',()=>{ document.getElementById('fx-flag1').textContent=(currencies[from.value]||['🌐'])[0]; doFx(); });
+  to.addEventListener('change',()=>{ document.getElementById('fx-flag2').textContent=(currencies[to.value]||['🌐'])[0]; doFx(); });
+  fetchRates();
+}
+async function fetchRates(){
+  document.getElementById('fx-update').textContent='환율 업데이트 중...';
+  try{
+    const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    if(!res.ok) throw new Error('API 오류');
+    const data = await res.json();
+    fxRates = data.rates;
+    fxUpdated = new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('fx-update').textContent = '최종 업데이트: ' + fxUpdated;
+    doFx();
+  }catch(e){
+    // 폴백 환율 (근사값)
+    fxRates = {USD:1,KRW:1380,EUR:0.92,JPY:149,CNY:7.24,GBP:0.79,HKD:7.82,SGD:1.34,AUD:1.53,CAD:1.36,CHF:0.88,THB:35.1,MXN:17.2,BRL:4.97,INR:83.1};
+    document.getElementById('fx-update').textContent='오프라인 모드 (근사 환율)';
+    doFx();
+  }
+}
+function doFx(){
+  if(!Object.keys(fxRates).length) return;
+  const from = document.getElementById('fx-from').value;
+  const to = document.getElementById('fx-to').value;
+  const val = parseFloat(document.getElementById('fx-val').value)||0;
+  if(!fxRates[from]||!fxRates[to]) return;
+  const rate = fxRates[to]/fxRates[from];
+  const result = val*rate;
+  const fmt = n=>{
+    if(n>=100) return n.toLocaleString('ko-KR',{maximumFractionDigits:2});
+    return n.toLocaleString('ko-KR',{maximumFractionDigits:4});
+  };
+  document.getElementById('fx-result').textContent = `${fmt(result)} ${to}`;
+  document.getElementById('fx-rate').textContent = `1 ${from} = ${fmt(rate)} ${to}`;
+}
+
+/* ── 키보드 지원 ── */
+document.addEventListener('keydown', e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  if('0123456789'.includes(e.key)) inputNum(e.key);
+  else if(e.key==='.') inputDot();
+  else if(e.key==='+'||e.key==='-') inputOp(e.key);
+  else if(e.key==='*') inputOp('*');
+  else if(e.key==='/'){e.preventDefault();inputOp('/');}
+  else if(e.key==='Enter'||e.key==='=') calculate();
+  else if(e.key==='Backspace') backspace();
+  else if(e.key==='Escape') clearAll();
+});
+
+/* ── 초기화 ── */
+initConv();
+initFx();
+renderHistory();
+updateDisplay();
+</script>
+</body>
+</html>
