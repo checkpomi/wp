@@ -1,0 +1,465 @@
+<!-- Pomi Space Invaders – Free Retro Alien Shooter Arcade Game | pomiai -->
+<div id="invaders-game-container" style="max-width: 500px; margin: 40px auto; background: #0a0a0a; border-radius: 12px; padding: 20px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(46,204,113,0.1); border: 3px solid #333; touch-action: none; user-select: none;">
+    <div style="text-align:center;margin-bottom:8px"><a href="https://checkpomi.com" target="_blank" style="background:#ff007f;color:#fff;font-size:10px;font-weight:bold;padding:3px 12px;border-radius:20px;letter-spacing:2px;font-family:monospace;text-decoration:none;">pomiai.com</a></div>
+
+    
+    <!-- Game HUD -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; color: #fff;">
+        <div>
+            <h3 style="color: #2ecc71; margin: 0; font-size: 1.2rem; font-weight: bold; text-shadow: 0 0 8px #2ecc71;">POMI SPACE INVADERS</h3>
+            <div style="font-size: 0.9rem; color: #f1c40f; margin-top: 5px;">LEVEL: <span id="si-level">1</span>/20</div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 0.9rem; color: #ff9ff3; margin-bottom: 5px;">SCORE: <span id="si-score">0</span></div>
+            <div style="font-size: 0.9rem; color: #e74c3c;">LIVES: <span id="si-lives">❤️❤️❤️</span></div>
+        </div>
+    </div>
+
+    <!-- Game Controls (Start, Pause, End) -->
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
+        <button id="btn-si-start" class="si-ctrl-btn" style="background: #2ecc71; color: #000;">▶ 시작</button>
+        <button id="btn-si-pause" class="si-ctrl-btn" style="background: #f1c40f; color: #000;">⏸ 중지</button>
+        <button id="btn-si-reset" class="si-ctrl-btn" style="background: #e74c3c; color: #fff;">⏹ 리셋</button>
+    </div>
+
+    <!-- Canvas Container with CRT Effect -->
+    <div style="position: relative; width: 100%; aspect-ratio: 4/5; background: #000; border-radius: 8px; border: 2px solid #555; overflow: hidden; margin-bottom: 15px;">
+        <!-- Scanlines -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%); background-size: 100% 4px; pointer-events: none; z-index: 10;"></div>
+        
+        <canvas id="si-canvas" width="400" height="500" style="display: block; width: 100%; height: 100%;"></canvas>
+    </div>
+
+    <!-- Mobile D-Pad (Action Controls) -->
+    <div style="display: flex; justify-content: space-between; gap: 10px;">
+        <div style="display: flex; gap: 10px;">
+            <button class="si-dir-btn" id="btn-si-left">◀</button>
+            <button class="si-dir-btn" id="btn-si-right">▶</button>
+        </div>
+        <button class="si-dir-btn" id="btn-si-shoot" style="flex: 1; background: #e74c3c; color: white; border-color: #c0392b;">🔥 FIRE</button>
+    </div>
+
+    <style>
+        #invaders-game-container .si-ctrl-btn { border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: inherit; font-size: 0.85rem; box-shadow: 0 4px 0 rgba(0,0,0,0.5); }
+        #invaders-game-container .si-ctrl-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        #invaders-game-container .si-dir-btn { background: #333; color: #fff; border: 2px solid #555; height: 50px; min-width: 60px; border-radius: 8px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 0 #111; touch-action: manipulation; }
+        #invaders-game-container .si-dir-btn:active { background: #555; transform: translateY(4px); box-shadow: none; }
+    </style>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('si-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // DOM Elements
+            const scoreEl = document.getElementById('si-score');
+            const levelEl = document.getElementById('si-level');
+            const livesEl = document.getElementById('si-lives');
+
+            // Game Constants & State
+            const MAX_LEVEL = 20;
+            let reqId = null;
+            let isPlaying = false;
+            let isGameOverTriggered = false; // 중복 게임오버 방지 플래그
+            
+            let level = 1;
+            let score = 0;
+            let lives = 3;
+            
+            let player;
+            let aliens = [];
+            let bullets = [];
+            let alienBullets = [];
+            let shields = [];
+
+            let keys = { ArrowLeft: false, ArrowRight: false, Space: false };
+            let lastShotTime = 0;
+
+            // Alien Movement logic
+            let alienDir = 1; // 1 = right, -1 = left
+            let alienSpeed = 0.5;
+
+            // --- Classes ---
+            class Player {
+                constructor() {
+                    this.width = 30;
+                    this.height = 15;
+                    this.x = canvas.width / 2 - this.width / 2;
+                    this.y = canvas.height - 30;
+                    this.speed = 4;
+                    this.color = '#2ecc71';
+                    this.isHit = false;
+                    this.hitTimer = 0;
+                }
+                draw() {
+                    if (this.isHit) {
+                        // 피격 시 10프레임 간격으로 깜빡임 처리
+                        if (Math.floor(this.hitTimer / 10) % 2 === 0) return;
+                    }
+                    ctx.fillStyle = this.color;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = this.color;
+                    // Draw tank shape
+                    ctx.fillRect(this.x, this.y + 5, this.width, this.height - 5);
+                    ctx.fillRect(this.x + 12, this.y, 6, 5);
+                    ctx.fillRect(this.x + 14, this.y - 5, 2, 5);
+                    ctx.shadowBlur = 0;
+                }
+                update() {
+                    if (keys.ArrowLeft && this.x > 0) this.x -= this.speed;
+                    if (keys.ArrowRight && this.x < canvas.width - this.width) this.x += this.speed;
+                    
+                    if (this.isHit) {
+                        this.hitTimer--;
+                        if(this.hitTimer <= 0) this.isHit = false; // 무적 시간 종료
+                    }
+                }
+            }
+
+            class Alien {
+                constructor(x, y, row) {
+                    this.width = 24;
+                    this.height = 16;
+                    this.x = x;
+                    this.y = y;
+                    this.type = row; 
+                    this.alive = true;
+                }
+                draw() {
+                    if(!this.alive) return;
+                    ctx.fillStyle = this.type < 2 ? '#e74c3c' : (this.type < 4 ? '#f1c40f' : '#3498db');
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(this.x + 4, this.y + 4, 4, 4);
+                    ctx.fillRect(this.x + 16, this.y + 4, 4, 4);
+                }
+            }
+
+            class Bullet {
+                constructor(x, y, speed, color) {
+                    this.x = x;
+                    this.y = y;
+                    this.width = 4;
+                    this.height = 10;
+                    this.speed = speed;
+                    this.color = color;
+                    this.active = true;
+                }
+                draw() {
+                    if(!this.active) return;
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                }
+                update() {
+                    this.y += this.speed;
+                    if (this.y < 0 || this.y > canvas.height) this.active = false;
+                }
+            }
+
+            class ShieldBlock {
+                constructor(x, y) {
+                    this.x = x;
+                    this.y = y;
+                    this.size = 6;
+                    this.active = true;
+                }
+                draw() {
+                    if(!this.active) return;
+                    ctx.fillStyle = '#2ecc71';
+                    ctx.fillRect(this.x, this.y, this.size, this.size);
+                }
+            }
+
+            // --- Initialization ---
+            function initGame(isFullReset = false) {
+                if (isFullReset) {
+                    level = 1;
+                    score = 0;
+                    lives = 3;
+                }
+                
+                isGameOverTriggered = false;
+                player = new Player();
+                bullets = [];
+                alienBullets = [];
+                
+                initAliens();
+                initShields();
+                updateUI();
+                
+                alienDir = 1;
+            }
+
+            function initAliens() {
+                aliens = [];
+                alienSpeed = 0.3 + (level * 0.15); 
+                
+                let rows = 5;
+                let cols = 8;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        aliens.push(new Alien(40 + c * 40, 40 + r * 30, r));
+                    }
+                }
+            }
+
+            function initShields() {
+                shields = [];
+                let shieldXStarts = [45, 145, 245, 345];
+                shieldXStarts.forEach(startX => {
+                    for (let r = 0; r < 4; r++) {
+                        for (let c = 0; c < 6; c++) {
+                            if(r===0 && (c===0 || c===5)) continue;
+                            shields.push(new ShieldBlock(startX + c * 6, 380 + r * 6));
+                        }
+                    }
+                });
+            }
+
+            function updateUI() {
+                scoreEl.innerText = score;
+                levelEl.innerText = level;
+                livesEl.innerText = lives > 0 ? '❤️'.repeat(lives) : '💀';
+            }
+
+            // --- Main Game Loop ---
+            function gameLoop() {
+                if (!isPlaying || isGameOverTriggered) return;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                updatePlayer();
+                updateAliens();
+                updateBullets();
+                checkCollisions();
+                
+                drawAll();
+                
+                if (!isGameOverTriggered) {
+                    reqId = requestAnimationFrame(gameLoop);
+                }
+            }
+
+            function updatePlayer() {
+                player.update();
+                if (keys.Space && Date.now() - lastShotTime > 400 && !player.isHit) {
+                    if (bullets.filter(b => b.active).length < 2) {
+                        bullets.push(new Bullet(player.x + player.width/2 - 2, player.y, -7, '#2ecc71'));
+                        lastShotTime = Date.now();
+                    }
+                }
+            }
+
+            function updateAliens() {
+                let hitWall = false;
+                let aliveAliens = aliens.filter(a => a.alive);
+                
+                if (aliveAliens.length === 0) {
+                    levelUp();
+                    return;
+                }
+
+                let currentSpeed = alienSpeed + (40 - aliveAliens.length) * 0.02;
+
+                // 외계인들이 벽에 닿을지 미리 예측 (버그 픽스 핵심)
+                for (let a of aliveAliens) {
+                    if (a.x + (currentSpeed * alienDir) <= 10 || a.x + a.width + (currentSpeed * alienDir) >= canvas.width - 10) {
+                        hitWall = true;
+                        break; // 한 마리라도 닿으면 전체 방향 전환
+                    }
+                }
+
+                if (hitWall) {
+                    alienDir *= -1; // 방향 전환
+                    for (let a of aliveAliens) {
+                        a.y += 20; // 아래로 전진
+                        a.x += currentSpeed * alienDir; // 바뀐 방향으로 즉시 밀어내기
+                        
+                        // 바닥에 닿으면 목숨 상관없이 게임 오버
+                        if (a.y + a.height >= player.y) {
+                            handleGameOver(true);
+                            return; 
+                        }
+                    }
+                } else {
+                    for (let a of aliveAliens) {
+                        a.x += currentSpeed * alienDir;
+                    }
+                }
+
+                // 외계인 총알 발사
+                let fireRate = 0.005 + (level * 0.002);
+                if (Math.random() < fireRate) {
+                    let shooter = aliveAliens[Math.floor(Math.random() * aliveAliens.length)];
+                    alienBullets.push(new Bullet(shooter.x + shooter.width/2 - 2, shooter.y + shooter.height, 4 + (level*0.2), '#fff'));
+                }
+            }
+
+            function updateBullets() {
+                bullets.forEach(b => b.update());
+                alienBullets.forEach(b => b.update());
+                bullets = bullets.filter(b => b.active);
+                alienBullets = alienBullets.filter(b => b.active);
+            }
+
+            function checkCollisions() {
+                const rectIntersect = (r1, r2) => {
+                    return !(r2.x > r1.x + r1.width || r2.x + r2.width < r1.x || r2.y > r1.y + r1.height || r2.y + r2.height < r1.y);
+                };
+
+                // 플레이어 총알 -> 외계인 / 쉴드
+                bullets.forEach(b => {
+                    if(!b.active) return;
+                    for (let a of aliens) {
+                        if (a.alive && rectIntersect(b, a)) {
+                            a.alive = false;
+                            b.active = false;
+                            score += (5 - Math.floor(a.type/2)) * 10;
+                            updateUI();
+                            break;
+                        }
+                    }
+                    if (b.active) {
+                        for (let s of shields) {
+                            if (s.active && rectIntersect(b, {x:s.x, y:s.y, width:s.size, height:s.size})) {
+                                s.active = false;
+                                b.active = false;
+                                break;
+                            }
+                        }
+                    }
+                });
+
+                // 외계인 총알 -> 플레이어 / 쉴드
+                alienBullets.forEach(b => {
+                    if(!b.active) return;
+                    if (!player.isHit && rectIntersect(b, player)) {
+                        b.active = false;
+                        handlePlayerHit();
+                    }
+                    if (b.active) {
+                        for (let s of shields) {
+                            if (s.active && rectIntersect(b, {x:s.x, y:s.y, width:s.size, height:s.size})) {
+                                s.active = false;
+                                b.active = false;
+                                break;
+                            }
+                        }
+                    }
+                });
+            }
+
+            function handlePlayerHit() {
+                lives--;
+                updateUI();
+                player.isHit = true;
+                player.hitTimer = 90; // 1.5초간 무적 (약 90프레임)
+                
+                if (lives <= 0) {
+                    handleGameOver(false);
+                } else {
+                    alienBullets = []; // 부활 시 억까(연속 피격) 방지를 위해 적 총알 초기화
+                }
+            }
+
+            function handleGameOver(isInvaded) {
+                if (isGameOverTriggered) return;
+                isGameOverTriggered = true;
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+                
+                let msg = isInvaded ? "💥 외계인들이 기지에 침투했습니다!" : "💥 목숨을 모두 잃었습니다!";
+                setTimeout(() => alert(`${msg}\n최종 점수: ${score}\n다시 도전하세요!`), 100);
+            }
+
+            function levelUp() {
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+                
+                if (level >= MAX_LEVEL) {
+                    setTimeout(() => alert(`🏆 축하합니다! 지구를 완벽하게 지켜냈습니다!\n최종 점수: ${score}`), 100);
+                    return;
+                }
+                
+                level++;
+                setTimeout(() => {
+                    alert(`🚀 레벨 ${level} 시작! 외계인들이 더 빨라집니다.`);
+                    initAliens();
+                    bullets = [];
+                    alienBullets = [];
+                    updateUI();
+                    isPlaying = true;
+                    gameLoop();
+                }, 500);
+            }
+
+            function drawAll() {
+                player.draw();
+                aliens.forEach(a => a.draw());
+                bullets.forEach(b => b.draw());
+                alienBullets.forEach(b => b.draw());
+                shields.forEach(s => s.draw());
+            }
+
+            // --- Event Listeners ---
+            document.getElementById('btn-si-start').addEventListener('click', () => {
+                if (!isPlaying && lives > 0 && !isGameOverTriggered) {
+                    if(aliens.length === 0) initGame(true); 
+                    isPlaying = true;
+                    gameLoop();
+                }
+            });
+
+            document.getElementById('btn-si-pause').addEventListener('click', () => {
+                isPlaying = false;
+            });
+
+            document.getElementById('btn-si-reset').addEventListener('click', () => {
+                isPlaying = false;
+                cancelAnimationFrame(reqId);
+                initGame(true);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawAll(); 
+            });
+
+            // Keyboard
+            window.addEventListener('keydown', (e) => {
+                if (["ArrowLeft", "ArrowRight", "Space"].includes(e.code)) {
+                    e.preventDefault(); 
+                }
+                if (e.code === 'ArrowLeft') keys.ArrowLeft = true;
+                if (e.code === 'ArrowRight') keys.ArrowRight = true;
+                if (e.code === 'Space') keys.Space = true;
+            }, { passive: false });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'ArrowLeft') keys.ArrowLeft = false;
+                if (e.code === 'ArrowRight') keys.ArrowRight = false;
+                if (e.code === 'Space') keys.Space = false;
+            });
+
+            // Mobile Touch Controls
+            const btnLeft = document.getElementById('btn-si-left');
+            const btnRight = document.getElementById('btn-si-right');
+            const btnShoot = document.getElementById('btn-si-shoot');
+
+            const addTouch = (elem, key) => {
+                elem.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; }, {passive: false});
+                elem.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; }, {passive: false});
+                elem.addEventListener('mousedown', (e) => { e.preventDefault(); keys[key] = true; });
+                elem.addEventListener('mouseup', (e) => { e.preventDefault(); keys[key] = false; });
+                elem.addEventListener('mouseleave', (e) => { keys[key] = false; });
+            };
+
+            addTouch(btnLeft, 'ArrowLeft');
+            addTouch(btnRight, 'ArrowRight');
+            addTouch(btnShoot, 'Space');
+
+            // Draw Initial State
+            initGame(true);
+            drawAll();
+        })();
+    </script>
+</div>
+<!-- End of Playable Space Invaders HTML5 Game -->

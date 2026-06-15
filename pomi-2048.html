@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pomi 2048 – Free Classic Tile Merging Brain Game | pomiai</title>
+    <style>
+        :root {
+            --bg-color: #faf8ef;
+            --grid-bg: #bbada0;
+            --tile-empty: #cdc1b4;
+            --text-dark: #776e65;
+            --text-light: #f9f6f2;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            font-family: 'Clear Sans', Arial, sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0; touch-action: none;
+        }
+        .header { width: 320px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .score-container { background: var(--grid-bg); padding: 10px 20px; border-radius: 6px; color: white; text-align: center; min-width: 60px; }
+        .grid-container {
+            background: var(--grid-bg); width: 320px; height: 320px;
+            padding: 10px; border-radius: 6px; display: grid;
+            grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr);
+            gap: 10px; box-sizing: border-box; position: relative;
+        }
+        .cell {
+            background: var(--tile-empty); border-radius: 4px; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: bold; transition: all 0.1s ease;
+        }
+        /* Tile Colors */
+        .cell[data-value="2"] { background: #eee4da; color: var(--text-dark); }
+        .cell[data-value="4"] { background: #ede0c8; color: var(--text-dark); }
+        .cell[data-value="8"] { background: #f2b179; color: white; }
+        .cell[data-value="16"] { background: #f59563; color: white; }
+        .cell[data-value="32"] { background: #f67c5f; color: white; }
+        .cell[data-value="64"] { background: #f65e3b; color: white; }
+        .cell[data-value="128"] { background: #edcf72; color: white; font-size: 20px; }
+        .cell[data-value="256"] { background: #edcc61; color: white; font-size: 20px; }
+        .cell[data-value="512"] { background: #edc850; color: white; font-size: 20px; }
+        .cell[data-value="1024"] { background: #edc53f; color: white; font-size: 16px; }
+        .cell[data-value="2048"] { background: #edc22e; color: white; font-size: 16px; }
+
+        .btn-restart { margin-top: 20px; padding: 10px 25px; background: #8f7a66; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; font-weight: bold; }
+        .btn-restart:hover { background: #7f6a56; }
+    </style>
+</head>
+<body>
+
+    <div style="text-align:center;margin-bottom:6px"><a href="https://checkpomi.com" target="_blank" style="background:#ff007f;color:#fff;font-size:10px;font-weight:bold;padding:3px 12px;border-radius:20px;letter-spacing:2px;font-family:monospace;text-decoration:none;">pomiai.com</a></div>
+    <div class="header">
+        <h1 style="margin:0; font-size: 48px;">2048</h1><div style="font-size:11px;color:#8f7a66;margin-top:2px;font-weight:bold;">by pomiai</div>
+        <div class="score-container">
+            <div style="font-size:12px; font-weight: bold;">SCORE</div>
+            <div id="score" style="font-size: 24px; font-weight: bold;">0</div>
+        </div>
+    </div>
+
+    <div id="grid" class="grid-container"></div>
+
+    <button class="btn-restart" onclick="resetGame()">New Game</button>
+
+    <script>
+        const gridDisplay = document.querySelector('#grid');
+        const scoreDisplay = document.querySelector('#score');
+        let squares = [];
+        let score = 0;
+
+        function createBoard() {
+            gridDisplay.innerHTML = '';
+            squares = [];
+            for (let i = 0; i < 16; i++) {
+                const square = document.createElement('div');
+                square.classList.add('cell');
+                gridDisplay.appendChild(square);
+                squares.push(square);
+            }
+            generate();
+            generate();
+        }
+
+        function generate() {
+            const emptySquares = squares.filter(s => s.innerHTML === '');
+            if (emptySquares.length > 0) {
+                const randomSquare = emptySquares[Math.floor(Math.random() * emptySquares.length)];
+                const val = Math.random() > 0.1 ? 2 : 4;
+                randomSquare.innerHTML = val;
+                randomSquare.setAttribute('data-value', val);
+                checkForGameOver();
+            }
+        }
+
+        // 공통 이동/합치기 로직
+        function slide(line) {
+            let filtered = line.filter(num => num);
+            for (let i = 0; i < filtered.length - 1; i++) {
+                if (filtered[i] === filtered[i + 1]) {
+                    filtered[i] = filtered[i] * 2;
+                    score += filtered[i];
+                    scoreDisplay.innerHTML = score;
+                    filtered.splice(i + 1, 1);
+                }
+            }
+            while (filtered.length < 4) filtered.push(0);
+            return filtered;
+        }
+
+        function moveLeft() {
+            let changed = false;
+            for (let i = 0; i < 16; i += 4) {
+                let row = [parseInt(squares[i].innerHTML)||0, parseInt(squares[i+1].innerHTML)||0, parseInt(squares[i+2].innerHTML)||0, parseInt(squares[i+3].innerHTML)||0];
+                let newRow = slide(row);
+                for (let j = 0; j < 4; j++) {
+                    if (parseInt(squares[i+j].innerHTML)||0 !== newRow[j]) changed = true;
+                    squares[i+j].innerHTML = newRow[j] === 0 ? '' : newRow[j];
+                    squares[i+j].setAttribute('data-value', newRow[j] === 0 ? '' : newRow[j]);
+                }
+            }
+            if (changed) generate();
+        }
+
+        function moveRight() {
+            let changed = false;
+            for (let i = 0; i < 16; i += 4) {
+                let row = [parseInt(squares[i+3].innerHTML)||0, parseInt(squares[i+2].innerHTML)||0, parseInt(squares[i+1].innerHTML)||0, parseInt(squares[i].innerHTML)||0];
+                let newRow = slide(row);
+                for (let j = 0; j < 4; j++) {
+                    if (parseInt(squares[i+3-j].innerHTML)||0 !== newRow[j]) changed = true;
+                    squares[i+3-j].innerHTML = newRow[j] === 0 ? '' : newRow[j];
+                    squares[i+3-j].setAttribute('data-value', newRow[j] === 0 ? '' : newRow[j]);
+                }
+            }
+            if (changed) generate();
+        }
+
+        function moveUp() {
+            let changed = false;
+            for (let i = 0; i < 4; i++) {
+                let col = [parseInt(squares[i].innerHTML)||0, parseInt(squares[i+4].innerHTML)||0, parseInt(squares[i+8].innerHTML)||0, parseInt(squares[i+12].innerHTML)||0];
+                let newCol = slide(col);
+                for (let j = 0; j < 4; j++) {
+                    if (parseInt(squares[i+j*4].innerHTML)||0 !== newCol[j]) changed = true;
+                    squares[i+j*4].innerHTML = newCol[j] === 0 ? '' : newCol[j];
+                    squares[i+j*4].setAttribute('data-value', newCol[j] === 0 ? '' : newCol[j]);
+                }
+            }
+            if (changed) generate();
+        }
+
+        function moveDown() {
+            let changed = false;
+            for (let i = 0; i < 4; i++) {
+                let col = [parseInt(squares[i+12].innerHTML)||0, parseInt(squares[i+8].innerHTML)||0, parseInt(squares[i+4].innerHTML)||0, parseInt(squares[i].innerHTML)||0];
+                let newCol = slide(col);
+                for (let j = 0; j < 4; j++) {
+                    if (parseInt(squares[i+(3-j)*4].innerHTML)||0 !== newCol[j]) changed = true;
+                    squares[i+(3-j)*4].innerHTML = newCol[j] === 0 ? '' : newCol[j];
+                    squares[i+(3-j)*4].setAttribute('data-value', newCol[j] === 0 ? '' : newCol[j]);
+                }
+            }
+            if (changed) generate();
+        }
+
+        function handleKey(e) {
+            if (e.keyCode === 37) moveLeft();
+            else if (e.keyCode === 38) moveUp();
+            else if (e.keyCode === 39) moveRight();
+            else if (e.keyCode === 40) moveDown();
+        }
+
+        function checkForGameOver() {
+            let zeros = squares.filter(s => s.innerHTML === '').length;
+            if (zeros === 0) {
+                // 더 합칠 수 있는게 있는지 확인 로직 생략(심플화), 꽉 차면 종료 제안
+                // 실제 고도화시 인접 타일 체크 필요
+            }
+        }
+
+        function resetGame() {
+            score = 0;
+            scoreDisplay.innerHTML = 0;
+            createBoard();
+        }
+
+        document.addEventListener('keyup', handleKey);
+        window.onload = createBoard;
+
+        // Swipe Support
+        let startX, startY;
+        document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; });
+        document.addEventListener('touchend', e => {
+            if (!startX || !startY) return;
+            let diffX = e.changedTouches[0].clientX - startX;
+            let diffY = e.changedTouches[0].clientY - startY;
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0) moveRight(); else moveLeft();
+            } else {
+                if (diffY > 0) moveDown(); else moveUp();
+            }
+            startX = null; startY = null;
+        });
+    </script>
+</body>
+</html>

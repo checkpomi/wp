@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pomi Bubble Bobble – Free Retro Arcade Bubble Shooter | pomiai</title>
+    <style>
+        body { background: #000; color: #fff; font-family: 'Courier New', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 10px; touch-action: none; }
+        .hud { display: flex; gap: 20px; font-size: 18px; color: #2ecc71; margin: 10px 0; font-weight: bold; text-shadow: 2px 2px #000; }
+        #game-container { position: relative; border: 3px solid #3498db; background: #00021a; }
+        canvas { display: block; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); z-index: 10; text-align: center; padding: 20px; box-sizing: border-box; }
+        .main-btns { margin: 15px 0; display: flex; gap: 10px; }
+        .btn { padding: 10px 20px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-start { background: #2ecc71; color: white; font-size: 1.2rem; }
+        .btn-pause { background: #f1c40f; color: #000; }
+        .btn-reset { background: #e74c3c; color: white; }
+        .mobile-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; width: 100%; max-width: 360px; }
+        .ctrl-btn { height: 60px; background: #333; color: white; border: 2px solid #555; border-radius: 10px; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .ctrl-btn:active { background: #666; }
+        .btn-fire { background: #e67e22; border-color: #d35400; grid-column: span 3; }
+    </style>
+</head>
+<body>
+
+    <div style="text-align:center;margin-bottom:6px"><a href="https://checkpomi.com" target="_blank" style="background:#ff007f;color:#fff;font-size:10px;font-weight:bold;padding:3px 12px;border-radius:20px;letter-spacing:2px;font-family:monospace;text-decoration:none;">pomiai.com</a></div>
+    <div class="hud">
+        <div>SCORE: <span id="score">0</span></div>
+        <div>LVL: <span id="level">1</span></div>
+        <div style="color: #e74c3c;">LIVES: <span id="lives">3</span></div>
+    </div>
+
+    <div id="game-container">
+        <div id="overlay" class="overlay">
+            <h1 id="msg" style="color:#2ecc71">POMI BUBBLE BOBBLE</h1>
+            <p id="sub-msg">Balanced 10 Levels Challenge!</p>
+            <button class="btn btn-start" onclick="game.start()">START GAME</button>
+        </div>
+        <canvas id="gameCanvas" width="320" height="320"></canvas>
+    </div>
+
+    <div class="main-btns">
+        <button id="pauseBtn" class="btn btn-pause" onclick="game.togglePause()" disabled>PAUSE</button>
+        <button class="btn btn-reset" onclick="resetGame()">RESET</button>
+    </div>
+
+    <div class="mobile-controls">
+        <div class="ctrl-btn" onmousedown="game.input.left=true" onmouseup="game.input.left=false" ontouchstart="game.input.left=true" ontouchend="game.input.left=false">LEFT</div>
+        <div class="ctrl-btn" style="background:#3498db" onmousedown="game.jump()" ontouchstart="game.jump()">JUMP</div>
+        <div class="ctrl-btn" onmousedown="game.input.right=true" onmouseup="game.input.right=false" ontouchstart="game.input.right=true" ontouchend="game.input.right=false">RIGHT</div>
+        <div class="ctrl-btn btn-fire" onmousedown="game.shoot()" ontouchstart="game.shoot()">FIRE BUBBLE (X)</div>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const levelEl = document.getElementById('level');
+const livesEl = document.getElementById('lives');
+const pauseBtn = document.getElementById('pauseBtn');
+const overlay = document.getElementById('overlay');
+const msgEl = document.getElementById('msg');
+const subMsgEl = document.getElementById('sub-msg');
+
+const game = {
+    running: false,
+    paused: false,
+    score: 0, level: 1, lives: 3,
+    spawnTimer: 0, enemiesDefeated: 0,
+    input: { left: false, right: false },
+    bubbles: [], enemies: [],
+    platforms: [
+        {x: 0, y: 300, w: 320, h: 20},
+        {x: 30, y: 220, w: 100, h: 10},
+        {x: 190, y: 220, w: 100, h: 10},
+        {x: 100, y: 140, w: 120, h: 10},
+        {x: 0, y: 70, w: 80, h: 10},
+        {x: 240, y: 70, w: 80, h: 10}
+    ],
+    player: { x: 150, y: 250, w: 20, h: 20, vx: 0, vy: 0, speed: 3.5, jumpPower: -10, grounded: false, dir: 1, invincible: 0 },
+
+    start() {
+        this.running = true; this.paused = false; this.score = 0; this.level = 1; this.lives = 3; this.enemiesDefeated = 0;
+        this.resetLevelData();
+        overlay.style.display = 'none';
+        pauseBtn.disabled = false;
+        this.loop();
+    },
+
+    resetLevelData() {
+        this.bubbles = []; this.enemies = []; this.spawnTimer = 0;
+        this.player.x = 150; this.player.y = 250;
+        this.player.invincible = 60;
+        scoreEl.innerText = this.score;
+        levelEl.innerText = this.level;
+        livesEl.innerText = this.lives;
+    },
+
+    spawnEnemy() {
+        const xPos = Math.random() > 0.5 ? 20 : 280;
+        // 악당 속도 하향 조정: 기본 1.0~2.0 -> 0.6~1.2 / 레벨 증가폭 0.2 -> 0.1
+        const enemySpeed = (Math.random() * 0.6 + 0.6) + (this.level * 0.1);
+        this.enemies.push({
+            x: xPos, y: 20, w: 20, h: 20,
+            vx: enemySpeed * (xPos > 150 ? -1 : 1),
+            vy: 0, trapped: false, grounded: false,
+            jumpChance: 0.005 + (this.level * 0.002) // 점프 확률도 소폭 하향
+        });
+    },
+
+    jump() { if(this.player.grounded) this.player.vy = this.player.jumpPower; },
+    shoot() {
+        if(!this.running || this.paused) return;
+        this.bubbles.push({ x: this.player.x + (this.player.dir*10), y: this.player.y+5, vx: this.player.dir*7, vy: -0.2, life: 100, trappedEnemy: null });
+    },
+
+    togglePause() {
+        this.paused = !this.paused;
+        pauseBtn.innerText = this.paused ? "RESUME" : "PAUSE";
+        if(!this.paused) this.loop();
+    },
+
+    die() {
+        if(this.player.invincible > 0) return;
+        this.lives--;
+        livesEl.innerText = this.lives;
+        if(this.lives <= 0) this.gameOver();
+        else { this.player.x = 150; this.player.y = 250; this.player.vy = 0; this.player.invincible = 120; } // 무적 시간 1.5초 -> 2초 증가
+    },
+
+    update() {
+        if(!this.running || this.paused) return;
+        if(this.player.invincible > 0) this.player.invincible--;
+
+        if(this.enemiesDefeated >= this.level * 5 && this.level < 10) { this.level++; this.enemiesDefeated = 0; levelEl.innerText = this.level; }
+        this.spawnTimer++;
+        if(this.spawnTimer > Math.max(70, 200 - (this.level * 10))) { this.spawnEnemy(); this.spawnTimer = 0; }
+
+        if(this.input.left) { this.player.vx = -this.player.speed; this.player.dir = -1; }
+        else if(this.input.right) { this.player.vx = this.player.speed; this.player.dir = 1; }
+        else { this.player.vx = 0; }
+        this.applyPhysics(this.player);
+
+        this.enemies.forEach((en) => {
+            if(!en.trapped) {
+                en.x += en.vx;
+                if(en.x <= 0 || en.x >= canvas.width - en.w) en.vx *= -1;
+                if(en.grounded && Math.random() < en.jumpChance) en.vy = -8;
+                this.applyPhysics(en);
+                if(Math.abs(this.player.x - en.x) < 18 && Math.abs(this.player.y - en.y) < 18) this.die();
+            }
+        });
+
+        this.bubbles.forEach((b, bi) => {
+            b.x += b.vx; b.y += b.vy; b.vx *= 0.95; b.life--;
+            if(!b.trappedEnemy) {
+                this.enemies.forEach((en) => {
+                    if(!en.trapped && Math.abs(b.x - en.x) < 22 && Math.abs(b.y - en.y) < 22) {
+                        en.trapped = true; b.trappedEnemy = en; b.vy = -0.8;
+                    }
+                });
+            } else {
+                if(Math.abs(this.player.x - b.x) < 25 && Math.abs(this.player.y - b.y) < 25) {
+                    this.score += 100 * this.level; this.enemiesDefeated++;
+                    scoreEl.innerText = this.score;
+                    this.enemies = this.enemies.filter(e => e !== b.trappedEnemy);
+                    this.bubbles.splice(bi, 1);
+                } else {
+                    b.trappedEnemy.x = b.x; b.trappedEnemy.y = b.y;
+                }
+            }
+            if(b.life <= 0) { if(b.trappedEnemy) b.trappedEnemy.trapped = false; this.bubbles.splice(bi, 1); }
+        });
+    },
+
+    applyPhysics(obj) {
+        obj.vy += 0.5;
+        obj.x += obj.vx || 0;
+        obj.y += obj.vy;
+        obj.grounded = false;
+        if(obj.x < 0) obj.x = 0;
+        if(obj.x > canvas.width - obj.w) obj.x = canvas.width - obj.w;
+        this.platforms.forEach(p => {
+            if(obj.x < p.x + p.w && obj.x + obj.w > p.x && obj.y + obj.h > p.y && obj.y + obj.h < p.y + p.h + 10) {
+                if(obj.vy > 0) { obj.grounded = true; obj.vy = 0; obj.y = p.y - obj.h; }
+            }
+        });
+    },
+
+    draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#2c3e50';
+        this.platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
+        if(this.player.invincible % 4 < 2) {
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(this.player.x, this.player.y, this.player.w, this.player.h);
+        }
+        this.enemies.forEach(en => {
+            if(!en.trapped) {
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(en.x, en.y, en.w, en.h);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(en.vx > 0 ? en.x+12 : en.x+4, en.y+4, 4, 4);
+            }
+        });
+        this.bubbles.forEach(b => {
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.trappedEnemy ? 14 : 9, 0, Math.PI*2);
+            ctx.strokeStyle = b.trappedEnemy ? '#f1c40f' : '#00d2ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        });
+    },
+
+    gameOver() {
+        this.running = false; overlay.style.display = 'flex';
+        msgEl.innerText = "GAME OVER"; msgEl.style.color = "#e74c3c";
+        subMsgEl.innerHTML = `Final Score: ${this.score}<br>Level: ${this.level}`;
+        pauseBtn.disabled = true;
+    },
+
+    loop() {
+        if(!this.running || this.paused) return;
+        this.update(); this.draw();
+        requestAnimationFrame(() => this.loop());
+    }
+};
+
+function resetGame() { location.reload(); }
+
+window.addEventListener('keydown', e => {
+    if(e.code === 'ArrowLeft') game.input.left = true;
+    if(e.code === 'ArrowRight') game.input.right = true;
+    if(e.code === 'KeyZ' || e.code === 'ArrowUp' || e.code === 'Space') game.jump();
+    if(e.code === 'KeyX') game.shoot();
+});
+window.addEventListener('keyup', e => {
+    if(e.code === 'ArrowLeft') game.input.left = false;
+    if(e.code === 'ArrowRight') game.input.right = false;
+});
+</script>
+</body>
+</html>

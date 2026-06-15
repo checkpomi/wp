@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomi Tetris – Free Classic Block Puzzle Arcade Game | pomiai</title>
+    <style>
+        body {
+            background: #121212;
+            color: #fff;
+            font-family: 'Apple SD Gothic Neo', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* 스코어 및 상태 표시 */
+        .header {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .score-board { font-size: 28px; color: #f1c40f; font-weight: bold; }
+        .status-text { color: #aaa; font-size: 14px; margin-top: 5px; }
+
+        /* 게임 보드 박스 */
+        #game-wrapper {
+            position: relative;
+            border: 5px solid #333;
+            background: #000;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        canvas { display: block; }
+
+        /* 중앙 메시지 오버레이 */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        /* 메인 컨트롤 버튼 그룹 */
+        .main-controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-start { background: #27ae60; color: white; }
+        .btn-pause { background: #f39c12; color: white; }
+        .btn-reset { background: #e74c3c; color: white; }
+        .btn:hover { opacity: 0.8; transform: translateY(-2px); }
+        .btn:disabled { background: #555; cursor: not-allowed; transform: none; }
+
+        /* 이동 버튼 (모바일용) */
+        .move-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .ctrl-btn {
+            padding: 18px;
+            background: #333;
+            border: none;
+            color: white;
+            border-radius: 10px;
+            font-size: 18px;
+            touch-action: manipulation;
+        }
+        .span-3 { grid-column: span 3; }
+    </style>
+</head>
+<body>
+
+    <div style="text-align:center;margin-bottom:6px"><a href="https://checkpomi.com" target="_blank" style="background:#ff007f;color:#fff;font-size:10px;font-weight:bold;padding:3px 12px;border-radius:20px;letter-spacing:2px;font-family:monospace;text-decoration:none;">pomiai.com</a></div>
+    <div class="header">
+        <div class="score-board">SCORE: <span id="score">0</span></div>
+        <div id="status" class="status-text">Press Start to Play!</div>
+    </div>
+
+    <div id="game-wrapper">
+        <div id="overlay">
+            <h2 id="msg">RETRO TETRIS</h2>
+            <button class="btn btn-start" onclick="startGame()">START GAME</button>
+        </div>
+        <canvas id="tetris" width="240" height="400"></canvas>
+    </div>
+
+    <!-- 상단 주요 기능 버튼 -->
+    <div class="main-controls">
+        <button id="pauseBtn" class="btn btn-pause" onclick="togglePause()" disabled>PAUSE</button>
+        <button class="btn btn-reset" onclick="resetGame()">RESET</button>
+    </div>
+
+    <!-- 방향 조절 버튼 -->
+    <div class="move-controls">
+        <button class="ctrl-btn span-3" onclick="playerRotate(1)">ROTATE</button>
+        <button class="ctrl-btn" onclick="playerMove(-1)">LEFT</button>
+        <button class="ctrl-btn" onclick="playerDrop()">DOWN</button>
+        <button class="ctrl-btn" onclick="playerMove(1)">RIGHT</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const statusElement = document.getElementById('status');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const overlay = document.getElementById('overlay');
+        const msg = document.getElementById('msg');
+
+        context.scale(20, 20);
+
+        let gameRunning = false;
+        let isPaused = false;
+        let dropCounter = 0;
+        let dropInterval = 1000;
+        let lastTime = 0;
+        let requestId;
+
+        // [시작] 게임 시작
+        function startGame() {
+            arena.forEach(row => row.fill(0));
+            player.score = 0;
+            updateScore();
+            playerReset();
+            overlay.style.display = 'none';
+            gameRunning = true;
+            isPaused = false;
+            pauseBtn.disabled = false;
+            pauseBtn.innerText = "PAUSE";
+            statusElement.innerText = "Playing...";
+            update();
+        }
+
+        // [중지/재개] 일시정지 토글
+        function togglePause() {
+            if (!gameRunning) return;
+            
+            isPaused = !isPaused;
+            if (isPaused) {
+                cancelAnimationFrame(requestId);
+                pauseBtn.innerText = "RESUME";
+                statusElement.innerText = "Paused";
+            } else {
+                lastTime = performance.now();
+                pauseBtn.innerText = "PAUSE";
+                statusElement.innerText = "Playing...";
+                update();
+            }
+        }
+
+        // [종료] 게임 리셋
+        function resetGame() {
+            cancelAnimationFrame(requestId);
+            gameRunning = false;
+            isPaused = false;
+            pauseBtn.disabled = true;
+            pauseBtn.innerText = "PAUSE";
+            msg.innerText = "GAME RESET";
+            overlay.style.display = 'flex';
+            statusElement.innerText = "Press Start to Play!";
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function arenaSweep() {
+            let rowCount = 1;
+            outer: for (let y = arena.length - 1; y > 0; --y) {
+                for (let x = 0; x < arena[y].length; ++x) {
+                    if (arena[y][x] === 0) continue outer;
+                }
+                const row = arena.splice(y, 1)[0].fill(0);
+                arena.unshift(row);
+                ++y;
+                player.score += rowCount * 10;
+                rowCount *= 2;
+            }
+            updateScore();
+        }
+
+        function collide(arena, player) {
+            const [m, o] = [player.matrix, player.pos];
+            for (let y = 0; y < m.length; ++y) {
+                for (let x = 0; x < m[y].length; ++x) {
+                    if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) return true;
+                }
+            }
+            return false;
+        }
+
+        function createMatrix(w, h) {
+            const matrix = [];
+            while (h--) matrix.push(new Array(w).fill(0));
+            return matrix;
+        }
+
+        function createPiece(type) {
+            if (type === 'I') return [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]];
+            else if (type === 'L') return [[0, 2, 0], [0, 2, 0], [0, 2, 2]];
+            else if (type === 'J') return [[0, 3, 0], [0, 3, 0], [3, 3, 0]];
+            else if (type === 'O') return [[4, 4], [4, 4]];
+            else if (type === 'Z') return [[5, 5, 0], [0, 5, 5], [0, 0, 0]];
+            else if (type === 'S') return [[0, 6, 6], [6, 6, 0], [0, 0, 0]];
+            else if (type === 'T') return [[0, 7, 0], [7, 7, 7], [0, 0, 0]];
+        }
+
+        function draw() {
+            context.fillStyle = '#000';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            drawMatrix(arena, {x: 0, y: 0});
+            drawMatrix(player.matrix, player.pos);
+        }
+
+        function drawMatrix(matrix, offset) {
+            matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        context.fillStyle = colors[value];
+                        context.fillRect(x + offset.x, y + offset.y, 1, 1);
+                    }
+                });
+            });
+        }
+
+        function merge(arena, player) {
+            player.matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value;
+                });
+            });
+        }
+
+        function rotate(matrix, dir) {
+            for (let y = 0; y < matrix.length; ++y) {
+                for (let x = 0; x < y; ++x) [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+            }
+            if (dir > 0) matrix.forEach(row => row.reverse());
+            else matrix.reverse();
+        }
+
+        function playerDrop() {
+            if (!gameRunning || isPaused) return;
+            player.pos.y++;
+            if (collide(arena, player)) {
+                player.pos.y--;
+                merge(arena, player);
+                playerReset();
+                arenaSweep();
+            }
+            dropCounter = 0;
+        }
+
+        function playerMove(offset) {
+            if (!gameRunning || isPaused) return;
+            player.pos.x += offset;
+            if (collide(arena, player)) player.pos.x -= offset;
+        }
+
+        function playerReset() {
+            const pieces = 'ILJOTSZ';
+            player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
+            player.pos.y = 0;
+            player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+            if (collide(arena, player)) {
+                gameRunning = false;
+                pauseBtn.disabled = true;
+                msg.innerText = "GAME OVER";
+                overlay.style.display = 'flex';
+                statusElement.innerText = "Try Again!";
+            }
+        }
+
+        function playerRotate(dir) {
+            if (!gameRunning || isPaused) return;
+            const pos = player.pos.x;
+            let offset = 1;
+            rotate(player.matrix, dir);
+            while (collide(arena, player)) {
+                player.pos.x += offset;
+                offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > player.matrix[0].length) {
+                    rotate(player.matrix, -dir);
+                    player.pos.x = pos;
+                    return;
+                }
+            }
+        }
+
+        function update(time = 0) {
+            if (!gameRunning || isPaused) return;
+            const deltaTime = time - lastTime;
+            lastTime = time;
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) playerDrop();
+            draw();
+            requestId = requestAnimationFrame(update);
+        }
+
+        function updateScore() {
+            scoreElement.innerText = player.score;
+        }
+
+        const colors = [null, '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF'];
+        const arena = createMatrix(12, 20);
+        const player = { pos: {x: 0, y: 0}, matrix: null, score: 0 };
+
+        document.addEventListener('keydown', event => {
+            if (event.keyCode === 37) playerMove(-1);
+            else if (event.keyCode === 39) playerMove(1);
+            else if (event.keyCode === 40) playerDrop();
+            else if (event.keyCode === 38) playerRotate(1);
+            else if (event.keyCode === 32) togglePause(); // 스페이스바 일시정지
+        });
+    </script>
+</body>
+</html>

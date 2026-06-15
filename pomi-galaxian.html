@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Pomi Galaxian – Free Classic Space Shooter Arcade Game | pomiai</title>
+    <style>
+        :root {
+            --neon-blue: #00d2ff;
+            --neon-red: #ff4d4d;
+            --arcade-yellow: #f8e71c;
+            --power-up: #00ff41;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            overflow: hidden; /* 전체 페이지 스크롤 방지 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            touch-action: none; /* 브라우저 기본 터치 액션(줌, 스크롤) 차단 */
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 100vw;
+            max-width: 500px;
+            height: 100vh;
+            max-height: 850px;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid #333;
+            box-sizing: border-box;
+        }
+
+        .ui-top {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: #111;
+            font-size: 16px;
+            color: var(--arcade-yellow);
+            font-weight: bold;
+        }
+
+        canvas {
+            flex-grow: 1;
+            display: block;
+            width: 100%;
+            background: radial-gradient(circle at center, #001529 0%, #000 100%);
+            touch-action: none;
+        }
+
+        .control-panel {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px;
+            background: #1a1a1a;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .btn-start { background: var(--arcade-yellow); color: #000; }
+        .btn-pause { background: #444; color: #fff; }
+        .btn-stop { background: var(--neon-red); color: #fff; }
+
+        /* 모바일 컨트롤러 전용 레이아웃 */
+        #mobile-controller {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 15px;
+            background: #0a0a0a;
+            border-top: 1px solid #333;
+        }
+
+        .m-btn {
+            height: 55px;
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .m-btn:active { background: #444; transform: translateY(2px); }
+        .fire-btn { 
+            grid-column: span 3; 
+            height: 60px; 
+            background: linear-gradient(to bottom, #800, #400); 
+            color: var(--neon-red); 
+            font-weight: bold;
+            border-color: var(--neon-red);
+        }
+
+        .level-up-msg {
+            position: absolute;
+            top: 40%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            color: var(--arcade-yellow);
+            display: none;
+            text-shadow: 0 0 15px #000;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+<div style="text-align:center;margin-bottom:6px"><a href="https://checkpomi.com" target="_blank" style="background:#ff007f;color:#fff;font-size:10px;font-weight:bold;padding:3px 12px;border-radius:20px;letter-spacing:2px;font-family:monospace;text-decoration:none;">pomiai.com</a></div>
+<div id="game-wrapper">
+    <div class="ui-top">
+        <div style="color:#f8e71c;font-weight:bold;letter-spacing:1px;">POMI GALAXIAN</div><div>LVL: <span id="level">1</span></div>
+        <div>SCORE: <span id="score">0</span></div>
+        <div>LIFE: <span id="life">❤️❤️❤️</span></div>
+    </div>
+    
+    <div id="levelMsg" class="level-up-msg">LEVEL UP!</div>
+    
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="control-panel">
+        <button id="startBtn" class="btn btn-start">START</button>
+        <button id="pauseBtn" class="btn btn-pause">PAUSE</button>
+        <button id="stopBtn" class="btn btn-stop">QUIT</button>
+    </div>
+
+    <div id="mobile-controller">
+        <div></div><div id="upBtn" class="m-btn">▲</div><div></div>
+        <div id="leftBtn" class="m-btn">◀</div>
+        <div id="downBtn" class="m-btn">▼</div>
+        <div id="rightBtn" class="m-btn">▶</div>
+        <div id="fireBtn" class="m-btn fire-btn">🔥 FIRE (ATTACK)</div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 화면 크기에 맞게 캔버스 해상도 조절
+    function resizeCanvas() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+    }
+    window.addEventListener('load', resizeCanvas);
+    window.addEventListener('resize', resizeCanvas);
+
+    let score = 0, level = 1, lives = 3, isRunning = false, isPaused = false;
+    let powerLevel = 1, player = { x: 200, y: 0, w: 30, h: 30, speed: 6 };
+    let bullets = [], enemies = [], items = [], keys = {};
+    let animationId;
+
+    function init() {
+        score = 0; level = 1; lives = 3; powerLevel = 1;
+        enemies = []; items = []; bullets = [];
+        player.x = canvas.width / 2;
+        player.y = canvas.height - 80;
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('score').innerText = score;
+        document.getElementById('level').innerText = level;
+        document.getElementById('life').innerText = "❤️".repeat(lives > 0 ? lives : 0);
+    }
+
+    // [중요] 스크롤 방지 로직
+    window.addEventListener('keydown', e => {
+        const preventKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'w', 'a', 's', 'd'];
+        if (preventKeys.includes(e.key)) {
+            e.preventDefault(); // 방향키/스페이스바 스크롤 방지
+            keys[e.key.toLowerCase()] = true;
+            keys[e.key] = true;
+            if (e.code === 'Space') fire();
+        }
+    }, { passive: false });
+
+    window.addEventListener('keyup', e => {
+        keys[e.key.toLowerCase()] = false;
+        keys[e.key] = false;
+    });
+
+    // 모바일 터치 스크롤 차단
+    document.addEventListener('touchmove', e => {
+        if(isRunning) e.preventDefault();
+    }, { passive: false });
+
+    function draw() {
+        if (!isRunning || isPaused) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 8방향 이동
+        if (keys['arrowup'] || keys['w']) if(player.y > 20) player.y -= player.speed;
+        if (keys['arrowdown'] || keys['s']) if(player.y < canvas.height - 30) player.y += player.speed;
+        if (keys['arrowleft'] || keys['a']) if(player.x > 20) player.x -= player.speed;
+        if (keys['arrowright'] || keys['d']) if(player.x < canvas.width - 20) player.x += player.speed;
+
+        // 플레이어
+        ctx.fillStyle = powerLevel > 1 ? '#00ff41' : '#00d2ff';
+        ctx.beginPath();
+        ctx.moveTo(player.x, player.y);
+        ctx.lineTo(player.x - 15, player.y + 25);
+        ctx.lineTo(player.x + 15, player.y + 25);
+        ctx.fill();
+
+        // 총알
+        bullets.forEach((b, i) => {
+            b.y -= 12;
+            ctx.fillStyle = "white";
+            ctx.fillRect(b.x - 2, b.y, 4, 12);
+            if (b.y < 0) bullets.splice(i, 1);
+        });
+
+        // 적군 소환 및 업데이트
+        if (Math.random() < 0.02 + (level * 0.005)) {
+            enemies.push({ x: Math.random() * (canvas.width - 30), y: -30, speed: 2 + (level * 0.4) });
+        }
+
+        enemies.forEach((e, ei) => {
+            e.y += e.speed;
+            ctx.fillStyle = '#ff4d4d';
+            ctx.fillRect(e.x, e.y, 25, 20);
+
+            // 충돌 감지
+            if (Math.abs(player.x - e.x) < 25 && Math.abs(player.y - e.y) < 25) {
+                enemies.splice(ei, 1);
+                lives--; powerLevel = 1; updateUI();
+                if (lives <= 0) stopGame("GAME OVER");
+            }
+
+            bullets.forEach((b, bi) => {
+                if (b.x > e.x && b.x < e.x + 25 && b.y > e.y && b.y < e.y + 20) {
+                    if(Math.random() < 0.12) items.push({x: e.x, y: e.y, speed: 2.5});
+                    enemies.splice(ei, 1); bullets.splice(bi, 1);
+                    score += 10;
+                    if(Math.floor(score/400) + 1 > level && level < 10) { level++; showLevelMsg(); }
+                    updateUI();
+                }
+            });
+            if (e.y > canvas.height) enemies.splice(ei, 1);
+        });
+
+        // 아이템
+        items.forEach((it, ii) => {
+            it.y += it.speed;
+            ctx.fillStyle = '#f8e71c';
+            ctx.font = "bold 18px Arial";
+            ctx.fillText("P", it.x, it.y);
+            if (Math.abs(player.x - it.x) < 30 && Math.abs(player.y - it.y) < 30) {
+                items.splice(ii, 1); if(powerLevel < 3) powerLevel++;
+            }
+            if (it.y > canvas.height) items.splice(ii, 1);
+        });
+
+        animationId = requestAnimationFrame(draw);
+    }
+
+    function fire() {
+        if (!isRunning || isPaused) return;
+        if (powerLevel === 1) bullets.push({x: player.x, y: player.y});
+        else if (powerLevel === 2) bullets.push({x: player.x - 12, y: player.y}, {x: player.x + 12, y: player.y});
+        else bullets.push({x: player.x - 18, y: player.y}, {x: player.x, y: player.y - 12}, {x: player.x + 18, y: player.y});
+    }
+
+    function showLevelMsg() {
+        const msg = document.getElementById('levelMsg');
+        msg.innerText = `LEVEL ${level}`;
+        msg.style.display = 'block';
+        setTimeout(() => msg.style.display = 'none', 1500);
+    }
+
+    function stopGame(text) {
+        isRunning = false;
+        cancelAnimationFrame(animationId);
+        ctx.fillStyle = "rgba(0,0,0,0.85)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.font = "bold 30px Arial";
+        ctx.fillText(text, canvas.width/2 - 85, canvas.height/2);
+    }
+
+    // 모바일 버튼 핸들링 (연속 이동 가능)
+    const setupBtn = (id, key) => {
+        const btn = document.getElementById(id);
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key.toLowerCase()] = true; });
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key.toLowerCase()] = false; });
+    };
+    setupBtn('upBtn', 'w'); setupBtn('downBtn', 's'); setupBtn('leftBtn', 'a'); setupBtn('rightBtn', 'd');
+    document.getElementById('fireBtn').addEventListener('touchstart', (e) => { e.preventDefault(); fire(); });
+
+    document.getElementById('startBtn').addEventListener('click', () => { isRunning = true; isPaused = false; init(); draw(); });
+    document.getElementById('pauseBtn').addEventListener('click', () => { isPaused = !isPaused; if(!isPaused) draw(); });
+    document.getElementById('stopBtn').addEventListener('click', () => stopGame("QUIT"));
+</script>
+</body>
+</html>
