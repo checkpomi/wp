@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">pomiai 쇼츠 라디오</title>
+<meta name="description" id="page-desc" content="pomiai의 짧은 음악 쇼츠를 라디오처럼 반복 재생하는 위젯">
+<style>
+  :root{
+    --plum:#2b1f3d;
+    --plum2:#3a2a52;
+    --amber:#e8935a;
+    --gold:#f4c873;
+    --cream:#f4ede0;
+    --rose:#d8788f;
+    --line:rgba(244,237,224,.14);
+    --shadow:0 18px 40px rgba(15,9,26,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:transparent;font-family:'Noto Sans KR',-apple-system,sans-serif}
+  #widget{
+    width:100%;
+    max-width:300px;
+    background:linear-gradient(165deg,var(--plum) 0%,var(--plum2) 55%,#241934 100%);
+    border-radius:20px;
+    padding:18px;
+    color:var(--cream);
+    box-shadow:var(--shadow);
+    border:1px solid var(--line);
+    position:relative;
+    overflow:hidden;
+  }
+  #widget::before{
+    content:'';
+    position:absolute;top:-40%;right:-30%;width:70%;height:70%;
+    background:radial-gradient(circle,rgba(232,147,90,.25),transparent 70%);
+    pointer-events:none;
+  }
+  #head{display:flex;align-items:center;gap:10px;margin-bottom:14px;position:relative;z-index:1}
+  #dial{
+    width:9px;height:9px;border-radius:50%;background:var(--gold);
+    box-shadow:0 0 0 0 rgba(244,200,115,.6);
+  }
+  #dial.live{animation:pulse 1.6s infinite}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(244,200,115,.55)}
+    70%{box-shadow:0 0 0 8px rgba(244,200,115,0)}
+    100%{box-shadow:0 0 0 0 rgba(244,200,115,0)}
+  }
+  #title-area{flex:1;min-width:0}
+  #eyebrow{font-size:10px;letter-spacing:.14em;color:var(--rose);font-weight:700;text-transform:uppercase}
+  #wname{font-family:'Noto Serif KR',serif;font-size:15px;font-weight:600;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  #disc-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;position:relative;z-index:1}
+  #disc-wrap{width:64px;height:64px;flex-shrink:0;position:relative}
+  #disc{
+    width:64px;height:64px;border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 50%, var(--plum) 0 14%, transparent 14.5%),
+      repeating-radial-gradient(circle, #1c1428 0, #1c1428 2px, #2a1f3a 2px, #2a1f3a 4px);
+    border:3px solid var(--gold);
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    transition:transform .3s;
+  }
+  #disc.spin{animation:spin 3.2s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #disc-center{
+    position:absolute;top:50%;left:50%;width:14px;height:14px;
+    transform:translate(-50%,-50%);
+    background:var(--amber);border-radius:50%;border:2px solid var(--plum);
+  }
+
+  #now-info{flex:1;min-width:0}
+  #now-label{font-size:10px;color:var(--rose);font-weight:700;letter-spacing:.08em;margin-bottom:2px}
+  #now-title{font-family:'Noto Serif KR',serif;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
+  #now-track{font-size:11px;color:rgba(244,237,224,.6)}
+
+  #progress-track{
+    position:relative;z-index:1;
+    height:3px;background:rgba(244,237,224,.15);border-radius:99px;margin-bottom:14px;overflow:hidden;
+  }
+  #progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--amber),var(--gold));border-radius:99px;transition:width .25s linear}
+
+  #controls{display:flex;align-items:center;justify-content:center;gap:10px;position:relative;z-index:1;margin-bottom:12px}
+  .ctrl-btn{
+    background:rgba(244,237,224,.08);border:1px solid var(--line);color:var(--cream);
+    width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:.18s;
+  }
+  .ctrl-btn:hover{background:rgba(244,237,224,.18);transform:translateY(-1px)}
+  .ctrl-btn svg{width:14px;height:14px}
+  #play-btn{
+    width:46px;height:46px;background:linear-gradient(135deg,var(--amber),var(--rose));
+    border:none;box-shadow:0 6px 16px rgba(232,147,90,.35);
+  }
+  #play-btn svg{width:18px;height:18px}
+  #play-btn:hover{transform:translateY(-1px) scale(1.03)}
+
+  #mode-row{display:flex;justify-content:center;gap:8px;position:relative;z-index:1;margin-bottom:4px}
+  .mode-chip{
+    font-size:10px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);
+    background:rgba(244,237,224,.05);color:rgba(244,237,224,.65);cursor:pointer;font-weight:600;letter-spacing:.02em;
+    transition:.15s;
+  }
+  .mode-chip.on{background:linear-gradient(135deg,var(--amber),var(--gold));color:var(--plum);border-color:transparent}
+
+  #hidden-player{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden}
+
+  #counter{text-align:center;font-size:10px;color:rgba(244,237,224,.4);margin-top:10px;position:relative;z-index:1;letter-spacing:.04em}
+
+  #empty-state{
+    text-align:center;font-size:12px;color:rgba(244,237,224,.55);padding:10px 6px;line-height:1.6;
+  }
+</style>
+</head>
+<body>
+
+<div id="widget">
+  <div id="head">
+    <div id="dial"></div>
+    <div id="title-area">
+      <div id="eyebrow" data-i18n="eyebrow">NOW STREAMING</div>
+      <div id="wname" data-i18n="widget_name">pomiai 쇼츠 라디오</div>
+    </div>
+  </div>
+
+  <div id="disc-row">
+    <div id="disc-wrap"><div id="disc"><div id="disc-center"></div></div></div>
+    <div id="now-info">
+      <div id="now-label" data-i18n="now_playing">현재 곡</div>
+      <div id="now-title" id="now-title-text">—</div>
+      <div id="now-track" id="now-track-text">0 / 0</div>
+    </div>
+  </div>
+
+  <div id="progress-track"><div id="progress-fill"></div></div>
+
+  <div id="controls">
+    <button class="ctrl-btn" id="prev-btn" title="이전" data-i18n-title="prev">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+    </button>
+    <button class="ctrl-btn" id="play-btn" title="재생" data-i18n-title="play">
+      <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <button class="ctrl-btn" id="next-btn" title="다음" data-i18n-title="next">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg>
+    </button>
+  </div>
+
+  <div id="mode-row">
+    <button class="mode-chip on" id="mode-loop-all" data-i18n="mode_loop_all">전체반복</button>
+    <button class="mode-chip" id="mode-loop-one" data-i18n="mode_loop_one">1곡반복</button>
+    <button class="mode-chip" id="mode-shuffle" data-i18n="mode_shuffle">랜덤</button>
+  </div>
+
+  <div id="counter"><span id="counter-text">0 / 0</span></div>
+</div>
+
+<div id="hidden-player"><div id="yt-player"></div></div>
+
+<script>
+/* ============================================================
+   I18N — §5 표준 구조
+   ============================================================ */
+const I18N = {
+  ko: {
+    page_title: 'pomiai 쇼츠 라디오',
+    eyebrow: 'NOW STREAMING',
+    widget_name: 'pomiai 쇼츠 라디오',
+    now_playing: '현재 곡',
+    play: '재생', pause: '일시정지', prev: '이전', next: '다음',
+    mode_loop_all: '전체반복', mode_loop_one: '1곡반복', mode_shuffle: '랜덤',
+    empty: '아직 등록된 쇼츠가 없어요. 곧 채워질 예정이에요.',
+    tap_to_start: '탭하여 재생'
+  },
+  en: {
+    page_title: 'pomiai Shorts Radio',
+    eyebrow: 'NOW STREAMING',
+    widget_name: 'pomiai Shorts Radio',
+    now_playing: 'Now Playing',
+    play: 'Play', pause: 'Pause', prev: 'Prev', next: 'Next',
+    mode_loop_all: 'Loop All', mode_loop_one: 'Loop One', mode_shuffle: 'Shuffle',
+    empty: 'No shorts added yet. Coming soon.',
+    tap_to_start: 'Tap to play'
+  },
+  ja: {
+    page_title: 'pomiai ショーツラジオ',
+    eyebrow: 'NOW STREAMING',
+    widget_name: 'pomiai ショーツラジオ',
+    now_playing: '再生中',
+    play: '再生', pause: '一時停止', prev: '前へ', next: '次へ',
+    mode_loop_all: '全曲リピート', mode_loop_one: '1曲リピート', mode_shuffle: 'シャッフル',
+    empty: 'まだショーツが登録されていません。',
+    tap_to_start: 'タップして再生'
+  }
+};
+
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+  if (LANG === 'ar') document.getElementById('html-root').setAttribute('dir','rtl');
+})();
+
+function applyI18n() {
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const k = el.dataset.i18nTitle;
+    if (typeof t[k] === 'string') el.title = t[k];
+  });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+
+/* ============================================================
+   쇼츠 데이터 — 40개 슬롯, videoId는 추후 편집
+   ============================================================ */
+const SHORTS = Array.from({length: 40}, (_, i) => ({
+  videoId: "",                              // ← 추후 YouTube 영상 ID 입력
+  title: `pomiai shorts ${String(i + 1).padStart(2, '0')}`,
+  duration: 27
+}));
+
+/* ============================================================
+   재생 로직
+   ============================================================ */
+let player = null;
+let playerReady = false;
+let curIdx = 0;
+let isPlaying = false;
+let playMode = 'loop_all'; // loop_all | loop_one | shuffle
+let shuffleOrder = [];
+let shufflePos = 0;
+let progressTimer = null;
+
+const $ = id => document.getElementById(id);
+
+function buildShuffleOrder(){
+  shuffleOrder = SHORTS.map((_,i)=>i).sort(()=>Math.random()-0.5);
+  shufflePos = Math.max(0, shuffleOrder.indexOf(curIdx));
+}
+
+function setMode(mode){
+  playMode = mode;
+  ['loop-all','loop-one','shuffle'].forEach(m=>{
+    $('mode-'+m).classList.toggle('on', ('mode_'+m.replace('-','_')) === ('mode_'+mode));
+  });
+  $('mode-loop-all').classList.toggle('on', mode==='loop_all');
+  $('mode-loop-one').classList.toggle('on', mode==='loop_one');
+  $('mode-shuffle').classList.toggle('on', mode==='shuffle');
+  if (mode==='shuffle') buildShuffleOrder();
+}
+
+function nextIndex(){
+  if (playMode==='loop_one') return curIdx;
+  if (playMode==='shuffle'){
+    if (!shuffleOrder.length) buildShuffleOrder();
+    shufflePos = (shufflePos+1) % shuffleOrder.length;
+    if (shufflePos===0) buildShuffleOrder();
+    return shuffleOrder[shufflePos];
+  }
+  return (curIdx+1) % SHORTS.length; // loop_all
+}
+function prevIndex(){
+  if (playMode==='shuffle'){
+    if (!shuffleOrder.length) buildShuffleOrder();
+    shufflePos = (shufflePos-1+shuffleOrder.length) % shuffleOrder.length;
+    return shuffleOrder[shufflePos];
+  }
+  return (curIdx-1+SHORTS.length) % SHORTS.length;
+}
+
+function updateNowInfo(){
+  const t = window._T;
+  const track = SHORTS[curIdx];
+  $('now-title-text').textContent = track && track.videoId ? track.title : t.empty;
+  $('counter-text').textContent = `${curIdx+1} / ${SHORTS.length}`;
+  $('now-track-text').textContent = `${curIdx+1} / ${SHORTS.length}`;
+}
+
+function updateProgress(seconds, duration){
+  const pct = duration ? Math.min(100,(seconds/duration)*100) : 0;
+  $('progress-fill').style.width = pct + '%';
+}
+
+function startProgressTimer(){
+  clearInterval(progressTimer);
+  progressTimer = setInterval(()=>{
+    if (!player || !playerReady || !isPlaying) return;
+    try{
+      const dur = player.getDuration() || SHORTS[curIdx].duration;
+      const cur = player.getCurrentTime() || 0;
+      updateProgress(cur, dur);
+    }catch(e){}
+  }, 250);
+}
+
+function loadAndPlay(idx){
+  curIdx = idx;
+  updateNowInfo();
+  const track = SHORTS[curIdx];
+  if (!track.videoId) { setPlayingUI(false); return; }
+  if (player && playerReady){
+    player.loadVideoById(track.videoId);
+    player.playVideo();
+  }
+}
+
+function setPlayingUI(playing){
+  isPlaying = playing;
+  $('disc').classList.toggle('spin', playing);
+  $('dial').classList.toggle('live', playing);
+  $('play-icon').innerHTML = playing
+    ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>'
+    : '<path d="M8 5v14l11-7z"/>';
+}
+
+function onPlayerStateChange(e){
+  if (e.data === YT.PlayerState.PLAYING){
+    setPlayingUI(true);
+  } else if (e.data === YT.PlayerState.PAUSED){
+    setPlayingUI(false);
+  } else if (e.data === YT.PlayerState.ENDED){
+    const idx = nextIndex();
+    loadAndPlay(idx);
+  }
+}
+
+function togglePlay(){
+  if (!playerReady){ initPlayer(true); return; }
+  if (!SHORTS[curIdx].videoId) return;
+  if (isPlaying){ player.pauseVideo(); }
+  else { player.playVideo(); }
+}
+
+function initPlayer(autoStart){
+  if (window.YT && window.YT.Player){
+    createPlayer(autoStart);
+  } else {
+    window.onYouTubeIframeAPIReady = ()=> createPlayer(autoStart);
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  }
+}
+
+function createPlayer(autoStart){
+  const firstValid = SHORTS.findIndex(s=>s.videoId);
+  const startIdx = firstValid >= 0 ? firstValid : 0;
+  curIdx = startIdx;
+  player = new YT.Player('yt-player', {
+    height: '1', width: '1',
+    videoId: SHORTS[startIdx].videoId || undefined,
+    playerVars: { playsinline: 1, controls: 0, modestbranding: 1, rel: 0 },
+    events: {
+      onReady: ()=>{
+        playerReady = true;
+        startProgressTimer();
+        if (autoStart && SHORTS[startIdx].videoId) player.playVideo();
+        updateNowInfo();
+      },
+      onStateChange: onPlayerStateChange
+    }
+  });
+}
+
+/* 이벤트 바인딩 */
+$('play-btn').addEventListener('click', togglePlay);
+$('next-btn').addEventListener('click', ()=> loadAndPlay(nextIndex()));
+$('prev-btn').addEventListener('click', ()=> loadAndPlay(prevIndex()));
+$('mode-loop-all').addEventListener('click', ()=> setMode('loop_all'));
+$('mode-loop-one').addEventListener('click', ()=> setMode('loop_one'));
+$('mode-shuffle').addEventListener('click', ()=> setMode('shuffle'));
+
+updateNowInfo();
+setMode('loop_all');
+</script>
+</body>
+</html>
