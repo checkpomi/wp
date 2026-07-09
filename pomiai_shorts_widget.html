@@ -4,354 +4,185 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="page-title">pomiai 쇼츠 라디오</title>
-<meta name="description" content="pomiai의 짧은 음악 쇼츠를 라디오처럼 반복 재생하는 위젯">
-<!-- YouTube IFrame API: 페이지 로드 시 즉시 준비 -->
 <script src="https://www.youtube.com/iframe_api"></script>
 <style>
-  :root{
-    --plum:#2b1f3d;--plum2:#3a2a52;--amber:#e8935a;
-    --gold:#f4c873;--cream:#f4ede0;--rose:#d8788f;
-    --line:rgba(244,237,224,.14);--shadow:0 18px 40px rgba(15,9,26,.45);
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:transparent;font-family:'Noto Sans KR',-apple-system,sans-serif}
-  #widget{
-    width:100%;max-width:300px;
-    background:linear-gradient(165deg,var(--plum) 0%,var(--plum2) 55%,#241934 100%);
-    border-radius:20px;padding:18px;color:var(--cream);
-    box-shadow:var(--shadow);border:1px solid var(--line);position:relative;overflow:hidden;
-  }
-  #widget::before{
-    content:'';position:absolute;top:-40%;right:-30%;width:70%;height:70%;
-    background:radial-gradient(circle,rgba(232,147,90,.25),transparent 70%);pointer-events:none;
-  }
-  #head{display:flex;align-items:center;gap:10px;margin-bottom:14px;position:relative;z-index:1}
-  #dial{width:9px;height:9px;border-radius:50%;background:var(--gold)}
-  #dial.live{animation:pulse 1.6s infinite}
-  @keyframes pulse{
-    0%{box-shadow:0 0 0 0 rgba(244,200,115,.55)}
-    70%{box-shadow:0 0 0 8px rgba(244,200,115,0)}
-    100%{box-shadow:0 0 0 0 rgba(244,200,115,0)}
-  }
-  #title-area{flex:1;min-width:0}
-  #eyebrow{font-size:10px;letter-spacing:.14em;color:var(--rose);font-weight:700;text-transform:uppercase}
-  #wname{font-family:'Noto Serif KR',serif;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #disc-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;position:relative;z-index:1}
-  #disc-wrap{width:64px;height:64px;flex-shrink:0;position:relative}
-  #disc{
-    width:64px;height:64px;border-radius:50%;
-    background:radial-gradient(circle at 50% 50%,var(--plum) 0 14%,transparent 14.5%),
-               repeating-radial-gradient(circle,#1c1428 0,#1c1428 2px,#2a1f3a 2px,#2a1f3a 4px);
-    border:3px solid var(--gold);box-shadow:0 4px 14px rgba(0,0,0,.4);
-  }
-  #disc.spin{animation:spin 3.2s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  #disc-center{
-    position:absolute;top:50%;left:50%;width:14px;height:14px;
-    transform:translate(-50%,-50%);background:var(--amber);border-radius:50%;border:2px solid var(--plum);
-  }
-  #now-info{flex:1;min-width:0}
-  #now-label{font-size:10px;color:var(--rose);font-weight:700;letter-spacing:.08em;margin-bottom:2px}
-  #now-title{font-family:'Noto Serif KR',serif;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
-  #now-track{font-size:11px;color:rgba(244,237,224,.6)}
-  #progress-track{
-    position:relative;z-index:1;height:3px;background:rgba(244,237,224,.15);
-    border-radius:99px;margin-bottom:14px;overflow:hidden;
-  }
-  #progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--amber),var(--gold));border-radius:99px;transition:width .25s linear}
-  #controls{display:flex;align-items:center;justify-content:center;gap:10px;position:relative;z-index:1;margin-bottom:12px}
-  .ctrl-btn{
-    background:rgba(244,237,224,.08);border:1px solid var(--line);color:var(--cream);
-    width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    cursor:pointer;transition:.18s;
-  }
-  .ctrl-btn:hover{background:rgba(244,237,224,.18);transform:translateY(-1px)}
-  .ctrl-btn svg{width:14px;height:14px}
-  #play-btn{
-    width:46px;height:46px;background:linear-gradient(135deg,var(--amber),var(--rose));
-    border:none;box-shadow:0 6px 16px rgba(232,147,90,.35);
-  }
-  #play-btn svg{width:18px;height:18px}
-  #play-btn:hover{transform:translateY(-1px) scale(1.03)}
-  #mode-row{display:flex;justify-content:center;gap:8px;position:relative;z-index:1;margin-bottom:4px}
-  .mode-chip{
-    font-size:10px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);
-    background:rgba(244,237,224,.05);color:rgba(244,237,224,.65);cursor:pointer;font-weight:600;transition:.15s;
-  }
-  .mode-chip.on{background:linear-gradient(135deg,var(--amber),var(--gold));color:var(--plum);border-color:transparent}
-  #counter{text-align:center;font-size:10px;color:rgba(244,237,224,.4);margin-top:10px;position:relative;z-index:1}
-  #toast{
-    position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
-    background:rgba(232,147,90,.9);color:var(--plum);font-size:11px;font-weight:700;
-    padding:6px 14px;border-radius:99px;z-index:10;opacity:0;transition:opacity .25s;
-    white-space:nowrap;pointer-events:none;
-  }
-  #toast.show{opacity:1}
-  /* 숨겨진 플레이어 */
-  #hidden-player{position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden}
+:root{--plum:#2b1f3d;--plum2:#3a2a52;--amber:#e8935a;--gold:#f4c873;--cream:#f4ede0;--rose:#d8788f;--line:rgba(244,237,224,.14);--sh:0 18px 40px rgba(15,9,26,.45)}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:transparent;font-family:'Noto Sans KR',-apple-system,sans-serif}
+#w{width:100%;max-width:300px;background:linear-gradient(165deg,var(--plum) 0%,var(--plum2) 55%,#241934 100%);border-radius:20px;padding:18px;color:var(--cream);box-shadow:var(--sh);border:1px solid var(--line);position:relative;overflow:hidden}
+#w::before{content:'';position:absolute;top:-40%;right:-30%;width:70%;height:70%;background:radial-gradient(circle,rgba(232,147,90,.25),transparent 70%);pointer-events:none}
+#hd{display:flex;align-items:center;gap:10px;margin-bottom:14px;position:relative;z-index:1}
+#dl{width:9px;height:9px;border-radius:50%;background:var(--gold)}
+#dl.live{animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(244,200,115,.55)}70%{box-shadow:0 0 0 8px rgba(244,200,115,0)}100%{box-shadow:0 0 0 0 rgba(244,200,115,0)}}
+#ta{flex:1;min-width:0}
+#ey{font-size:10px;letter-spacing:.14em;color:var(--rose);font-weight:700;text-transform:uppercase}
+#wn{font-family:'Noto Serif KR',serif;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dr{display:flex;align-items:center;gap:14px;margin-bottom:14px;position:relative;z-index:1}
+#dw{width:64px;height:64px;flex-shrink:0;position:relative}
+#disc{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 50% 50%,var(--plum) 0 14%,transparent 14.5%),repeating-radial-gradient(circle,#1c1428 0,#1c1428 2px,#2a1f3a 2px,#2a1f3a 4px);border:3px solid var(--gold);box-shadow:0 4px 14px rgba(0,0,0,.4)}
+#disc.spin{animation:spin 3.2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#dc{position:absolute;top:50%;left:50%;width:14px;height:14px;transform:translate(-50%,-50%);background:var(--amber);border-radius:50%;border:2px solid var(--plum)}
+#ni{flex:1;min-width:0}
+#nl{font-size:10px;color:var(--rose);font-weight:700;letter-spacing:.08em;margin-bottom:2px}
+#nt{font-family:'Noto Serif KR',serif;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px}
+#nk{font-size:11px;color:rgba(244,237,224,.6)}
+#pt{position:relative;z-index:1;height:3px;background:rgba(244,237,224,.15);border-radius:99px;margin-bottom:14px;overflow:hidden}
+#pf{height:100%;width:0%;background:linear-gradient(90deg,var(--amber),var(--gold));border-radius:99px;transition:width .25s linear}
+#cr{display:flex;align-items:center;justify-content:center;gap:10px;position:relative;z-index:1;margin-bottom:12px}
+.cb{background:rgba(244,237,224,.08);border:1px solid var(--line);color:var(--cream);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s}
+.cb:hover{background:rgba(244,237,224,.18);transform:translateY(-1px)}
+.cb svg{width:14px;height:14px}
+#pbtn{width:46px;height:46px;background:linear-gradient(135deg,var(--amber),var(--rose));border:none;box-shadow:0 6px 16px rgba(232,147,90,.35)}
+#pbtn svg{width:18px;height:18px}
+#mr{display:flex;justify-content:center;gap:8px;position:relative;z-index:1;margin-bottom:4px}
+.mc{font-size:10px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:rgba(244,237,224,.05);color:rgba(244,237,224,.65);cursor:pointer;font-weight:600;transition:.15s}
+.mc.on{background:linear-gradient(135deg,var(--amber),var(--gold));color:var(--plum);border-color:transparent}
+#cnt{text-align:center;font-size:10px;color:rgba(244,237,224,.4);margin-top:10px;position:relative;z-index:1}
+#toast{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(232,147,90,.9);color:var(--plum);font-size:11px;font-weight:700;padding:6px 14px;border-radius:99px;z-index:10;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none}
+#toast.show{opacity:1}
+#hp{position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden}
 </style>
 </head>
 <body>
-
-<div id="widget">
-  <div id="head">
-    <div id="dial"></div>
-    <div id="title-area">
-      <div id="eyebrow">NOW STREAMING</div>
-      <div id="wname">pomiai 쇼츠 라디오</div>
-    </div>
+<div id="w">
+  <div id="hd"><div id="dl"></div><div id="ta"><div id="ey">NOW STREAMING</div><div id="wn">pomiai 쇼츠 라디오</div></div></div>
+  <div id="dr"><div id="dw"><div id="disc"><div id="dc"></div></div></div>
+    <div id="ni"><div id="nl">현재 곡</div><div id="nt">—</div><div id="nk">0 / 88</div></div></div>
+  <div id="pt"><div id="pf"></div></div>
+  <div id="cr">
+    <button class="cb" id="pb" title="이전"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+    <button class="cb" id="pbtn" title="재생"><svg id="pi" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+    <button class="cb" id="nb" title="다음"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg></button>
   </div>
-
-  <div id="disc-row">
-    <div id="disc-wrap">
-      <div id="disc"><div id="disc-center"></div></div>
-    </div>
-    <div id="now-info">
-      <div id="now-label">현재 곡</div>
-      <div id="now-title">—</div>
-      <div id="now-track">0 / 0</div>
-    </div>
+  <div id="mr">
+    <button class="mc on" id="m-la">전체반복</button>
+    <button class="mc" id="m-lo">1곡반복</button>
+    <button class="mc" id="m-sh">랜덤</button>
   </div>
-
-  <div id="progress-track"><div id="progress-fill"></div></div>
-
-  <div id="controls">
-    <button class="ctrl-btn" id="prev-btn" title="이전">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
-    </button>
-    <button class="ctrl-btn" id="play-btn" title="재생">
-      <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-    </button>
-    <button class="ctrl-btn" id="next-btn" title="다음">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg>
-    </button>
-  </div>
-
-  <div id="mode-row">
-    <button class="mode-chip on" id="mode-loop-all">전체반복</button>
-    <button class="mode-chip" id="mode-loop-one">1곡반복</button>
-    <button class="mode-chip" id="mode-shuffle">랜덤</button>
-  </div>
-
-  <div id="counter"><span id="counter-text">0 / 0</span></div>
+  <div id="cnt"><span id="ct">0 / 88</span></div>
   <div id="toast"></div>
 </div>
-
-<div id="hidden-player"><div id="yt-player"></div></div>
-
+<div id="hp"><div id="yt-player"></div></div>
 <script>
-/* ============================================================
-   쇼츠 데이터
-   ▼ videoId: "" → 실제 YouTube 쇼츠 영상 ID로 교체
-   예) "dQw4w9WgXcQ"  (유튜브 URL의 v= 또는 shorts/ 뒤 11자리)
-   ============================================================ */
-const SHORTS = [
-  { videoId: "", title: "pomiai shorts 01" },
-  { videoId: "", title: "pomiai shorts 02" },
-  { videoId: "", title: "pomiai shorts 03" },
-  { videoId: "", title: "pomiai shorts 04" },
-  { videoId: "", title: "pomiai shorts 05" },
-  { videoId: "", title: "pomiai shorts 06" },
-  { videoId: "", title: "pomiai shorts 07" },
-  { videoId: "", title: "pomiai shorts 08" },
-  { videoId: "", title: "pomiai shorts 09" },
-  { videoId: "", title: "pomiai shorts 10" },
-  { videoId: "", title: "pomiai shorts 11" },
-  { videoId: "", title: "pomiai shorts 12" },
-  { videoId: "", title: "pomiai shorts 13" },
-  { videoId: "", title: "pomiai shorts 14" },
-  { videoId: "", title: "pomiai shorts 15" },
-  { videoId: "", title: "pomiai shorts 16" },
-  { videoId: "", title: "pomiai shorts 17" },
-  { videoId: "", title: "pomiai shorts 18" },
-  { videoId: "", title: "pomiai shorts 19" },
-  { videoId: "", title: "pomiai shorts 20" },
-  { videoId: "", title: "pomiai shorts 21" },
-  { videoId: "", title: "pomiai shorts 22" },
-  { videoId: "", title: "pomiai shorts 23" },
-  { videoId: "", title: "pomiai shorts 24" },
-  { videoId: "", title: "pomiai shorts 25" },
-  { videoId: "", title: "pomiai shorts 26" },
-  { videoId: "", title: "pomiai shorts 27" },
-  { videoId: "", title: "pomiai shorts 28" },
-  { videoId: "", title: "pomiai shorts 29" },
-  { videoId: "", title: "pomiai shorts 30" },
-  { videoId: "", title: "pomiai shorts 31" },
-  { videoId: "", title: "pomiai shorts 32" },
-  { videoId: "", title: "pomiai shorts 33" },
-  { videoId: "", title: "pomiai shorts 34" },
-  { videoId: "", title: "pomiai shorts 35" },
-  { videoId: "", title: "pomiai shorts 36" },
-  { videoId: "", title: "pomiai shorts 37" },
-  { videoId: "", title: "pomiai shorts 38" },
-  { videoId: "", title: "pomiai shorts 39" },
-  { videoId: "", title: "pomiai shorts 40" }
-];
-
-/* ============================================================
-   유효한 트랙만 필터링
-   ============================================================ */
-const VALID = SHORTS.filter(s => s.videoId.trim() !== "");
-
-/* ============================================================
-   상태
-   ============================================================ */
-let player = null;
-let playerReady = false;
-let curIdx = 0;       // VALID 배열 기준 인덱스
-let isPlaying = false;
-let playMode = 'loop_all';
-let shuffleOrder = [], shufflePos = 0;
-let progressTimer = null;
-
-const $ = id => document.getElementById(id);
-
-/* ============================================================
-   유틸
-   ============================================================ */
-function showToast(msg) {
-  const t = $('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._tid);
-  t._tid = setTimeout(() => t.classList.remove('show'), 2400);
-}
-
-function buildShuffleOrder() {
-  shuffleOrder = VALID.map((_, i) => i).sort(() => Math.random() - 0.5);
-  shufflePos = Math.max(0, shuffleOrder.indexOf(curIdx));
-}
-
-function setMode(mode) {
-  playMode = mode;
-  $('mode-loop-all').classList.toggle('on', mode === 'loop_all');
-  $('mode-loop-one').classList.toggle('on', mode === 'loop_one');
-  $('mode-shuffle').classList.toggle('on', mode === 'shuffle');
-  if (mode === 'shuffle') buildShuffleOrder();
-}
-
-function nextIndex() {
-  if (!VALID.length) return 0;
-  if (playMode === 'loop_one') return curIdx;
-  if (playMode === 'shuffle') {
-    if (!shuffleOrder.length) buildShuffleOrder();
-    shufflePos = (shufflePos + 1) % shuffleOrder.length;
-    if (shufflePos === 0) buildShuffleOrder();
-    return shuffleOrder[shufflePos];
-  }
-  return (curIdx + 1) % VALID.length;
-}
-
-function prevIndex() {
-  if (!VALID.length) return 0;
-  if (playMode === 'shuffle') {
-    if (!shuffleOrder.length) buildShuffleOrder();
-    shufflePos = (shufflePos - 1 + shuffleOrder.length) % shuffleOrder.length;
-    return shuffleOrder[shufflePos];
-  }
-  return (curIdx - 1 + VALID.length) % VALID.length;
-}
-
-/* ============================================================
-   UI 업데이트
-   ============================================================ */
-function updateNowInfo() {
-  if (!VALID.length) {
-    $('now-title').textContent = 'ID를 입력하면 재생돼요';
-    $('now-track').textContent = '0 / 0';
-    $('counter-text').textContent = '0 / 0';
-    return;
-  }
-  const track = VALID[curIdx];
-  $('now-title').textContent = track.title;
-  $('now-track').textContent = `${curIdx + 1} / ${VALID.length}`;
-  $('counter-text').textContent = `${curIdx + 1} / ${VALID.length}`;
-}
-
-function setPlayingUI(playing) {
-  isPlaying = playing;
-  $('disc').classList.toggle('spin', playing);
-  $('dial').classList.toggle('live', playing);
-  $('play-icon').innerHTML = playing
-    ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>'
-    : '<path d="M8 5v14l11-7z"/>';
-}
-
-function updateProgress() {
-  if (!player || !playerReady || !isPlaying) return;
-  try {
-    const dur = player.getDuration() || 27;
-    const cur = player.getCurrentTime() || 0;
-    $('progress-fill').style.width = Math.min(100, (cur / dur) * 100) + '%';
-  } catch(e) {}
-}
-
-/* ============================================================
-   플레이어 제어
-   ============================================================ */
-function loadAndPlay(idx) {
-  if (!VALID.length) { showToast('📋 먼저 videoId를 입력해주세요'); return; }
-  curIdx = idx;
-  updateNowInfo();
-  if (player && playerReady) {
-    player.loadVideoById(VALID[curIdx].videoId);
-  }
-}
-
-function togglePlay() {
-  if (!VALID.length) { showToast('📋 먼저 videoId를 입력해주세요'); return; }
-  if (!playerReady) { showToast('⏳ 플레이어 준비 중...'); return; }
-  if (isPlaying) {
-    player.pauseVideo();
-  } else {
-    if (player.getVideoUrl && player.getVideoUrl().includes('v=')) {
-      player.playVideo();
-    } else {
-      player.loadVideoById(VALID[curIdx].videoId);
-    }
-  }
-}
-
-/* ============================================================
-   YouTube IFrame API 콜백 (페이지 로드 시 자동 호출됨)
-   ============================================================ */
-window.onYouTubeIframeAPIReady = function() {
-  player = new YT.Player('yt-player', {
-    height: '1', width: '1',
-    playerVars: { playsinline: 1, controls: 0, modestbranding: 1, rel: 0 },
-    events: {
-      onReady: function() {
-        playerReady = true;
-        // 첫 번째 유효한 트랙 로드만 해두고 재생은 안 함 (사용자 클릭 대기)
-        if (VALID.length) {
-          player.cueVideoById(VALID[0].videoId);
-        }
-        updateNowInfo();
-        progressTimer = setInterval(updateProgress, 250);
-      },
-      onStateChange: function(e) {
-        if (e.data === YT.PlayerState.PLAYING)  setPlayingUI(true);
-        if (e.data === YT.PlayerState.PAUSED)   setPlayingUI(false);
-        if (e.data === YT.PlayerState.ENDED)    loadAndPlay(nextIndex());
-        if (e.data === YT.PlayerState.BUFFERING) setPlayingUI(true);
-      }
-    }
-  });
+const SHORTS=[
+  { videoId:"FdICSw7ibuE", title:"별보다 작은 목소리" },
+  { videoId:"fWksp6t0S2g", title:"फॉर्चून मेनिया" },
+  { videoId:"qLQUFtFKpDc", title:"命运狂热" },
+  { videoId:"3uuBE2OEaeE", title:"Manie de la Fortune" },
+  { videoId:"IOyrLDc87Y0", title:"Schicksals-Mania" },
+  { videoId:"ExXW_ZgiJCg", title:"Mania da Sorte" },
+  { videoId:"DbfDqmSy3Yg", title:"Manía del Destino" },
+  { videoId:"UBg4H7KPYYs", title:"フォーチュンマニア" },
+  { videoId:"xPYlw7L6izU", title:"Fortune Mania" },
+  { videoId:"9BJYON0dlyM", title:"Jingle Bells in July" },
+  { videoId:"2ysQOSZ1KTM", title:"포춘 쿠키" },
+  { videoId:"J3UNqUr1nY8", title:"ジングルベル燃え" },
+  { videoId:"LQFpr-1NuyE", title:"한여름 징글벨" },
+  { videoId:"teUZXRygyRY", title:"나만 아는 사랑 이야기 (Male Ver.)" },
+  { videoId:"vanwV8FSPGs", title:"Awakening Heart_ Mantra of Compassion, Pt. 2 (천수경 Part 2 New Age)" },
+  { videoId:"voixWMiQ1Ic", title:"Mantra of Compassion, Pt. 1 (천수경 Part 1 New Age)" },
+  { videoId:"Iuf0OwHGVJs", title:"The Heart Sutra_ Cosmic Emptiness (반야심경 Ambient Meditation)" },
+  { videoId:"VWs8CdkKfE0", title:"Sutra of the Earth Store_ Infinite Vows (지장경 New Age)" },
+  { videoId:"RqApmt66EuI", title:"The Flower Adornment Sutra_ Universal Harmony (화엄경 Symphony)" },
+  { videoId:"GQtyJREF7Ng", title:"Dhammapada_ Verses of Wisdom (법구경 Chill & Relax)" },
+  { videoId:"GdHEU5qCEoU", title:"The Lotus Sutra_ Sacred Awakening (법화경 Meditation)" },
+  { videoId:"v4V1N8FGXxo", title:"먼지 속 아기 웃음" },
+  { videoId:"bX5VofvZoZ8", title:"반전의 반전 (Male Club Mix) (Radiio Edit)" },
+  { videoId:"Xhr5lSJumfU", title:"반전의 반전 (Male Club Mix)" },
+  { videoId:"CBjRXhYt4U0", title:"반전의 반전 (Female Club Mix) (Radio Edit)" },
+  { videoId:"qRV4SmKB4VQ", title:"반전의 반전 (Female Club Mix)" },
+  { videoId:"qj6sYNXsGj0", title:"반전의 반전" },
+  { videoId:"e45RhyR-PVg", title:"나만 아는 사랑 이야기 (Radio Edit)" },
+  { videoId:"eh85pp3CzP8", title:"나만 아는 사랑 이야기" },
+  { videoId:"zMivW2GPNGI", title:"나만의 아침 (Radio Edit)" },
+  { videoId:"TRSn6f1Q3Mg", title:"나만의 아침" },
+  { videoId:"bZobwxiJfls", title:"오예스 머리흔들 (Radio Edit)" },
+  { videoId:"bmN13mdZbOs", title:"오예스 머리흔들" },
+  { videoId:"IzMj8JiGjiA", title:"나에게 아름다운 시" },
+  { videoId:"VZin24yDR-w", title:"마이 라이징 스타 (Dance Ver.)" },
+  { videoId:"Kbziq1lMb8M", title:"ライジングスター" },
+  { videoId:"maeG85XMhCE", title:"MY RISING START" },
+  { videoId:"lGS0-vn-WT8", title:"마이 라이징 스타" },
+  { videoId:"BE37iUlU-nQ", title:"미운 일곱 혁명가" },
+  { videoId:"AzbH7JZ8Gzc", title:"할아버지 낭만 수첩" },
+  { videoId:"_wOmvgCnNpk", title:"자석의 거리감" },
+  { videoId:"J2YB1GAmGpU", title:"良心1等級 SOS (양심 1등급 SOS) [Japanese Male Ver.]" },
+  { videoId:"lumMd5hpzTk", title:"良心1等級 SOS (양심 1등급 SOS) (Radio Edit) [Japanese Female Ver.]" },
+  { videoId:"pjCzBhzUwcw", title:"양심 1등급 SOS [Female Ver.]" },
+  { videoId:"lOgTXfeWV5w", title:"양심 1등급 SOS" },
+  { videoId:"g6XenYaqCQo", title:"纯度百分之百的真货 (백프로 진국) (Radio Edit) [Chinese ver.]" },
+  { videoId:"bl5vh-138JA", title:"纯度百分之百的真货 (백프로 진국) [Chinese ver.]" },
+  { videoId:"6pfDiN7iOF0", title:"純情100% (백프로 진국) (Radio Edit) [Japanese Ver.]" },
+  { videoId:"krxYHmCJQm8", title:"노란 장판 갬성 (Radio Edit) [Indie Rock Female Ver.]" },
+  { videoId:"FcUvYW_kaUQ", title:"노란 장판 갬성 [Indie Rock Female Ver.]" },
+  { videoId:"M6T1nH0QIWY", title:"노란 장판 갬성 (Radio Edit) [Indie Rock Male Ver.]" },
+  { videoId:"AxZXizF2FcY", title:"노란 장판 갬성 [Indie Rock Male Ver.]" },
+  { videoId:"QeTlhqtIbMQ", title:"노란 장판 갬성 [Ballad Ver.]" },
+  { videoId:"dwboUVPhPz8", title:"서울 뚝 배기" },
+  { videoId:"DM2EzAZ1ws4", title:"서울 뚝 배기 (Radio Edit)" },
+  { videoId:"AYb9gmVwSMc", title:"오구 울엄마" },
+  { videoId:"cOUb1V-fRJ0", title:"오구 울엄마 (Radio Edit)" },
+  { videoId:"H2QFv4KnbGc", title:"비밀 통장 다이아 (Radio Edit) [Idol Dance Ver.]" },
+  { videoId:"GjvlGAQVMyE", title:"비밀 통장 다이아 [Idol Dance Ver.]" },
+  { videoId:"cgqdm5K08Vo", title:"비밀 통장 다이아" },
+  { videoId:"DB4H-IEK5IY", title:"백프로 진국 (Radio Edit)" },
+  { videoId:"VZA9JZKwrek", title:"백프로 진국" },
+  { videoId:"lj2-tKM5Ejk", title:"The Away Couldn't I Receipt Throw (捨てられなかったレシート) [Japan Ver.]" },
+  { videoId:"9hTqAwmMzME", title:"The Away Couldn't I Receipt Throw (서랍 속의 영수증) [Korean Ver.]" },
+  { videoId:"pgXbOfQk2eo", title:"Heaven Inside (Korean Ver.)" },
+  { videoId:"lOC___ZmD5E", title:"먼지 레코드 (Dusty Records Shelf)" },
+  { videoId:"V5aaFub0KW0", title:"먼지 레코드 (Dusty Records Shelf) (Radio Edit)" },
+  { videoId:"3-SjZuX7MRQ", title:"Dusty Records Shelf (먼지 레코드) (Radio Edit) [English Version]" },
+  { videoId:"7QdYXDoAkPM", title:"Dusty Records Shelf (먼지 레코드) [English Version]" },
+  { videoId:"vo_EmEauyuY", title:"Silver Screen Fade (Radio Edit)" },
+  { videoId:"T11X0g9q2GA", title:"Silver Screen Fade" },
+  { videoId:"jv8SuZyjibw", title:"Heaven Inside (Radio Edit)" },
+  { videoId:"CUh813rWllg", title:"Heaven Inside" },
+  { videoId:"q7qdc18LFGU", title:"Porch Light Years" },
+  { videoId:"ktJyaSKvhSc", title:"Porch Light Years (Radio Edit)" },
+  { videoId:"1sj65Pwrl4g", title:"The Away Couldn't I Receipt Throw(Acoustic Folk Ver.)" },
+  { videoId:"NZSuMdHW-xY", title:"ジングルベル燃え (Radio Edit)" },
+  { videoId:"-nc3ZbJOijM", title:"マイ・ライジングスター (Radio Ver.)" },
+  { videoId:"ul3AIbkn1b8", title:"MY RISING START (Radio Ver.)" },
+  { videoId:"-lF4e80z5hA", title:"미운 일곱 혁명가 (Radio Ver.)" },
+  { videoId:"CkgvXIxrGoY", title:"良心1等級 SOS (양심 1등급 SOS) (Radio Edit) [Japanese Male Ver.]" },
+  { videoId:"a8uhLsbibPQ", title:"良心1等級 SOS (양심 1등급 SOS) [Japanese Female Ver.]" },
+  { videoId:"hrwB2DDF2Mw", title:"أصل مئة بالمئة (백프로 진국) [Arabic ver.]" },
+  { videoId:"xCdH7fOWD3w", title:"أصل مئة بالمئة (Radio Edit) [백프로진국 Arabic ver.]" },
+  { videoId:"ZUqxZEJBhTM", title:"純情100% (백프로 진국) (Radio Edit) [Japanese Ver.]" },
+  { videoId:"0pr_EFVwDzk", title:"노란 장판 갬성 (Radio Edit) [Ballad Ver.]" },
+  { videoId:"EbuWHGRTt0M", title:"비밀 통장 다이아 (Radio Edit)" },
+  { videoId:"DA5_ufpcLAQ", title:"The Away Couldn't I Receipt Throw(Soft Lock Pop Ver.)" }];
+const VALID=SHORTS.filter(s=>s.videoId.trim()!=="");
+let player=null,ready=false,ci=0,playing=false,mode='la';
+let so=[],sp=0,ptimer=null;
+const $=id=>document.getElementById(id);
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+function bso(){so=VALID.map((_,i)=>i).sort(()=>Math.random()-.5);sp=Math.max(0,so.indexOf(ci));}
+function ni2(){if(!VALID.length)return 0;if(mode==='lo')return ci;if(mode==='sh'){if(!so.length)bso();sp=(sp+1)%so.length;if(sp===0)bso();return so[sp];}return(ci+1)%VALID.length;}
+function pi2(){if(!VALID.length)return 0;if(mode==='sh'){if(!so.length)bso();sp=(sp-1+so.length)%so.length;return so[sp];}return(ci-1+VALID.length)%VALID.length;}
+function sm(m){mode=m;$('m-la').classList.toggle('on',m==='la');$('m-lo').classList.toggle('on',m==='lo');$('m-sh').classList.toggle('on',m==='sh');if(m==='sh')bso();}
+function ui(){if(!VALID.length){$('nt').textContent='재생 목록 없음';return;}const t=VALID[ci];$('nt').textContent=t.title;$('nk').textContent=(ci+1)+' / '+VALID.length;$('ct').textContent=(ci+1)+' / '+VALID.length;}
+function spu(p){playing=p;$('disc').classList.toggle('spin',p);$('dl').classList.toggle('live',p);$('pi').innerHTML=p?'<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>':'<path d="M8 5v14l11-7z"/>';}
+function uprog(){if(!player||!ready||!playing)return;try{const d=player.getDuration()||27,c=player.getCurrentTime()||0;$('pf').style.width=Math.min(100,c/d*100)+'%';}catch(e){}}
+function lap(vi){if(!VALID.length)return;ci=vi;ui();if(player&&ready)player.loadVideoById(VALID[ci].videoId);}
+function tp(){if(!VALID.length){toast('등록된 영상이 없어요');return;}if(!ready){toast('⏳ 준비 중...');return;}if(playing){player.pauseVideo();}else{try{const s=player.getPlayerState();(s===-1||s===5)?player.loadVideoById(VALID[ci].videoId):player.playVideo();}catch(e){player.loadVideoById(VALID[ci].videoId);}}}
+window.onYouTubeIframeAPIReady=function(){
+  player=new YT.Player('yt-player',{height:'1',width:'1',playerVars:{playsinline:1,controls:0,modestbranding:1,rel:0},
+  events:{
+    onReady:function(){ready=true;if(VALID.length)player.cueVideoById(VALID[0].videoId);ptimer=setInterval(uprog,250);ui();},
+    onStateChange:function(e){if(e.data===YT.PlayerState.PLAYING)spu(true);if(e.data===YT.PlayerState.PAUSED)spu(false);if(e.data===YT.PlayerState.ENDED)lap(ni2());}
+  }});
 };
-
-/* ============================================================
-   이벤트 바인딩
-   ============================================================ */
-$('play-btn').addEventListener('click', togglePlay);
-$('next-btn').addEventListener('click', () => loadAndPlay(nextIndex()));
-$('prev-btn').addEventListener('click', () => loadAndPlay(prevIndex()));
-$('mode-loop-all').addEventListener('click', () => setMode('loop_all'));
-$('mode-loop-one').addEventListener('click', () => setMode('loop_one'));
-$('mode-shuffle').addEventListener('click', () => setMode('shuffle'));
-
-/* 초기화 */
-updateNowInfo();
-setMode('loop_all');
+$('pbtn').addEventListener('click',tp);
+$('pb').addEventListener('click',()=>{if(VALID.length)lap(pi2());});
+$('nb').addEventListener('click',()=>{if(VALID.length)lap(ni2());});
+$('m-la').addEventListener('click',()=>sm('la'));
+$('m-lo').addEventListener('click',()=>sm('lo'));
+$('m-sh').addEventListener('click',()=>sm('sh'));
+sm('la');ui();
 </script>
 </body>
 </html>
