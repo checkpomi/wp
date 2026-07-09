@@ -4,465 +4,338 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="page-title">포미 음악 플레이어 | pomiai Music</title>
-<meta name="description" content="pomiai의 AI 작곡 음악 30곡. 발라드, 디스코펑크, 명상 음악까지 한 곳에서 감상하세요.">
+<meta name="description" content="pomiai의 AI 작곡 음악 150곡. 발라드, K-pop, 디스코펑크, 명상 음악까지 한 곳에서 감상하세요.">
 <link rel="canonical" href="https://checkpomi.com/pomi-music-player/">
 <meta property="og:title" content="포미 음악 플레이어 | pomiai Music">
-<meta property="og:description" content="pomiai의 AI 작곡 음악 30곡을 한 곳에서. 전체/한곡 반복, 랜덤 재생.">
+<meta property="og:description" content="pomiai AI 작곡 음악 전체 재생목록. 150곡을 라디오처럼 들어보세요.">
 <meta property="og:type" content="music.playlist">
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "MusicPlaylist",
-  "name": "포미 음악 플레이어",
-  "description": "pomiai AI 작곡 음악 30곡 전체 재생목록",
-  "url": "https://checkpomi.com/pomi-music-player/",
-  "numTracks": 30,
-  "creator": { "@type": "Person", "name": "pomiai" }
-}
+{"@context":"https://schema.org","@type":"MusicPlaylist","name":"포미 음악 플레이어","description":"pomiai AI 작곡 음악 150곡 전체 재생목록","url":"https://checkpomi.com/pomi-music-player/","numTracks":150,"creator":{"@type":"Person","name":"pomiai"}}
 </script>
-<!-- YouTube IFrame API: 페이지 로드 시 즉시 준비 -->
 <script src="https://www.youtube.com/iframe_api"></script>
 <style>
-  :root{
-    --plum:#2b1f3d;--plum2:#3a2a52;--plum-deep:#1c1428;
-    --amber:#e8935a;--gold:#f4c873;--cream:#f4ede0;--rose:#d8788f;
-    --line:rgba(244,237,224,.12);
-    --font-d:'Noto Serif KR',serif;
-    --font-b:'Noto Sans KR',-apple-system,sans-serif;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:var(--plum-deep);font-family:var(--font-b);color:var(--cream)}
-  #page{max-width:920px;margin:0 auto;padding:32px 20px 80px}
-
-  /* HERO */
-  #hero{
-    position:relative;border-radius:28px;overflow:hidden;
-    background:radial-gradient(circle at 18% 22%,rgba(232,147,90,.28),transparent 55%),
-               linear-gradient(150deg,var(--plum) 0%,var(--plum2) 55%,#241934 100%);
-    padding:36px 32px 32px;margin-bottom:28px;border:1px solid var(--line);
-  }
-  #hero-eyebrow{font-size:11px;letter-spacing:.18em;color:var(--rose);font-weight:700;text-transform:uppercase;margin-bottom:10px}
-  #hero h1{font-family:var(--font-d);font-size:clamp(24px,4vw,36px);margin:0 0 8px;font-weight:700}
-  #hero p{font-size:14px;color:rgba(244,237,224,.72);max-width:520px;line-height:1.7;margin:0}
-
-  /* DECK */
-  #deck{display:flex;gap:24px;align-items:center;margin-top:28px;flex-wrap:wrap}
-  #disc-wrap{width:120px;height:120px;flex-shrink:0;position:relative}
-  #tonearm{
-    position:absolute;top:-14px;right:-6px;width:58px;height:58px;
-    transform-origin:88% 10%;transform:rotate(-22deg);transition:transform .5s ease;z-index:2;pointer-events:none;
-  }
-  #tonearm.active{transform:rotate(4deg)}
-  #disc{
-    width:120px;height:120px;border-radius:50%;
-    background:radial-gradient(circle at 50% 50%,var(--plum) 0 13%,transparent 13.5%),
-               repeating-radial-gradient(circle,#1c1428 0,#1c1428 3px,#2a1f3a 3px,#2a1f3a 7px);
-    border:5px solid var(--gold);box-shadow:0 10px 30px rgba(0,0,0,.45);
-  }
-  #disc.spin{animation:spin 3.4s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  #disc-center{position:absolute;top:50%;left:50%;width:22px;height:22px;transform:translate(-50%,-50%);background:var(--amber);border-radius:50%;border:3px solid var(--plum-deep)}
-
-  #now-info{flex:1;min-width:200px}
-  #now-eyebrow{font-size:10px;color:var(--rose);font-weight:700;letter-spacing:.1em;margin-bottom:4px}
-  #now-title{font-family:var(--font-d);font-size:22px;font-weight:700;margin-bottom:5px}
-  #now-sub{font-size:12px;color:rgba(244,237,224,.5)}
-
-  #progress-row{display:flex;align-items:center;gap:10px;margin-top:14px}
-  #progress-track{flex:1;height:4px;background:rgba(244,237,224,.15);border-radius:99px;overflow:hidden;cursor:pointer;position:relative}
-  #progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--amber),var(--gold));border-radius:99px;transition:width .25s linear}
-  .time-lbl{font-size:10px;color:rgba(244,237,224,.5);min-width:34px;text-align:center}
-
-  #controls-row{display:flex;align-items:center;gap:12px;margin-top:16px;flex-wrap:wrap}
-  .ctrl-btn{
-    background:rgba(244,237,224,.08);border:1px solid var(--line);color:var(--cream);
-    width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    cursor:pointer;transition:.18s;
-  }
-  .ctrl-btn:hover{background:rgba(244,237,224,.18);transform:translateY(-1px)}
-  .ctrl-btn svg{width:16px;height:16px}
-  #play-btn{
-    width:54px;height:54px;background:linear-gradient(135deg,var(--amber),var(--rose));
-    border:none;box-shadow:0 8px 20px rgba(232,147,90,.35);
-  }
-  #play-btn svg{width:22px;height:22px}
-  .mode-chip{
-    font-size:11px;padding:7px 14px;border-radius:99px;border:1px solid var(--line);
-    background:rgba(244,237,224,.05);color:rgba(244,237,224,.65);cursor:pointer;font-weight:600;transition:.15s;
-  }
-  .mode-chip.on{background:linear-gradient(135deg,var(--amber),var(--gold));color:var(--plum-deep);border-color:transparent}
-  #mode-group{display:flex;gap:8px;margin-left:auto}
-
-  /* TOOLBAR */
-  #toolbar{display:flex;gap:10px;align-items:center;margin:32px 0 14px;flex-wrap:wrap}
-  #search-input{
-    flex:1;min-width:160px;background:rgba(244,237,224,.06);border:1px solid var(--line);
-    color:var(--cream);border-radius:12px;padding:10px 14px;font-size:13px;outline:none;
-  }
-  #search-input::placeholder{color:rgba(244,237,224,.38)}
-  #search-input:focus{border-color:rgba(232,147,90,.5)}
-  #track-count{font-size:12px;color:rgba(244,237,224,.45);white-space:nowrap}
-
-  /* PLAYLIST */
-  #playlist{display:flex;flex-direction:column;gap:5px}
-  .track-row{
-    display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:13px;
-    background:rgba(244,237,224,.03);border:1px solid transparent;cursor:pointer;transition:.15s;
-  }
-  .track-row:hover{background:rgba(244,237,224,.08)}
-  .track-row.active{
-    background:linear-gradient(90deg,rgba(232,147,90,.16),rgba(244,200,115,.05));
-    border-color:rgba(244,200,115,.28);
-  }
-  .track-row.no-id{opacity:.45;cursor:default}
-  .track-num{font-size:12px;color:rgba(244,237,224,.38);width:26px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
-  .track-row.active .track-num{color:var(--gold)}
-  .track-eq{width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .track-main{flex:1;min-width:0}
-  .track-title{font-family:var(--font-d);font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .track-badge{
-    display:inline-block;font-size:10px;padding:1px 7px;border-radius:99px;margin-left:6px;
-    background:rgba(216,120,143,.25);color:var(--rose);font-weight:600;vertical-align:middle;
-  }
-  .track-meta{font-size:11px;color:rgba(244,237,224,.4);margin-top:2px}
-  .track-dur{font-size:11px;color:rgba(244,237,224,.35);flex-shrink:0;font-variant-numeric:tabular-nums}
-
-  #no-results{text-align:center;padding:40px 20px;color:rgba(244,237,224,.35);font-size:14px}
-
-  /* HIDDEN PLAYER */
-  #hidden-player{position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden}
-
-  @media(max-width:560px){
-    #deck{flex-direction:column;align-items:flex-start}
-    #mode-group{margin-left:0;width:100%;justify-content:flex-start}
-    #hero{padding:28px 20px 24px}
-  }
+:root{--plum:#2b1f3d;--plum2:#3a2a52;--deep:#1c1428;--amber:#e8935a;--gold:#f4c873;--cream:#f4ede0;--rose:#d8788f;--line:rgba(244,237,224,.12);--fd:'Noto Serif KR',serif;--fb:'Noto Sans KR',-apple-system,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--deep);font-family:var(--fb);color:var(--cream)}
+#page{max-width:960px;margin:0 auto;padding:28px 16px 80px}
+#hero{position:relative;border-radius:24px;overflow:hidden;background:radial-gradient(circle at 16% 22%,rgba(232,147,90,.26),transparent 52%),linear-gradient(148deg,var(--plum) 0%,var(--plum2) 55%,#241934 100%);padding:32px 28px 28px;margin-bottom:24px;border:1px solid var(--line)}
+#eyebrow{font-size:10px;letter-spacing:.18em;color:var(--rose);font-weight:700;text-transform:uppercase;margin-bottom:8px}
+#hero h1{font-family:var(--fd);font-size:clamp(22px,3.5vw,34px);margin:0 0 7px;font-weight:700}
+#hero p{font-size:13px;color:rgba(244,237,224,.7);max-width:500px;line-height:1.7;margin:0}
+#deck{display:flex;gap:20px;align-items:center;margin-top:24px;flex-wrap:wrap}
+#disc-wrap{width:108px;height:108px;flex-shrink:0;position:relative}
+#tonearm{position:absolute;top:-12px;right:-4px;width:52px;height:52px;transform-origin:88% 10%;transform:rotate(-22deg);transition:transform .5s ease;z-index:2;pointer-events:none}
+#tonearm.active{transform:rotate(4deg)}
+#disc{width:108px;height:108px;border-radius:50%;background:radial-gradient(circle at 50% 50%,var(--plum) 0 13%,transparent 13.5%),repeating-radial-gradient(circle,#1c1428 0,#1c1428 3px,#2a1f3a 3px,#2a1f3a 7px);border:4px solid var(--gold);box-shadow:0 8px 24px rgba(0,0,0,.45)}
+#disc.spin{animation:spin 3.4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#disc-c{position:absolute;top:50%;left:50%;width:20px;height:20px;transform:translate(-50%,-50%);background:var(--amber);border-radius:50%;border:3px solid var(--deep)}
+#ni{flex:1;min-width:180px}
+#neyebrow{font-size:10px;color:var(--rose);font-weight:700;letter-spacing:.1em;margin-bottom:3px}
+#ntitle{font-family:var(--fd);font-size:20px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:480px}
+#nsub{font-size:12px;color:rgba(244,237,224,.5)}
+#prog-row{display:flex;align-items:center;gap:9px;margin-top:12px}
+#prog-track{flex:1;height:4px;background:rgba(244,237,224,.15);border-radius:99px;overflow:hidden;cursor:pointer}
+#prog-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--amber),var(--gold));border-radius:99px;transition:width .25s linear}
+.tl{font-size:10px;color:rgba(244,237,224,.5);min-width:32px;text-align:center}
+#ctrl-row{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+.cb{background:rgba(244,237,224,.08);border:1px solid var(--line);color:var(--cream);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.16s}
+.cb:hover{background:rgba(244,237,224,.18);transform:translateY(-1px)}
+.cb svg{width:15px;height:15px}
+#pbtn{width:50px;height:50px;background:linear-gradient(135deg,var(--amber),var(--rose));border:none;box-shadow:0 6px 18px rgba(232,147,90,.32)}
+#pbtn svg{width:20px;height:20px}
+#mg{display:flex;gap:7px;margin-left:auto}
+.mc{font-size:11px;padding:6px 13px;border-radius:99px;border:1px solid var(--line);background:rgba(244,237,224,.05);color:rgba(244,237,224,.65);cursor:pointer;font-weight:600;transition:.14s}
+.mc.on{background:linear-gradient(135deg,var(--amber),var(--gold));color:var(--deep);border-color:transparent}
+#toolbar{display:flex;gap:9px;align-items:center;margin:28px 0 12px;flex-wrap:wrap}
+#si{flex:1;min-width:140px;background:rgba(244,237,224,.06);border:1px solid var(--line);color:var(--cream);border-radius:11px;padding:9px 13px;font-size:13px;outline:none}
+#si::placeholder{color:rgba(244,237,224,.38)}
+#si:focus{border-color:rgba(232,147,90,.5)}
+#tc{font-size:12px;color:rgba(244,237,224,.45);white-space:nowrap}
+#pl{display:flex;flex-direction:column;gap:4px}
+.tr{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:12px;background:rgba(244,237,224,.03);border:1px solid transparent;cursor:pointer;transition:.14s}
+.tr:hover{background:rgba(244,237,224,.08)}
+.tr.active{background:linear-gradient(90deg,rgba(232,147,90,.15),rgba(244,200,115,.04));border-color:rgba(244,200,115,.26)}
+.tn{font-size:11px;color:rgba(244,237,224,.38);width:28px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+.tr.active .tn{color:var(--gold)}
+.teq{width:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tm{flex:1;min-width:0}
+.tt{font-family:var(--fd);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb{display:inline-block;font-size:10px;padding:1px 6px;border-radius:99px;margin-left:5px;background:rgba(216,120,143,.22);color:var(--rose);font-weight:600;vertical-align:middle}
+.tmeta{font-size:11px;color:rgba(244,237,224,.38);margin-top:1px}
+#hidden-player{position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden}
+@media(max-width:540px){#deck{flex-direction:column;align-items:flex-start}#mg{margin-left:0}}
 </style>
 </head>
 <body>
 <div id="page">
-
-  <section id="hero">
-    <div id="hero-eyebrow">POMIAI MUSIC · AI COMPOSED · YOUTUBE</div>
-    <h1>포미 음악 플레이어</h1>
-    <p>AI와 함께 만든 pomiai의 노래 30곡. 발라드부터 디스코펑크, 명상 음악까지 — 라디오처럼 이어 들어보세요.</p>
-
-    <div id="deck">
-      <div id="disc-wrap">
-        <!-- 턴테이블 톤암 -->
-        <div id="tonearm">
-          <svg viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="8" r="6" fill="#f4c873" opacity=".9"/>
-            <line x1="50" y1="8" x2="8" y2="50" stroke="#f4ede0" stroke-width="2.5" stroke-linecap="round"/>
-            <circle cx="8" cy="50" r="4" fill="#e8935a"/>
-          </svg>
-        </div>
-        <div id="disc"><div id="disc-center"></div></div>
+<section id="hero">
+  <div id="eyebrow">POMIAI MUSIC · AI COMPOSED · YOUTUBE</div>
+  <h1>포미 음악 플레이어</h1>
+  <p>AI와 함께 만든 pomiai의 음악 전체 모음. 발라드부터 K-pop, 디스코펑크, 명상 음악까지 — 라디오처럼 이어 들어보세요.</p>
+  <div id="deck">
+    <div id="disc-wrap">
+      <div id="tonearm"><svg viewBox="0 0 54 54" fill="none"><circle cx="46" cy="8" r="6" fill="#f4c873" opacity=".9"/><line x1="46" y1="8" x2="8" y2="48" stroke="#f4ede0" stroke-width="2.5" stroke-linecap="round"/><circle cx="8" cy="48" r="4" fill="#e8935a"/></svg></div>
+      <div id="disc"><div id="disc-c"></div></div>
+    </div>
+    <div id="ni">
+      <div id="neyebrow">NOW PLAYING</div>
+      <div id="ntitle">—</div>
+      <div id="nsub">0 / 150</div>
+      <div id="prog-row">
+        <span class="tl" id="tc-cur">0:00</span>
+        <div id="prog-track"><div id="prog-fill"></div></div>
+        <span class="tl" id="tc-dur">—</span>
       </div>
-
-      <div id="now-info">
-        <div id="now-eyebrow">NOW PLAYING</div>
-        <div id="now-title">—</div>
-        <div id="now-sub">0 / 30</div>
-
-        <div id="progress-row">
-          <span class="time-lbl" id="time-cur">0:00</span>
-          <div id="progress-track"><div id="progress-fill"></div></div>
-          <span class="time-lbl" id="time-dur">—</span>
-        </div>
-
-        <div id="controls-row">
-          <button class="ctrl-btn" id="prev-btn" title="이전">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
-          </button>
-          <button class="ctrl-btn" id="play-btn" title="재생">
-            <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          </button>
-          <button class="ctrl-btn" id="next-btn" title="다음">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg>
-          </button>
-          <div id="mode-group">
-            <button class="mode-chip on" id="mode-loop-all">전체반복</button>
-            <button class="mode-chip" id="mode-loop-one">1곡반복</button>
-            <button class="mode-chip" id="mode-shuffle">랜덤</button>
-          </div>
+      <div id="ctrl-row">
+        <button class="cb" id="pb2" title="이전"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+        <button class="cb" id="pbtn" title="재생"><svg id="pi" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+        <button class="cb" id="nb2" title="다음"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg></button>
+        <div id="mg">
+          <button class="mc on" id="m-la">전체반복</button>
+          <button class="mc" id="m-lo">1곡반복</button>
+          <button class="mc" id="m-sh">랜덤</button>
         </div>
       </div>
     </div>
-  </section>
-
-  <div id="toolbar">
-    <input id="search-input" type="search" placeholder="곡 제목 검색...">
-    <span id="track-count">30곡</span>
   </div>
-
-  <div id="playlist"></div>
+</section>
+<div id="toolbar">
+  <input id="si" type="search" placeholder="곡 제목 검색...">
+  <span id="tc">150곡</span>
 </div>
-
+<div id="pl"></div>
+</div>
 <div id="hidden-player"><div id="yt-player"></div></div>
-
 <script>
-/* ============================================================
-   트랙 데이터 — 30곡
-   ▼ videoId: "" → 실제 YouTube 영상 ID로 교체 (11자리)
-   ============================================================ */
-const TRACKS = [
-  { no:1,  videoId:"", title:"pomiai track 01",               genre:"" },
-  { no:2,  videoId:"", title:"pomiai track 02",               genre:"" },
-  { no:3,  videoId:"", title:"pomiai track 03",               genre:"" },
-  { no:4,  videoId:"", title:"pomiai track 04",               genre:"" },
-  { no:5,  videoId:"", title:"서랍속영수증",                   genre:"" },
-  { no:6,  videoId:"", title:"pomiai track 06",               genre:"" },
-  { no:7,  videoId:"", title:"pomiai track 07",               genre:"" },
-  { no:8,  videoId:"", title:"pomiai track 08",               genre:"" },
-  { no:9,  videoId:"", title:"pomiai track 09",               genre:"" },
-  { no:10, videoId:"", title:"pomiai track 10",               genre:"" },
-  { no:11, videoId:"", title:"pomiai track 11",               genre:"" },
-  { no:12, videoId:"", title:"pomiai track 12",               genre:"" },
-  { no:13, videoId:"", title:"pomiai track 13",               genre:"" },
-  { no:14, videoId:"", title:"pomiai track 14",               genre:"" },
-  { no:15, videoId:"", title:"pomiai track 15",               genre:"" },
-  { no:16, videoId:"", title:"pomiai track 16",               genre:"" },
-  { no:17, videoId:"", title:"pomiai track 17",               genre:"" },
-  { no:18, videoId:"", title:"pomiai track 18",               genre:"" },
-  { no:19, videoId:"", title:"pomiai track 19",               genre:"" },
-  { no:20, videoId:"", title:"pomiai track 20",               genre:"" },
-  { no:21, videoId:"", title:"pomiai track 21",               genre:"" },
-  { no:22, videoId:"", title:"pomiai track 22",               genre:"" },
-  { no:23, videoId:"", title:"선명한 고요",                   genre:"Zen & Inner Peace" },
-  { no:24, videoId:"", title:"pomiai track 24",               genre:"Zen & Inner Peace" },
-  { no:25, videoId:"", title:"pomiai track 25",               genre:"Zen & Inner Peace" },
-  { no:26, videoId:"", title:"pomiai track 26",               genre:"Zen & Inner Peace" },
-  { no:27, videoId:"", title:"pomiai track 27",               genre:"Zen & Inner Peace" },
-  { no:28, videoId:"", title:"pomiai track 28",               genre:"Zen & Inner Peace" },
-  { no:29, videoId:"", title:"pomiai track 29",               genre:"Zen & Inner Peace" },
-  { no:30, videoId:"", title:"pomiai track 30",               genre:"" }
-];
-
-/* 재생 가능한 트랙 (videoId 있는 것만) */
-const VALID = TRACKS.filter(t => t.videoId.trim() !== "");
-
-let player = null, playerReady = false;
-let curValidIdx = 0;   // VALID 배열 기준
-let isPlaying = false;
-let playMode = 'loop_all';
-let shuffleOrder = [], shufflePos = 0;
-let progressTimer = null;
-let visibleTracks = [...TRACKS];
-
-const $ = id => document.getElementById(id);
-const fmtTime = s => { s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
-
-/* ============================================================
-   셔플 / 인덱스 계산
-   ============================================================ */
-function buildShuffleOrder() {
-  shuffleOrder = VALID.map((_,i)=>i).sort(()=>Math.random()-0.5);
-  shufflePos = Math.max(0, shuffleOrder.indexOf(curValidIdx));
+const TRACKS=[
+  { no:  1, videoId:"FdICSw7ibuE", title:"별보다 작은 목소리", genre:"" },
+  { no:  2, videoId:"fWksp6t0S2g", title:"फॉर्चून मेनिया", genre:"" },
+  { no:  3, videoId:"qLQUFtFKpDc", title:"命运狂热", genre:"" },
+  { no:  4, videoId:"3uuBE2OEaeE", title:"Manie de la Fortune", genre:"" },
+  { no:  5, videoId:"IOyrLDc87Y0", title:"Schicksals-Mania", genre:"" },
+  { no:  6, videoId:"ExXW_ZgiJCg", title:"Mania da Sorte", genre:"" },
+  { no:  7, videoId:"DbfDqmSy3Yg", title:"Manía del Destino", genre:"" },
+  { no:  8, videoId:"UBg4H7KPYYs", title:"フォーチュンマニア", genre:"" },
+  { no:  9, videoId:"xPYlw7L6izU", title:"Fortune Mania", genre:"" },
+  { no: 10, videoId:"9BJYON0dlyM", title:"Jingle Bells in July", genre:"" },
+  { no: 11, videoId:"2ysQOSZ1KTM", title:"포춘 쿠키", genre:"" },
+  { no: 12, videoId:"J3UNqUr1nY8", title:"ジングルベル燃え", genre:"" },
+  { no: 13, videoId:"LQFpr-1NuyE", title:"한여름 징글벨", genre:"" },
+  { no: 14, videoId:"teUZXRygyRY", title:"나만 아는 사랑 이야기 (Male Ver.)", genre:"" },
+  { no: 15, videoId:"6FLmO0eX4fc", title:"MY RISING START (Radio Edit)", genre:"" },
+  { no: 16, videoId:"vanwV8FSPGs", title:"Awakening Heart_ Mantra of Compassion, Pt. 2 (천수경 Part 2 New Age)", genre:"Zen & Inner Peace" },
+  { no: 17, videoId:"voixWMiQ1Ic", title:"Mantra of Compassion, Pt. 1 (천수경 Part 1 New Age)", genre:"Zen & Inner Peace" },
+  { no: 18, videoId:"Iuf0OwHGVJs", title:"The Heart Sutra_ Cosmic Emptiness (반야심경 Ambient Meditation)", genre:"Zen & Inner Peace" },
+  { no: 19, videoId:"VWs8CdkKfE0", title:"Sutra of the Earth Store_ Infinite Vows (지장경 New Age)", genre:"Zen & Inner Peace" },
+  { no: 20, videoId:"RqApmt66EuI", title:"The Flower Adornment Sutra_ Universal Harmony (화엄경 Symphony)", genre:"Zen & Inner Peace" },
+  { no: 21, videoId:"GQtyJREF7Ng", title:"Dhammapada_ Verses of Wisdom (법구경 Chill & Relax)", genre:"Zen & Inner Peace" },
+  { no: 22, videoId:"GdHEU5qCEoU", title:"The Lotus Sutra_ Sacred Awakening (법화경 Meditation)", genre:"Zen & Inner Peace" },
+  { no: 23, videoId:"v4V1N8FGXxo", title:"먼지 속 아기 웃음", genre:"" },
+  { no: 24, videoId:"bX5VofvZoZ8", title:"반전의 반전 (Male Club Mix) (Radiio Edit)", genre:"" },
+  { no: 25, videoId:"Xhr5lSJumfU", title:"반전의 반전 (Male Club Mix)", genre:"" },
+  { no: 26, videoId:"CBjRXhYt4U0", title:"반전의 반전 (Female Club Mix) (Radio Edit)", genre:"" },
+  { no: 27, videoId:"qRV4SmKB4VQ", title:"반전의 반전 (Female Club Mix)", genre:"" },
+  { no: 28, videoId:"qj6sYNXsGj0", title:"반전의 반전", genre:"" },
+  { no: 29, videoId:"e45RhyR-PVg", title:"나만 아는 사랑 이야기 (Radio Edit)", genre:"" },
+  { no: 30, videoId:"eh85pp3CzP8", title:"나만 아는 사랑 이야기", genre:"" },
+  { no: 31, videoId:"zMivW2GPNGI", title:"나만의 아침 (Radio Edit)", genre:"" },
+  { no: 32, videoId:"TRSn6f1Q3Mg", title:"나만의 아침", genre:"" },
+  { no: 33, videoId:"bZobwxiJfls", title:"오예스 머리흔들 (Radio Edit)", genre:"" },
+  { no: 34, videoId:"bmN13mdZbOs", title:"오예스 머리흔들", genre:"" },
+  { no: 35, videoId:"IzMj8JiGjiA", title:"나에게 아름다운 시", genre:"" },
+  { no: 36, videoId:"VZin24yDR-w", title:"마이 라이징 스타 (Dance Ver.)", genre:"" },
+  { no: 37, videoId:"Kbziq1lMb8M", title:"ライジングスター", genre:"" },
+  { no: 38, videoId:"maeG85XMhCE", title:"MY RISING START", genre:"" },
+  { no: 39, videoId:"lGS0-vn-WT8", title:"마이 라이징 스타", genre:"" },
+  { no: 40, videoId:"BE37iUlU-nQ", title:"미운 일곱 혁명가", genre:"" },
+  { no: 41, videoId:"AzbH7JZ8Gzc", title:"할아버지 낭만 수첩", genre:"" },
+  { no: 42, videoId:"_wOmvgCnNpk", title:"자석의 거리감", genre:"" },
+  { no: 43, videoId:"J2YB1GAmGpU", title:"良心1等級 SOS (양심 1등급 SOS) [Japanese Male Ver.]", genre:"" },
+  { no: 44, videoId:"lumMd5hpzTk", title:"良心1等級 SOS (양심 1등급 SOS) (Radio Edit) [Japanese Female Ver.]", genre:"" },
+  { no: 45, videoId:"pjCzBhzUwcw", title:"양심 1등급 SOS [Female Ver.]", genre:"" },
+  { no: 46, videoId:"lOgTXfeWV5w", title:"양심 1등급 SOS", genre:"" },
+  { no: 47, videoId:"g6XenYaqCQo", title:"纯度百分之百的真货 (백프로 진국) (Radio Edit) [Chinese ver.]", genre:"" },
+  { no: 48, videoId:"bl5vh-138JA", title:"纯度百分之百的真货 (백프로 진국) [Chinese ver.]", genre:"" },
+  { no: 49, videoId:"6pfDiN7iOF0", title:"純情100% (백프로 진국) (Radio Edit) [Japanese Ver.]", genre:"" },
+  { no: 50, videoId:"krxYHmCJQm8", title:"노란 장판 갬성 (Radio Edit) [Indie Rock Female Ver.]", genre:"" },
+  { no: 51, videoId:"FcUvYW_kaUQ", title:"노란 장판 갬성 [Indie Rock Female Ver.]", genre:"" },
+  { no: 52, videoId:"M6T1nH0QIWY", title:"노란 장판 갬성 (Radio Edit) [Indie Rock Male Ver.]", genre:"" },
+  { no: 53, videoId:"AxZXizF2FcY", title:"노란 장판 갬성 [Indie Rock Male Ver.]", genre:"" },
+  { no: 54, videoId:"QeTlhqtIbMQ", title:"노란 장판 갬성 [Ballad Ver.]", genre:"" },
+  { no: 55, videoId:"dwboUVPhPz8", title:"서울 뚝 배기", genre:"" },
+  { no: 56, videoId:"DM2EzAZ1ws4", title:"서울 뚝 배기 (Radio Edit)", genre:"" },
+  { no: 57, videoId:"AYb9gmVwSMc", title:"오구 울엄마", genre:"" },
+  { no: 58, videoId:"cOUb1V-fRJ0", title:"오구 울엄마 (Radio Edit)", genre:"" },
+  { no: 59, videoId:"H2QFv4KnbGc", title:"비밀 통장 다이아 (Radio Edit) [Idol Dance Ver.]", genre:"" },
+  { no: 60, videoId:"GjvlGAQVMyE", title:"비밀 통장 다이아 [Idol Dance Ver.]", genre:"" },
+  { no: 61, videoId:"cgqdm5K08Vo", title:"비밀 통장 다이아", genre:"" },
+  { no: 62, videoId:"DB4H-IEK5IY", title:"백프로 진국 (Radio Edit)", genre:"" },
+  { no: 63, videoId:"VZA9JZKwrek", title:"백프로 진국", genre:"" },
+  { no: 64, videoId:"lj2-tKM5Ejk", title:"The Away Couldn't I Receipt Throw (捨てられなかったレシート) [Japan Ver.]", genre:"" },
+  { no: 65, videoId:"9hTqAwmMzME", title:"The Away Couldn't I Receipt Throw (서랍 속의 영수증) [Korean Ver.]", genre:"" },
+  { no: 66, videoId:"pgXbOfQk2eo", title:"Heaven Inside (Korean Ver.)", genre:"" },
+  { no: 67, videoId:"lOC___ZmD5E", title:"먼지 레코드 (Dusty Records Shelf)", genre:"" },
+  { no: 68, videoId:"V5aaFub0KW0", title:"먼지 레코드 (Dusty Records Shelf) (Radio Edit)", genre:"" },
+  { no: 69, videoId:"3-SjZuX7MRQ", title:"Dusty Records Shelf (먼지 레코드) (Radio Edit) [English Version]", genre:"" },
+  { no: 70, videoId:"7QdYXDoAkPM", title:"Dusty Records Shelf (먼지 레코드) [English Version]", genre:"" },
+  { no: 71, videoId:"vo_EmEauyuY", title:"Silver Screen Fade (Radio Edit)", genre:"" },
+  { no: 72, videoId:"T11X0g9q2GA", title:"Silver Screen Fade", genre:"" },
+  { no: 73, videoId:"jv8SuZyjibw", title:"Heaven Inside (Radio Edit)", genre:"" },
+  { no: 74, videoId:"CUh813rWllg", title:"Heaven Inside", genre:"" },
+  { no: 75, videoId:"q7qdc18LFGU", title:"Porch Light Years", genre:"" },
+  { no: 76, videoId:"ktJyaSKvhSc", title:"Porch Light Years (Radio Edit)", genre:"" },
+  { no: 77, videoId:"1sj65Pwrl4g", title:"The Away Couldn't I Receipt Throw(Acoustic Folk Ver.)", genre:"" },
+  { no: 78, videoId:"KrQhEFY-xSQ", title:"पीले लिनोलियम की नॉस्टैल्जिया", genre:"" },
+  { no: 79, videoId:"AE1GwS-bfNo", title:"Vibe do linóleo amarelo", genre:"" },
+  { no: 80, videoId:"Jgjj-nVmCs8", title:"Gelbe-Linoleum-Nostalgie", genre:"" },
+  { no: 81, videoId:"yeM2Gk4JTB8", title:"Tarjeta IC Pitido", genre:"" },
+  { no: 82, videoId:"VpUR_v9V7ms", title:"Modelos Altos Topo", genre:"" },
+  { no: 83, videoId:"6d_sB9xowZo", title:"Ambiance vieux lino jaune", genre:"" },
+  { no: 84, videoId:"3HPRykaW-tE", title:"Ambiance vieux lino jaune (Radio Edit)", genre:"" },
+  { no: 85, videoId:"1D5-sEpmy0w", title:"Luxus-Bankkonto Liebe", genre:"" },
+  { no: 86, videoId:"kOErGGu_aoA", title:"Asli Dilwala (असली दिलवाला)", genre:"" },
+  { no: 87, videoId:"EDpJ_SEjhls", title:"Le diamant brut", genre:"" },
+  { no: 88, videoId:"IR5CR779YW8", title:"할아버지 낭만 수첩", genre:"" },
+  { no: 89, videoId:"y6K_KLRsDyY", title:"자석의 거리감", genre:"" },
+  { no: 90, videoId:"Qde8tTJ3cNI", title:"자석의 거리감 (مسافة كالمغناطيس) [Arabic Ver.]", genre:"" },
+  { no: 91, videoId:"AUB6OrSeSgM", title:"오구 울엄마", genre:"" },
+  { no: 92, videoId:"Gxp6RNW7lpM", title:"양심 1등급 SOS", genre:"" },
+  { no: 93, videoId:"fWVVulCKUP4", title:"양심 1등급 SOS [Female Ver.]", genre:"" },
+  { no: 94, videoId:"YCbx9iJRHwo", title:"서울 뚝 배기", genre:"" },
+  { no: 95, videoId:"NrpWXrmevtQ", title:"서울 뚝 배기 (Radio Edit)", genre:"" },
+  { no: 96, videoId:"hCAcKR52xsM", title:"비밀 통장 다이아", genre:"" },
+  { no: 97, videoId:"gLtGljLb2J8", title:"비밀 통장 다이아 [Idol Dance Ver.]", genre:"" },
+  { no: 98, videoId:"Qui30bNncvg", title:"백프로진국 (أصل مئة بالمئة) [Arabic ver.]", genre:"" },
+  { no: 99, videoId:"X0vo0CXnSOg", title:"백프로 진국", genre:"" },
+  { no:100, videoId:"GLP7zBIUiK4", title:"미운 일곱 혁명가", genre:"" },
+  { no:101, videoId:"b0_eHd0mEhQ", title:"미운 일곱 혁명가 (Radio Ver.)", genre:"" },
+  { no:102, videoId:"9nG-IEbeo9Y", title:"먼지 레코드 (Dusty Records Shelf)", genre:"" },
+  { no:103, videoId:"keoKCe3kZBw", title:"마이 라이징 스타", genre:"" },
+  { no:104, videoId:"1vg2NwaLwPI", title:"마이 라이징 스타 (Radio Ver.)", genre:"" },
+  { no:105, videoId:"doZfzO4Lyq0", title:"마이 라이징 스타 (Dance Ver.)", genre:"" },
+  { no:106, videoId:"tNgFIqrAHlQ", title:"노란 장판 갬성 [Indie Rock Male Ver.]", genre:"" },
+  { no:107, videoId:"0BlH9ZZpg0Q", title:"노란 장판 갬성 [Indie Rock Female Ver.]", genre:"" },
+  { no:108, videoId:"mYUSRer4-ec", title:"노란 장판 갬성 [Ballad Ver.]", genre:"" },
+  { no:109, videoId:"EsBfi3ePOak", title:"나에게 아름다운 시", genre:"" },
+  { no:110, videoId:"71ehkumkhzI", title:"良心1等級 SOS (양심 1등급 SOS) (Radio Edit) [Japanese Male Ver.]", genre:"" },
+  { no:111, videoId:"dmmwD5TNYgQ", title:"良心1等級 SOS (양심 1등급 SOS) (Radio Edit) [Japanese Female Ver.]", genre:"" },
+  { no:112, videoId:"Sn3vl05O7Ms", title:"纯度百分之百的真货 (백프로 진국) [Chinese ver.])", genre:"" },
+  { no:113, videoId:"lXifpdO6hqM", title:"純情100% (백프로 진국) [Japanese Ver.]", genre:"" },
+  { no:114, videoId:"9lPfox6qtjM", title:"磁石般的距离 (자석의 거리감) [Chinese Female Ver.]", genre:"" },
+  { no:115, videoId:"Hg8GMqwL5og", title:"磁石のような距離感 (자석의 거리감) [Japanese Female Ver.]", genre:"" },
+  { no:116, videoId:"03dzf-uaIHQ", title:"実家感エモさ (Male Ver.)", genre:"" },
+  { no:117, videoId:"z4oHAqEcLiQ", title:"実家感エモさ (Female Ver.)", genre:"" },
+  { no:118, videoId:"DAEtxnUqkcM", title:"マイ・ライジングスター", genre:"" },
+  { no:119, videoId:"nfLjgnVAYrI", title:"マイ・ライジングスター (Radio Ver.)", genre:"" },
+  { no:120, videoId:"x3jTGK3_WSo", title:"पीले लिनोलियम की नॉस्टैल्जिया (Radio Edit)", genre:"" },
+  { no:121, videoId:"1qvYj4rNbkI", title:"مسافة كالمغناطيس (자석의 거리감) [Arabic ver]", genre:"" },
+  { no:122, videoId:"nN5pt5zpK0Y", title:"مسافة كالمغناطيس (자석의 거리감) (Radio Edit) [Arabic ver]", genre:"" },
+  { no:123, videoId:"jf10DA5syr4", title:"Vibe do linóleo amarelo (Radio Edit)", genre:"" },
+  { no:124, videoId:"FIKH8AmsNhg", title:"The Away Couldn't I Receipt Throw [English Ver.]", genre:"" },
+  { no:125, videoId:"4AHgtr21-G8", title:"The Away Couldn't I Receipt Throw [English Folk Ver.]", genre:"" },
+  { no:126, videoId:"ZMkQOS7biBo", title:"The Away Couldn't I Receipt Throw (서랍 속의 영수증)", genre:"" },
+  { no:127, videoId:"cTrHSyVLITs", title:"The Away Couldn't I Receipt Throw (捨てられなかったレシート) [Japanese Ver.]", genre:"" },
+  { no:128, videoId:"4mr0nouimzw", title:"Tarjeta IC Pitido (Radio Edit)", genre:"" },
+  { no:129, videoId:"Ed8oxnu9JDc", title:"Silver Screen Fade", genre:"" },
+  { no:130, videoId:"BUt9k7Ov8So", title:"Porch Light Years", genre:"" },
+  { no:131, videoId:"32eiJdDz0VI", title:"Modelos Altos Topo", genre:"" },
+  { no:132, videoId:"TFaXQ2ax1sQ", title:"MY RISING START", genre:"" },
+  { no:133, videoId:"v_vd65QBlcY", title:"Heaven Inside", genre:"" },
+  { no:134, videoId:"wanPJjrW4FQ", title:"Gelbe-Linoleum-Nostalgie (Radio Edit)", genre:"" },
+  { no:135, videoId:"jZUxSv29MxQ", title:"Dusty Records Shelf (먼지 레코드) [English ver.]", genre:"" },
+  { no:136, videoId:"9XGs9FteU6A", title:"Distance Like a Magnet (자석의 거리감) [English Ver.]", genre:"" },
+  { no:137, videoId:"lrZR9WeAlZ4", title:"Distance Like a Magnet (자석의 거리감) [English Ver.]", genre:"" },
+  { no:138, videoId:"p9Uso8e7ozU", title:"Distance Like a Magnet (자석의 거리감) (Radio Edit) [English Ver.]", genre:"" },
+  { no:139, videoId:"NZSuMdHW-xY", title:"ジングルベル燃え (Radio Edit)", genre:"" },
+  { no:140, videoId:"-nc3ZbJOijM", title:"マイ・ライジングスター (Radio Ver.)", genre:"" },
+  { no:141, videoId:"ul3AIbkn1b8", title:"MY RISING START (Radio Ver.)", genre:"" },
+  { no:142, videoId:"-lF4e80z5hA", title:"미운 일곱 혁명가 (Radio Ver.)", genre:"" },
+  { no:143, videoId:"CkgvXIxrGoY", title:"良心1等級 SOS (양심 1등급 SOS) (Radio Edit) [Japanese Male Ver.]", genre:"" },
+  { no:144, videoId:"a8uhLsbibPQ", title:"良心1等級 SOS (양심 1등급 SOS) [Japanese Female Ver.]", genre:"" },
+  { no:145, videoId:"hrwB2DDF2Mw", title:"أصل مئة بالمئة (백프로 진국) [Arabic ver.]", genre:"" },
+  { no:146, videoId:"xCdH7fOWD3w", title:"أصل مئة بالمئة (Radio Edit) [백프로진국 Arabic ver.]", genre:"" },
+  { no:147, videoId:"ZUqxZEJBhTM", title:"純情100% (백프로 진국) (Radio Edit) [Japanese Ver.]", genre:"" },
+  { no:148, videoId:"0pr_EFVwDzk", title:"노란 장판 갬성 (Radio Edit) [Ballad Ver.]", genre:"" },
+  { no:149, videoId:"EbuWHGRTt0M", title:"비밀 통장 다이아 (Radio Edit)", genre:"" },
+  { no:150, videoId:"DA5_ufpcLAQ", title:"The Away Couldn't I Receipt Throw(Soft Lock Pop Ver.)", genre:"" }];
+const VALID=TRACKS.filter(t=>t.videoId.trim()!=="");
+let player=null,ready=false,ci=0,playing=false,mode='la';
+let so=[],sp=0,vis=[...TRACKS],ptimer=null;
+const $=id=>document.getElementById(id);
+const ft=s=>{s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+function bso(){so=VALID.map((_,i)=>i).sort(()=>Math.random()-.5);sp=Math.max(0,so.indexOf(ci));}
+function ni2(){if(!VALID.length)return 0;if(mode==='lo')return ci;if(mode==='sh'){if(!so.length)bso();sp=(sp+1)%so.length;if(sp===0)bso();return so[sp];}return(ci+1)%VALID.length;}
+function pi2(){if(!VALID.length)return 0;if(mode==='sh'){if(!so.length)bso();sp=(sp-1+so.length)%so.length;return so[sp];}return(ci-1+VALID.length)%VALID.length;}
+function sm(m){mode=m;['la','lo','sh'].forEach(x=>$('m-'+x).classList.toggle('on',x===m));if(m==='sh')bso();}
+function ui(){
+  if(!VALID.length){$('ntitle').textContent='재생할 영상이 없습니다';return;}
+  const t=VALID[ci];
+  $('ntitle').textContent=t.title;
+  $('nsub').textContent=(TRACKS.indexOf(t)+1)+' / '+TRACKS.length;
 }
-function nextValidIdx() {
-  if (!VALID.length) return 0;
-  if (playMode==='loop_one') return curValidIdx;
-  if (playMode==='shuffle') {
-    if (!shuffleOrder.length) buildShuffleOrder();
-    shufflePos = (shufflePos+1) % shuffleOrder.length;
-    if (shufflePos===0) buildShuffleOrder();
-    return shuffleOrder[shufflePos];
-  }
-  return (curValidIdx+1) % VALID.length;
+function spu(p){
+  playing=p;
+  $('disc').classList.toggle('spin',p);
+  $('tonearm').classList.toggle('active',p);
+  $('pi').innerHTML=p?'<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>':'<path d="M8 5v14l11-7z"/>';
+  rpl();
 }
-function prevValidIdx() {
-  if (!VALID.length) return 0;
-  if (playMode==='shuffle') {
-    if (!shuffleOrder.length) buildShuffleOrder();
-    shufflePos = (shufflePos-1+shuffleOrder.length) % shuffleOrder.length;
-    return shuffleOrder[shufflePos];
-  }
-  return (curValidIdx-1+VALID.length) % VALID.length;
+function uprog(){
+  if(!player||!ready)return;
+  try{const d=player.getDuration()||0,c=player.getCurrentTime()||0;
+    $('prog-fill').style.width=(d?Math.min(100,c/d*100):0)+'%';
+    $('tc-cur').textContent=ft(c);$('tc-dur').textContent=d?ft(d):'—';}catch(e){}
 }
-
-/* ============================================================
-   모드 설정
-   ============================================================ */
-function setMode(mode) {
-  playMode = mode;
-  $('mode-loop-all').classList.toggle('on', mode==='loop_all');
-  $('mode-loop-one').classList.toggle('on', mode==='loop_one');
-  $('mode-shuffle').classList.toggle('on', mode==='shuffle');
-  if (mode==='shuffle') buildShuffleOrder();
-}
-
-/* ============================================================
-   UI 업데이트
-   ============================================================ */
-function updateNowInfo() {
-  if (!VALID.length) {
-    $('now-title').textContent = 'videoId를 입력하면 재생돼요';
-    $('now-sub').textContent = '0 / 0';
-    return;
-  }
-  const t = VALID[curValidIdx];
-  const globalNo = TRACKS.indexOf(t) + 1;
-  $('now-title').textContent = t.title;
-  $('now-sub').textContent = `${globalNo} / ${TRACKS.length}`;
-}
-
-function setPlayingUI(playing) {
-  isPlaying = playing;
-  $('disc').classList.toggle('spin', playing);
-  $('tonearm').classList.toggle('active', playing);
-  $('play-icon').innerHTML = playing
-    ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>'
-    : '<path d="M8 5v14l11-7z"/>';
-  renderPlaylist();
-}
-
-function updateProgress() {
-  if (!player || !playerReady) return;
-  try {
-    const dur = player.getDuration() || 0;
-    const cur = player.getCurrentTime() || 0;
-    $('progress-fill').style.width = (dur ? Math.min(100,(cur/dur)*100) : 0) + '%';
-    $('time-cur').textContent = fmtTime(cur);
-    $('time-dur').textContent = dur ? fmtTime(dur) : '—';
-  } catch(e) {}
-}
-
-function eqAnim() {
-  return `<svg viewBox="0 0 16 16" fill="none" stroke="${isPlaying?'#f4c873':'#e8935a'}" stroke-width="2" stroke-linecap="round">
-    <line x1="3" y1="14" x2="3" y2="${isPlaying?8:11}"><animate attributeName="y2" values="4;13;6;12;4" dur=".8s" repeatCount="indefinite"/></line>
-    <line x1="8" y1="14" x2="8" y2="${isPlaying?5:10}"><animate attributeName="y2" values="11;3;10;4;11" dur=".7s" repeatCount="indefinite"/></line>
-    <line x1="13" y1="14" x2="13" y2="${isPlaying?9:12}"><animate attributeName="y2" values="7;13;5;12;7" dur=".9s" repeatCount="indefinite"/></line>
-  </svg>`;
-}
-
-function renderPlaylist() {
-  const wrap = $('playlist');
-  if (!visibleTracks.length) {
-    wrap.innerHTML = '<div id="no-results">검색 결과가 없어요</div>';
-    return;
-  }
-  const currentTrack = VALID[curValidIdx];
-  wrap.innerHTML = '';
-  visibleTracks.forEach(track => {
-    const hasId = track.videoId.trim() !== "";
-    const isActive = track === currentTrack;
-    const row = document.createElement('div');
-    row.className = 'track-row' + (isActive?' active':'') + (!hasId?' no-id':'');
-    row.innerHTML = `
-      <div class="track-num">${String(track.no).padStart(2,'0')}</div>
-      <div class="track-eq">${isActive ? eqAnim() : ''}</div>
-      <div class="track-main">
-        <div class="track-title">${track.title}${track.genre?`<span class="track-badge">${track.genre}</span>`:''}</div>
-        <div class="track-meta">${hasId ? 'pomiai · AI Music' : '⚠ ID 미입력'}</div>
-      </div>
-      <div class="track-dur">${hasId?'0:27':'—'}</div>
-    `;
-    if (hasId) {
-      row.addEventListener('click', () => {
-        const vIdx = VALID.indexOf(track);
-        if (vIdx >= 0) loadAndPlay(vIdx);
-      });
-    }
+function eqa(){return`<svg viewBox="0 0 16 16" fill="none" stroke="${playing?'#f4c873':'#e8935a'}" stroke-width="2" stroke-linecap="round"><line x1="3" y1="14" x2="3" y2="8"><animate attributeName="y2" values="4;13;6;12;4" dur=".8s" repeatCount="indefinite"/></line><line x1="8" y1="14" x2="8" y2="5"><animate attributeName="y2" values="11;3;10;4;11" dur=".7s" repeatCount="indefinite"/></line><line x1="13" y1="14" x2="13" y2="9"><animate attributeName="y2" values="7;13;5;12;7" dur=".9s" repeatCount="indefinite"/></line></svg>`;}
+function rpl(){
+  const wrap=$('pl');
+  if(!vis.length){wrap.innerHTML='<div style="text-align:center;padding:36px;color:rgba(244,237,224,.35);font-size:14px">검색 결과가 없어요</div>';return;}
+  const cur=VALID[ci];wrap.innerHTML='';
+  vis.forEach(t=>{
+    const hasId=t.videoId.trim()!=="",isA=t===cur;
+    const row=document.createElement('div');
+    row.className='tr'+(isA?' active':'');
+    row.innerHTML=`<div class="tn">${String(t.no).padStart(3,'0')}</div><div class="teq">${isA?eqa():''}</div><div class="tm"><div class="tt">${t.title}${t.genre?`<span class="tb">${t.genre}</span>`:''}</div><div class="tmeta">pomiai · AI Music${!hasId?' · <span style="color:#e8935a;font-size:10px">▸ ID 미입력</span>':''}</div></div>`;
+    if(hasId)row.addEventListener('click',()=>lap(VALID.indexOf(t)));
     wrap.appendChild(row);
   });
-  $('track-count').textContent = visibleTracks.length + '곡';
+  $('tc').textContent=vis.length+'곡';
 }
-
-/* ============================================================
-   플레이어 제어
-   ============================================================ */
-function loadAndPlay(vIdx) {
-  if (!VALID.length) return;
-  curValidIdx = vIdx;
-  updateNowInfo();
-  renderPlaylist();
-  if (player && playerReady) {
-    player.loadVideoById(VALID[curValidIdx].videoId);
-  }
+function lap(vi){
+  if(!VALID.length)return;ci=vi;ui();rpl();
+  if(player&&ready)player.loadVideoById(VALID[ci].videoId);
 }
-
-function togglePlay() {
-  if (!VALID.length) return;
-  if (!playerReady) return;
-  if (isPlaying) {
-    player.pauseVideo();
-  } else {
-    // 비디오가 로드된 상태면 재생, 아니면 첫 트랙 로드
-    try {
-      const state = player.getPlayerState();
-      if (state === -1 || state === 5) {
-        player.loadVideoById(VALID[curValidIdx].videoId);
-      } else {
-        player.playVideo();
-      }
-    } catch(e) {
-      player.loadVideoById(VALID[curValidIdx].videoId);
-    }
-  }
+function tp(){
+  if(!VALID.length||!ready)return;
+  if(playing){player.pauseVideo();}
+  else{try{const s=player.getPlayerState();(s===-1||s===5)?player.loadVideoById(VALID[ci].videoId):player.playVideo();}catch(e){player.loadVideoById(VALID[ci].videoId);}}
 }
-
-/* ============================================================
-   YouTube IFrame API 콜백
-   ============================================================ */
-window.onYouTubeIframeAPIReady = function() {
-  player = new YT.Player('yt-player', {
-    height: '1', width: '1',
-    playerVars: { playsinline: 1, controls: 0, modestbranding: 1, rel: 0 },
-    events: {
-      onReady: function() {
-        playerReady = true;
-        // 첫 번째 유효 트랙을 미리 큐잉 (소리 없이 준비만)
-        if (VALID.length) {
-          player.cueVideoById(VALID[0].videoId);
-        }
-        progressTimer = setInterval(updateProgress, 250);
-        updateNowInfo();
-        renderPlaylist();
-      },
-      onStateChange: function(e) {
-        if (e.data === YT.PlayerState.PLAYING)  setPlayingUI(true);
-        if (e.data === YT.PlayerState.PAUSED)   setPlayingUI(false);
-        if (e.data === YT.PlayerState.ENDED)    loadAndPlay(nextValidIdx());
-      }
-    }
-  });
+window.onYouTubeIframeAPIReady=function(){
+  player=new YT.Player('yt-player',{height:'1',width:'1',
+    playerVars:{playsinline:1,controls:0,modestbranding:1,rel:0},
+    events:{
+      onReady:function(){ready=true;if(VALID.length)player.cueVideoById(VALID[0].videoId);ptimer=setInterval(uprog,250);ui();rpl();},
+      onStateChange:function(e){if(e.data===YT.PlayerState.PLAYING)spu(true);if(e.data===YT.PlayerState.PAUSED)spu(false);if(e.data===YT.PlayerState.ENDED)lap(ni2());}
+    }});
 };
-
-/* ============================================================
-   검색 필터
-   ============================================================ */
-$('search-input').addEventListener('input', e => {
-  const q = e.target.value.trim().toLowerCase();
-  visibleTracks = q ? TRACKS.filter(t => t.title.toLowerCase().includes(q)) : [...TRACKS];
-  renderPlaylist();
+$('prog-track').addEventListener('click',e=>{
+  if(!player||!ready)return;
+  const r=(e.clientX-e.currentTarget.getBoundingClientRect().left)/e.currentTarget.offsetWidth;
+  const d=player.getDuration()||0;if(d)player.seekTo(d*r,true);
 });
-
-/* ============================================================
-   진행바 클릭 seek
-   ============================================================ */
-$('progress-track').addEventListener('click', e => {
-  if (!player || !playerReady) return;
-  const rect = e.currentTarget.getBoundingClientRect();
-  const ratio = (e.clientX - rect.left) / rect.width;
-  const dur = player.getDuration() || 0;
-  if (dur) player.seekTo(dur * ratio, true);
+$('si').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  vis=q?TRACKS.filter(t=>t.title.toLowerCase().includes(q)||t.genre.toLowerCase().includes(q)):[...TRACKS];
+  rpl();
 });
-
-/* ============================================================
-   컨트롤 버튼
-   ============================================================ */
-$('play-btn').addEventListener('click', togglePlay);
-$('next-btn').addEventListener('click', () => { if(VALID.length) loadAndPlay(nextValidIdx()); });
-$('prev-btn').addEventListener('click', () => { if(VALID.length) loadAndPlay(prevValidIdx()); });
-$('mode-loop-all').addEventListener('click', () => setMode('loop_all'));
-$('mode-loop-one').addEventListener('click', () => setMode('loop_one'));
-$('mode-shuffle').addEventListener('click', () => setMode('shuffle'));
-
-/* 초기 렌더 */
-setMode('loop_all');
-renderPlaylist();
-updateNowInfo();
+$('pbtn').addEventListener('click',tp);
+$('pb2').addEventListener('click',()=>{if(VALID.length)lap(pi2());});
+$('nb2').addEventListener('click',()=>{if(VALID.length)lap(ni2());});
+$('m-la').addEventListener('click',()=>sm('la'));
+$('m-lo').addEventListener('click',()=>sm('lo'));
+$('m-sh').addEventListener('click',()=>sm('sh'));
+sm('la');rpl();ui();
 </script>
 </body>
 </html>
