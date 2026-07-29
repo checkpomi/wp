@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<!--
+===================================================
+pomiai_breakout.html — 버전 로그
+===================================================
+현재 버전: 2026.07.27
+최종 수정: 2026.07.27
+변경 내역 (최신순):
+  - 2026.07.27  최초 pomiai 표준 적용 (원본: pomi-breakout.html)
+      · pomiai 다크 UI 셸로 리디자인, 벽돌/패들 네온 컬러는 유지
+      · 좌우 이동 버튼 pointer 이벤트 기반 재구현(연속 이동 유지)
+      · alert() 스테이지 안내를 논블로킹 토스트로 교체
+      · 20스테이지 진행 유지, ko/en/ja 다국어, 브랜드 푸터 적용
+캐시 무효화: ?v=2026.07.27
+===================================================
+
+-->
+<title id="page-title">pomiai 브레이크아웃</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);--ac4:rgba(108,92,232,.08);
+  --go:#d4924a;--go2:#f0b060;--go3:rgba(212,146,74,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re3:rgba(224,85,85,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;overscroll-behavior:none}
+
+#shell{max-width:420px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding:0 0 18px}
+
+#header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;position:sticky;top:0;background:var(--s1);border-bottom:1px solid var(--bd);z-index:20}
+#logo{font-size:14px;font-weight:700;color:var(--ac2);letter-spacing:.5px}
+#logo span{color:var(--tx3);font-weight:400}
+#header .tagline{font-size:10px;color:var(--tx3);margin-top:1px}
+.icon-btn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);width:36px;height:36px;border-radius:10px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.icon-btn:active{background:var(--ac3);color:var(--ac2)}
+
+#stats-row{display:flex;gap:8px;padding:12px 16px 6px}
+.chip{flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:9px 6px;text-align:center}
+.chip-label{font-size:9px;color:var(--tx3);font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px}
+.chip-value{font-size:17px;font-weight:700;color:var(--tx);font-family:'DM Mono',monospace}
+
+#board-area{position:relative;display:flex;justify-content:center;padding:10px 16px 4px;flex:1}
+#canvas-wrap{position:relative;background:#000;border-radius:14px;overflow:hidden;box-shadow:var(--sh);border:1px solid var(--bd2);width:100%;max-width:300px}
+#pause-overlay{position:absolute;inset:0;background:rgba(8,8,14,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;border-radius:14px;z-index:5}
+#pause-overlay.show{display:flex}
+#pause-overlay .po-title{font-size:16px;font-weight:700;color:var(--ac2)}
+
+#action-row{display:flex;gap:8px;padding:12px 16px 4px}
+.btn{background:linear-gradient(135deg,var(--ac),#4a38c0);border:none;color:#fff;border-radius:11px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(108,92,232,.28);flex:1}
+.btn:active{filter:brightness(.92);transform:scale(.98)}
+.btn.outline{background:transparent;border:1px solid var(--bd2);color:var(--tx2);box-shadow:none}
+.btn.go{background:linear-gradient(135deg,var(--te),#1a8c72);box-shadow:0 4px 16px rgba(40,196,160,.22)}
+.btn.re{background:linear-gradient(135deg,var(--re),#a83232);box-shadow:0 4px 16px rgba(224,85,85,.22)}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+#control-pad{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;gap:14px;flex-wrap:wrap}
+#dpad{display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px;gap:6px;flex-shrink:0}
+#dpad button{background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.1s}
+#dpad button:active,#dpad button.active{background:var(--ac3);border-color:var(--ac);color:var(--ac2);transform:scale(.94)}
+#action-buttons{display:flex;gap:8px;flex-wrap:wrap}
+#action-buttons button{width:64px;height:56px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:18px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:.1s}
+#action-buttons button:active{background:var(--te3);border-color:var(--te);color:var(--te2);transform:scale(.94)}
+#action-buttons button.fire:active{background:var(--re3);border-color:var(--re);color:#ff9a9a}
+#action-buttons button span{font-size:8px;font-weight:600;color:var(--tx3);letter-spacing:.4px}
+#action-buttons button:active span{color:inherit}
+
+#touch-hint{text-align:center;font-size:11px;color:var(--tx3);padding:8px 16px 2px}
+#pc-hint{text-align:center;font-size:11px;color:var(--tx3);padding:6px 16px 2px}
+@media (hover:none) and (pointer:coarse){ #pc-hint{display:none} }
+@media (hover:hover) and (pointer:fine){ #touch-hint{display:none} }
+
+.brand-footer{margin:16px 16px 0;padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.brand-name{font-weight:700;font-size:13px;letter-spacing:-.01em;color:var(--tx)}
+.brand-by{font-weight:600;font-size:11px;color:var(--tx3);margin-right:4px}
+.brand-links{display:flex;gap:8px;flex-wrap:wrap}
+.brand-links a{font-size:11px;font-weight:700;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bd2);white-space:nowrap}
+.brand-links a:active{opacity:.7}
+
+#gameover-modal{position:fixed;inset:0;background:rgba(4,4,8,.82);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+#gameover-modal.show{display:flex}
+.go-card{background:var(--s1);border:1px solid var(--bd2);border-radius:18px;padding:28px 24px;text-align:center;max-width:300px;width:100%;box-shadow:var(--sh)}
+.go-title{font-size:20px;font-weight:700;color:var(--re);margin-bottom:8px}
+.go-score-label{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-top:14px}
+.go-score-val{font-size:30px;font-weight:700;color:var(--ac2);font-family:'DM Mono',monospace;margin-bottom:18px}
+
+#landscape-lock{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px}
+#landscape-lock .rot-ic{font-size:44px;animation:rotpulse 1.6s ease-in-out infinite}
+@keyframes rotpulse{0%,100%{transform:rotate(0)}50%{transform:rotate(-90deg)}}
+#landscape-lock .rot-txt{font-size:14px;color:var(--tx2);font-weight:600}
+@media (orientation:landscape) and (hover:none) and (pointer:coarse){
+  #landscape-lock{display:flex}
+}
+
+#canvas-wrap{max-width:320px}
+#brickCanvas{display:block;width:100%;height:auto}
+#msg-toast{position:absolute;top:10px;left:50%;transform:translateX(-50%) translateY(-6px);background:rgba(14,14,24,.94);border:1px solid var(--bd2);color:var(--tx);font-size:12px;font-weight:600;padding:8px 14px;border-radius:20px;opacity:0;transition:.2s;pointer-events:none;z-index:15;text-align:center;max-width:90%}
+#msg-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+</style>
+</head>
+<body>
+<div id="landscape-lock">
+  <div class="rot-ic">📱</div>
+  <div class="rot-txt" data-i18n="orientation_msg">화면을 세로로 돌려주세요</div>
+</div>
+<div id="shell">
+  <div id="header">
+    <div>
+      <div id="logo">pomiai <span>· BREAKOUT</span></div>
+      <div class="tagline" data-i18n="tagline">공을 튕겨 벽돌을 깨보세요</div>
+    </div>
+  </div>
+
+  <div id="stats-row">
+    <div class="chip"><div class="chip-label" data-i18n="life">라이프</div><div class="chip-value" id="lifeDisplay">❤️❤️❤️</div></div>
+    <div class="chip"><div class="chip-label" data-i18n="stage">스테이지</div><div class="chip-value" id="stageDisplay">1/20</div></div>
+    <div class="chip"><div class="chip-label" data-i18n="score">점수</div><div class="chip-value" id="scoreDisplay">0</div></div>
+  </div>
+
+  <div id="board-area">
+    <div id="canvas-wrap">
+      <canvas id="brickCanvas" width="400" height="500"></canvas>
+      <div id="msg-toast"></div>
+      <div id="pause-overlay"><div class="po-title" data-i18n="btn_resume">계속</div></div>
+    </div>
+  </div>
+
+  <div id="touch-hint" data-i18n="touch_hint">좌우 버튼으로 패들을 움직이세요</div>
+  <div id="pc-hint" data-i18n="pc_hint">PC: 방향키(◀▶)로 이동 · P 일시정지</div>
+
+  <div id="action-row">
+    <button class="btn" id="startBtn" data-i18n="btn_start">시작</button>
+    <button class="btn outline" id="pauseBtn" data-i18n="btn_pause" disabled>일시정지</button>
+    <button class="btn re" id="stopBtn" data-i18n="btn_end">종료</button>
+  </div>
+
+  <div id="control-pad">
+    <button id="l-btn" style="flex:1;height:60px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:22px">◀</button>
+    <button id="r-btn" style="flex:1;height:60px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:22px">▶</button>
+  </div>
+
+  <div class="brand-footer">
+    <div class="brand-name"><span class="brand-by" data-i18n="footer_by">Product by</span> pomiai</div>
+    <div class="brand-links">
+      <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
+      <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube</a>
+    </div>
+  </div>
+</div>
+
+<div id="gameover-modal">
+  <div class="go-card">
+    <div class="go-title" id="goTitle" data-i18n="gameover_title">게임 오버</div>
+    <div class="go-score-label" data-i18n="final_score">최종 점수</div>
+    <div class="go-score-val" id="finalScore">0</div>
+    <button class="btn full" style="width:100%" id="retryBtn" data-i18n="btn_retry">다시하기</button>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  ko:{ page_title:'pomiai 브레이크아웃', tagline:'공을 튕겨 벽돌을 깨보세요',
+    life:'라이프', stage:'스테이지', score:'점수',
+    touch_hint:'좌우 버튼으로 패들을 움직이세요', pc_hint:'PC: 방향키(◀▶)로 이동 · P 일시정지',
+    btn_start:'시작', btn_pause:'일시정지', btn_resume:'계속', btn_end:'종료', btn_retry:'다시하기',
+    orientation_msg:'화면을 세로로 돌려주세요',
+    gameover_title:'게임 오버', clear_title:'🏆 클리어!', final_score:'최종 점수', footer_by:'Product by',
+    msg_stage:'STAGE 시작' },
+  en:{ page_title:'pomiai Breakout', tagline:'Bounce the ball to break bricks',
+    life:'Life', stage:'Stage', score:'Score',
+    touch_hint:'Use buttons to move the paddle', pc_hint:'PC: Arrow keys · P to pause',
+    btn_start:'Start', btn_pause:'Pause', btn_resume:'Resume', btn_end:'End', btn_retry:'Retry',
+    orientation_msg:'Please rotate to portrait',
+    gameover_title:'Game Over', clear_title:'🏆 Cleared!', final_score:'Final Score', footer_by:'Product by',
+    msg_stage:'STAGE START' },
+  ja:{ page_title:'pomiai ブロック崩し', tagline:'ボールを跳ね返してブロックを壊そう',
+    life:'ライフ', stage:'ステージ', score:'スコア',
+    touch_hint:'ボタンでパドルを移動', pc_hint:'PC：矢印キー・Pで一時停止',
+    btn_start:'スタート', btn_pause:'一時停止', btn_resume:'再開', btn_end:'終了', btn_retry:'もう一度',
+    orientation_msg:'画面を縦向きにしてください',
+    gameover_title:'ゲームオーバー', clear_title:'🏆 クリア！', final_score:'最終スコア', footer_by:'Product by',
+    msg_stage:'STAGE スタート' }
+};
+
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+function applyI18n() {
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+function bindHold(el, fn, repeatMs){
+  repeatMs = repeatMs || 130;
+  let iv=null;
+  const start=(e)=>{ e.preventDefault(); fn(); el.classList.add('active'); iv=setInterval(fn,repeatMs); };
+  const end=()=>{ clearInterval(iv); iv=null; el.classList.remove('active'); };
+  el.addEventListener('pointerdown', start);
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointerleave', end);
+  el.addEventListener('pointercancel', end);
+}
+
+const canvas = document.getElementById('brickCanvas');
+const ctx = canvas.getContext('2d');
+const toast = document.getElementById('msg-toast');
+function showToast(msg, ms){
+  toast.textContent = msg; toast.classList.add('show');
+  clearTimeout(showToast._tid);
+  showToast._tid = setTimeout(()=>toast.classList.remove('show'), ms||1400);
+}
+
+let score=0, lives=3, stage=1, active=false, paused=false, loop;
+const ballRadius=8;
+let x,y,dx,dy;
+const paddleHeight=12, paddleBaseWidth=90;
+let paddleWidth=paddleBaseWidth, paddleX;
+const brickRowCount=6, brickColumnCount=5;
+const brickWidth=65, brickHeight=20, brickPadding=10, brickOffsetTop=40, brickOffsetLeft=15;
+let bricks=[]; const keys={};
+
+window.addEventListener('keydown', e=>{
+  if(['ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+  keys[e.code]=true;
+  if(e.key==='p'||e.key==='P') togglePause();
+});
+window.addEventListener('keyup', e=> keys[e.code]=false);
+
+function setupTouch(id,key){
+  const el=document.getElementById(id);
+  el.addEventListener('pointerdown', e=>{e.preventDefault(); keys[key]=true;});
+  el.addEventListener('pointerup', e=>{e.preventDefault(); keys[key]=false;});
+  el.addEventListener('pointerleave', e=>{ keys[key]=false;});
+  el.addEventListener('pointercancel', e=>{ keys[key]=false;});
+}
+setupTouch('l-btn','ArrowLeft'); setupTouch('r-btn','ArrowRight');
+
+function initBricks(){
+  bricks = Array.from({length:brickColumnCount},()=>Array.from({length:brickRowCount},()=>({x:0,y:0,status:1})));
+}
+function updateHUD(){
+  document.getElementById('scoreDisplay').textContent = score;
+  document.getElementById('stageDisplay').textContent = `${stage}/20`;
+  document.getElementById('lifeDisplay').textContent = '❤️'.repeat(Math.max(lives,0));
+}
+function initStage(){
+  paddleWidth = Math.max(paddleBaseWidth-(stage*2), 40);
+  paddleX = (canvas.width-paddleWidth)/2;
+  x = canvas.width/2; y = canvas.height-40;
+  let speed = 2.5+(stage*0.4); dx=speed; dy=-speed;
+  initBricks(); updateHUD();
+}
+function startGame(){
+  if(paused) return togglePause();
+  active=true; paused=false; score=0; lives=3; stage=1;
+  document.getElementById('gameover-modal').classList.remove('show');
+  initStage();
+  document.getElementById('startBtn').disabled=true;
+  document.getElementById('pauseBtn').disabled=false;
+  runGame();
+}
+function togglePause(){
+  if(!active) return;
+  paused=!paused;
+  document.getElementById('pause-overlay').classList.toggle('show', paused);
+  if(!paused) runGame();
+}
+function stopGame(msg){
+  active=false; paused=false;
+  cancelAnimationFrame(loop);
+  document.getElementById('pause-overlay').classList.remove('show');
+  document.getElementById('startBtn').disabled=false;
+  document.getElementById('pauseBtn').disabled=true;
+  document.getElementById('goTitle').textContent = msg || window._T.gameover_title;
+  document.getElementById('finalScore').textContent = `${score} (Stage ${stage})`;
+  document.getElementById('gameover-modal').classList.add('show');
+}
+function collisionDetection(){
+  let activeBricks=0;
+  for(let c=0;c<brickColumnCount;c++) for(let r=0;r<brickRowCount;r++){
+    let b=bricks[c][r];
+    if(b.status===1){
+      activeBricks++;
+      if(x>b.x && x<b.x+brickWidth && y>b.y && y<b.y+brickHeight){
+        dy=-dy; b.status=0; score+=10; updateHUD();
+      }
+    }
+  }
+  if(activeBricks===0 && active){
+    if(stage<20){ stage++; showToast(`${window._T.msg_stage} ${stage}`); initStage(); }
+    else { stopGame(window._T.clear_title); }
+  }
+}
+function runGame(){
+  if(!active||paused) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle='#161d27';
+  for(let i=0;i<canvas.width;i+=40){ ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+  drawBricks(); drawBall(); drawPaddle(); collisionDetection();
+  if(x+dx>canvas.width-ballRadius || x+dx<ballRadius) dx=-dx;
+  if(y+dy<ballRadius) dy=-dy;
+  else if(y+dy>canvas.height-ballRadius-10){
+    if(x>paddleX && x<paddleX+paddleWidth){
+      dy=-dy; dx=8*((x-(paddleX+paddleWidth/2))/paddleWidth);
+    } else {
+      lives--; updateHUD();
+      if(lives<=0){ stopGame(); return; }
+      x=canvas.width/2; y=canvas.height-40; dx=Math.abs(dx); dy=-Math.abs(dy);
+    }
+  }
+  if(keys['ArrowRight'] && paddleX<canvas.width-paddleWidth) paddleX+=7;
+  else if(keys['ArrowLeft'] && paddleX>0) paddleX-=7;
+  x+=dx; y+=dy;
+  loop=requestAnimationFrame(runGame);
+}
+function drawBall(){
+  ctx.beginPath(); ctx.arc(x,y,ballRadius,0,Math.PI*2);
+  ctx.fillStyle='#fff'; ctx.shadowBlur=10; ctx.shadowColor='#9b8ff5';
+  ctx.fill(); ctx.closePath(); ctx.shadowBlur=0;
+}
+function drawPaddle(){
+  ctx.beginPath(); ctx.rect(paddleX, canvas.height-paddleHeight-10, paddleWidth, paddleHeight);
+  ctx.fillStyle = stage<=7 ? '#4eddb8' : (stage<=14 ? '#f0b060' : '#ff5fa8');
+  ctx.shadowBlur=15; ctx.shadowColor=ctx.fillStyle;
+  ctx.fill(); ctx.closePath(); ctx.shadowBlur=0;
+}
+function drawBricks(){
+  for(let c=0;c<brickColumnCount;c++) for(let r=0;r<brickRowCount;r++){
+    if(bricks[c][r].status===1){
+      let bx=(c*(brickWidth+brickPadding))+brickOffsetLeft;
+      let by=(r*(brickHeight+brickPadding))+brickOffsetTop;
+      bricks[c][r].x=bx; bricks[c][r].y=by;
+      ctx.beginPath(); ctx.rect(bx,by,brickWidth,brickHeight);
+      ctx.fillStyle = r%2===0 ? '#ff5fa8' : '#4eddb8';
+      ctx.fill(); ctx.closePath();
+    }
+  }
+}
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('stopBtn').addEventListener('click', ()=>stopGame(window._T.btn_end));
+document.getElementById('retryBtn').addEventListener('click', ()=>{ document.getElementById('gameover-modal').classList.remove('show'); startGame(); });
+updateHUD();
+
+</script>
+</body>
+</html>
