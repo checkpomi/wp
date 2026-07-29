@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+===================================================
+pomiai_subway.html — 버전 로그 (원본: seoul-subway-search.html)
+===================================================
+현재 버전: 2026.07.27 | 최종 수정: 2026.07.27
+변경 내역: 2026.07.27 pomiai 표준 파일명 규칙 적용(pomiai_subway.html로 리네임) +
+버전 로그, ko/en/ja 다국어(헤더+모드탭 기준) 신규 적용. 이미 존재하던 brand-footer는
+유지. 24개 노선/약 606개 역 Dijkstra 경로 탐색 로직은 원본 유지.
+캐시 무효화: ?v=2026.07.27
+===================================================
+-->
+<title id="page-title">pomiai 지하철 역 검색 · 경로 찾기</title>
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --paper:#f4f3ef;
+    --card:#ffffff;
+    --line-border:#e2e0d9;
+    --muted:#726f66;
+    --accent:#00A84D;
+    --warn:#B5451B;
+    --l1:#0052A4; --l2:#00A84D; --l3:#EF7C1C; --l4:#00A4E3; --l5:#996CAC;
+    --l6:#CD7C2F; --l7:#747F00; --l8:#E6186C; --l9:#BDB092;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    min-height:100vh;
+    padding:20px 14px 60px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+
+  header{margin-bottom:14px;}
+  .eyebrow{font-size:11px; letter-spacing:.14em; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;}
+  h1{font-size:24px; font-weight:900; margin:0 0 4px; letter-spacing:-.02em;}
+  .sub{font-size:13.5px; color:var(--muted); margin:0;}
+
+  /* mode tabs */
+  .mode-tabs{display:flex; gap:8px; margin:16px 0 18px;}
+  .mode-tab{
+    flex:1; text-align:center; padding:11px 8px; border-radius:10px; font-weight:800; font-size:14px;
+    background:var(--card); border:2px solid var(--line-border); cursor:pointer; color:var(--muted);
+  }
+  .mode-tab.active{border-color:var(--ink); color:var(--ink); background:#fff;}
+  .mode-panel{display:none;}
+  .mode-panel.active{display:block;}
+
+  /* ---- search mode ---- */
+  .search-box{position:relative; margin:0 0 10px;}
+  input[type="text"], input[type="time"]{
+    width:100%; padding:14px 44px 14px 16px; font-size:16px;
+    border:2px solid var(--ink); border-radius:10px; background:var(--card);
+    color:var(--ink); font-weight:600; outline:none;
+  }
+  input[type="text"]:focus, input[type="time"]:focus{border-color:var(--accent);}
+  .clear-btn{position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer; padding:6px; display:none;}
+
+  .line-tabs{display:flex; flex-wrap:wrap; gap:6px; padding:4px 0 12px;}
+  .pill{flex:0 0 auto; padding:7px 13px; border-radius:20px; font-size:13px; font-weight:800; border:2px solid transparent; cursor:pointer; color:#fff; white-space:nowrap; opacity:.55;}
+  .pill.active{opacity:1; box-shadow:0 0 0 2px var(--ink) inset;}
+  .category-tabs{display:flex; gap:6px; margin:0 0 8px; flex-wrap:wrap;}
+  .cat-pill{
+    flex:0 0 auto; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:800;
+    background:var(--card); border:1.5px solid var(--line-border); color:var(--muted); cursor:pointer;
+  }
+  .cat-pill.active{border-color:var(--ink); color:var(--ink); background:#fff;}
+  .meta-row{font-size:12.5px; color:var(--muted); font-weight:700; margin:2px 2px 10px;}
+  .station-list{display:flex; flex-direction:column; gap:8px;}
+  .station-card{background:var(--card); border:1px solid var(--line-border); border-radius:12px; padding:13px 14px; cursor:pointer;}
+  .station-card.selected{border-color:var(--ink); border-width:2px; padding:12px 13px;}
+  .card-top{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .station-name{font-size:16.5px; font-weight:800; letter-spacing:-.01em;}
+  .badges{display:flex; gap:5px; flex-wrap:wrap;}
+  .badge{min-width:24px; height:22px; padding:0 6px; border-radius:11px; color:#fff; font-size:10.5px; font-weight:800; display:flex; align-items:center; justify-content:center; flex:0 0 auto; white-space:nowrap;}
+  .transfer-tag{font-size:10.5px; font-weight:800; color:var(--l8); margin-top:5px;}
+  .sign-board{margin-top:10px; border-radius:14px; overflow:hidden; border:1px solid var(--line-border); background:var(--card);}
+  .sign-strip{height:8px; width:100%;}
+  .sign-body{padding:16px;}
+  .sign-line-label{font-size:11px; font-weight:800; color:#fff; padding:3px 9px; border-radius:6px; display:inline-block; margin-bottom:10px;}
+  .sign-station{font-size:22px; font-weight:900; letter-spacing:-.02em; margin-bottom:14px;}
+  .adjacency{display:flex; align-items:stretch; gap:0; border-top:1px dashed var(--line-border); padding-top:12px;}
+  .adj-cell{flex:1; text-align:center; padding:4px 6px;}
+  .adj-cell.mid{flex:0 0 auto; padding:0 10px; display:flex; align-items:center; color:var(--muted); font-weight:900;}
+  .adj-dir{font-size:10px; color:var(--muted); font-weight:800; margin-bottom:3px;}
+  .adj-name{font-size:14px; font-weight:800;}
+  .adj-name.empty{color:var(--muted); font-weight:600; font-size:12.5px;}
+  .other-lines{margin-top:12px; padding-top:12px; border-top:1px solid var(--line-border);}
+  .other-lines-label{font-size:11px; font-weight:800; color:var(--muted); margin-bottom:7px;}
+  .empty-state{text-align:center; padding:48px 20px; color:var(--muted);}
+  .empty-state .big{font-size:34px; margin-bottom:8px;}
+  .empty-state p{font-size:13.5px; margin:2px 0;}
+
+  /* ---- route mode ---- */
+  .field-group{margin-bottom:12px;}
+  .field-label{font-size:12px; font-weight:800; color:var(--muted); margin-bottom:5px; display:flex; align-items:center; justify-content:space-between;}
+  .waypoint-row{display:flex; gap:6px; margin-bottom:8px;}
+  .waypoint-row input{flex:1;}
+  .rm-btn{flex:0 0 auto; width:44px; border-radius:10px; border:2px solid var(--line-border); background:var(--card); font-weight:800; color:var(--warn); cursor:pointer;}
+  .add-waypoint{
+    width:100%; padding:10px; border-radius:10px; border:2px dashed var(--line-border); background:transparent;
+    font-weight:700; font-size:13px; color:var(--muted); cursor:pointer; margin-bottom:14px;
+  }
+  .row2{display:flex; gap:10px;}
+  .row2 > div{flex:1;}
+  .daytype-pills{display:flex; gap:8px;}
+  .day-pill{flex:1; text-align:center; padding:12px 8px; border-radius:10px; border:2px solid var(--line-border); background:var(--card); font-weight:800; font-size:13.5px; cursor:pointer; color:var(--muted);}
+  .day-pill.active{border-color:var(--ink); color:var(--ink);}
+  .find-btn{
+    width:100%; padding:15px; border-radius:12px; border:none; background:var(--ink); color:#fff;
+    font-size:16px; font-weight:800; cursor:pointer; margin-top:16px; margin-bottom:6px;
+  }
+  .find-btn:active{opacity:.85;}
+  .route-tabs{display:flex; gap:8px; margin:22px 0 12px;}
+  .route-tab{flex:1; padding:12px 6px; border-radius:12px; border:2px solid var(--line-border); background:var(--card); text-align:center; cursor:pointer;}
+  .route-tab.active{border-color:var(--ink);}
+  .route-tab .rt-label{font-size:11px; font-weight:800; color:var(--muted); margin-bottom:4px;}
+  .route-tab .rt-value{font-size:17px; font-weight:900;}
+  .route-detail{background:var(--card); border:1px solid var(--line-border); border-radius:14px; padding:16px;}
+  .rd-summary{display:flex; flex-wrap:wrap; gap:10px 18px; padding-bottom:14px; border-bottom:1px solid var(--line-border); margin-bottom:14px;}
+  .rd-stat .rd-num{font-size:19px; font-weight:900;}
+  .rd-stat .rd-cap{font-size:10.5px; color:var(--muted); font-weight:800;}
+  .rd-note{font-size:11.5px; color:var(--muted); margin-top:2px; margin-bottom:14px; line-height:1.5;}
+  .seg{display:flex; gap:10px; margin-bottom:2px;}
+  .seg-track{display:flex; flex-direction:column; align-items:center; width:18px;}
+  .seg-dot{width:12px;height:12px;border-radius:50%;border:3px solid; background:#fff;}
+  .seg-line-bar{width:4px; flex:1; min-height:26px; border-radius:2px;}
+  .seg-content{flex:1; padding-bottom:16px;}
+  .seg-station-name{font-weight:800; font-size:14.5px;}
+  .seg-line-tag{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:800; color:#fff; padding:2px 8px; border-radius:6px; margin:4px 0;}
+  .seg-detail{font-size:12px; color:var(--muted);}
+  .seg-dir{font-size:11.5px; font-weight:700; color:var(--ink); margin:2px 0;}
+  .transfer-marker{display:flex; align-items:center; gap:8px; margin:2px 0 2px 0; padding-left:28px; font-size:11.5px; font-weight:800; color:var(--warn);}
+  .transfer-tip{padding-left:28px; padding-bottom:10px; font-size:11px; color:var(--ink); line-height:1.5; font-weight:600; display:flex; flex-direction:column; align-items:flex-start; gap:2px;}
+  .transfer-tip.muted{color:var(--muted); font-weight:500;}
+  .tip-link{
+    display:inline-flex; align-items:center; gap:3px; margin-top:5px; margin-left:0;
+    padding:5px 10px; border-radius:8px; background:var(--paper); border:1px solid var(--line-border);
+    color:var(--ink); font-size:11px; font-weight:800; text-decoration:none; width:fit-content;
+  }
+  .tip-link:active{opacity:.7;}
+  .tip-link-row{display:flex; gap:6px; flex-wrap:wrap; margin-top:5px;}
+  .tip-hint{font-size:10.5px; color:var(--muted); font-weight:500; margin-top:4px; font-style:italic;}
+  .warn-banner{
+    background:#FBEFE7; border:1px solid #E8C4A8; color:var(--warn); border-radius:10px; padding:10px 12px;
+    font-size:12px; font-weight:700; margin-bottom:14px; line-height:1.5;
+  }
+  .route-empty{text-align:center; padding:32px 20px; color:var(--muted); font-size:13px;}
+
+  footer{margin-top:28px; padding-top:16px; border-top:1px solid var(--line-border); font-size:11.5px; color:var(--muted); line-height:1.6;}
+
+  .brand-footer{
+    margin-top:18px; padding:16px; border-radius:12px; background:var(--card); border:1px solid var(--line-border);
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  }
+  .brand-name{font-weight:900; font-size:14px; letter-spacing:-.01em; color:var(--ink);}
+  .brand-by{font-weight:600; font-size:12px; color:var(--muted); margin-right:4px;}
+  .brand-links{display:flex; gap:10px; flex-wrap:wrap;}
+  .brand-links a{
+    font-size:12px; font-weight:700; color:var(--ink); text-decoration:none; padding:6px 12px;
+    border-radius:8px; background:var(--paper); border:1px solid var(--line-border); white-space:nowrap;
+  }
+  .brand-links a:active{opacity:.7;}
+
+  /* ---- 모바일 최적화 (워드프레스 임베드 등 좁은 폭 대응) ---- */
+  @media (max-width: 480px){
+    body{padding:14px 10px 48px;}
+    h1{font-size:20px;}
+    .sub{font-size:12.5px;}
+    .mode-tab{padding:10px 4px; font-size:12.5px;}
+    .pill{padding:6px 10px; font-size:12px;}
+    .cat-pill{padding:5px 10px; font-size:11.5px;}
+    .badge{min-width:20px; height:20px; font-size:9.5px; padding:0 5px;}
+    .station-name{font-size:15px;}
+    .sign-station{font-size:19px;}
+    .rd-summary{gap:8px 12px;}
+    .rd-stat .rd-num{font-size:17px;}
+    .route-tab .rt-value{font-size:15px;}
+    input[type="text"], input[type="time"]{padding:12px 40px 12px 14px;}
+    .waypoint-row input{min-width:0;}
+    .find-btn{padding:14px; font-size:15px;}
+    .brand-footer{flex-direction:column; align-items:flex-start; padding:14px;}
+  }
+  @media (max-width: 340px){
+    .route-tabs{flex-direction:column;}
+    .rd-summary{justify-content:space-between;}
+  }
+  /* 터치 조작 시 탭 영역 확보 */
+  .mode-tab, .pill, .cat-pill, .day-pill, .find-btn, .rm-btn, .add-waypoint{
+    min-height:38px; display:flex; align-items:center; justify-content:center;
+  }
+  .route-tab{min-height:52px; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .station-card{min-height:38px;}
+  html{-webkit-text-size-adjust:100%;}
+.langbtn{background:#fff;border:1px solid #ddd;color:#666;font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="position:relative">
+    <div id="lang-switch" style="position:absolute;top:0;right:0;display:flex;gap:4px">
+      <button data-lang="ko" class="langbtn">한</button>
+      <button data-lang="en" class="langbtn">EN</button>
+      <button data-lang="ja" class="langbtn">日</button>
+    </div>
+    <div class="eyebrow">Seoul Capital Area Rail · Station Tool</div>
+    <h1 data-i18n="h1">지하철 역 검색 · 경로 찾기</h1>
+    <p class="sub" data-i18n="sub">서울 지하철부터 광역철도·경전철까지, 역 정보를 찾고 최적 경로를 계산해요.</p>
+  </header>
+
+  <div class="mode-tabs">
+    <div class="mode-tab active" data-mode="search" data-i18n="mode_search">🔍 역 검색</div>
+    <div class="mode-tab" data-mode="route" data-i18n="mode_route">🧭 경로 찾기</div>
+  </div>
+
+  <!-- ===== SEARCH MODE ===== -->
+  <div class="mode-panel active" id="panel-search">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="역 이름을 입력하세요 (예: 강남, 홍대입구)" autocomplete="off">
+      <button class="clear-btn" id="clearBtn">✕</button>
+    </div>
+    <div class="category-tabs" id="categoryTabs"></div>
+    <div class="line-tabs" id="lineTabs"></div>
+    <div class="meta-row" id="metaRow"></div>
+    <div class="station-list" id="stationList"></div>
+  </div>
+
+  <!-- ===== ROUTE MODE ===== -->
+  <div class="mode-panel" id="panel-route">
+    <div class="field-group">
+      <div class="field-label">출발지</div>
+      <input type="text" id="originInput" list="stationsDatalist" placeholder="출발역 입력" autocomplete="off">
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">경유지 <span id="waypointCount" style="color:var(--muted);font-weight:600;"></span></div>
+      <div id="waypointsWrap"></div>
+      <button class="add-waypoint" id="addWaypointBtn">+ 경유지 추가</button>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">도착지</div>
+      <input type="text" id="destInput" list="stationsDatalist" placeholder="도착역 입력" autocomplete="off">
+    </div>
+
+    <datalist id="stationsDatalist"></datalist>
+
+    <div class="field-group">
+      <div class="field-label">요일 유형</div>
+      <div class="daytype-pills">
+        <div class="day-pill active" data-day="weekday">평일</div>
+        <div class="day-pill" data-day="weekend">주말·공휴일</div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">출발 시각</div>
+      <input type="time" id="departTime">
+    </div>
+
+    <button class="find-btn" id="findRouteBtn">경로 계산하기</button>
+
+    <div id="routeResults"></div>
+  </div>
+
+  <footer id="footerNote">
+    ⓘ 서울 1~9호선 및 수인분당선·경의중앙선·신분당선·공항철도·경춘선·경강선·서해선·인천1·2호선·김포골드라인·신림선·우이신설선·의정부경전철·용인경전철·GTX-A 등 수도권 연결 노선을 포함한 참고용 도구예요.
+    일부 소규모 역이나 최신 연장 구간은 빠졌을 수 있고, 노선 연장·역명 변경 등 최신 변경사항이 반영되지 않았을 수 있어요.
+    <strong>GTX-A는 아직 운정중앙~서울역, 수서~동탄 두 구간으로 나뉘어 운행 중</strong>이라 이 도구에서도 서울역~수서 구간은 연결하지 않았어요(2026년 8월경 전 구간 개통 예정).
+    신분당선·공항철도 등 일부 노선은 실제로는 별도의 추가요금이 붙을 수 있는데, 이 도구의 요금 계산은 통합 거리비례 모델만 반영한 추정치예요.
+    실시간 운행 정보나 정확한 경로·요금은 공식 앱(카카오맵, 네이버지도, 각 운영사 앱 등)에서 확인해 주세요.
+  </footer>
+
+  <div class="brand-footer">
+    <div class="brand-name"><span class="brand-by">Product by</span> pomiai</div>
+    <div class="brand-links">
+      <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
+      <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube @pomiai_official</a>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* =====================================================
+   DATA
+===================================================== */
+const LINES = {
+  1:{name:'1호선', color:'#0052A4', stations:['소요산','동두천','보산','동두천중앙','지행','덕정','덕계','양주','녹양','의정부','회룡','망월사','도봉산','도봉','방학','창동','녹천','월계','광운대','석계','신이문','외대앞','회기','청량리','제기동','신설동','동묘앞','동대문','종로5가','종로3가','종각','시청','서울역','남영','용산','노량진','대방','신길','영등포','신도림','구로'],
+    branches:{'경인선 방면':['구로','구일','개봉','오류동','온수','역곡','소사','부천','중동','송내','부개','부평','백운','동암','간석','주안','도화','제물포','도원','동인천'], '경부선 방면':['구로','가산디지털단지','독산','금천구청','석수','관악','안양','명학','금정','군포','당정','의왕','성균관대','화서','수원']}},
+  2:{name:'2호선', color:'#00A84D', stations:['시청','을지로입구','을지로3가','을지로4가','동대문역사문화공원','신당','상왕십리','왕십리','한양대','뚝섬','성수','건대입구','구의','강변','잠실나루','잠실','잠실새내','종합운동장','삼성','선릉','역삼','강남','교대','서초','방배','사당','낙성대','서울대입구','봉천','신림','신대방','구로디지털단지','대림','신도림','문래','영등포구청','당산','합정','홍대입구','신촌','이대','아현','충정로'],
+    branches:{'성수지선':['성수','용답','신답','용두','신설동'], '신정지선':['신도림','도림천','양천구청','신정네거리','까치산']}},
+  3:{name:'3호선', color:'#EF7C1C', stations:['대화','주엽','정발산','마두','백석','대곡','화정','원당','원흥','삼송','지축','구파발','연신내','불광','녹번','홍제','무악재','독립문','경복궁','안국','종로3가','을지로3가','충무로','동대입구','약수','금호','옥수','압구정','신사','잠원','고속터미널','교대','남부터미널','양재','매봉','도곡','대치','학여울','대청','일원','수서','가락시장','경찰병원','오금']},
+  4:{name:'4호선', color:'#00A4E3', stations:['진접','오남','별내별가람','당고개','상계','노원','창동','쌍문','수유','미아','미아사거리','길음','성신여대입구','한성대입구','혜화','동대문','동대문역사문화공원','충무로','명동','회현','서울역','숙대입구','삼각지','신용산','이촌','동작','이수','사당','남태령','선바위','경마공원','대공원','과천','정부과천청사','인덕원','평촌','범계','금정','산본','수리산','대야미','반월','상록수','한대앞','중앙','고잔','공단','안산','신길온천','정왕','오이도']},
+  5:{name:'5호선', color:'#996CAC', stations:['방화','개화산','김포공항','송정','마곡','발산','우장산','화곡','까치산','신정','목동','오목교','양평','영등포구청','영등포시장','신길','여의도','여의나루','마포','공덕','애오개','충정로','서대문','광화문','종로3가','을지로4가','동대문역사문화공원','청구','신금호','행당','왕십리','마장','답십리','장한평','군자','아차산','광나루','천호','강동','길동','굽은다리','명일','고덕','상일동','강일','미사','하남풍산','하남시청','하남검단산'],
+    branches:{'마천지선':['강동','길동','둔촌동','올림픽공원','방이','오금','개롱','거여','마천']}},
+  6:{name:'6호선', color:'#CD7C2F', stations:['응암','역촌','불광','독바위','연신내','구산','대조','새절','증산','디지털미디어시티','월드컵경기장','마포구청','망원','합정','상수','광흥창','대흥','공덕','효창공원앞','삼각지','녹사평','이태원','한강진','버티고개','약수','청구','신당','동묘앞','창신','보문','안암','고려대','월곡','상월곡','돌곶이','석계','태릉입구','화랑대','봉화산','신내']},
+  7:{name:'7호선', color:'#747F00', stations:['장암','도봉산','수락산','마들','노원','중계','하계','공릉','태릉입구','먹골','중화','상봉','면목','사가정','용마산','중곡','군자','어린이대공원','건대입구','뚝섬유원지','청담','강남구청','학동','논현','반포','고속터미널','내방','이수','남성','숭실대입구','상도','장승배기','신대방삼거리','보라매','신풍','대림','남구로','가산디지털단지','철산','광명사거리','천왕','온수','까치울','부천종합운동장','춘의','신중동','부천시청','상동','삼산체육관','굴포천','부평구청','산곡','석남']},
+  8:{name:'8호선', color:'#E6186C', stations:['암사','천호','강동구청','몽촌토성','잠실','석촌','송파','가락시장','문정','장지','복정','산성','남한산성입구','단대오거리','신흥','수진','모란']},
+  9:{name:'9호선', color:'#BDB092', stations:['개화','김포공항','공항시장','신방화','마곡나루','양천향교','가양','증미','등촌','염창','신목동','선유도','당산','국회의사당','여의도','샛강','노량진','노들','흑석','동작','구반포','신반포','고속터미널','사평','신논현','언주','선정릉','삼성중앙','봉은사','종합운동장','삼전','석촌고분','석촌','송파나루','한성백제','올림픽공원','둔촌오륜','중앙보훈병원']},
+
+  suin:{name:'수인분당선', badge:'수인분', color:'#FABE00', profile:'wide', stations:['청량리','왕십리','서울숲','압구정로데오','강남구청','선정릉','선릉','한티','도곡','구룡','개포동','대모산입구','수서','복정','가천대','태평','모란','야탑','이매','서현','수내','정자','미금','오리','죽전','보정','구성','신갈','기흥','상갈','청명','영통','망포','매탄권선','수원','고색','오목천','어천','야목','사리','한대앞','중앙','고잔','공단','안산','신길온천','정왕','오이도','달월','월곶','소래포구','인천논현','호구포','남동인더스파크','원인재','연수','송도','인천시청','예술회관','테크노파크','지식정보단지','인하대','숭의','신포','인천']},
+  gyeongui:{name:'경의중앙선', badge:'경의', color:'#77C4A3', profile:'wide', stations:['임진강','문산','파주','월롱','금촌','금릉','탄현','일산','풍산','백마','곡산','대곡','능곡','행신','강매','화전','수색','디지털미디어시티','가좌','홍대입구','공덕','효창공원앞','용산','이촌','서빙고','한남','옥수','응봉','왕십리','청량리','회기','중랑','상봉','망우','양원','구리','도농','덕소','도심','팔당','운길산','양수','신원','국수','아신','오빈','양평','원덕','용문','지평']},
+  sinbundang:{name:'신분당선', badge:'신분당', color:'#D31145', profile:'wide', stations:['신사','논현','신논현','강남','양재','양재시민의숲','청계산입구','판교','정자','미금','동천','수지구청','성복','상현','광교중앙','광교']},
+  arex:{name:'공항철도', badge:'공항철도', color:'#0090D2', profile:'wide', stations:['서울역','공덕','홍대입구','디지털미디어시티','마곡나루','김포공항','계양','검암','청라국제도시','영종','운서','공항화물청사','인천공항1터미널','인천공항2터미널']},
+  gyeongchun:{name:'경춘선', badge:'경춘', color:'#0C8E72', profile:'wide', stations:['상봉','신내','갈매','별내','퇴계원','사릉','금곡','평내호평','천마산','마석','대성리','청평','상천','가평','굴봉산','백양리','강촌','김유정','남춘천','춘천']},
+  gyeonggang:{name:'경강선', badge:'경강', color:'#003DA5', profile:'wide', stations:['판교','이매','삼동','경기광주','초월','곤지암','신둔도예촌','이천','부발','세종대왕릉','여주']},
+  seohae:{name:'서해선', badge:'서해', color:'#8FAE1B', profile:'wide', stations:['대곡','능곡','원종','부천종합운동장','소사','소새울','시흥대야','신천','신현','시흥시청','시흥능곡','달미','선부','초지','시우','원시']},
+  incheon1:{name:'인천1호선', badge:'인천1', color:'#759CD1', stations:['계양','귤현','박촌','임학','계산','경인교대입구','작전','갈산','부평구청','부평시장','부평','동수','부평삼거리','간석오거리','인천시청','예술회관','인천터미널','문학경기장','선학','신연수','원인재','동춘','동막','캠퍼스타운','테크노파크','지식정보단지','인천대입구','센트럴파크','국제업무지구','송도달빛축제공원']},
+  incheon2:{name:'인천2호선', badge:'인천2', color:'#ED8B00', stations:['검단오류','왕길','검단사거리','마전','완정','독정','검암','검바위','아시아드경기장','서구청','가정','가정중앙시장','석남','서부여성회관','인천가좌','가재울','주안국가산단','주안','시민공원','석바위시장','인천시청','인천대공원','남동구청','만수','남촌도림','석천사거리','운연']},
+  gimpo:{name:'김포골드라인', badge:'김포', color:'#A17800', stations:['양촌','구래','마산','장기','운양','걸포북변','사우(김포시청)','풍무','고촌','김포공항']},
+  sillim:{name:'신림선', badge:'신림선', color:'#6789CA', stations:['샛강','대방','보라매','보라매공원','당곡','신림','서원','서울대벤처타운','관악산']},
+  uisinseol:{name:'우이신설선', badge:'우이신설', color:'#8DC63F', stations:['신설동','보문','성신여대입구','정릉','북한산보국문','솔샘','삼양사거리','삼양','화계','가오리','4·19민주묘지','솔밭공원','북한산우이']},
+  uijeongbu:{name:'의정부경전철', badge:'의정부', color:'#FF8200', stations:['발곡','회룡','의정부','의정부시청','흥선','곤제','어룡','범골','경기도청북부청사','새말','탑석']},
+  yongin:{name:'용인경전철', badge:'용인', color:'#4FA96E', stations:['기흥','강남대','지석','어정','동백','초당','삼가','용인시청','고진','명지대','김량장','용인중앙시장','운동장·송담대','관곡','전대·에버랜드']},
+  gtxa:{name:'GTX-A', badge:'GTX-A', color:'#956AA8', profile:'gtx', branches:{'북부(운정~서울역)':['운정중앙','킨텍스','대곡','연신내','서울역'], '남부(수서~동탄)':['수서','성남','구성','동탄']}}
+};
+
+const stationMap = {}; // name -> [{line, idx, seq, branch}]
+Object.keys(LINES).forEach(no=>{
+  const seq = LINES[no].stations || [];
+  seq.forEach((name, idx)=>{
+    if(!stationMap[name]) stationMap[name] = [];
+    stationMap[name].push({line:no, idx, seq});
+  });
+  if(LINES[no].branches){
+    Object.entries(LINES[no].branches).forEach(([bname, bseq])=>{
+      bseq.forEach((name, bidx)=>{
+        if(!stationMap[name]) stationMap[name] = [];
+        if(!stationMap[name].some(e=>e.line===no)){
+          stationMap[name].push({line:no, idx:bidx, seq:bseq, branch:bname});
+        }
+      });
+    });
+  }
+});
+const ALL_STATIONS = Object.keys(stationMap).sort((a,b)=>a.localeCompare(b,'ko'));
+const lineColor = no => LINES[no].color;
+const lineName = no => LINES[no].name;
+
+/* =====================================================
+   ROUTE GRAPH  (approximate model — see footer disclaimer)
+   profile: 'subway' (default, 도시철도 1~9호선·경전철류) / 'wide' (광역철도, 역간거리가 김)
+            / 'gtx' (GTX-A, 역간거리가 훨씬 더 넓고 고속)
+===================================================== */
+const PROFILES = {
+  subway: {time:2.2, dist:1.3},   // 평균 역간 소요시간(분)·거리(km) 추정치 — 도시철도
+  wide:   {time:3.2, dist:2.6},   // 광역철도(수인분당선·경의중앙선·신분당선 등) 추정치
+  gtx:    {time:6.5, dist:13}     // GTX-A 추정치 (실제 구간별 편차가 매우 큼)
+};
+function profileFor(line){ return PROFILES[LINES[line].profile || 'subway']; }
+const TRANSFER_WALK = 3;    // 환승 도보 이동 평균(분) 추정치
+
+function waitTime(day){ return day==='weekend' ? 4 : 2.5; }        // 평균 배차대기(분) 추정치
+function transferPenalty(day){ return TRANSFER_WALK + waitTime(day); }
+
+const rideAdj = {}; // station -> [{to, line, time, dist}]
+function addRideEdge(a,b,line){
+  if(!rideAdj[a]) rideAdj[a]=[];
+  const p = profileFor(line);
+  rideAdj[a].push({to:b, line, time:p.time, dist:p.dist});
+}
+function buildSeq(seq, line){
+  for(let i=0;i<seq.length-1;i++){
+    addRideEdge(seq[i], seq[i+1], line);
+    addRideEdge(seq[i+1], seq[i], line);
+  }
+}
+Object.keys(LINES).forEach(no=>{
+  buildSeq(LINES[no].stations || [], no);
+  if(LINES[no].branches){
+    Object.values(LINES[no].branches).forEach(bseq=>buildSeq(bseq, no));
+  }
+});
+
+function linesAt(station){
+  return [...new Set((stationMap[station]||[]).map(e=>e.line))];
+}
+
+function fareFromKm(km){
+  const base = 1550;
+  if(km<=10) return base;
+  if(km<=50) return base + Math.ceil((km-10)/5)*100;
+  return base + Math.ceil((50-10)/5)*100 + Math.ceil((km-50)/8)*100;
+}
+
+// 방향(OO행) 계산: 세그먼트의 첫 두 역으로 진행 방향을 판단해 해당 방향의 종점을 찾음.
+// 2호선 본선(순환선)은 'OO행' 대신 외선/내선순환으로 표기.
+function segmentDirection(seg){
+  if(!seg.stations || seg.stations.length<2) return null;
+  const a = seg.stations[0], b = seg.stations[1];
+  const candidates = (stationMap[a]||[]).filter(e=>e.line===seg.line);
+  let entry = candidates.find(e=> e.seq[e.idx+1]===b || e.seq[e.idx-1]===b);
+  if(!entry) entry = candidates[0];
+  if(!entry) return null;
+  const seq = entry.seq;
+  const idxA = entry.idx;
+  const idxB = seq.indexOf(b);
+  if(idxB<0) return null;
+  const increasing = idxB > idxA;
+  if(seg.line==='2' && seq===LINES['2'].stations && !entry.branch){
+    // 2호선 순환선은 종점이 없고, 외선/내선순환 표기는 실제로도 혼동이 잦아
+    // 최신 안내판과 동일하게 '다음역 방면'으로 표기해요.
+    return `${b} 방면`;
+  }
+  const terminal = increasing ? seq[seq.length-1] : seq[0];
+  return terminal===seg.stations[seg.stations.length-1] ? `${terminal}행` : `${terminal} 방면`;
+}
+
+// 환승 시 편리한 승하차 위치(칸번호 등) — 실제 역 구조를 확인해 검증된 역만 우선 반영.
+// 아직 검증하지 못한 환승역은 목록에 없으며, 해당 역은 일반 환승 통로 안내로 대체돼요.
+const TRANSFER_TIPS = {
+  '교대': [
+    {lines:['2','3'], tip:'3호선→2호선 환승: 외선순환(강남 방면)은 열차 앞쪽(10번째 칸 부근), 내선순환(서초 방면)은 열차 맨 뒤쪽(1번째 칸 부근)이 환승통로에 가장 가까워요.'}
+  ]
+};
+function findTransferTip(station, lineA, lineB){
+  const list = TRANSFER_TIPS[station];
+  if(!list) return null;
+  return list.find(t => t.lines.includes(lineA) && t.lines.includes(lineB)) || null;
+}
+
+// 환승역 + 두 노선명으로 네이버 검색 결과 링크 생성 (편한 환승 칸 등 최신 정보를 바로 찾아볼 수 있도록)
+function transferSearchLink(station, lineA, lineB){
+  const q = `${station}역 ${lineName(lineA)} ${lineName(lineB)} 환승 편한 칸`;
+  return `https://search.naver.com/search.naver?query=${encodeURIComponent(q)}`;
+}
+function stationMapLink(station){
+  return `https://map.naver.com/p/search/${encodeURIComponent(station+'역')}`;
+}
+
+// 각 구간의 소요시간과, 그 구간이 끝나는(환승/도착) 시점까지의 누적 시각을 계산.
+// 실시간 열차 도착 정보는 없으므로, 평균 배차간격 기반의 '예상' 값이에요.
+function computeSegmentTimings(route, dep, day){
+  let cum = waitTime(day); // 첫 열차 탑승 전 평균 대기시간
+  return route.segments.map((seg, i)=>{
+    const segMin = (seg.stations.length-1) * profileFor(seg.line).time;
+    cum += segMin;
+    const arrival = fmtClock(dep, cum);
+    let transferWaitMin = 0;
+    if(i < route.segments.length-1){
+      transferWaitMin = transferPenalty(day);
+      cum += transferWaitMin;
+    }
+    return {segMin, arrival, transferWaitMin};
+  });
+}
+
+// 환승역에서 갈아탈 노선의 시간표를 바로 찾아볼 수 있는 검색 링크
+function timetableSearchLink(station, line){
+  const q = `${station}역 ${lineName(line)} 시간표`;
+  return `https://search.naver.com/search.naver?query=${encodeURIComponent(q)}`;
+}
+
+// Dijkstra over states (station|line)
+function findPath(start, end, metric, day){
+  if(!stationMap[start] || !stationMap[end]) return null;
+  if(start===end) return {edges:[], startStation:start, startLine:linesAt(start)[0], totalCost:0};
+  const dist = new Map();
+  const prev = new Map();
+  const pq = [];
+  linesAt(start).forEach(line=>{
+    const key = start+'|'+line;
+    const c = metric==='time' ? waitTime(day) : 0;
+    dist.set(key,c);
+    pq.push({key, station:start, line, cost:c});
+  });
+  const visited = new Set();
+  while(pq.length){
+    let mi=0;
+    for(let i=1;i<pq.length;i++) if(pq[i].cost<pq[mi].cost) mi=i;
+    const cur = pq.splice(mi,1)[0];
+    if(visited.has(cur.key)) continue;
+    visited.add(cur.key);
+    if(cur.station===end){
+      const edgesRev=[]; let ck=cur.key;
+      while(prev.has(ck)){ const p=prev.get(ck); edgesRev.push(p); ck=p.from; }
+      edgesRev.reverse();
+      const startParts = ck.split('|');
+      return {edges:edgesRev, startStation:startParts[0], startLine:startParts[1], totalCost:cur.cost};
+    }
+    (rideAdj[cur.station]||[]).filter(e=>e.line===cur.line).forEach(e=>{
+      const nkey = e.to+'|'+e.line;
+      const w = metric==='time' ? e.time : e.dist;
+      const nc = cur.cost + w;
+      if(!dist.has(nkey) || nc < dist.get(nkey)-1e-9){
+        dist.set(nkey, nc);
+        prev.set(nkey, {from:cur.key, type:'ride', line:e.line, fromStation:cur.station, toStation:e.to, edgeTime:e.time, edgeDist:e.dist});
+        pq.push({key:nkey, station:e.to, line:e.line, cost:nc});
+      }
+    });
+    linesAt(cur.station).filter(l=>l!==cur.line).forEach(l2=>{
+      const nkey = cur.station+'|'+l2;
+      const w = metric==='time' ? transferPenalty(day) : 0;
+      const nc = cur.cost + w;
+      if(!dist.has(nkey) || nc < dist.get(nkey)-1e-9){
+        dist.set(nkey, nc);
+        prev.set(nkey, {from:cur.key, type:'transfer', line:l2, fromStation:cur.station, toStation:cur.station});
+        pq.push({key:nkey, station:cur.station, line:l2, cost:nc});
+      }
+    });
+  }
+  return null;
+}
+
+function edgesToSegments(startStation, startLine, edges){
+  const segments = [];
+  let segLine = startLine, segStations=[startStation];
+  edges.forEach(e=>{
+    if(e.type==='ride'){
+      segStations.push(e.toStation);
+    } else {
+      segments.push({line:segLine, stations:segStations});
+      segLine = e.line;
+      segStations = [e.toStation];
+    }
+  });
+  segments.push({line:segLine, stations:segStations});
+  return segments.filter(s=>s.stations.length>1 || segments.length===1);
+}
+
+// build a full multi-leg route (origin -> waypoints -> destination) for a given metric
+function buildRoute(stops, metric, day){
+  let allSegments = [];
+  let totalTime = 0, totalDist = 0;
+  for(let i=0;i<stops.length-1;i++){
+    const res = findPath(stops[i], stops[i+1], metric, day);
+    if(!res) return null;
+    const segs = edgesToSegments(res.startStation, res.startLine, res.edges);
+    // merge with previous if same line continues across a waypoint join
+    if(allSegments.length && segs.length && allSegments[allSegments.length-1].line===segs[0].line){
+      const last = allSegments[allSegments.length-1];
+      last.stations = last.stations.concat(segs[0].stations.slice(1));
+      allSegments = allSegments.concat(segs.slice(1));
+    } else {
+      allSegments = allSegments.concat(segs);
+    }
+    // recompute time/dist for this leg directly from edges (metric-agnostic accumulation)
+    let legTime = metric==='time' ? waitTime(day) : 0;
+    let legDist = 0;
+    res.edges.forEach(e=>{
+      if(e.type==='ride'){ legTime += e.edgeTime; legDist += e.edgeDist; }
+      else { legTime += transferPenalty(day); }
+    });
+    totalTime += legTime;
+    totalDist += legDist;
+  }
+  const transferCount = Math.max(0, allSegments.length-1);
+  return {segments:allSegments, totalTime, totalDist, fare:fareFromKm(totalDist), transferCount};
+}
+
+/* =====================================================
+   SEARCH MODE UI
+===================================================== */
+let activeLine = null;
+let activeCategory = 'metro'; // 기본값: 지하철(1~9호선)만 표시해 첫 화면이 복잡하지 않도록
+let selectedStation = null;
+const lineTabsEl = document.getElementById('lineTabs');
+const categoryTabsEl = document.getElementById('categoryTabs');
+const listEl = document.getElementById('stationList');
+const metaEl = document.getElementById('metaRow');
+const input = document.getElementById('searchInput');
+const clearBtn = document.getElementById('clearBtn');
+
+const CATEGORY_MAP = {
+  metro: ['1','2','3','4','5','6','7','8','9'],
+  wide: ['suin','gyeongui','sinbundang','arex','gyeongchun','gyeonggang','seohae','gtxa'],
+  light: ['incheon1','incheon2','gimpo','sillim','uisinseol','uijeongbu','yongin']
+};
+const CATEGORY_LABEL = {all:'전체 노선', metro:'지하철 1~9호선', wide:'광역철도·GTX', light:'경전철'};
+function categoryOf(line){
+  for(const cat of Object.keys(CATEGORY_MAP)) if(CATEGORY_MAP[cat].includes(String(line))) return cat;
+  return 'metro';
+}
+function linesInCategory(cat){
+  return cat==='all' ? Object.keys(LINES) : CATEGORY_MAP[cat];
+}
+
+function renderCategoryTabs(){
+  let html = '';
+  Object.keys(CATEGORY_LABEL).forEach(cat=>{
+    html += `<div class="cat-pill${activeCategory===cat?' active':''}" data-cat="${cat}">${CATEGORY_LABEL[cat]}</div>`;
+  });
+  categoryTabsEl.innerHTML = html;
+  categoryTabsEl.querySelectorAll('.cat-pill').forEach(p=>{
+    p.addEventListener('click', ()=>{
+      activeCategory = p.dataset.cat;
+      activeLine = null; // 카테고리 전환 시 개별 노선 필터는 초기화
+      categoryTabsEl.querySelectorAll('.cat-pill').forEach(x=>x.classList.remove('active'));
+      p.classList.add('active');
+      renderTabs();
+      renderSearch();
+    });
+  });
+}
+
+function renderTabs(){
+  let html = `<div class="pill active" style="background:#1a1a1a" data-line="">전체</div>`;
+  linesInCategory(activeCategory).forEach(no=>{ html += `<div class="pill" style="background:${lineColor(no)}" data-line="${no}">${lineName(no)}</div>`; });
+  lineTabsEl.innerHTML = html;
+  lineTabsEl.querySelectorAll('.pill').forEach(p=>{
+    p.addEventListener('click', ()=>{
+      activeLine = p.dataset.line || null;
+      lineTabsEl.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+      p.classList.add('active');
+      renderSearch();
+    });
+  });
+}
+function badgeHtml(no){ const label = LINES[no].badge || no; return `<div class="badge" style="background:${lineColor(no)}">${label}</div>`; }
+function getResults(){
+  const q = input.value.trim();
+  let names = ALL_STATIONS;
+  if(activeLine) names = names.filter(n => stationMap[n].some(e=>e.line===activeLine));
+  if(q) names = names.filter(n => n.includes(q));
+  return names;
+}
+function stationLines(name){ return [...new Set(stationMap[name].map(e=>e.line))].sort((a,b)=>a-b); }
+function findAdjacency(name, line){
+  const entries = stationMap[name].filter(e=>e.line===line);
+  const entry = entries.find(e=>!e.branch) || entries[0];
+  const seq = entry.seq, idx = entry.idx;
+  return { prev: idx>0? seq[idx-1]:null, next: idx<seq.length-1? seq[idx+1]:null };
+}
+function renderCard(name){
+  const lines = stationLines(name);
+  const isTransfer = lines.length>1;
+  return `<div class="station-card${selectedStation===name?' selected':''}" data-name="${name}">
+    <div class="card-top"><div class="station-name">${name}</div><div class="badges">${lines.map(badgeHtml).join('')}</div></div>
+    ${isTransfer ? `<div class="transfer-tag">환승역 · ${lines.map(l=>l+'호선').join(' · ')}</div>` : ''}
+  </div>`;
+}
+function selectedLineFor(name, lines){ return (activeLine && lines.includes(activeLine)) ? activeLine : lines[0]; }
+function renderSignBoard(name){
+  const lines = stationLines(name);
+  const primary = selectedLineFor(name, lines);
+  const color = lineColor(primary);
+  const {prev, next} = findAdjacency(name, primary);
+  const others = lines.filter(l=>l!==primary);
+  return `<div class="sign-board">
+    <div class="sign-strip" style="background:${color}"></div>
+    <div class="sign-body">
+      <div class="sign-line-label" style="background:${color}">${lineName(primary)}</div>
+      <div class="sign-station">${name}</div>
+      <div class="adjacency">
+        <div class="adj-cell"><div class="adj-dir">◀ 이전역</div><div class="adj-name ${prev?'':'empty'}">${prev || '종점'}</div></div>
+        <div class="adj-cell mid">·</div>
+        <div class="adj-cell"><div class="adj-dir">다음역 ▶</div><div class="adj-name ${next?'':'empty'}">${next || '종점'}</div></div>
+      </div>
+      ${others.length ? `<div class="other-lines"><div class="other-lines-label">환승 가능 노선</div><div class="badges">${others.map(badgeHtml).join('')}</div></div>` : ''}
+    </div>
+  </div>`;
+}
+function renderSearch(){
+  const results = getResults();
+  metaEl.textContent = `${results.length}개 역`;
+  if(results.length===0){
+    listEl.innerHTML = `<div class="empty-state"><div class="big">🔍</div><p>검색 결과가 없어요.</p><p>역 이름을 다시 확인해 주세요.</p></div>`;
+    return;
+  }
+  let html='';
+  results.slice(0,60).forEach(name=>{
+    html += renderCard(name);
+    if(selectedStation===name) html += renderSignBoard(name);
+  });
+  listEl.innerHTML = html;
+  listEl.querySelectorAll('.station-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const name = card.dataset.name;
+      selectedStation = (selectedStation===name) ? null : name;
+      renderSearch();
+    });
+  });
+  clearBtn.style.display = input.value ? 'block' : 'none';
+}
+input.addEventListener('input', renderSearch);
+clearBtn.addEventListener('click', ()=>{ input.value=''; input.focus(); renderSearch(); });
+
+/* =====================================================
+   ROUTE MODE UI
+===================================================== */
+const datalistEl = document.getElementById('stationsDatalist');
+datalistEl.innerHTML = ALL_STATIONS.map(n=>`<option value="${n}">`).join('');
+
+const originInput = document.getElementById('originInput');
+const destInput = document.getElementById('destInput');
+const waypointsWrap = document.getElementById('waypointsWrap');
+const waypointCountEl = document.getElementById('waypointCount');
+const addWaypointBtn = document.getElementById('addWaypointBtn');
+const departTimeInput = document.getElementById('departTime');
+const routeResultsEl = document.getElementById('routeResults');
+let dayType = 'weekday';
+let waypointIds = 0;
+const MAX_WAYPOINTS = 3;
+
+function nowHHMM(){
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+departTimeInput.value = nowHHMM();
+
+function addWaypointRow(){
+  const rows = waypointsWrap.querySelectorAll('.waypoint-row').length;
+  if(rows>=MAX_WAYPOINTS) return;
+  const id = 'wp'+(waypointIds++);
+  const row = document.createElement('div');
+  row.className='waypoint-row';
+  row.dataset.id=id;
+  row.innerHTML = `<input type="text" list="stationsDatalist" placeholder="경유역 입력" autocomplete="off">
+    <button class="rm-btn" type="button">✕</button>`;
+  row.querySelector('.rm-btn').addEventListener('click', ()=>{ row.remove(); updateWaypointCount(); });
+  waypointsWrap.appendChild(row);
+  updateWaypointCount();
+}
+function updateWaypointCount(){
+  const rows = waypointsWrap.querySelectorAll('.waypoint-row').length;
+  waypointCountEl.textContent = rows ? `(${rows}/${MAX_WAYPOINTS})` : '';
+  addWaypointBtn.style.display = rows>=MAX_WAYPOINTS ? 'none' : 'block';
+}
+addWaypointBtn.addEventListener('click', addWaypointRow);
+
+document.querySelectorAll('.day-pill').forEach(p=>{
+  p.addEventListener('click', ()=>{
+    dayType = p.dataset.day;
+    document.querySelectorAll('.day-pill').forEach(x=>x.classList.remove('active'));
+    p.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.mode-tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.mode-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.querySelectorAll('.mode-panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-'+t.dataset.mode).classList.add('active');
+  });
+});
+
+function fmtMin(min){
+  const m = Math.round(min);
+  if(m<60) return `${m}분`;
+  return `${Math.floor(m/60)}시간 ${m%60}분`;
+}
+function fmtClock(startHHMM, addMin){
+  const [h,m] = startHHMM.split(':').map(Number);
+  let total = h*60+m+Math.round(addMin);
+  let dayOver = false;
+  if(total>=24*60){ total-=24*60; dayOver=true; }
+  const hh = String(Math.floor(total/60)).padStart(2,'0');
+  const mm = String(total%60).padStart(2,'0');
+  return {clock:`${hh}:${mm}`, dayOver};
+}
+function serviceWarning(departMin, arriveClockInfo, day){
+  // rough typical operating window: 05:30 ~ about 24:20(00:20), slightly narrower on weekends
+  const startWin = 5*60+30;
+  const endWin = day==='weekend' ? (24*60+10) : (24*60+25);
+  const [dh,dm] = departTimeInput.value.split(':').map(Number);
+  const depMinAbs = dh*60+dm;
+  const arriveMinAbs = arriveClockInfo.dayOver ? depMinAbs+9999 : null; // not used precisely
+  let warn = false;
+  if(depMinAbs < startWin || depMinAbs > endWin) warn = true;
+  if(arriveClockInfo.dayOver) warn = true;
+  return warn;
+}
+
+function computeRoutes(){
+  const origin = originInput.value.trim();
+  const dest = destInput.value.trim();
+  const waypoints = [...waypointsWrap.querySelectorAll('.waypoint-row input')].map(i=>i.value.trim()).filter(Boolean);
+
+  if(!origin || !dest){
+    routeResultsEl.innerHTML = `<div class="route-empty">출발지와 도착지를 입력해 주세요.</div>`;
+    return;
+  }
+  if(!stationMap[origin]){ routeResultsEl.innerHTML = `<div class="route-empty">'${origin}' 역을 찾을 수 없어요. 목록에서 선택해 주세요.</div>`; return; }
+  if(!stationMap[dest]){ routeResultsEl.innerHTML = `<div class="route-empty">'${dest}' 역을 찾을 수 없어요. 목록에서 선택해 주세요.</div>`; return; }
+  for(const w of waypoints){
+    if(!stationMap[w]){ routeResultsEl.innerHTML = `<div class="route-empty">경유지 '${w}' 역을 찾을 수 없어요.</div>`; return; }
+  }
+
+  const stops = [origin, ...waypoints, dest];
+  const timeRoute = buildRoute(stops, 'time', dayType);
+  const distRoute = buildRoute(stops, 'distance', dayType);
+
+  if(!timeRoute || !distRoute){
+    routeResultsEl.innerHTML = `<div class="route-empty">경로를 계산할 수 없어요. 역 이름을 확인해 주세요.</div>`;
+    return;
+  }
+  // fare-optimal coincides with distance-optimal in this distance-based fare model
+  const routes = {
+    time: timeRoute,
+    fare: distRoute,
+    distance: distRoute
+  };
+  renderRouteResults(routes, stops);
+}
+
+let activeRouteTab = 'time';
+function renderRouteResults(routes, stops){
+  const dep = departTimeInput.value || nowHHMM();
+  const tabsMeta = [
+    {key:'time', label:'⏱ 최단시간', value: fmtMin(routes.time.totalTime)},
+    {key:'fare', label:'💰 최저교통비', value: `${routes.fare.fare.toLocaleString()}원`},
+    {key:'distance', label:'📏 최단거리', value: `${routes.distance.totalDist.toFixed(1)}km`}
+  ];
+  let html = `<div class="route-tabs">`;
+  tabsMeta.forEach(t=>{
+    html += `<div class="route-tab${activeRouteTab===t.key?' active':''}" data-key="${t.key}">
+      <div class="rt-label">${t.label}</div><div class="rt-value">${t.value}</div>
+    </div>`;
+  });
+  html += `</div>`;
+  html += `<div id="routeDetailWrap"></div>`;
+  routeResultsEl.innerHTML = html;
+  routeResultsEl.querySelectorAll('.route-tab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      activeRouteTab = t.dataset.key;
+      routeResultsEl.querySelectorAll('.route-tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      renderRouteDetail(routes[activeRouteTab], dep, activeRouteTab, routes);
+    });
+  });
+  renderRouteDetail(routes[activeRouteTab], dep, activeRouteTab, routes);
+}
+
+function renderRouteDetail(route, dep, key, routes){
+  const wrap = document.getElementById('routeDetailWrap');
+  const arrive = fmtClock(dep, route.totalTime);
+  const warn = serviceWarning(dep, arrive, dayType);
+  let sameAsDistance = (key==='fare');
+
+  let inner = `<div class="route-detail">`;
+  inner += `<div class="rd-summary">
+    <div class="rd-stat"><div class="rd-num">${fmtMin(route.totalTime)}</div><div class="rd-cap">예상 소요시간</div></div>
+    <div class="rd-stat"><div class="rd-num">${route.fare.toLocaleString()}원</div><div class="rd-cap">예상 교통비</div></div>
+    <div class="rd-stat"><div class="rd-num">${route.totalDist.toFixed(1)}km</div><div class="rd-cap">이동 거리</div></div>
+    <div class="rd-stat"><div class="rd-num">${route.transferCount}회</div><div class="rd-cap">환승</div></div>
+    <div class="rd-stat"><div class="rd-num">${arrive.clock}${arrive.dayOver?' (익일)':''}</div><div class="rd-cap">도착 예정</div></div>
+  </div>`;
+
+  if(sameAsDistance){
+    inner += `<div class="rd-note">💡 교통비는 이동 거리에 비례해 계산되기 때문에 이 모델에서는 최저교통비 경로가 최단거리 경로와 동일해요.</div>`;
+  }
+  inner += `<div class="rd-note">🗓 ${dayType==='weekend'?'주말·공휴일':'평일'} 기준 평균 배차간격을 반영한 추정치예요 (배차·환승 대기시간 포함).</div>`;
+
+  if(warn){
+    inner += `<div class="warn-banner">⚠️ 출발 또는 도착 시각이 첫차·막차 운행 시간대에 가까울 수 있어요. 정확한 첫차/막차 시각은 호선·방향별로 다르니 반드시 공식 앱에서 확인해 주세요.</div>`;
+  }
+
+  const timings = computeSegmentTimings(route, dep, dayType);
+
+  route.segments.forEach((seg, i)=>{
+    const color = lineColor(seg.line);
+    const from = seg.stations[0], to = seg.stations[seg.stations.length-1];
+    const stopCount = seg.stations.length-1;
+    const dir = segmentDirection(seg);
+    const timing = timings[i];
+    inner += `<div class="seg">
+      <div class="seg-track"><div class="seg-dot" style="border-color:${color}"></div><div class="seg-line-bar" style="background:${color}"></div></div>
+      <div class="seg-content">
+        <div class="seg-station-name">${from}</div>
+        <div class="seg-line-tag" style="background:${color}">${lineName(seg.line)}</div>
+        ${dir ? `<div class="seg-dir">🚈 ${dir} 열차 탑승</div>` : ''}
+        <div class="seg-detail">${stopCount}개 역 이동 (약 ${fmtMin(timing.segMin)}) → <strong>${to}</strong></div>
+      </div>
+    </div>`;
+    if(i < route.segments.length-1){
+      const nextLine = route.segments[i+1].line;
+      const tip = findTransferTip(to, seg.line, nextLine);
+      const searchUrl = transferSearchLink(to, seg.line, nextLine);
+      const ttUrl = timetableSearchLink(to, nextLine);
+      const liveUrl = stationMapLink(to);
+      inner += `<div class="transfer-marker">🔁 ${to} 도착 예정 ${timing.arrival.clock}${timing.arrival.dayOver?' (익일)':''} · ${lineName(nextLine)}(으)로 환승</div>`;
+      if(tip){
+        inner += `<div class="transfer-tip">📍 ${tip.tip}
+          <a class="tip-link" href="${searchUrl}" target="_blank" rel="noopener">최신 정보 검색 ↗</a>
+        </div>`;
+      } else {
+        inner += `<div class="transfer-tip muted">📍 편한 환승 칸 정보는 아직 검증되지 않았어요.
+          <a class="tip-link" href="${searchUrl}" target="_blank" rel="noopener">🔍 ${to}역 환승 정보 검색 ↗</a>
+        </div>`;
+      }
+      inner += `<div class="transfer-tip muted">🚉 이 도구는 실시간 열차 위치를 가져오지 못해요(평균 배차 약 ${fmtMin(timing.transferWaitMin)} 반영한 추정치).
+        <span class="tip-link-row">
+          <a class="tip-link" href="${liveUrl}" target="_blank" rel="noopener">🔴 실시간 도착정보 ↗</a>
+          <a class="tip-link" href="${ttUrl}" target="_blank" rel="noopener">🕐 ${lineName(nextLine)} 시간표 ↗</a>
+        </span>
+        <span class="tip-hint">👉 지도가 열리면 '${to}역'을 한 번 더 눌러보세요 — 실시간 도착 정보를 바로 확인할 수 있어요.</span>
+      </div>`;
+    }
+  });
+  // final destination dot
+  const lastSeg = route.segments[route.segments.length-1];
+  inner += `<div class="seg">
+    <div class="seg-track"><div class="seg-dot" style="border-color:${lineColor(lastSeg.line)}; background:${lineColor(lastSeg.line)}"></div></div>
+    <div class="seg-content"><div class="seg-station-name">${lastSeg.stations[lastSeg.stations.length-1]} (도착)</div></div>
+  </div>`;
+
+  inner += `</div>`;
+  wrap.innerHTML = inner;
+}
+
+document.getElementById('findRouteBtn').addEventListener('click', computeRoutes);
+
+/* init */
+renderCategoryTabs();
+renderTabs();
+renderSearch();
+updateWaypointCount();
+
+const I18N = {
+  ko:{ page_title:'pomiai 지하철 역 검색 · 경로 찾기', h1:'지하철 역 검색 · 경로 찾기',
+    sub:'서울 지하철부터 광역철도·경전철까지, 역 정보를 찾고 최적 경로를 계산해요.',
+    mode_search:'🔍 역 검색', mode_route:'🧭 경로 찾기' },
+  en:{ page_title:'pomiai Seoul Subway Search & Route Finder', h1:'Subway Station Search & Route Finder',
+    sub:'From Seoul Metro to wide-area rail and light rail — find station info and calculate the best route.',
+    mode_search:'🔍 Search Stations', mode_route:'🧭 Find Route' },
+  ja:{ page_title:'pomiai ソウル地下鉄駅検索・経路案内', h1:'地下鉄駅検索・経路案内',
+    sub:'ソウル地下鉄から広域鉄道・軽電鉄まで、駅情報を検索して最適な経路を計算します。',
+    mode_search:'🔍 駅を検索', mode_route:'🧭 経路案内' }
+};
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language||'ko').slice(0,2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
+  window._LANG=LANG; window._T=I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ if(typeof t[el.dataset.i18n]==='string') el.textContent = t[el.dataset.i18n]; });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+document.querySelectorAll('#lang-switch button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const lang = btn.dataset.lang;
+    const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url);
+    window._LANG = lang; window._T = I18N[lang];
+    document.getElementById('html-root').lang = lang;
+    applyI18n();
+  });
+});
+</script>
+</body>
+</html>
