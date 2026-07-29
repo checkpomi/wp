@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<!--
+===================================================
+pomiai_bubblebobble.html — 버전 로그
+===================================================
+현재 버전: 2026.07.27
+최종 수정: 2026.07.27
+변경 내역 (최신순):
+  - 2026.07.27  최초 pomiai 표준 적용 (원본: pomi-bubblebobble.html)
+      · pomiai 다크 UI 셸로 리디자인, 플랫폼 물리/버블 포획 로직 유지
+      · LEFT/RIGHT/JUMP/FIRE 버튼을 pointer 이벤트 기반으로 재구현
+      · ko/en/ja 다국어, 브랜드 푸터, 세로모드 고정 적용
+캐시 무효화: ?v=2026.07.27
+===================================================
+
+-->
+<title id="page-title">pomiai 버블보블</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);--ac4:rgba(108,92,232,.08);
+  --go:#d4924a;--go2:#f0b060;--go3:rgba(212,146,74,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re3:rgba(224,85,85,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;overscroll-behavior:none}
+
+#shell{max-width:420px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding:0 0 18px}
+
+#header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;position:sticky;top:0;background:var(--s1);border-bottom:1px solid var(--bd);z-index:20}
+#logo{font-size:14px;font-weight:700;color:var(--ac2);letter-spacing:.5px}
+#logo span{color:var(--tx3);font-weight:400}
+#header .tagline{font-size:10px;color:var(--tx3);margin-top:1px}
+.icon-btn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);width:36px;height:36px;border-radius:10px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.icon-btn:active{background:var(--ac3);color:var(--ac2)}
+
+#stats-row{display:flex;gap:8px;padding:12px 16px 6px}
+.chip{flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:9px 6px;text-align:center}
+.chip-label{font-size:9px;color:var(--tx3);font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px}
+.chip-value{font-size:17px;font-weight:700;color:var(--tx);font-family:'DM Mono',monospace}
+
+#board-area{position:relative;display:flex;justify-content:center;padding:10px 16px 4px;flex:1}
+#canvas-wrap{position:relative;background:#000;border-radius:14px;overflow:hidden;box-shadow:var(--sh);border:1px solid var(--bd2);width:100%;max-width:300px}
+#pause-overlay{position:absolute;inset:0;background:rgba(8,8,14,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;border-radius:14px;z-index:5}
+#pause-overlay.show{display:flex}
+#pause-overlay .po-title{font-size:16px;font-weight:700;color:var(--ac2)}
+
+#action-row{display:flex;gap:8px;padding:12px 16px 4px}
+.btn{background:linear-gradient(135deg,var(--ac),#4a38c0);border:none;color:#fff;border-radius:11px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(108,92,232,.28);flex:1}
+.btn:active{filter:brightness(.92);transform:scale(.98)}
+.btn.outline{background:transparent;border:1px solid var(--bd2);color:var(--tx2);box-shadow:none}
+.btn.go{background:linear-gradient(135deg,var(--te),#1a8c72);box-shadow:0 4px 16px rgba(40,196,160,.22)}
+.btn.re{background:linear-gradient(135deg,var(--re),#a83232);box-shadow:0 4px 16px rgba(224,85,85,.22)}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+#control-pad{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;gap:14px;flex-wrap:wrap}
+#dpad{display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px;gap:6px;flex-shrink:0}
+#dpad button{background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.1s}
+#dpad button:active,#dpad button.active{background:var(--ac3);border-color:var(--ac);color:var(--ac2);transform:scale(.94)}
+#action-buttons{display:flex;gap:8px;flex-wrap:wrap}
+#action-buttons button{width:64px;height:56px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:18px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:.1s}
+#action-buttons button:active{background:var(--te3);border-color:var(--te);color:var(--te2);transform:scale(.94)}
+#action-buttons button.fire:active{background:var(--re3);border-color:var(--re);color:#ff9a9a}
+#action-buttons button span{font-size:8px;font-weight:600;color:var(--tx3);letter-spacing:.4px}
+#action-buttons button:active span{color:inherit}
+
+#touch-hint{text-align:center;font-size:11px;color:var(--tx3);padding:8px 16px 2px}
+#pc-hint{text-align:center;font-size:11px;color:var(--tx3);padding:6px 16px 2px}
+@media (hover:none) and (pointer:coarse){ #pc-hint{display:none} }
+@media (hover:hover) and (pointer:fine){ #touch-hint{display:none} }
+
+.brand-footer{margin:16px 16px 0;padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.brand-name{font-weight:700;font-size:13px;letter-spacing:-.01em;color:var(--tx)}
+.brand-by{font-weight:600;font-size:11px;color:var(--tx3);margin-right:4px}
+.brand-links{display:flex;gap:8px;flex-wrap:wrap}
+.brand-links a{font-size:11px;font-weight:700;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bd2);white-space:nowrap}
+.brand-links a:active{opacity:.7}
+
+#gameover-modal{position:fixed;inset:0;background:rgba(4,4,8,.82);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+#gameover-modal.show{display:flex}
+.go-card{background:var(--s1);border:1px solid var(--bd2);border-radius:18px;padding:28px 24px;text-align:center;max-width:300px;width:100%;box-shadow:var(--sh)}
+.go-title{font-size:20px;font-weight:700;color:var(--re);margin-bottom:8px}
+.go-score-label{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-top:14px}
+.go-score-val{font-size:30px;font-weight:700;color:var(--ac2);font-family:'DM Mono',monospace;margin-bottom:18px}
+
+#landscape-lock{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px}
+#landscape-lock .rot-ic{font-size:44px;animation:rotpulse 1.6s ease-in-out infinite}
+@keyframes rotpulse{0%,100%{transform:rotate(0)}50%{transform:rotate(-90deg)}}
+#landscape-lock .rot-txt{font-size:14px;color:var(--tx2);font-weight:600}
+@media (orientation:landscape) and (hover:none) and (pointer:coarse){
+  #landscape-lock{display:flex}
+}
+
+#canvas-wrap{max-width:300px}
+#bbCanvas{display:block;width:100%;height:auto;background:#050510}
+#action-buttons.bb{flex-direction:column}
+.bb-fire{grid-column:span 3}
+
+</style>
+</head>
+<body>
+<div id="landscape-lock">
+  <div class="rot-ic">📱</div>
+  <div class="rot-txt" data-i18n="orientation_msg">화면을 세로로 돌려주세요</div>
+</div>
+<div id="shell">
+  <div id="header">
+    <div>
+      <div id="logo">pomiai <span>· BUBBLE BOBBLE</span></div>
+      <div class="tagline" data-i18n="tagline">버블로 적을 가둬 물리치세요</div>
+    </div>
+  </div>
+
+  <div id="stats-row">
+    <div class="chip"><div class="chip-label" data-i18n="score">점수</div><div class="chip-value" id="scoreDisplay">0</div></div>
+    <div class="chip"><div class="chip-label" data-i18n="level">레벨</div><div class="chip-value" id="levelDisplay">1</div></div>
+    <div class="chip"><div class="chip-label" data-i18n="lives">라이프</div><div class="chip-value" id="livesDisplay">3</div></div>
+  </div>
+
+  <div id="board-area">
+    <div id="canvas-wrap">
+      <canvas id="bbCanvas" width="320" height="320"></canvas>
+      <div id="overlay-msg" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,14,.9);text-align:center;padding:20px;gap:10px">
+        <div style="font-size:18px;font-weight:700;color:var(--te2)" id="ov-title" data-i18n="start_title">pomiai 버블보블</div>
+        <div style="font-size:12px;color:var(--tx2)" id="ov-sub" data-i18n="start_sub">10레벨 도전!</div>
+        <button class="btn" id="startBtn" data-i18n="btn_start">시작</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="touch-hint" data-i18n="touch_hint">LEFT/RIGHT 이동, JUMP 점프, FIRE 버블 발사</div>
+  <div id="pc-hint" data-i18n="pc_hint">PC: 방향키 이동 · Z/스페이스 점프 · X 버블</div>
+
+  <div id="action-row">
+    <button class="btn outline" id="pauseBtn" data-i18n="btn_pause" disabled>일시정지</button>
+    <button class="btn re" id="resetBtn" data-i18n="btn_reset">리셋</button>
+  </div>
+
+  <div id="control-pad">
+    <div id="dpad" style="grid-template-columns:56px 56px">
+      <button id="leftBtn" style="grid-column:1;grid-row:1">◀</button>
+      <button id="rightBtn" style="grid-column:2;grid-row:1">▶</button>
+    </div>
+    <div id="action-buttons">
+      <button id="jumpBtn" style="width:64px;height:56px">⤒<span data-i18n="lbl_jump">JUMP</span></button>
+      <button id="fireBtn" class="fire" style="width:64px;height:56px">🫧<span data-i18n="lbl_fire">FIRE</span></button>
+    </div>
+  </div>
+
+  <div class="brand-footer">
+    <div class="brand-name"><span class="brand-by" data-i18n="footer_by">Product by</span> pomiai</div>
+    <div class="brand-links">
+      <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
+      <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  ko:{ page_title:'pomiai 버블보블', tagline:'버블로 적을 가둬 물리치세요',
+    score:'점수', level:'레벨', lives:'라이프', lbl_jump:'점프', lbl_fire:'버블',
+    touch_hint:'LEFT/RIGHT 이동, JUMP 점프, FIRE 버블 발사', pc_hint:'PC: 방향키 이동 · Z/스페이스 점프 · X 버블',
+    btn_pause:'일시정지', btn_pause_resume:'계속', btn_reset:'리셋', btn_start:'시작', orientation_msg:'화면을 세로로 돌려주세요',
+    start_title:'pomiai 버블보블', start_sub:'10레벨 도전!',
+    gameover_title:'게임 오버', final_score:'최종 점수', footer_by:'Product by' },
+  en:{ page_title:'pomiai Bubble Bobble', tagline:'Trap enemies in bubbles to defeat them',
+    score:'Score', level:'Level', lives:'Lives', lbl_jump:'Jump', lbl_fire:'Bubble',
+    touch_hint:'LEFT/RIGHT to move, JUMP to jump, FIRE a bubble', pc_hint:'PC: Arrows to move · Z/Space to jump · X to fire',
+    btn_pause:'Pause', btn_pause_resume:'Resume', btn_reset:'Reset', btn_start:'Start', orientation_msg:'Please rotate to portrait',
+    start_title:'pomiai Bubble Bobble', start_sub:'10 levels of challenge!',
+    gameover_title:'Game Over', final_score:'Final Score', footer_by:'Product by' },
+  ja:{ page_title:'pomiai バブルボブル', tagline:'バブルで敵を閉じ込めて倒そう',
+    score:'スコア', level:'レベル', lives:'ライフ', lbl_jump:'ジャンプ', lbl_fire:'バブル',
+    touch_hint:'LEFT/RIGHTで移動、JUMPでジャンプ、FIREでバブル発射', pc_hint:'PC：矢印キー移動・Z/スペースでジャンプ・Xでバブル',
+    btn_pause:'一時停止', btn_pause_resume:'再開', btn_reset:'リセット', btn_start:'スタート', orientation_msg:'画面を縦向きにしてください',
+    start_title:'pomiai バブルボブル', start_sub:'10レベルに挑戦！',
+    gameover_title:'ゲームオーバー', final_score:'最終スコア', footer_by:'Product by' }
+};
+
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+function applyI18n() {
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+function bindHold(el, fn, repeatMs){
+  repeatMs = repeatMs || 130;
+  let iv=null;
+  const start=(e)=>{ e.preventDefault(); fn(); el.classList.add('active'); iv=setInterval(fn,repeatMs); };
+  const end=()=>{ clearInterval(iv); iv=null; el.classList.remove('active'); };
+  el.addEventListener('pointerdown', start);
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointerleave', end);
+  el.addEventListener('pointercancel', end);
+}
+
+const canvas = document.getElementById('bbCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl=document.getElementById('scoreDisplay'), levelEl=document.getElementById('levelDisplay'), livesEl=document.getElementById('livesDisplay');
+const pauseBtn=document.getElementById('pauseBtn'), overlay=document.getElementById('overlay-msg'), ovTitle=document.getElementById('ov-title'), ovSub=document.getElementById('ov-sub');
+
+const game = {
+  running:false, paused:false, score:0, level:1, lives:3, spawnTimer:0, enemiesDefeated:0,
+  input:{left:false,right:false}, bubbles:[], enemies:[],
+  platforms:[
+    {x:0,y:300,w:320,h:20},{x:30,y:220,w:100,h:10},{x:190,y:220,w:100,h:10},
+    {x:100,y:140,w:120,h:10},{x:0,y:70,w:80,h:10},{x:240,y:70,w:80,h:10}
+  ],
+  player:{x:150,y:250,w:20,h:20,vx:0,vy:0,speed:3.5,jumpPower:-10,grounded:false,dir:1,invincible:0},
+
+  start(){
+    this.running=true; this.paused=false; this.score=0; this.level=1; this.lives=3; this.enemiesDefeated=0;
+    this.resetLevelData(); overlay.style.display='none'; pauseBtn.disabled=false; this.loop();
+  },
+  resetLevelData(){
+    this.bubbles=[]; this.enemies=[]; this.spawnTimer=0;
+    this.player.x=150; this.player.y=250; this.player.invincible=60;
+    scoreEl.textContent=this.score; levelEl.textContent=this.level; livesEl.textContent=this.lives;
+  },
+  spawnEnemy(){
+    const xPos=Math.random()>0.5?20:280;
+    const enemySpeed=(Math.random()*0.6+0.6)+(this.level*0.1);
+    this.enemies.push({x:xPos,y:20,w:20,h:20,vx:enemySpeed*(xPos>150?-1:1),vy:0,trapped:false,grounded:false,jumpChance:0.005+(this.level*0.002)});
+  },
+  jump(){ if(this.player.grounded) this.player.vy=this.player.jumpPower; },
+  shoot(){
+    if(!this.running||this.paused) return;
+    this.bubbles.push({x:this.player.x+(this.player.dir*10),y:this.player.y+5,vx:this.player.dir*7,vy:-0.2,life:100,trappedEnemy:null});
+  },
+  togglePause(){
+    this.paused=!this.paused;
+    document.getElementById('pause-overlay')?.classList.toggle('show', this.paused);
+    pauseBtn.textContent = this.paused ? window._T.btn_pause_resume : window._T.btn_pause;
+    if(!this.paused) this.loop();
+  },
+  die(){
+    if(this.player.invincible>0) return;
+    this.lives--; livesEl.textContent=this.lives;
+    if(this.lives<=0) this.gameOver();
+    else { this.player.x=150; this.player.y=250; this.player.vy=0; this.player.invincible=120; }
+  },
+  update(){
+    if(!this.running||this.paused) return;
+    if(this.player.invincible>0) this.player.invincible--;
+    if(this.enemiesDefeated>=this.level*5 && this.level<10){ this.level++; this.enemiesDefeated=0; levelEl.textContent=this.level; }
+    this.spawnTimer++;
+    if(this.spawnTimer>Math.max(70,200-(this.level*10))){ this.spawnEnemy(); this.spawnTimer=0; }
+    if(this.input.left){ this.player.vx=-this.player.speed; this.player.dir=-1; }
+    else if(this.input.right){ this.player.vx=this.player.speed; this.player.dir=1; }
+    else this.player.vx=0;
+    this.applyPhysics(this.player);
+    this.enemies.forEach(en=>{
+      if(!en.trapped){
+        en.x+=en.vx;
+        if(en.x<=0||en.x>=canvas.width-en.w) en.vx*=-1;
+        if(en.grounded && Math.random()<en.jumpChance) en.vy=-8;
+        this.applyPhysics(en);
+        if(Math.abs(this.player.x-en.x)<18 && Math.abs(this.player.y-en.y)<18) this.die();
+      }
+    });
+    this.bubbles.forEach((b,bi)=>{
+      b.x+=b.vx; b.y+=b.vy; b.vx*=0.95; b.life--;
+      if(!b.trappedEnemy){
+        this.enemies.forEach(en=>{
+          if(!en.trapped && Math.abs(b.x-en.x)<22 && Math.abs(b.y-en.y)<22){ en.trapped=true; b.trappedEnemy=en; b.vy=-0.8; }
+        });
+      } else {
+        if(Math.abs(this.player.x-b.x)<25 && Math.abs(this.player.y-b.y)<25){
+          this.score+=100*this.level; this.enemiesDefeated++; scoreEl.textContent=this.score;
+          this.enemies=this.enemies.filter(e=>e!==b.trappedEnemy); this.bubbles.splice(bi,1);
+        } else { b.trappedEnemy.x=b.x; b.trappedEnemy.y=b.y; }
+      }
+      if(b.life<=0){ if(b.trappedEnemy) b.trappedEnemy.trapped=false; this.bubbles.splice(bi,1); }
+    });
+  },
+  applyPhysics(obj){
+    obj.vy+=0.5; obj.x+=obj.vx||0; obj.y+=obj.vy; obj.grounded=false;
+    if(obj.x<0) obj.x=0; if(obj.x>canvas.width-obj.w) obj.x=canvas.width-obj.w;
+    this.platforms.forEach(p=>{
+      if(obj.x<p.x+p.w && obj.x+obj.w>p.x && obj.y+obj.h>p.y && obj.y+obj.h<p.y+p.h+10){
+        if(obj.vy>0){ obj.grounded=true; obj.vy=0; obj.y=p.y-obj.h; }
+      }
+    });
+  },
+  draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#191928'; this.platforms.forEach(p=>ctx.fillRect(p.x,p.y,p.w,p.h));
+    if(this.player.invincible%4<2){ ctx.fillStyle='#4eddb8'; ctx.fillRect(this.player.x,this.player.y,this.player.w,this.player.h); }
+    this.enemies.forEach(en=>{
+      if(!en.trapped){
+        ctx.fillStyle='#e05555'; ctx.fillRect(en.x,en.y,en.w,en.h);
+        ctx.fillStyle='#fff'; ctx.fillRect(en.vx>0?en.x+12:en.x+4, en.y+4, 4, 4);
+      }
+    });
+    this.bubbles.forEach(b=>{
+      ctx.beginPath(); ctx.arc(b.x,b.y,b.trappedEnemy?14:9,0,Math.PI*2);
+      ctx.strokeStyle=b.trappedEnemy?'#f0b060':'#9b8ff5'; ctx.lineWidth=2; ctx.stroke();
+    });
+  },
+  gameOver(){
+    this.running=false;
+    ovTitle.textContent=window._T.gameover_title; ovTitle.style.color='var(--re)';
+    ovSub.innerHTML = `${window._T.final_score}: ${this.score}<br>Lv.${this.level}`;
+    document.getElementById('startBtn').textContent = window._T.btn_reset;
+    overlay.style.display='flex';
+    pauseBtn.disabled=true;
+  },
+  loop(){ if(!this.running||this.paused) return; this.update(); this.draw(); requestAnimationFrame(()=>this.loop()); }
+};
+
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  ovTitle.textContent=window._T.start_title; ovTitle.style.color='var(--te2)';
+  ovSub.textContent=window._T.start_sub;
+  game.start();
+});
+pauseBtn.addEventListener('click', ()=>game.togglePause());
+document.getElementById('resetBtn').addEventListener('click', ()=>location.reload());
+
+window.addEventListener('keydown', e=>{
+  if(e.code==='ArrowLeft') game.input.left=true;
+  if(e.code==='ArrowRight') game.input.right=true;
+  if(e.code==='KeyZ'||e.code==='ArrowUp'||e.code==='Space') game.jump();
+  if(e.code==='KeyX') game.shoot();
+});
+window.addEventListener('keyup', e=>{
+  if(e.code==='ArrowLeft') game.input.left=false;
+  if(e.code==='ArrowRight') game.input.right=false;
+});
+function bindHoldDir(id,key){
+  const el=document.getElementById(id);
+  el.addEventListener('pointerdown', e=>{e.preventDefault(); game.input[key]=true;});
+  const up=()=>game.input[key]=false;
+  el.addEventListener('pointerup', up); el.addEventListener('pointerleave', up); el.addEventListener('pointercancel', up);
+}
+bindHoldDir('leftBtn','left'); bindHoldDir('rightBtn','right');
+document.getElementById('jumpBtn').addEventListener('pointerdown', e=>{e.preventDefault(); game.jump();});
+document.getElementById('fireBtn').addEventListener('pointerdown', e=>{e.preventDefault(); game.shoot();});
+
+</script>
+</body>
+</html>
