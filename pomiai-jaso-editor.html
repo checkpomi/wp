@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<!--
+===================================================
+pomiai-jaso-editor.html — 버전 로그
+===================================================
+현재 버전: 2026.07.27 | 최종 수정: 2026.07.27
+변경 내역: 2026.07.27 pomiai 표준 적용 — 버전 로그, ko/en/ja 다국어(탭+타이틀 기준),
+브랜드 링크 신규 적용(고정높이 레이아웃이라 풋터 대신 상단바에 배치). 자소 드로잉/
+JSON 내보내기 로직은 원본 유지.
+캐시 무효화: ?v=2026.07.27
+===================================================
+-->
+<title id="page-title">pomiai 자소 에디터</title>
+<style>
+:root{
+  --bg:#fdf8ee;--bg2:#f5edd8;--bg3:#e8d8b8;
+  --ink:#1c1008;--ink2:#5a3e20;--ink3:#8a6a3a;
+  --or:#d4620a;--or2:#e8a030;--gr:#2d6a3f;--pu:#534AB7;
+  --cv:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;touch-action:none;}
+body{background:var(--bg);color:var(--ink);font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;display:flex;flex-direction:column;}
+
+/* 툴바 */
+#tb{height:50px;background:var(--ink);display:flex;align-items:center;border-bottom:2px solid var(--or);flex-shrink:0;overflow-x:auto;gap:0;}
+#tb::-webkit-scrollbar{display:none;}
+.logo{padding:0 14px;font-size:16px;font-weight:700;letter-spacing:2px;color:var(--or2);white-space:nowrap;border-right:1px solid #333;flex-shrink:0;}
+.logo small{font-size:10px;color:#888;letter-spacing:0;display:block;font-weight:400;}
+.tgrp{display:flex;gap:1px;padding:0 6px;border-right:1px solid #333;flex-shrink:0;}
+.tbtn{background:none;border:none;color:#aaa;cursor:pointer;padding:6px 9px;border-radius:4px;font-size:12px;white-space:nowrap;display:flex;align-items:center;gap:3px;transition:all .12s;-webkit-user-select:none;user-select:none;}
+.tbtn:hover,.tbtn:active{background:#333;color:#fff;}
+.tbtn.on{background:var(--or);color:#fff;}
+.acts{display:flex;gap:4px;padding:0 10px;margin-left:auto;flex-shrink:0;}
+.abtn{background:none;border:1px solid #444;color:#ccc;cursor:pointer;padding:4px 11px;border-radius:4px;font-size:11px;white-space:nowrap;transition:all .12s;}
+.abtn:hover,.abtn:active{border-color:var(--or2);color:var(--or2);}
+.abtn.pr{background:var(--or);border-color:var(--or);color:#fff;}
+.abtn.gr{background:var(--gr);border-color:var(--gr);color:#fff;}
+
+/* 메인 */
+#main{display:flex;flex:1;overflow:hidden;}
+
+/* 자소 패널 */
+#jp{width:210px;background:var(--bg2);border-right:1px solid var(--bg3);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.jpt{padding:8px 12px 4px;font-size:9px;letter-spacing:3px;color:var(--ink3);border-bottom:1px solid var(--bg3);font-weight:500;}
+.tabrow{display:flex;border-bottom:1px solid var(--bg3);}
+.tab{flex:1;padding:7px 0;text-align:center;font-size:11px;cursor:pointer;color:var(--ink3);background:none;border:none;border-bottom:2px solid transparent;transition:all .12s;}
+.tab.on{color:var(--or);border-bottom-color:var(--or);}
+#jg{flex:1;overflow-y:auto;padding:5px;}
+
+/* 자소 그룹 */
+.jgroup{margin-bottom:8px;}
+.jgroup-title{font-size:9px;letter-spacing:2px;color:var(--ink3);padding:3px 4px 2px;font-weight:500;}
+.jcells{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;}
+.jc{
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  font-size:14px;cursor:pointer;border-radius:4px;border:1px solid transparent;
+  background:var(--cv);color:var(--ink);transition:all .1s;position:relative;
+  -webkit-user-select:none;user-select:none;
+}
+.jc:active{transform:scale(.92);}
+.jc.on{background:var(--or);color:#fff;border-color:var(--or);}
+.jc.done::after{content:'';position:absolute;top:2px;right:2px;width:5px;height:5px;border-radius:50%;background:var(--gr);}
+.jc.cho{border-color:#e0d0f8;}
+.jc.jung{border-color:#d0e8d8;}
+.jc.jong{border-color:#f8e0d0;}
+.jc.cho.on,.jc.jung.on,.jc.jong.on{border-color:transparent;}
+
+/* 진행률 */
+#progress-bar{height:3px;background:var(--bg3);flex-shrink:0;}
+#progress-fill{height:100%;background:var(--gr);transition:width .3s;width:0%;}
+#progress-text{padding:3px 12px;font-size:10px;color:var(--ink3);background:var(--bg2);border-bottom:1px solid var(--bg3);}
+
+/* 캔버스 */
+#cw{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+#ci{height:32px;background:var(--bg2);border-bottom:1px solid var(--bg3);display:flex;align-items:center;padding:0 12px;gap:10px;font-size:11px;color:var(--ink3);flex-shrink:0;}
+.jname{font-weight:700;font-size:18px;}
+.jtype{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500;}
+.t-cho{background:#e8e0f8;color:var(--pu);}
+.t-jung{background:#d8f0e0;color:var(--gr);}
+.t-jong{background:#f8e8d8;color:var(--or);}
+#cc{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#d8ceb8;position:relative;}
+#fc{background:var(--cv);display:block;touch-action:none;}
+
+/* 속성 패널 */
+#pp{width:200px;background:var(--bg2);border-left:1px solid var(--bg3);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;}
+.ps{border-bottom:1px solid var(--bg3);padding:10px 12px;}
+.ps h4{font-size:9px;letter-spacing:3px;color:var(--ink3);margin-bottom:8px;font-weight:500;}
+.pr{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.pr label{font-size:11px;color:var(--ink3);min-width:44px;}
+.pr input[type=range]{flex:1;accent-color:var(--or);}
+.pr input[type=color]{width:28px;height:22px;border:none;border-radius:3px;cursor:pointer;padding:0;}
+.vl{font-size:11px;font-weight:700;color:var(--or);min-width:22px;text-align:right;}
+select{flex:1;padding:3px 5px;font-size:11px;background:var(--bg);border:1px solid var(--bg3);border-radius:3px;color:var(--ink);}
+.br{display:flex;gap:4px;flex-wrap:wrap;}
+.bs{flex:1;padding:5px 4px;border:1px solid var(--bg3);border-radius:4px;background:var(--cv);color:var(--ink2);cursor:pointer;font-size:10px;transition:all .1s;text-align:center;min-width:48px;}
+.bs:hover,.bs:active{border-color:var(--or);color:var(--or);}
+.bs.w{border-color:#c0392b;color:#c0392b;}
+.bs.w:hover{background:#c0392b;color:#fff;}
+
+/* 미리보기 */
+#pvbar{height:56px;background:var(--ink);display:flex;align-items:center;padding:0 14px;border-top:1px solid #333;flex-shrink:0;overflow:hidden;gap:10px;}
+#pvtxt{flex:1;font-size:24px;color:#fff;letter-spacing:2px;white-space:nowrap;overflow:hidden;}
+#pvinfo{font-size:10px;color:#666;text-align:right;line-height:1.6;flex-shrink:0;}
+
+/* 필압 */
+#pres{position:absolute;bottom:12px;left:12px;font-size:10px;color:var(--ink3);background:var(--bg2);padding:5px 8px;border-radius:6px;opacity:0;transition:opacity .3s;border:1px solid var(--bg3);pointer-events:none;}
+#pbar-wrap{height:3px;background:#ddd;border-radius:2px;margin-top:3px;width:100px;}
+#pbar-fill{height:100%;background:var(--or);border-radius:2px;width:50%;transition:width .05s;}
+
+/* 플로팅 버튼 */
+#flt{position:absolute;bottom:14px;right:14px;display:flex;flex-direction:column;gap:7px;z-index:100;}
+.fb{width:46px;height:46px;border-radius:50%;background:var(--or);color:#fff;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.25);transition:all .12s;-webkit-user-select:none;user-select:none;}
+.fb:active{transform:scale(.9);}
+.fb.sm{width:36px;height:36px;font-size:14px;background:var(--ink);}
+
+/* 모달 */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:flex;align-items:center;justify-content:center;}
+.md{background:var(--bg);border-radius:14px;padding:22px;width:min(400px,92vw);border:1px solid var(--bg3);}
+.md h3{font-size:15px;margin-bottom:10px;color:var(--or);}
+.md p{font-size:12px;line-height:1.7;color:var(--ink2);margin-bottom:8px;}
+.mdb{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;}
+.mdb button{padding:7px 14px;border-radius:5px;border:1px solid var(--bg3);cursor:pointer;font-size:12px;}
+.mdb .ok{background:var(--or);color:#fff;border-color:var(--or);}
+.mdb .gr{background:var(--gr);color:#fff;border-color:var(--gr);}
+.hid{display:none!important;}
+
+/* 반응형 */
+@media(max-width:600px){
+  #jp,#pp{position:absolute;top:0;bottom:0;z-index:200;box-shadow:2px 0 12px rgba(0,0,0,.15);}
+  #jp{left:0;width:190px;}
+  #pp{right:0;width:185px;}
+  #jp.hid{transform:translateX(-100%);}
+  #pp.hid2{transform:translateX(100%);}
+}
+.langbtn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#ccc;font-size:10px;font-weight:700;padding:5px 8px;border-radius:7px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div id="tb">
+  <div class="logo">pomiai 자소 에디터<small>pomiai — 자소 67개 → 11,172자 TTF</small></div>
+  <div class="tgrp">
+    <button class="tbtn on" id="t-free" onclick="setTool('free')" title="자유(F)">🖌 자유</button>
+    <button class="tbtn" id="t-pen"  onclick="setTool('pen')"  title="펜(P)">✏️ 펜</button>
+    <button class="tbtn" id="t-era"  onclick="setTool('era')"  title="지우개(E)">🧹</button>
+  </div>
+  <div class="tgrp">
+    <button class="tbtn" onclick="undo()" title="Ctrl+Z">↩</button>
+    <button class="tbtn" onclick="redo()" title="Ctrl+Y">↪</button>
+    <button class="tbtn" onclick="delLast()" title="Del">✕획</button>
+    <button class="tbtn" onclick="toggleGrid()">⊞</button>
+  </div>
+  <div class="acts">
+    <button class="abtn" onclick="clearCur()" data-i18n="btn_clear">지우기</button>
+    <button class="abtn" onclick="showPreview()" data-i18n="btn_preview">미리보기</button>
+    <button class="abtn gr" onclick="showExport()" data-i18n="btn_export">📦 JSON 내보내기</button>
+  </div>
+  <div id="lang-switch" style="display:flex;gap:4px;margin-left:8px">
+    <button data-lang="ko" class="langbtn">한</button>
+    <button data-lang="en" class="langbtn">EN</button>
+    <button data-lang="ja" class="langbtn">日</button>
+  </div>
+  <a href="https://checkpomi.com" target="_blank" rel="noopener" style="font-size:10px;font-weight:700;color:#aaa;text-decoration:none;padding:5px 9px;border-radius:7px;background:rgba(255,255,255,.08);margin-left:6px;flex-shrink:0;white-space:nowrap">🌐 pomiai</a>
+</div>
+
+<div id="main">
+  <!-- 자소 패널 -->
+  <div id="jp">
+    <div class="jpt">JASO PALETTE — 자소 67개</div>
+    <div class="tabrow">
+      <button class="tab on" onclick="switchTab('cho',this)" data-i18n="tab_cho">초성 19</button>
+      <button class="tab"    onclick="switchTab('jung',this)" data-i18n="tab_jung">중성 21</button>
+      <button class="tab"    onclick="switchTab('jong',this)" data-i18n="tab_jong">종성 27</button>
+    </div>
+    <div id="progress-bar"><div id="progress-fill"></div></div>
+    <div id="progress-text">0 / 67 완료</div>
+    <div id="jg"></div>
+  </div>
+
+  <!-- 캔버스 -->
+  <div id="cw">
+    <div id="ci">
+      <span class="jname" id="jlabel">ㄱ</span>
+      <span class="jtype t-cho" id="jtype">초성</span>
+      <span id="jtip" style="font-size:10px;color:var(--ink3);flex:1"></span>
+      <span id="coord" style="font-family:monospace;font-size:10px">0, 0</span>
+    </div>
+    <div id="cc">
+      <canvas id="fc"></canvas>
+      <div id="pres">
+        👆 필압 <b id="pval" style="color:var(--or)">50%</b>
+        <div id="pbar-wrap"><div id="pbar-fill"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 속성 패널 -->
+  <div id="pp">
+    <div class="ps">
+      <h4>획 속성</h4>
+      <div class="pr"><label>굵기</label><input type="range" id="sw" min="4" max="80" value="20" oninput="onSW()"><span class="vl" id="swv">20</span></div>
+      <div class="pr"><label>불투명</label><input type="range" id="op" min="20" max="100" value="100" oninput="document.getElementById('opv').textContent=this.value"><span class="vl" id="opv">100</span></div>
+      <div class="pr"><label>색상</label><input type="color" id="sc" value="#1c1008"></div>
+      <div class="pr">
+        <label>끝</label>
+        <select id="lc">
+          <option value="round">둥글게 ● 동자승</option>
+          <option value="butt">직각 ▌ 목판</option>
+          <option value="square">정사각</option>
+        </select>
+      </div>
+    </div>
+    <div class="ps">
+      <h4>필압 설정</h4>
+      <div class="pr"><label>최소%</label><input type="range" id="pmin" min="5" max="80" value="25" oninput="document.getElementById('pminv').textContent=this.value"><span class="vl" id="pminv">25</span></div>
+      <div class="pr"><label>최대%</label><input type="range" id="pmax" min="100" max="400" value="230" oninput="document.getElementById('pmaxv').textContent=this.value"><span class="vl" id="pmaxv">230</span></div>
+      <div class="pr"><label>감마</label><input type="range" id="pg" min="2" max="15" value="6" oninput="document.getElementById('pgv').textContent=(this.value/10).toFixed(1)"><span class="vl" id="pgv">0.6</span></div>
+    </div>
+    <div class="ps">
+      <h4>빠른 편집</h4>
+      <div class="br">
+        <button class="bs" onclick="doRound()">끝 둥글게</button>
+        <button class="bs" onclick="doCenter()">중앙정렬</button>
+      </div>
+      <div class="br" style="margin-top:4px">
+        <button class="bs" onclick="doScale(1.1)">+10%</button>
+        <button class="bs" onclick="doScale(0.9)">-10%</button>
+        <button class="bs" onclick="doFlip()">좌우반전</button>
+      </div>
+      <div class="br" style="margin-top:4px">
+        <button class="bs" onclick="copyJaso()">복사</button>
+        <button class="bs" onclick="pasteJaso()">붙여넣기</button>
+      </div>
+      <div class="br" style="margin-top:4px">
+        <button class="bs w" onclick="clearCur()">지우기</button>
+      </div>
+    </div>
+    <div class="ps">
+      <h4>저장</h4>
+      <div class="br">
+        <button class="bs" onclick="saveLocal()">💾 자동저장</button>
+        <button class="bs" onclick="loadLocal()">📂 불러오기</button>
+      </div>
+      <div style="margin-top:6px;font-size:10px;color:var(--ink3)" id="ss">저장 안 됨</div>
+    </div>
+    <div class="ps">
+      <h4>행이체 가이드</h4>
+      <div style="font-size:10px;color:var(--ink3);line-height:1.9" id="guide-text">
+        자소를 선택하면 가이드가 표시됩니다
+      </div>
+    </div>
+  </div>
+
+  <!-- 플로팅 -->
+  <div id="flt">
+    <button class="fb sm" onclick="undo()">↩</button>
+    <button class="fb sm" onclick="delLast()">✕</button>
+    <button class="fb" id="fmain" onclick="cycleTool()">🖌</button>
+  </div>
+</div>
+
+<div id="pvbar">
+  <div id="pvtxt">행이체</div>
+  <div id="pvinfo">완성: 0/67자<br>다음: ㄱ</div>
+</div>
+
+<!-- 내보내기 모달 -->
+<div class="mo hid" id="exmo">
+  <div class="md">
+    <h3>📦 JSON 내보내기</h3>
+    <p>그린 자소 데이터를 JSON으로 저장합니다.<br>
+    <b>HaengicheBuilder.py</b>에 이 파일을 불러오면<br>
+    한글 <b>11,172자 TTF</b>가 자동 생성됩니다.</p>
+    <div style="background:var(--bg2);border-radius:8px;padding:10px;margin:8px 0;font-size:11px;color:var(--ink2)">
+      완성된 자소: <b id="done-count" style="color:var(--gr)">0</b> / 67개<br>
+      <span id="missing-list" style="color:var(--or);font-size:10px"></span>
+    </div>
+    <p style="font-size:11px;color:var(--ink3)">
+      ※ 자소가 없는 글자는 빈 칸으로 생성됩니다.<br>
+      나중에 추가하고 다시 내보내기 가능합니다.
+    </p>
+    <div class="mdb">
+      <button onclick="closeEx()">취소</button>
+      <button class="gr" onclick="dlJSON()">💾 JSON 다운로드</button>
+    </div>
+  </div>
+</div>
+
+<!-- 미리보기 모달 -->
+<div class="mo hid" id="pvmo">
+  <div class="md" style="width:min(480px,95vw)">
+    <h3>🔤 자소 조합 미리보기</h3>
+    <p style="font-size:11px;color:var(--ink3)">그린 자소로 한글이 어떻게 조합되는지 확인합니다</p>
+    <canvas id="preview-canvas" width="440" height="220" style="width:100%;border-radius:8px;background:#fff;margin:8px 0;display:block"></canvas>
+    <div style="font-size:11px;color:var(--ink3);text-align:center" id="pv-label">미리보기</div>
+    <div class="mdb">
+      <button onclick="closePv()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// 자소 정의
+// ══════════════════════════════════════════════
+const JASO = {
+  cho:  ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"],
+  jung: ["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"],
+  jong: ["ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"]
+};
+
+const GUIDE = {
+  "ㄱ":"꺾임 획 — 위 가로획 + 오른쪽 세로획. 꺾임부분 둥글게",
+  "ㄴ":"ㄴ자형 — 세로 + 아래 가로획. 코너 둥글게",
+  "ㄷ":"디귿 — 위·아래 가로 + 왼쪽 세로. 양 끝 둥글게",
+  "ㄹ":"리을 — 복잡한 계단형. 획 굵기 통일",
+  "ㅁ":"미음 — 정사각형에 가깝게. 네 획 균일",
+  "ㅂ":"비읍 — ㅁ 위에 점 두 개. 점은 정원으로",
+  "ㅅ":"시옷 — 위 점 + V자. 점은 크고 동그랗게",
+  "ㅇ":"이응 — 완전한 정원. 동자승 얼굴처럼 통통하게",
+  "ㅈ":"지읒 — ㅅ 아래 가로획 추가",
+  "ㅊ":"치읓 — ㅈ 위에 점 추가. 점 크게",
+  "ㅋ":"키읔 — ㄱ 중간에 가로획 추가",
+  "ㅌ":"티읕 — ㄷ 안에 가로획 추가",
+  "ㅍ":"피읖 — 위·아래 가로 + 세로 두 개",
+  "ㅎ":"히읗 — 위 점 두 개 + 가로 + ㅇ. 핵심 자소!",
+  "ㄲ":"쌍기역 — ㄱ 두 개. 약간 작게",
+  "ㄸ":"쌍디귿 — ㄷ 두 개",
+  "ㅃ":"쌍비읍 — ㅂ 두 개",
+  "ㅆ":"쌍시옷 — ㅅ 두 개",
+  "ㅉ":"쌍지읒 — ㅈ 두 개",
+  "ㅏ":"아 — 세로획 + 오른쪽 가로획",
+  "ㅐ":"애 — 세로 두 개 + 가로획",
+  "ㅑ":"야 — ㅏ에 가로획 하나 더",
+  "ㅒ":"얘 — ㅐ에 가로획 하나 더",
+  "ㅓ":"어 — 세로획 + 왼쪽 가로획",
+  "ㅔ":"에 — 세로 두 개 + 가로획 (왼쪽에)",
+  "ㅕ":"여 — ㅓ에 가로획 하나 더",
+  "ㅖ":"예 — ㅔ에 가로획 하나 더",
+  "ㅗ":"오 — 가로획 + 위로 세로획",
+  "ㅘ":"와 — ㅗ + ㅏ 합성",
+  "ㅙ":"왜 — ㅗ + ㅐ 합성",
+  "ㅚ":"외 — ㅗ + ㅣ 합성",
+  "ㅛ":"요 — ㅗ에 세로획 두 개",
+  "ㅜ":"우 — 가로획 + 아래로 세로획",
+  "ㅝ":"워 — ㅜ + ㅓ 합성",
+  "ㅞ":"웨 — ㅜ + ㅔ 합성",
+  "ㅟ":"위 — ㅜ + ㅣ 합성",
+  "ㅠ":"유 — ㅜ에 세로획 두 개",
+  "ㅡ":"으 — 가로획 하나",
+  "ㅢ":"의 — ㅡ + ㅣ",
+  "ㅣ":"이 — 세로획 하나",
+};
+
+const VERT_JUNG = new Set("ㅏㅐㅑㅒㅓㅔㅕㅖㅣ");
+const CHOSEONG  = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const JUNGSEONG = ["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
+const JONGSEONG = ["","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+
+// ══════════════════════════════════════════════
+// 상태
+// ══════════════════════════════════════════════
+const canvas = document.getElementById('fc');
+const ctx = canvas.getContext('2d');
+const UPM = 1000;
+let cS = 0, margin = 0, DA = 0;
+
+let curTab  = 'cho';
+let curJaso = 'ㄱ';
+let curTool = 'free';
+let showGrid = true;
+
+// 자소별 획 데이터: { jaso: [path, ...] }
+let jasoData = {};
+let undoSt = {}, redoSt = {};
+let clipboard = null;
+
+// 그리기 상태
+let penPath = null, freePath = null, isFree = false, isErase = false;
+
+// 필압
+let curP = 0.5, pHist = [], pressureOn = false;
+const PBUF = 5;
+
+// 도구 순서
+const TOOLS = ['free','pen','era'];
+let toolIdx = 0;
+
+// ══════════════════════════════════════════════
+// 초기화
+// ══════════════════════════════════════════════
+function init() {
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  renderPanel('cho');
+  selectJaso('ㄱ');
+
+  // Pointer Events (필압)
+  if (window.PointerEvent) {
+    canvas.addEventListener('pointerdown',  onPD, {passive:false});
+    canvas.addEventListener('pointermove',  onPM, {passive:false});
+    canvas.addEventListener('pointerup',    onPU, {passive:false});
+    canvas.addEventListener('pointercancel',onPU, {passive:false});
+    canvas.style.touchAction = 'none';
+  } else {
+    canvas.addEventListener('mousedown',  e=>{ if(e.button===0){ const p=cpos(e); hDown(p.x,p.y,0.5); }});
+    canvas.addEventListener('mousemove',  e=>{ const p=cpos(e); hMove(p.x,p.y,0.5); });
+    canvas.addEventListener('mouseup',    e=>hUp());
+    canvas.addEventListener('mouseleave', e=>hUp());
+    canvas.addEventListener('touchstart', e=>{ e.preventDefault(); const t=e.touches[0],p=tpos(t); hDown(p.x,p.y,t.force||0.5); },{passive:false});
+    canvas.addEventListener('touchmove',  e=>{ e.preventDefault(); const t=e.touches[0],p=tpos(t); hMove(p.x,p.y,t.force||0.5); },{passive:false});
+    canvas.addEventListener('touchend',   e=>{ e.preventDefault(); hUp(); },{passive:false});
+  }
+  canvas.addEventListener('contextmenu', e=>{ e.preventDefault(); finishPen(); });
+  document.addEventListener('keydown', onKey);
+
+  loadLocal();
+  updateProgress();
+  redraw();
+}
+
+function resizeCanvas() {
+  const cc = document.getElementById('cc');
+  const s = Math.min(cc.clientWidth, cc.clientHeight, 680);
+  canvas.width = canvas.height = s;
+  canvas.style.width = canvas.style.height = s + 'px';
+  cS = s; margin = Math.round(s * 0.1); DA = s - margin * 2;
+  redraw();
+}
+
+// ══════════════════════════════════════════════
+// 자소 패널 렌더링
+// ══════════════════════════════════════════════
+function renderPanel(tab) {
+  const g = document.getElementById('jg');
+  const list = JASO[tab];
+  const typeClass = tab === 'cho' ? 'cho' : tab === 'jung' ? 'jung' : 'jong';
+  g.innerHTML = `<div class="jgroup"><div class="jgroup-title">${
+    tab==='cho'?'초성 19개':tab==='jung'?'중성 21개':'종성 27개'
+  }</div><div class="jcells">${
+    list.map(j => `<div class="jc ${typeClass}${j===curJaso?' on':''}${jasoData[j]?.length?' done':''}"
+      onclick="selectJaso('${j}')" title="${GUIDE[j]||j}">${j}</div>`).join('')
+  }</div></div>`;
+}
+
+function switchTab(tab, btn) {
+  curTab = tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  renderPanel(tab);
+}
+
+function selectJaso(j) {
+  if (penPath) finishPen();
+  curJaso = j;
+  const type = JASO.cho.includes(j)?'cho':JASO.jung.includes(j)?'jung':'jong';
+  const typeNames = {cho:'초성',jung:'중성',jong:'종성'};
+  document.getElementById('jlabel').textContent = j;
+  document.getElementById('jtype').textContent = typeNames[type];
+  document.getElementById('jtype').className = 'jtype t-'+type;
+  document.getElementById('jtip').textContent = GUIDE[j]||'';
+  document.getElementById('guide-text').textContent = GUIDE[j]||'자소를 선택하면 가이드가 표시됩니다';
+  renderPanel(curTab);
+  redraw();
+}
+
+// ══════════════════════════════════════════════
+// 좌표 변환
+// ══════════════════════════════════════════════
+function toC(fx,fy){ return {x:margin+(fx/UPM)*DA, y:cS-margin-(fy/UPM)*DA}; }
+function toF(cx,cy){ return {x:Math.round(((cx-margin)/DA)*UPM), y:Math.round(((cS-margin-cy)/DA)*UPM)}; }
+function cpos(e){ const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+function tpos(t){ const r=canvas.getBoundingClientRect(); return {x:t.clientX-r.left,y:t.clientY-r.top}; }
+
+// ══════════════════════════════════════════════
+// Pointer Events
+// ══════════════════════════════════════════════
+function onPD(e) {
+  if (!e.isPrimary) return;
+  e.preventDefault();
+  canvas.setPointerCapture(e.pointerId);
+  const r=canvas.getBoundingClientRect();
+  pHist=[]; curP=smoothP(e.pressure||0.5);
+  showPres(e.pressure,e.pointerType);
+  hDown(e.clientX-r.left, e.clientY-r.top, curP);
+}
+function onPM(e) {
+  if (!e.isPrimary) return;
+  e.preventDefault();
+  const r=canvas.getBoundingClientRect();
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  for (const ev of evs) {
+    curP = smoothP(ev.pressure||0.5);
+    showPres(ev.pressure, ev.pointerType);
+    hMove(ev.clientX-r.left, ev.clientY-r.top, curP);
+  }
+}
+function onPU(e) {
+  e.preventDefault();
+  hUp();
+  hidePres();
+}
+
+function smoothP(raw) {
+  pHist.push(raw);
+  if (pHist.length>PBUF) pHist.shift();
+  let s=0,w=0;
+  pHist.forEach((v,i)=>{const ww=i+1;s+=v*ww;w+=ww;});
+  return s/w;
+}
+function pToSW(p, base) {
+  const pp=Math.max(0.05,Math.min(1,p));
+  const gamma=parseInt(document.getElementById('pg').value)/10;
+  const pmin=parseInt(document.getElementById('pmin').value)/100;
+  const pmax=parseInt(document.getElementById('pmax').value)/100;
+  return base*pmin + (base*pmax-base*pmin)*Math.pow(pp,gamma);
+}
+function showPres(f,pt) {
+  if (!f) return;
+  const el=document.getElementById('pres'); el.style.opacity='1';
+  document.getElementById('pval').textContent=Math.round(f*100)+'%';
+  document.getElementById('pbar-fill').style.width=(f*100)+'%';
+}
+function hidePres(){ document.getElementById('pres').style.opacity='0'; }
+
+// ══════════════════════════════════════════════
+// 통합 핸들러
+// ══════════════════════════════════════════════
+function hDown(cx,cy,force) {
+  const fp=toF(cx,cy);
+  document.getElementById('coord').textContent=`${fp.x}, ${fp.y}`;
+
+  if (curTool==='free') {
+    isFree=true;
+    freePath=mkPath([{...fp,p:force}]);
+    freePath.free=true; freePath.pressured=true;
+  } else if (curTool==='pen') {
+    if (!penPath) {
+      penPath=mkPath([fp]);
+    } else {
+      const first=toC(penPath.points[0].x,penPath.points[0].y);
+      if (Math.hypot(cx-first.x,cy-first.y)<14&&penPath.points.length>2) {
+        penPath.closed=true; commitPath(penPath); penPath=null;
+      } else {
+        penPath.points.push({...fp}); redraw();
+      }
+    }
+  } else if (curTool==='era') {
+    isErase=true; eraseAt(cx,cy);
+  }
+  redraw();
+}
+
+function hMove(cx,cy,force) {
+  const fp=toF(cx,cy);
+  document.getElementById('coord').textContent=`${fp.x}, ${fp.y}`;
+
+  if (curTool==='free'&&isFree&&freePath) {
+    const last=freePath.points[freePath.points.length-1];
+    if (Math.hypot(fp.x-last.x,fp.y-last.y)>5) {
+      freePath.points.push({...fp,p:force}); redraw();
+    }
+  } else if (curTool==='pen'&&penPath) {
+    redraw();
+    const last=penPath.points[penPath.points.length-1];
+    const lc=toC(last.x,last.y);
+    ctx.save(); ctx.strokeStyle='#d4620a88'; ctx.lineWidth=1.5;
+    ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(lc.x,lc.y); ctx.lineTo(cx,cy); ctx.stroke();
+    ctx.setLineDash([]); ctx.restore();
+  } else if (curTool==='era'&&isErase) {
+    eraseAt(cx,cy);
+  }
+}
+
+function hUp() {
+  if (curTool==='free'&&isFree) {
+    isFree=false;
+    if (freePath&&freePath.points.length>1) commitPath(freePath);
+    freePath=null; redraw();
+  }
+  isErase=false;
+}
+
+// ══════════════════════════════════════════════
+// 경로
+// ══════════════════════════════════════════════
+function mkPath(pts) {
+  return {
+    points:pts,
+    sw:parseInt(document.getElementById('sw').value),
+    sc:document.getElementById('sc').value,
+    lc:document.getElementById('lc').value,
+    op:parseInt(document.getElementById('op').value)/100,
+    closed:false, free:false, pressured:false,
+  };
+}
+function commitPath(path) {
+  if (!path||path.points.length<2) return;
+  saveUndo();
+  if (!jasoData[curJaso]) jasoData[curJaso]=[];
+  jasoData[curJaso].push({...path, points:[...path.points]});
+  renderPanel(curTab);
+  updateProgress();
+  redraw();
+}
+function finishPen() {
+  if (penPath&&penPath.points.length>=2) commitPath(penPath);
+  penPath=null; redraw();
+}
+
+// ══════════════════════════════════════════════
+// 지우개
+// ══════════════════════════════════════════════
+function eraseAt(cx,cy) {
+  const paths=jasoData[curJaso]; if(!paths?.length) return;
+  for (let i=paths.length-1;i>=0;i--) {
+    for (const pt of paths[i].points||[]) {
+      const cp=toC(pt.x,pt.y);
+      if (Math.hypot(cx-cp.x,cy-cp.y)<18) {
+        saveUndo(); paths.splice(i,1);
+        renderPanel(curTab); updateProgress(); redraw(); return;
+      }
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+// 그리기
+// ══════════════════════════════════════════════
+function redraw() {
+  ctx.clearRect(0,0,cS,cS);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,cS,cS);
+  if(showGrid) drawGrid();
+  drawGuides();
+  (jasoData[curJaso]||[]).forEach(p=>drawPath(p));
+  if(penPath) drawPath(penPath);
+  if(freePath&&isFree) drawPath(freePath);
+  if(curTool==='pen') {
+    (jasoData[curJaso]||[]).forEach(p=>drawAnchors(p,'#0066cc'));
+    if(penPath) drawAnchors(penPath,'#d4620a');
+  }
+  drawRef();
+}
+
+function drawGrid() {
+  ctx.strokeStyle='#f5ead8'; ctx.lineWidth=0.5;
+  const step=DA/10;
+  for(let i=0;i<=10;i++){
+    const x=margin+i*step, y=margin+i*step;
+    ctx.beginPath(); ctx.moveTo(x,margin); ctx.lineTo(x,cS-margin); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(margin,y); ctx.lineTo(cS-margin,y); ctx.stroke();
+  }
+  ctx.strokeStyle='#f0d8b0'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(cS/2,margin); ctx.lineTo(cS/2,cS-margin); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(margin,cS/2); ctx.lineTo(cS-margin,cS/2); ctx.stroke();
+}
+
+function drawGuides() {
+  [[0,'#eed8a0'],[300,'#e0c890'],[500,'#c8e0c0'],[700,'#c0c8e0']].forEach(([y,color])=>{
+    const cp=toC(0,y);
+    ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=1;
+    ctx.setLineDash([3,3]); ctx.beginPath();
+    ctx.moveTo(margin,cp.y); ctx.lineTo(cS-margin,cp.y); ctx.stroke();
+    ctx.setLineDash([]); ctx.restore();
+  });
+}
+
+function drawPath(path) {
+  if(!path.points||path.points.length<2) return;
+  ctx.save(); ctx.globalAlpha=path.op??1;
+  const color=path.sc||'#1c1008';
+  const base=path.sw||20;
+
+  if (path.free&&path.pressured) {
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle=color;
+    for(let i=0;i<path.points.length-1;i++){
+      const pA=path.points[i], pB=path.points[i+1];
+      const pMid=(( pA.p??0.5)+(pB.p??0.5))/2;
+      const sw=pToSW(pMid,base)*(DA/UPM)*1.8;
+      const a=toC(pA.x,pA.y), b=toC(pB.x,pB.y);
+      ctx.lineWidth=Math.max(0.5,sw); ctx.beginPath();
+      if(i===0){ ctx.moveTo(a.x,a.y); }
+      else {
+        const prev=toC(path.points[i-1].x,path.points[i-1].y);
+        ctx.moveTo((prev.x+a.x)/2,(prev.y+a.y)/2);
+      }
+      if(i<path.points.length-2){
+        const nc=toC(path.points[i+2].x,path.points[i+2].y);
+        ctx.quadraticCurveTo(b.x,b.y,(b.x+nc.x)/2,(b.y+nc.y)/2);
+      } else { ctx.lineTo(b.x,b.y); }
+      ctx.stroke();
+    }
+  } else {
+    const sw=base*(DA/UPM)*1.8;
+    ctx.lineWidth=Math.max(0.5,sw); ctx.lineCap=path.lc||'round';
+    ctx.lineJoin='round'; ctx.strokeStyle=color;
+    ctx.beginPath();
+    const f=toC(path.points[0].x,path.points[0].y); ctx.moveTo(f.x,f.y);
+    if(path.free){
+      for(let i=1;i<path.points.length-1;i++){
+        const a=toC(path.points[i].x,path.points[i].y);
+        const b=toC(path.points[i+1].x,path.points[i+1].y);
+        ctx.quadraticCurveTo(a.x,a.y,(a.x+b.x)/2,(a.y+b.y)/2);
+      }
+      const last=toC(path.points[path.points.length-1].x,path.points[path.points.length-1].y);
+      ctx.lineTo(last.x,last.y);
+    } else {
+      path.points.slice(1).forEach(pt=>{ const p=toC(pt.x,pt.y); ctx.lineTo(p.x,p.y); });
+    }
+    if(path.closed) ctx.closePath();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawAnchors(path,color) {
+  (path.points||[]).forEach((pt,i)=>{
+    const cp=toC(pt.x,pt.y);
+    ctx.beginPath(); ctx.arc(cp.x,cp.y,i===0?7:4.5,0,Math.PI*2);
+    ctx.fillStyle=i===0?'#d4620a':color; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+  });
+}
+
+function drawRef() {
+  ctx.save(); ctx.globalAlpha=0.07; ctx.fillStyle='#000';
+  const fs=DA*0.85;
+  ctx.font=`${fs}px "Apple SD Gothic Neo","Noto Sans KR",sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(curJaso,cS/2,cS/2);
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════
+// 편집
+// ══════════════════════════════════════════════
+function saveUndo(){
+  if(!undoSt[curJaso]) undoSt[curJaso]=[];
+  undoSt[curJaso].push(JSON.stringify(jasoData[curJaso]||[]));
+  if(undoSt[curJaso].length>40) undoSt[curJaso].shift();
+  redoSt[curJaso]=[];
+}
+function undo(){
+  if(!undoSt[curJaso]?.length) return;
+  if(!redoSt[curJaso]) redoSt[curJaso]=[];
+  redoSt[curJaso].push(JSON.stringify(jasoData[curJaso]||[]));
+  jasoData[curJaso]=JSON.parse(undoSt[curJaso].pop());
+  renderPanel(curTab); updateProgress(); redraw();
+}
+function redo(){
+  if(!redoSt[curJaso]?.length) return;
+  if(!undoSt[curJaso]) undoSt[curJaso]=[];
+  undoSt[curJaso].push(JSON.stringify(jasoData[curJaso]||[]));
+  jasoData[curJaso]=JSON.parse(redoSt[curJaso].pop());
+  renderPanel(curTab); updateProgress(); redraw();
+}
+function delLast(){
+  const p=jasoData[curJaso]; if(!p?.length) return;
+  saveUndo(); p.pop(); renderPanel(curTab); updateProgress(); redraw();
+}
+function clearCur(){
+  if(!confirm(`'${curJaso}' 자소를 지울까요?`)) return;
+  saveUndo(); jasoData[curJaso]=[]; renderPanel(curTab); updateProgress(); redraw();
+}
+function copyJaso(){ clipboard=JSON.parse(JSON.stringify(jasoData[curJaso]||[])); }
+function pasteJaso(){
+  if(!clipboard) return; saveUndo();
+  jasoData[curJaso]=JSON.parse(JSON.stringify(clipboard));
+  renderPanel(curTab); updateProgress(); redraw();
+}
+function doRound(){ (jasoData[curJaso]||[]).forEach(p=>{p.lc='round';}); redraw(); }
+function doCenter(){
+  const ps=jasoData[curJaso]||[]; if(!ps.length) return;
+  const xs=[],ys=[];
+  ps.forEach(p=>(p.points||[]).forEach(pt=>{xs.push(pt.x);ys.push(pt.y);}));
+  const cx=(Math.min(...xs)+Math.max(...xs))/2,cy=(Math.min(...ys)+Math.max(...ys))/2;
+  saveUndo();
+  ps.forEach(p=>(p.points||[]).forEach(pt=>{pt.x+=UPM/2-cx;pt.y+=UPM/2-cy;}));
+  redraw();
+}
+function doScale(f){
+  const ps=jasoData[curJaso]||[]; if(!ps.length) return;
+  const xs=[],ys=[];
+  ps.forEach(p=>(p.points||[]).forEach(pt=>{xs.push(pt.x);ys.push(pt.y);}));
+  const cx=(Math.min(...xs)+Math.max(...xs))/2,cy=(Math.min(...ys)+Math.max(...ys))/2;
+  saveUndo();
+  ps.forEach(p=>(p.points||[]).forEach(pt=>{pt.x=cx+(pt.x-cx)*f;pt.y=cy+(pt.y-cy)*f;}));
+  redraw();
+}
+function doFlip(){
+  const ps=jasoData[curJaso]||[]; if(!ps.length) return;
+  const xs=[]; ps.forEach(p=>(p.points||[]).forEach(pt=>xs.push(pt.x)));
+  const cx=(Math.min(...xs)+Math.max(...xs))/2;
+  saveUndo(); ps.forEach(p=>(p.points||[]).forEach(pt=>{pt.x=cx*2-pt.x;})); redraw();
+}
+
+// ══════════════════════════════════════════════
+// 도구 전환
+// ══════════════════════════════════════════════
+const TICONS={free:'🖌',pen:'✏️',era:'🧹'};
+const TNAMES={free:'자유 그리기',pen:'펜 도구',era:'지우개'};
+function setTool(t){
+  if(penPath&&t!=='pen') finishPen();
+  curTool=t; toolIdx=TOOLS.indexOf(t);
+  canvas.style.cursor={free:'crosshair',pen:'crosshair',era:'cell'}[t];
+  document.querySelectorAll('.tbtn[id^=t-]').forEach(b=>b.classList.remove('on'));
+  document.getElementById('t-'+t)?.classList.add('on');
+  document.getElementById('fmain').textContent=TICONS[t];
+  redraw();
+}
+function cycleTool(){ toolIdx=(toolIdx+1)%TOOLS.length; setTool(TOOLS[toolIdx]); }
+function toggleGrid(){ showGrid=!showGrid; redraw(); }
+function onSW(){ document.getElementById('swv').textContent=document.getElementById('sw').value; }
+
+// ══════════════════════════════════════════════
+// 진행률
+// ══════════════════════════════════════════════
+function updateProgress(){
+  const all=[...JASO.cho,...JASO.jung,...JASO.jong];
+  const done=all.filter(j=>jasoData[j]?.length>0).length;
+  const total=all.length;
+  document.getElementById('progress-fill').style.width=(done/total*100)+'%';
+  document.getElementById('progress-text').textContent=`${done} / ${total} 완료`;
+
+  // 미리보기 바
+  const missing=all.filter(j=>!jasoData[j]?.length);
+  document.getElementById('pvtxt').textContent='행이체 ';
+  document.getElementById('pvinfo').innerHTML=`완성: ${done}/${total}자<br>다음: ${missing[0]||'전부 완료!'}`;
+}
+
+// ══════════════════════════════════════════════
+// 저장 / 불러오기
+// ══════════════════════════════════════════════
+function saveLocal(){
+  localStorage.setItem('hae_jaso',JSON.stringify({jasoData,v:'1.0'}));
+  document.getElementById('ss').textContent='저장됨 '+new Date().toLocaleTimeString();
+}
+function loadLocal(){
+  const d=localStorage.getItem('hae_jaso'); if(!d) return;
+  try{
+    const p=JSON.parse(d); jasoData=p.jasoData||{};
+    renderPanel(curTab); updateProgress(); redraw();
+    document.getElementById('ss').textContent='불러옴';
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════════
+// 미리보기 — 자소 조합 렌더링
+// ══════════════════════════════════════════════
+function showPreview(){
+  const pc=document.getElementById('preview-canvas');
+  const pctx=pc.getContext('2d');
+  pctx.clearRect(0,0,pc.width,pc.height);
+  pctx.fillStyle='#fff'; pctx.fillRect(0,0,pc.width,pc.height);
+
+  // 샘플 단어로 미리보기
+  const samples=['가','나','행','이','체','동','자','승'];
+  const cell=pc.width/samples.length;
+
+  samples.forEach((ch,idx)=>{
+    const code=ch.codePointAt(0)-0xAC00;
+    if(code<0||code>11171) return;
+    const ci=Math.floor(code/28/21), ji=Math.floor(code/28)%21, ki=code%28;
+    const cho=CHOSEONG[ci], jung=JUNGSEONG[ji], jong=JONGSEONG[ki];
+
+    const x=idx*cell, y=0, w=cell, h=pc.height;
+    const isVert=VERT_JUNG.has(jung);
+    const hasJong=!!jong;
+
+    // 자소별 영역 계산
+    let areas=[];
+    if(isVert){
+      const cw=w*0.46, jw=w-cw;
+      if(hasJong){
+        const ch2=h*0.57, jonh=h*0.30, gap=h-ch2-jonh;
+        areas=[
+          {jaso:cho,  x:x,    y:y+jonh+gap, w:cw,  h:ch2},
+          {jaso:jung, x:x+cw, y:y+jonh,     w:jw,  h:h-jonh},
+          {jaso:jong, x:x,    y:y,           w:w,   h:jonh},
+        ];
+      } else {
+        areas=[
+          {jaso:cho,  x:x,    y:y, w:cw, h:h},
+          {jaso:jung, x:x+cw, y:y, w:jw, h:h},
+        ];
+      }
+    } else {
+      const ch2=h*0.45, juh=h-ch2;
+      if(hasJong){
+        const ch3=h*0.36, juh2=h*0.30, jonh=h-ch3-juh2;
+        areas=[
+          {jaso:cho,  x:x, y:y+juh2+jonh, w:w, h:ch3},
+          {jaso:jung, x:x, y:y+jonh,       w:w, h:juh2},
+          {jaso:jong, x:x, y:y,             w:w, h:jonh},
+        ];
+      } else {
+        areas=[
+          {jaso:cho,  x:x, y:y+juh, w:w, h:ch2},
+          {jaso:jung, x:x, y:y,      w:w, h:juh},
+        ];
+      }
+    }
+
+    // 각 자소 그리기
+    areas.forEach(({jaso,x:ax,y:ay,w:aw,h:ah})=>{
+      const paths=jasoData[jaso]||[];
+      if(!paths.length) {
+        // 없는 자소: 빈 영역 표시
+        pctx.save(); pctx.strokeStyle='#f0d0c0'; pctx.lineWidth=0.5;
+        pctx.strokeRect(ax+1,ay+1,aw-2,ah-2); pctx.restore();
+        return;
+      }
+      // 자소 바운딩박스
+      const xs=[],ys_=[]; paths.forEach(p=>(p.points||[]).forEach(pt=>{xs.push(pt.x);ys_.push(pt.y);}));
+      if(!xs.length) return;
+      const sx0=Math.min(...xs),sx1=Math.max(...xs),sy0=Math.min(...ys_),sy1=Math.max(...ys_);
+      const sw_=Math.max(1,sx1-sx0),sh_=Math.max(1,sy1-sy0);
+      const s=Math.min(aw/sw_,ah/sh_)*0.85;
+      const ox=ax+(aw-sw_*s)/2-sx0*s;
+      const oy=ay+(ah-sh_*s)/2-sy0*s;
+
+      paths.forEach(path=>{
+        const pts=path.points||[]; if(pts.length<2) return;
+        pctx.save();
+        pctx.strokeStyle=path.sc||'#1c1008';
+        pctx.lineWidth=Math.max(0.5,(path.sw||20)*s*(DA/UPM)*0.4);
+        pctx.lineCap=path.lc||'round'; pctx.lineJoin='round';
+        pctx.beginPath();
+        pctx.moveTo(pts[0].x*s+ox, pc.height-(pts[0].y*s+oy));
+        pts.slice(1).forEach(pt=>pctx.lineTo(pt.x*s+ox, pc.height-(pt.y*s+oy)));
+        if(path.closed) pctx.closePath();
+        pctx.stroke(); pctx.restore();
+      });
+    });
+  });
+
+  // 글자 레이블
+  pctx.fillStyle='#8a6a3a'; pctx.font='9px sans-serif'; pctx.textAlign='center';
+  samples.forEach((ch,i)=> pctx.fillText(ch,(i+0.5)*cell,pc.height-2));
+
+  document.getElementById('pv-label').textContent=`샘플: ${samples.join(' ')} — 없는 자소는 빈칸으로 표시`;
+  document.getElementById('pvmo').classList.remove('hid');
+}
+function closePv(){ document.getElementById('pvmo').classList.add('hid'); }
+
+// ══════════════════════════════════════════════
+// JSON 내보내기
+// ══════════════════════════════════════════════
+function showExport(){
+  const all=[...JASO.cho,...JASO.jung,...JASO.jong];
+  const done=all.filter(j=>jasoData[j]?.length>0);
+  const missing=all.filter(j=>!jasoData[j]?.length);
+  document.getElementById('done-count').textContent=done.length;
+  document.getElementById('missing-list').textContent=
+    missing.length ? '미완성: '+missing.join(' ') : '✅ 전부 완성!';
+  document.getElementById('exmo').classList.remove('hid');
+}
+function closeEx(){ document.getElementById('exmo').classList.add('hid'); }
+
+function dlJSON(){
+  const all=[...JASO.cho,...JASO.jung,...JASO.jong];
+
+  // 내보내기 형식: HaengicheBuilder.py가 읽을 수 있는 구조
+  const exportData = {
+    version: "1.0",
+    name: "행이체",
+    description: "행이체 동자승본 자소 데이터",
+    created: new Date().toISOString(),
+    canvas_size: UPM,
+    stats: {
+      total: all.length,
+      done: all.filter(j=>jasoData[j]?.length>0).length,
+    },
+    // 자소 데이터 (초성·중성·종성 통합)
+    jaso: {},
+    // 영문·숫자는 별도 (나중에 에디터에서 추가 가능)
+    latin: {},
+    num: {},
+  };
+
+  // 자소 데이터 정리
+  all.forEach(j=>{
+    const paths=jasoData[j]||[];
+    if(paths.length>0){
+      exportData.jaso[j]=paths.map(p=>({
+        points: (p.points||[]).map(pt=>({
+          x: Math.round(pt.x),
+          y: Math.round(pt.y),
+          p: pt.p!=null ? Math.round(pt.p*100)/100 : 0.5,
+        })),
+        sw:  Math.round(p.sw||20),
+        sc:  p.sc||'#1c1008',
+        lc:  p.lc||'round',
+        op:  p.op!=null ? Math.round(p.op*100)/100 : 1,
+        free: p.free||false,
+        pressured: p.pressured||false,
+        closed: p.closed||false,
+      }));
+    }
+  });
+
+  const json=JSON.stringify(exportData,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='haengiche-jaso.json';
+  a.click();
+  closeEx();
+  saveLocal();
+  document.getElementById('ss').textContent='내보내기+저장 완료 '+new Date().toLocaleTimeString();
+}
+
+// ══════════════════════════════════════════════
+// 키보드
+// ══════════════════════════════════════════════
+function onKey(e){
+  const tag=document.activeElement.tagName;
+  if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
+  if(e.ctrlKey||e.metaKey){
+    if(e.key==='z'){e.preventDefault();undo();}
+    if(e.key==='y'){e.preventDefault();redo();}
+    if(e.key==='s'){e.preventDefault();saveLocal();}
+    return;
+  }
+  const m={p:'pen',f:'free',e:'era'};
+  if(m[e.key?.toLowerCase()]) setTool(m[e.key.toLowerCase()]);
+  if(e.key==='Enter') finishPen();
+  if(e.key==='Escape'){if(penPath){penPath=null;redraw();}else delLast();}
+  if(e.key==='Backspace'||e.key==='Delete') delLast();
+
+  // 방향키로 자소 이동
+  const all=[...JASO.cho,...JASO.jung,...JASO.jong];
+  const idx=all.indexOf(curJaso);
+  if(e.key==='ArrowRight'&&idx<all.length-1){
+    const next=all[idx+1];
+    const tab=JASO.cho.includes(next)?'cho':JASO.jung.includes(next)?'jung':'jong';
+    if(tab!==curTab){
+      curTab=tab;
+      document.querySelectorAll('.tab').forEach((t,i)=>{
+        t.classList.toggle('on',['cho','jung','jong'][i]===tab);
+      });
+    }
+    selectJaso(next);
+  }
+  if(e.key==='ArrowLeft'&&idx>0){
+    const prev=all[idx-1];
+    const tab=JASO.cho.includes(prev)?'cho':JASO.jung.includes(prev)?'jung':'jong';
+    if(tab!==curTab){
+      curTab=tab;
+      document.querySelectorAll('.tab').forEach((t,i)=>{
+        t.classList.toggle('on',['cho','jung','jong'][i]===tab);
+      });
+    }
+    selectJaso(prev);
+  }
+}
+
+init();
+
+const I18N = {
+  ko:{ page_title:'pomiai 자소 에디터', tab_cho:'초성 19', tab_jung:'중성 21', tab_jong:'종성 27',
+    btn_clear:'지우기', btn_preview:'미리보기', btn_export:'📦 JSON 내보내기' },
+  en:{ page_title:'pomiai Jaso Editor', tab_cho:'Initial 19', tab_jung:'Medial 21', tab_jong:'Final 27',
+    btn_clear:'Clear', btn_preview:'Preview', btn_export:'📦 Export JSON' },
+  ja:{ page_title:'pomiai 字素エディター', tab_cho:'初声19', tab_jung:'中声21', tab_jong:'終声27',
+    btn_clear:'クリア', btn_preview:'プレビュー', btn_export:'📦 JSON書き出し' }
+};
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language||'ko').slice(0,2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
+  window._LANG=LANG; window._T=I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ if(typeof t[el.dataset.i18n]==='string') el.textContent = t[el.dataset.i18n]; });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+document.querySelectorAll('#lang-switch button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const lang = btn.dataset.lang;
+    const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url);
+    window._LANG = lang; window._T = I18N[lang];
+    document.getElementById('html-root').lang = lang;
+    applyI18n();
+  });
+});
+</script>
+</body>
+</html>
