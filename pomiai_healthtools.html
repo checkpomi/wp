@@ -1,9 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>pomiai Health Tools</title>
+<!--
+===================================================
+pomiai_healthtools.html — 버전 로그
+===================================================
+현재 버전: 2026.07.27 | 최종 수정: 2026.07.27
+변경 내역: 2026.07.27 pomiai 표준 적용 — 버전 로그, ko/en/ja 다국어(탭+타이틀+섹션 기준),
+브랜드 푸터 신규 적용. BMI/칼로리/나이 계산 로직은 원본 그대로 유지.
+캐시 무효화: ?v=2026.07.27
+===================================================
+-->
+<title id="page-title">pomiai Health Tools</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -87,6 +97,9 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
   .age-grid{grid-template-columns:1fr 1fr}
   #app{padding:16px 12px 60px}
 }
+.langbtn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer}
+.pomiai-brand-footer{max-width:640px;margin:16px auto 4px;padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.pomiai-brand-footer a{font-size:11px;font-weight:700;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bd2);margin-left:6px}
 </style>
 </head>
 <body>
@@ -94,17 +107,22 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
   <span id="logo">pomiai <span>health</span></span>
   <div class="h-sep"></div>
   <div id="htabs">
-    <div class="htab on"  onclick="goTab('bmi')">💪 BMI</div>
-    <div class="htab"     onclick="goTab('cal')">🔥 Calories</div>
-    <div class="htab"     onclick="goTab('age')">🎂 Age</div>
+    <div class="htab on"  onclick="goTab('bmi')" data-i18n="tab_bmi">💪 BMI</div>
+    <div class="htab"     onclick="goTab('cal')" data-i18n="tab_cal">🔥 Calories</div>
+    <div class="htab"     onclick="goTab('age')" data-i18n="tab_age">🎂 Age</div>
+  </div>
+  <div id="lang-switch" style="margin-left:auto;display:flex;gap:4px">
+    <button data-lang="ko" class="langbtn">한</button>
+    <button data-lang="en" class="langbtn">EN</button>
+    <button data-lang="ja" class="langbtn">日</button>
   </div>
 </div>
 <div id="app">
 
 <!-- ══ BMI ══ -->
 <div class="sec on" id="tab-bmi">
-  <div class="sec-title">BMI Calculator</div>
-  <div class="sec-sub">Body Mass Index · Ideal weight range · Weight status — supports metric & imperial</div>
+  <div class="sec-title" data-i18n="bmi_title">BMI Calculator</div>
+  <div class="sec-sub" data-i18n="bmi_sub">Body Mass Index · Ideal weight range · Weight status — supports metric & imperial</div>
   <div class="card">
     <div style="display:flex;gap:8px;margin-bottom:16px">
       <button class="btn full" id="unit-metric" onclick="setUnit('metric')">Metric (cm / kg)</button>
@@ -152,8 +170,8 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 
 <!-- ══ CALORIES ══ -->
 <div class="sec" id="tab-cal">
-  <div class="sec-title">Calorie & Nutrition Calculator</div>
-  <div class="sec-sub">BMR · TDEE · daily calorie target · macro breakdown — Mifflin–St Jeor formula</div>
+  <div class="sec-title" data-i18n="cal_title">Calorie & Nutrition Calculator</div>
+  <div class="sec-sub" data-i18n="cal_sub">BMR · TDEE · daily calorie target · macro breakdown — Mifflin–St Jeor formula</div>
   <div class="card">
     <div class="g3" style="margin-bottom:14px">
       <div><span class="fl">Age</span><input class="fi" id="cal-age" type="number" placeholder="25" min="1" oninput="calcCal()"></div>
@@ -191,7 +209,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 
 <!-- ══ AGE ══ -->
 <div class="sec" id="tab-age">
-  <div class="sec-title">Age Calculator</div>
+  <div class="sec-title" data-i18n="age_title">Age Calculator</div>
   <div class="sec-sub">Exact age · Korean age (만/세는 나이) · next birthday · zodiac · birthstone</div>
   <div class="card">
     <div class="g2" style="margin-bottom:14px">
@@ -206,6 +224,14 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
       <div class="age-grid" id="age-grid"></div>
       <div class="res-box show" id="age-extras" style="margin-top:14px"></div>
     </div>
+  </div>
+</div>
+
+<div class="pomiai-brand-footer">
+  <div style="font-size:13px;font-weight:700;color:var(--tx)"><span style="color:var(--tx3);font-weight:600;font-size:11px" data-i18n="footer_by">Product by</span> pomiai</div>
+  <div>
+    <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
+    <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube</a>
   </div>
 </div>
 
@@ -363,6 +389,46 @@ function calcAge(){
     <div class="res-row"><span class="res-label">📅 Day of Week Born</span><span class="res-val">${dob.toLocaleDateString('en-US',{weekday:'long'})}</span></div>`;
   $('age-result-wrap').style.display='block';
 }
+</script>
+<script>
+const I18N = {
+  en:{ page_title:'pomiai Health Tools', tab_bmi:'💪 BMI', tab_cal:'🔥 Calories', tab_age:'🎂 Age',
+    bmi_title:'BMI Calculator', bmi_sub:'Body Mass Index · Ideal weight range · Weight status — supports metric & imperial',
+    cal_title:'Calorie & Nutrition Calculator', cal_sub:'BMR · TDEE · daily calorie target · macro breakdown — Mifflin–St Jeor formula',
+    age_title:'Age Calculator', footer_by:'Product by' },
+  ko:{ page_title:'pomiai 건강 도구', tab_bmi:'💪 BMI', tab_cal:'🔥 칼로리', tab_age:'🎂 나이',
+    bmi_title:'BMI 계산기', bmi_sub:'체질량지수 · 표준 체중 범위 · 체중 상태 — 미터법/야드파운드법 지원',
+    cal_title:'칼로리 & 영양 계산기', cal_sub:'기초대사량(BMR) · 활동대사량(TDEE) · 일일 목표 칼로리 · 영양소 비율 — Mifflin–St Jeor 공식',
+    age_title:'나이 계산기', footer_by:'Product by' },
+  ja:{ page_title:'pomiai 健康ツール', tab_bmi:'💪 BMI', tab_cal:'🔥 カロリー', tab_age:'🎂 年齢',
+    bmi_title:'BMI計算機', bmi_sub:'体格指数・標準体重範囲・体重ステータス — メートル法/ヤードポンド法対応',
+    cal_title:'カロリー・栄養計算機', cal_sub:'基礎代謝量(BMR)・総消費カロリー(TDEE)・1日の目標カロリー・栄養素バランス — Mifflin–St Jeor式',
+    age_title:'年齢計算機', footer_by:'Product by' }
+};
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language||'en').slice(0,2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'en');
+  window._LANG=LANG; window._T=I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ if(typeof t[el.dataset.i18n]==='string') el.textContent = t[el.dataset.i18n]; });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+document.querySelectorAll('#lang-switch button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const lang = btn.dataset.lang;
+    const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url);
+    window._LANG = lang; window._T = I18N[lang];
+    document.getElementById('html-root').lang = lang;
+    applyI18n();
+  });
+});
 </script>
 </body>
 </html>
