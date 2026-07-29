@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<!--
+===================================================
+pomiai_tetris.html — 버전 로그
+===================================================
+현재 버전: 2026.07.27
+최종 수정: 2026.07.27
+변경 내역 (최신순):
+  - 2026.07.27  최초 제작
+      · 입력 레이어 분리 구조: 게임 로직은 순수 입력 함수(moveLeft/moveRight/
+        softDrop/hardDrop/rotatePiece)만 참조. 터치(D패드+스와이프)와 키보드가
+        동일한 함수를 호출하므로 PC/모바일 어색함 없이 동작.
+      · 모바일 퍼스트 세로모드 고정 레이아웃 + 가로모드 회전 안내 오버레이
+      · 고스트 피스(착지 예측) 추가 — 터치 플레이 정확도 보완
+      · pomiai 브랜드 컬러 시스템 / 브랜드 푸터 적용
+      · ko/en/ja 다국어(§5 표준 구조, data-i18n) 적용
+캐시 무효화: 배포 시 ?v=2026.07.27 쿼리스트링 사용 권장
+예) https://checkpomi.com/tools/pomiai_tetris.html?v=2026.07.27
+===================================================
+-->
+<title id="page-title">pomiai 테트리스</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);--ac4:rgba(108,92,232,.08);
+  --go:#d4924a;--go2:#f0b060;--go3:rgba(212,146,74,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re3:rgba(224,85,85,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;overscroll-behavior:none}
+
+#shell{max-width:420px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding:0 0 18px}
+
+/* 헤더 */
+#header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;position:sticky;top:0;background:var(--s1);border-bottom:1px solid var(--bd);z-index:20}
+#logo{font-size:14px;font-weight:700;color:var(--ac2);letter-spacing:.5px}
+#logo span{color:var(--tx3);font-weight:400}
+#header .tagline{font-size:10px;color:var(--tx3);margin-top:1px}
+.icon-btn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);width:36px;height:36px;border-radius:10px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.icon-btn:active{background:var(--ac3);color:var(--ac2)}
+
+/* 스탯 칩 */
+#stats-row{display:flex;gap:8px;padding:12px 16px 6px}
+.chip{flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:9px 6px;text-align:center}
+.chip-label{font-size:9px;color:var(--tx3);font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px}
+.chip-value{font-size:17px;font-weight:700;color:var(--tx);font-family:'DM Mono',monospace}
+
+/* 보드 영역 */
+#board-area{position:relative;display:flex;justify-content:center;padding:10px 16px 4px;flex:1}
+#canvas-wrap{position:relative;background:#000;border-radius:14px;overflow:hidden;box-shadow:var(--sh);border:1px solid var(--bd2);width:100%;max-width:280px}
+#board{display:block;width:100%;height:auto;touch-action:none}
+#next-box{position:absolute;top:10px;right:calc(50% - 140px + 10px);background:rgba(14,14,24,.92);border:1px solid var(--bd2);border-radius:10px;padding:6px 8px;text-align:center;backdrop-filter:blur(3px)}
+#next-box .chip-label{margin-bottom:2px}
+#next-canvas{width:52px;height:52px;display:block}
+#pause-overlay{position:absolute;inset:0;background:rgba(8,8,14,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;border-radius:14px;z-index:5}
+#pause-overlay.show{display:flex}
+#pause-overlay .po-title{font-size:16px;font-weight:700;color:var(--ac2)}
+
+/* 액션 로우 */
+#action-row{display:flex;gap:8px;padding:12px 16px 4px}
+.btn{background:linear-gradient(135deg,var(--ac),#4a38c0);border:none;color:#fff;border-radius:11px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(108,92,232,.28);flex:1}
+.btn:active{filter:brightness(.92);transform:scale(.98)}
+.btn.outline{background:transparent;border:1px solid var(--bd2);color:var(--tx2);box-shadow:none}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+/* 컨트롤 패드 */
+#control-pad{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;gap:14px}
+#dpad{display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px;gap:6px;flex-shrink:0}
+#dpad button{grid-row:1;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.1s}
+#dpad button:active,#dpad button.active{background:var(--ac3);border-color:var(--ac);color:var(--ac2);transform:scale(.94)}
+#btn-left{grid-column:1}
+#btn-down{grid-column:2}
+#btn-right{grid-column:3}
+#action-buttons{display:flex;flex-direction:column;gap:8px}
+#action-buttons button{width:64px;height:56px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:18px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:.1s}
+#action-buttons button:active{background:var(--te3);border-color:var(--te);color:var(--te2);transform:scale(.94)}
+#action-buttons button span{font-size:8px;font-weight:600;color:var(--tx3);letter-spacing:.4px}
+#action-buttons button:active span{color:var(--te2)}
+
+#touch-hint{text-align:center;font-size:11px;color:var(--tx3);padding:8px 16px 2px}
+#pc-hint{text-align:center;font-size:11px;color:var(--tx3);padding:6px 16px 2px}
+@media (hover:none) and (pointer:coarse){ #pc-hint{display:none} }
+@media (hover:hover) and (pointer:fine){ #touch-hint{display:none} }
+
+/* 브랜드 푸터 */
+.brand-footer{margin:16px 16px 0;padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.brand-name{font-weight:700;font-size:13px;letter-spacing:-.01em;color:var(--tx)}
+.brand-by{font-weight:600;font-size:11px;color:var(--tx3);margin-right:4px}
+.brand-links{display:flex;gap:8px;flex-wrap:wrap}
+.brand-links a{font-size:11px;font-weight:700;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bd2);white-space:nowrap}
+.brand-links a:active{opacity:.7}
+
+/* 게임오버 모달 */
+#gameover-modal{position:fixed;inset:0;background:rgba(4,4,8,.82);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+#gameover-modal.show{display:flex}
+.go-card{background:var(--s1);border:1px solid var(--bd2);border-radius:18px;padding:28px 24px;text-align:center;max-width:300px;width:100%;box-shadow:var(--sh)}
+.go-title{font-size:20px;font-weight:700;color:var(--re);margin-bottom:8px}
+.go-score-label{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-top:14px}
+.go-score-val{font-size:30px;font-weight:700;color:var(--ac2);font-family:'DM Mono',monospace;margin-bottom:18px}
+
+/* 가로모드(모바일) 회전 안내 */
+#landscape-lock{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px}
+#landscape-lock .rot-ic{font-size:44px;animation:rotpulse 1.6s ease-in-out infinite}
+@keyframes rotpulse{0%,100%{transform:rotate(0)}50%{transform:rotate(-90deg)}}
+#landscape-lock .rot-txt{font-size:14px;color:var(--tx2);font-weight:600}
+@media (orientation:landscape) and (hover:none) and (pointer:coarse){
+  #landscape-lock{display:flex}
+}
+</style>
+</head>
+<body>
+
+<div id="landscape-lock">
+  <div class="rot-ic">📱</div>
+  <div class="rot-txt" data-i18n="orientation_msg">화면을 세로로 돌려주세요</div>
+</div>
+
+<div id="shell">
+  <div id="header">
+    <div>
+      <div id="logo">pomiai <span>· TETRIS</span></div>
+      <div class="tagline" data-i18n="tagline">터치로 즐기는 모바일 아케이드</div>
+    </div>
+    <button class="icon-btn" id="btn-pause-icon" onclick="togglePause()">⏸</button>
+  </div>
+
+  <div id="stats-row">
+    <div class="chip"><div class="chip-label" data-i18n="score">점수</div><div class="chip-value" id="scoreDisplay">0</div></div>
+    <div class="chip"><div class="chip-label" data-i18n="level">레벨</div><div class="chip-value" id="levelDisplay">1</div></div>
+    <div class="chip"><div class="chip-label" data-i18n="lines">라인</div><div class="chip-value" id="linesDisplay">0</div></div>
+  </div>
+
+  <div id="board-area">
+    <div id="canvas-wrap">
+      <canvas id="board" width="250" height="500"></canvas>
+      <div id="next-box">
+        <div class="chip-label" data-i18n="next">다음</div>
+        <canvas id="next-canvas" width="80" height="80"></canvas>
+      </div>
+      <div id="pause-overlay">
+        <div class="po-title" data-i18n="btn_resume">계속</div>
+        <button class="btn" style="flex:none;padding:10px 22px" onclick="togglePause()" data-i18n="btn_resume">계속</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="touch-hint" data-i18n="touch_hint">보드를 탭하면 회전, 스와이프로 이동해요</div>
+  <div id="pc-hint" data-i18n="pc_hint">PC: 방향키 이동·회전 · 스페이스바 하드드롭 · P 일시정지</div>
+
+  <div id="action-row">
+    <button class="btn" id="startBtn" data-i18n="btn_start">시작</button>
+    <button class="btn outline" id="resetBtn" data-i18n="btn_reset">초기화</button>
+  </div>
+
+  <div id="control-pad">
+    <div id="dpad">
+      <button id="btn-left">◀</button>
+      <button id="btn-down">▼</button>
+      <button id="btn-right">▶</button>
+    </div>
+    <div id="action-buttons">
+      <button id="btn-rotate">⟳<span data-i18n="lbl_rotate">회전</span></button>
+      <button id="btn-drop">⤓<span data-i18n="lbl_drop">드롭</span></button>
+    </div>
+  </div>
+
+  <div class="brand-footer">
+    <div class="brand-name"><span class="brand-by" data-i18n="footer_by">Product by</span> pomiai</div>
+    <div class="brand-links">
+      <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
+      <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube</a>
+    </div>
+  </div>
+</div>
+
+<div id="gameover-modal">
+  <div class="go-card">
+    <div class="go-title" data-i18n="gameover_title">게임 오버</div>
+    <div class="go-score-label" data-i18n="final_score">최종 점수</div>
+    <div class="go-score-val" id="finalScore">0</div>
+    <button class="btn full" style="width:100%" id="retryBtn" data-i18n="btn_retry">다시하기</button>
+  </div>
+</div>
+
+<script>
+/* =====================================================
+   §5 다국어 표준 구조
+===================================================== */
+const I18N = {
+  ko:{
+    page_title:'pomiai 테트리스', tagline:'터치로 즐기는 모바일 아케이드',
+    score:'점수', level:'레벨', lines:'라인', next:'다음',
+    btn_start:'시작', btn_pause:'일시정지', btn_resume:'계속', btn_reset:'초기화', btn_retry:'다시하기',
+    lbl_rotate:'회전', lbl_drop:'드롭',
+    touch_hint:'보드를 탭하면 회전, 스와이프로 이동해요',
+    pc_hint:'PC: 방향키 이동·회전 · 스페이스바 하드드롭 · P 일시정지',
+    orientation_msg:'화면을 세로로 돌려주세요',
+    gameover_title:'게임 오버', final_score:'최종 점수',
+    footer_by:'Product by'
+  },
+  en:{
+    page_title:'pomiai Tetris', tagline:'A pocket arcade you can touch',
+    score:'Score', level:'Level', lines:'Lines', next:'Next',
+    btn_start:'Start', btn_pause:'Pause', btn_resume:'Resume', btn_reset:'Reset', btn_retry:'Retry',
+    lbl_rotate:'Rotate', lbl_drop:'Drop',
+    touch_hint:'Tap the board to rotate, swipe to move',
+    pc_hint:'PC: Arrow keys to move/rotate · Space to hard drop · P to pause',
+    orientation_msg:'Please rotate to portrait',
+    gameover_title:'Game Over', final_score:'Final Score',
+    footer_by:'Product by'
+  },
+  ja:{
+    page_title:'pomiai テトリス', tagline:'タッチで遊ぶポケットアーケード',
+    score:'スコア', level:'レベル', lines:'ライン', next:'ネクスト',
+    btn_start:'スタート', btn_pause:'一時停止', btn_resume:'再開', btn_reset:'リセット', btn_retry:'もう一度',
+    lbl_rotate:'回転', lbl_drop:'ドロップ',
+    touch_hint:'ボードをタップで回転、スワイプで移動',
+    pc_hint:'PC：矢印キーで移動・回転 ・ スペースでハードドロップ ・ Pで一時停止',
+    orientation_msg:'画面を縦向きにしてください',
+    gameover_title:'ゲームオーバー', final_score:'最終スコア',
+    footer_by:'Product by'
+  }
+};
+
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+
+function applyI18n() {
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+
+/* =====================================================
+   테트리스 엔진 (렌더링/로직) — 입력과 완전 분리
+===================================================== */
+const COLS=10, ROWS=20;
+const canvas=document.getElementById('board'), ctx=canvas.getContext('2d');
+const BLOCK = canvas.width / COLS; // 25px
+const nextCanvas=document.getElementById('next-canvas'), nextCtx=nextCanvas.getContext('2d');
+const NB = nextCanvas.width / 4;
+
+let board, score, level, lines, dropSpeed, currentPiece, nextPiece;
+let gameRunning=false, gamePaused=false, lastDropTime=0;
+const INITIAL_SPEED=800;
+
+const SHAPES = {
+  I:{shape:[[1,1,1,1]], color:'#4eddb8'},
+  J:{shape:[[1,0,0],[1,1,1]], color:'#5a7dff'},
+  L:{shape:[[0,0,1],[1,1,1]], color:'#f0b060'},
+  O:{shape:[[1,1],[1,1]], color:'#f5e04e'},
+  S:{shape:[[0,1,1],[1,1,0]], color:'#4ee06a'},
+  T:{shape:[[0,1,0],[1,1,1]], color:'#9b8ff5'},
+  Z:{shape:[[1,1,0],[0,1,1]], color:'#e05555'}
+};
+const KEYS = Object.keys(SHAPES);
+
+function newBoard(){ return Array.from({length:ROWS},()=>Array(COLS).fill(0)); }
+
+function getRandomPiece(){
+  const k = KEYS[Math.floor(Math.random()*KEYS.length)];
+  const s = SHAPES[k];
+  return { shape: s.shape.map(r=>r.slice()), color:s.color, x: Math.floor((COLS - s.shape[0].length)/2), y: 0 };
+}
+
+function rotateMatrix(m){
+  const N=m.length, M=m[0].length;
+  const res=Array.from({length:M},()=>Array(N).fill(0));
+  for(let y=0;y<N;y++) for(let x=0;x<M;x++) res[x][N-1-y]=m[y][x];
+  return res;
+}
+
+function isColliding(piece, testX=piece.x, testY=piece.y, testShape=piece.shape){
+  for(let i=0;i<testShape.length;i++){
+    for(let j=0;j<testShape[i].length;j++){
+      if(!testShape[i][j]) continue;
+      const x=testX+j, y=testY+i;
+      if(x<0||x>=COLS||y>=ROWS) return true;
+      if(y>=0 && board[y][x]) return true;
+    }
+  }
+  return false;
+}
+
+function mergePiece(piece){
+  for(let i=0;i<piece.shape.length;i++)
+    for(let j=0;j<piece.shape[i].length;j++)
+      if(piece.shape[i][j]){
+        const x=piece.x+j, y=piece.y+i;
+        if(y>=0 && y<ROWS && x>=0 && x<COLS) board[y][x]=piece.color;
+      }
+}
+
+function clearLines(){
+  let cleared=0;
+  for(let i=ROWS-1;i>=0;i--){
+    if(board[i].every(c=>c)){
+      board.splice(i,1); board.unshift(Array(COLS).fill(0));
+      cleared++; i++;
+    }
+  }
+  return cleared;
+}
+
+function updateScore(cleared){
+  if(!cleared) return;
+  const pts=[0,100,300,500,800];
+  score += pts[cleared]*level;
+  lines += cleared;
+  if(lines >= level*10){ level++; dropSpeed = Math.max(100, INITIAL_SPEED - (level-1)*55); }
+  updateDisplay();
+}
+
+function updateDisplay(){
+  document.getElementById('scoreDisplay').textContent=score;
+  document.getElementById('levelDisplay').textContent=level;
+  document.getElementById('linesDisplay').textContent=lines;
+}
+
+function ghostY(piece){
+  let gy=piece.y;
+  while(!isColliding(piece,piece.x,gy+1,piece.shape)) gy++;
+  return gy;
+}
+
+function drawBoard(){
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(let i=0;i<ROWS;i++) for(let j=0;j<COLS;j++){
+    if(board[i][j]){
+      ctx.fillStyle=board[i][j]; ctx.fillRect(j*BLOCK,i*BLOCK,BLOCK-1,BLOCK-1);
+      ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=1; ctx.strokeRect(j*BLOCK,i*BLOCK,BLOCK-1,BLOCK-1);
+    }
+  }
+  ctx.strokeStyle='rgba(255,255,255,.06)'; ctx.lineWidth=.5;
+  for(let i=0;i<=COLS;i++){ ctx.beginPath(); ctx.moveTo(i*BLOCK,0); ctx.lineTo(i*BLOCK,canvas.height); ctx.stroke(); }
+  for(let i=0;i<=ROWS;i++){ ctx.beginPath(); ctx.moveTo(0,i*BLOCK); ctx.lineTo(canvas.width,i*BLOCK); ctx.stroke(); }
+
+  if(currentPiece){
+    const gy=ghostY(currentPiece);
+    ctx.strokeStyle=currentPiece.color; ctx.globalAlpha=.35; ctx.lineWidth=1.5;
+    for(let i=0;i<currentPiece.shape.length;i++) for(let j=0;j<currentPiece.shape[i].length;j++)
+      if(currentPiece.shape[i][j]) ctx.strokeRect((currentPiece.x+j)*BLOCK+1,(gy+i)*BLOCK+1,BLOCK-3,BLOCK-3);
+    ctx.globalAlpha=1;
+
+    ctx.fillStyle=currentPiece.color;
+    for(let i=0;i<currentPiece.shape.length;i++) for(let j=0;j<currentPiece.shape[i].length;j++)
+      if(currentPiece.shape[i][j]) ctx.fillRect((currentPiece.x+j)*BLOCK,(currentPiece.y+i)*BLOCK,BLOCK-1,BLOCK-1);
+  }
+}
+
+function drawNextPiece(){
+  nextCtx.fillStyle='#0e0e18'; nextCtx.fillRect(0,0,nextCanvas.width,nextCanvas.height);
+  if(!nextPiece) return;
+  nextCtx.fillStyle=nextPiece.color;
+  const ox=(nextCanvas.width/NB - nextPiece.shape[0].length)/2;
+  const oy=(nextCanvas.height/NB - nextPiece.shape.length)/2;
+  for(let i=0;i<nextPiece.shape.length;i++) for(let j=0;j<nextPiece.shape[i].length;j++)
+    if(nextPiece.shape[i][j]) nextCtx.fillRect((ox+j)*NB,(oy+i)*NB,NB-2,NB-2);
+}
+
+function gameOver(){
+  gameRunning=false;
+  document.getElementById('gameover-modal').classList.add('show');
+  document.getElementById('finalScore').textContent=score;
+  document.getElementById('startBtn').disabled=false;
+}
+
+function gameLoop(ts){
+  if(!gameRunning){ return; }
+  if(!gamePaused && ts-lastDropTime>dropSpeed){
+    stepDown();
+    lastDropTime=ts;
+  }
+  drawBoard(); drawNextPiece();
+  requestAnimationFrame(gameLoop);
+}
+
+function stepDown(){
+  if(!currentPiece) return;
+  currentPiece.y++;
+  if(isColliding(currentPiece)){
+    currentPiece.y--;
+    mergePiece(currentPiece);
+    updateScore(clearLines());
+    currentPiece=nextPiece; nextPiece=getRandomPiece();
+    if(isColliding(currentPiece)){ gameOver(); return; }
+  }
+}
+
+/* =====================================================
+   입력 레이어 — 터치/키보드가 공통으로 호출하는 순수 함수
+===================================================== */
+function moveLeft(){
+  if(!gameRunning||gamePaused||!currentPiece) return;
+  currentPiece.x--; if(isColliding(currentPiece)) currentPiece.x++;
+  drawBoard();
+}
+function moveRight(){
+  if(!gameRunning||gamePaused||!currentPiece) return;
+  currentPiece.x++; if(isColliding(currentPiece)) currentPiece.x--;
+  drawBoard();
+}
+function softDrop(){
+  if(!gameRunning||gamePaused||!currentPiece) return;
+  stepDown(); drawBoard();
+}
+function hardDrop(){
+  if(!gameRunning||gamePaused||!currentPiece) return;
+  while(!isColliding(currentPiece,currentPiece.x,currentPiece.y+1,currentPiece.shape)) currentPiece.y++;
+  stepDown(); drawBoard();
+}
+function rotatePiece(){
+  if(!gameRunning||gamePaused||!currentPiece) return;
+  const orig=currentPiece.shape;
+  const rotated=rotateMatrix(orig);
+  const prevX=currentPiece.x;
+  currentPiece.shape=rotated;
+  if(isColliding(currentPiece)){
+    currentPiece.x=prevX-1;
+    if(isColliding(currentPiece)){ currentPiece.x=prevX+1;
+      if(isColliding(currentPiece)){ currentPiece.x=prevX; currentPiece.shape=orig; return; }
+    }
+  }
+  drawBoard();
+}
+function togglePause(){
+  if(!gameRunning) return;
+  gamePaused=!gamePaused;
+  document.getElementById('pause-overlay').classList.toggle('show',gamePaused);
+  document.getElementById('btn-pause-icon').textContent=gamePaused?'▶':'⏸';
+  if(!gamePaused){ lastDropTime=performance.now(); requestAnimationFrame(gameLoop); }
+}
+function startGame(){
+  if(gameRunning) return;
+  gameRunning=true; gamePaused=false;
+  board=newBoard(); score=0; level=1; lines=0; dropSpeed=INITIAL_SPEED;
+  updateDisplay();
+  currentPiece=getRandomPiece(); nextPiece=getRandomPiece();
+  document.getElementById('startBtn').disabled=true;
+  document.getElementById('gameover-modal').classList.remove('show');
+  document.getElementById('pause-overlay').classList.remove('show');
+  document.getElementById('btn-pause-icon').textContent='⏸';
+  lastDropTime=performance.now();
+  requestAnimationFrame(gameLoop);
+}
+function resetGame(){
+  gameRunning=false; gamePaused=false;
+  board=newBoard(); score=0; level=1; lines=0; dropSpeed=INITIAL_SPEED;
+  currentPiece=null; nextPiece=null;
+  updateDisplay(); drawBoard(); drawNextPiece();
+  document.getElementById('startBtn').disabled=false;
+  document.getElementById('gameover-modal').classList.remove('show');
+  document.getElementById('pause-overlay').classList.remove('show');
+  document.getElementById('btn-pause-icon').textContent='⏸';
+}
+
+/* ── 키보드 (PC) ── */
+document.addEventListener('keydown', e=>{
+  switch(e.key){
+    case 'ArrowLeft': e.preventDefault(); moveLeft(); break;
+    case 'ArrowRight': e.preventDefault(); moveRight(); break;
+    case 'ArrowDown': e.preventDefault(); softDrop(); break;
+    case 'ArrowUp': e.preventDefault(); rotatePiece(); break;
+    case ' ': e.preventDefault(); hardDrop(); break;
+    case 'p': case 'P': togglePause(); break;
+  }
+});
+
+/* ── 터치 D패드: pointerdown 시작, 길게 누르면 반복 ── */
+function bindHold(el, fn, repeatMs=130){
+  let iv=null;
+  const start=(e)=>{ e.preventDefault(); fn(); el.classList.add('active'); iv=setInterval(fn,repeatMs); };
+  const end=()=>{ clearInterval(iv); iv=null; el.classList.remove('active'); };
+  el.addEventListener('pointerdown', start);
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointerleave', end);
+  el.addEventListener('pointercancel', end);
+}
+bindHold(document.getElementById('btn-left'), moveLeft);
+bindHold(document.getElementById('btn-right'), moveRight);
+bindHold(document.getElementById('btn-down'), softDrop, 90);
+document.getElementById('btn-rotate').addEventListener('pointerdown', e=>{ e.preventDefault(); rotatePiece(); });
+document.getElementById('btn-drop').addEventListener('pointerdown', e=>{ e.preventDefault(); hardDrop(); });
+
+/* ── 보드 스와이프/탭 제스처 ── */
+(function(){
+  const wrap=document.getElementById('canvas-wrap');
+  let sx=0, sy=0, moved=false, lastMoveX=0;
+  wrap.addEventListener('pointerdown', e=>{ sx=e.clientX; sy=e.clientY; lastMoveX=e.clientX; moved=false; });
+  wrap.addEventListener('pointermove', e=>{
+    const dx=e.clientX-lastMoveX;
+    if(Math.abs(dx) > BLOCK*0.8){
+      dx>0 ? moveRight() : moveLeft();
+      lastMoveX=e.clientX; moved=true;
+    }
+  });
+  wrap.addEventListener('pointerup', e=>{
+    const dy=e.clientY-sy;
+    if(!moved && Math.abs(dy)<10 && Math.abs(e.clientX-sx)<10){ rotatePiece(); return; }
+    if(dy>60) hardDrop();
+  });
+})();
+
+/* ── 버튼 ── */
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('resetBtn').addEventListener('click', resetGame);
+document.getElementById('retryBtn').addEventListener('click', ()=>{ resetGame(); startGame(); });
+
+/* ── 초기 렌더 ── */
+board=newBoard();
+drawBoard(); drawNextPiece(); updateDisplay();
+</script>
+</body>
+</html>
