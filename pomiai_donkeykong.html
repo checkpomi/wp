@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<!--
+===================================================
+pomiai_donkeykong.html — 버전 로그
+===================================================
+현재 버전: 2026.07.27
+최종 수정: 2026.07.27
+변경 내역 (최신순):
+  - 2026.07.27  최초 pomiai 표준 적용 (원본: pomi-donkeykong.html)
+      · pomiai 다크 UI 셸 리디자인, 치비 스타일 캐릭터/사다리/거더 아트 유지
+      · alert() 피격·구출 안내를 논블로킹 토스트로 교체
+      · 8방향 D패드 + JUMP 버튼 pointer 이벤트 기반 재구현
+      · ko/en/ja 다국어, 브랜드 푸터, 세로모드 고정 적용
+캐시 무효화: ?v=2026.07.27
+===================================================
+
+-->
+<title id="page-title">pomiai 동키콩</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);--ac4:rgba(108,92,232,.08);
+  --go:#d4924a;--go2:#f0b060;--go3:rgba(212,146,74,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re3:rgba(224,85,85,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;overscroll-behavior:none}
+
+#shell{max-width:420px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding:0 0 18px}
+
+#header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;position:sticky;top:0;background:var(--s1);border-bottom:1px solid var(--bd);z-index:20}
+#logo{font-size:14px;font-weight:700;color:var(--ac2);letter-spacing:.5px}
+#logo span{color:var(--tx3);font-weight:400}
+#header .tagline{font-size:10px;color:var(--tx3);margin-top:1px}
+.icon-btn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);width:36px;height:36px;border-radius:10px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.icon-btn:active{background:var(--ac3);color:var(--ac2)}
+
+#stats-row{display:flex;gap:8px;padding:12px 16px 6px}
+.chip{flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:9px 6px;text-align:center}
+.chip-label{font-size:9px;color:var(--tx3);font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px}
+.chip-value{font-size:17px;font-weight:700;color:var(--tx);font-family:'DM Mono',monospace}
+
+#board-area{position:relative;display:flex;justify-content:center;padding:10px 16px 4px;flex:1}
+#canvas-wrap{position:relative;background:#000;border-radius:14px;overflow:hidden;box-shadow:var(--sh);border:1px solid var(--bd2);width:100%;max-width:300px}
+#pause-overlay{position:absolute;inset:0;background:rgba(8,8,14,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;border-radius:14px;z-index:5}
+#pause-overlay.show{display:flex}
+#pause-overlay .po-title{font-size:16px;font-weight:700;color:var(--ac2)}
+
+#action-row{display:flex;gap:8px;padding:12px 16px 4px}
+.btn{background:linear-gradient(135deg,var(--ac),#4a38c0);border:none;color:#fff;border-radius:11px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(108,92,232,.28);flex:1}
+.btn:active{filter:brightness(.92);transform:scale(.98)}
+.btn.outline{background:transparent;border:1px solid var(--bd2);color:var(--tx2);box-shadow:none}
+.btn.go{background:linear-gradient(135deg,var(--te),#1a8c72);box-shadow:0 4px 16px rgba(40,196,160,.22)}
+.btn.re{background:linear-gradient(135deg,var(--re),#a83232);box-shadow:0 4px 16px rgba(224,85,85,.22)}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+#control-pad{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;gap:14px;flex-wrap:wrap}
+#dpad{display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px;gap:6px;flex-shrink:0}
+#dpad button{background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.1s}
+#dpad button:active,#dpad button.active{background:var(--ac3);border-color:var(--ac);color:var(--ac2);transform:scale(.94)}
+#action-buttons{display:flex;gap:8px;flex-wrap:wrap}
+#action-buttons button{width:64px;height:56px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:18px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:.1s}
+#action-buttons button:active{background:var(--te3);border-color:var(--te);color:var(--te2);transform:scale(.94)}
+#action-buttons button.fire:active{background:var(--re3);border-color:var(--re);color:#ff9a9a}
+#action-buttons button span{font-size:8px;font-weight:600;color:var(--tx3);letter-spacing:.4px}
+#action-buttons button:active span{color:inherit}
+
+#touch-hint{text-align:center;font-size:11px;color:var(--tx3);padding:8px 16px 2px}
+#pc-hint{text-align:center;font-size:11px;color:var(--tx3);padding:6px 16px 2px}
+@media (hover:none) and (pointer:coarse){ #pc-hint{display:none} }
+@media (hover:hover) and (pointer:fine){ #touch-hint{display:none} }
+
+.brand-footer{margin:16px 16px 0;padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.brand-name{font-weight:700;font-size:13px;letter-spacing:-.01em;color:var(--tx)}
+.brand-by{font-weight:600;font-size:11px;color:var(--tx3);margin-right:4px}
+.brand-links{display:flex;gap:8px;flex-wrap:wrap}
+.brand-links a{font-size:11px;font-weight:700;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bd2);white-space:nowrap}
+.brand-links a:active{opacity:.7}
+
+#gameover-modal{position:fixed;inset:0;background:rgba(4,4,8,.82);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+#gameover-modal.show{display:flex}
+.go-card{background:var(--s1);border:1px solid var(--bd2);border-radius:18px;padding:28px 24px;text-align:center;max-width:300px;width:100%;box-shadow:var(--sh)}
+.go-title{font-size:20px;font-weight:700;color:var(--re);margin-bottom:8px}
+.go-score-label{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-top:14px}
+.go-score-val{font-size:30px;font-weight:700;color:var(--ac2);font-family:'DM Mono',monospace;margin-bottom:18px}
+
+#landscape-lock{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px}
+#landscape-lock .rot-ic{font-size:44px;animation:rotpulse 1.6s ease-in-out infinite}
+@keyframes rotpulse{0%,100%{transform:rotate(0)}50%{transform:rotate(-90deg)}}
+#landscape-lock .rot-txt{font-size:14px;color:var(--tx2);font-weight:600}
+@media (orientation:landscape) and (hover:none) and (pointer:coarse){
+  #landscape-lock{display:flex}
+}
+
+#canvas-wrap{max-width:300px}
+#dkCanvas{display:block;width:100%;height:auto;background:var(--s2)}
+#msg-toast{position:absolute;top:10px;left:50%;transform:translateX(-50%) translateY(-6px);background:rgba(14,14,24,.94);border:1px solid var(--bd2);color:var(--tx);font-size:12px;font-weight:600;padding:8px 14px;border-radius:20px;opacity:0;transition:.2s;pointer-events:none;z-index:15;text-align:center;max-width:90%}
+#msg-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.dk-jump{width:76px !important;height:76px !important;border-radius:50% !important}
+
+</style>
+</head>
+<body>
+<div id="landscape-lock">
+  <div class="rot-ic">📱</div>
+  <div class="rot-txt" data-i18n="orientation_msg">화면을 세로로 돌려주세요</div>
+</div>
+<div id="shell">
+  <div id="header">
+    <div>
+      <div id="logo">pomiai <span>· DONKEY KONG</span></div>
+      <div class="tagline" data-i18n="tagline">술통을 피해 공주를 구출하세요</div>
+    </div>
+  </div>
+
+  <div id="stats-row">
+    <div class="chip"><div class="chip-label" data-i18n="level">레벨</div><div class="chip-value" id="levelDisplay">1</div></div>
+    <div class="chip"><div class="chip-label" data-i18n="score">점수</div><div class="chip-value" id="scoreDisplay">0</div></div>
+    <div class="chip"><div class="chip-label" data-i18n="lives">라이프</div><div class="chip-value" id="livesDisplay">❤️❤️❤️</div></div>
+  </div>
+
+  <div id="board-area">
+    <div id="canvas-wrap">
+      <canvas id="dkCanvas" width="400" height="500"></canvas>
+      <div id="msg-toast"></div>
+    </div>
+  </div>
+
+  <div id="touch-hint" data-i18n="touch_hint">D패드로 이동, JUMP로 점프하세요</div>
+  <div id="pc-hint" data-i18n="pc_hint">PC: 방향키 이동 · 위/스페이스 점프</div>
+
+  <div id="action-row">
+    <button class="btn" id="startBtn" data-i18n="btn_start">시작</button>
+    <button class="btn outline" id="pauseBtn" data-i18n="btn_pause">일시정지</button>
+    <button class="btn re" id="endBtn" data-i18n="btn_end">종료</button>
+  </div>
+
+  <div id="control-pad">
+    <div id="dpad">
+      <button id="upBtn" style="grid-column:2;grid-row:1">▲</button>
+      <button id="leftBtn" style="grid-column:1;grid-row:2">◀</button>
+      <button id="downBtn" style="grid-column:2;grid-row:2">▼</button>
+      <button id="rightBtn" style="grid-column:3;grid-row:2">▶</button>
+    </div>
+    <div id="action-buttons">
+      <button id="jumpBtn" class="fire dk-jump">JUMP</button>
+    </div>
+  </div>
+
+  <div class="brand-footer">
+    <div class="brand-name"><span class="brand-by" data-i18n="footer_by">Product by</span> pomiai</div>
+    <div class="brand-links">
+      <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
+      <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  ko:{ page_title:'pomiai 동키콩', tagline:'술통을 피해 공주를 구출하세요',
+    level:'레벨', score:'점수', lives:'라이프',
+    touch_hint:'D패드로 이동, JUMP로 점프하세요', pc_hint:'PC: 방향키 이동 · 위/스페이스 점프',
+    btn_start:'시작', btn_pause:'일시정지', btn_end:'종료',
+    orientation_msg:'화면을 세로로 돌려주세요',
+    msg_hit:'앗! 술통에 맞았습니다 · 남은 생명', msg_clear:'🎉 구출 성공! 레벨' },
+  en:{ page_title:'pomiai Donkey Kong', tagline:'Dodge barrels and rescue the princess',
+    level:'Level', score:'Score', lives:'Lives',
+    touch_hint:'Move with the D-pad, JUMP to leap', pc_hint:'PC: Arrows to move · Up/Space to jump',
+    btn_start:'Start', btn_pause:'Pause', btn_end:'End',
+    orientation_msg:'Please rotate to portrait',
+    msg_hit:'Ouch! Hit by a barrel · Lives left', msg_clear:'🎉 Rescued! Level' },
+  ja:{ page_title:'pomiai ドンキーコング', tagline:'樽をよけてお姫様を助けよう',
+    level:'レベル', score:'スコア', lives:'ライフ',
+    touch_hint:'D-padで移動、JUMPでジャンプ', pc_hint:'PC：矢印キー移動・上/スペースでジャンプ',
+    btn_start:'スタート', btn_pause:'一時停止', btn_end:'終了',
+    orientation_msg:'画面を縦向きにしてください',
+    msg_hit:'樽に当たった！残りライフ', msg_clear:'🎉 救出成功！レベル' }
+};
+
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+function applyI18n() {
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+function bindHold(el, fn, repeatMs){
+  repeatMs = repeatMs || 130;
+  let iv=null;
+  const start=(e)=>{ e.preventDefault(); fn(); el.classList.add('active'); iv=setInterval(fn,repeatMs); };
+  const end=()=>{ clearInterval(iv); iv=null; el.classList.remove('active'); };
+  el.addEventListener('pointerdown', start);
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointerleave', end);
+  el.addEventListener('pointercancel', end);
+}
+
+const canvas = document.getElementById('dkCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl=document.getElementById('scoreDisplay'), livesEl=document.getElementById('livesDisplay'), levelEl=document.getElementById('levelDisplay');
+const toast=document.getElementById('msg-toast');
+function showToast(msg,ms){ toast.textContent=msg; toast.classList.add('show'); clearTimeout(showToast._tid); showToast._tid=setTimeout(()=>toast.classList.remove('show'), ms||1500); }
+
+let reqId=null, isPlaying=false, level=1, score=0, lives=3, frameCount=0;
+let keys={left:false,right:false,up:false,down:false};
+const GRAVITY=0.5, JUMP_POWER=-8.5, MOVE_SPEED=2.5, CLIMB_SPEED=2.0;
+
+const girders=[
+  {x1:0,y1:480,x2:400,y2:480},{x1:50,y1:390,x2:400,y2:410},{x1:0,y1:320,x2:350,y2:300},
+  {x1:50,y1:210,x2:400,y2:230},{x1:0,y1:140,x2:350,y2:120},{x1:150,y1:50,x2:300,y2:50}
+];
+const ladders=[
+  {x:350,y1:405,y2:480},{x:80,y1:308,y2:393},{x:320,y1:226,y2:305},{x:80,y1:128,y2:213},{x:250,y1:50,y2:130}
+];
+let player={x:30,y:440,w:20,h:28,dx:0,dy:0,state:'idle',grounded:false,facingRight:true};
+let barrels=[], goal={x:180,y:15,w:24,h:35};
+
+function initGame(full){ if(full){ level=1; score=0; lives=3; } resetLevel(); updateUI(); }
+function resetLevel(){
+  player.x=30; player.y=440; player.dx=0; player.dy=0; player.state='idle';
+  player.grounded=true; player.facingRight=true; barrels=[]; frameCount=0;
+}
+function updateUI(){ scoreEl.textContent=score; levelEl.textContent=level; livesEl.textContent=lives>0?'❤️'.repeat(lives):'💀'; }
+function getFloorY(x){
+  let highest=9999;
+  for(const g of girders){
+    if(x>=g.x1 && x<=g.x2){
+      let slope=(g.y2-g.y1)/(g.x2-g.x1), y=g.y1+slope*(x-g.x1);
+      if(y>=player.y+player.h*0.5 && y<highest) highest=y;
+    }
+  }
+  return highest;
+}
+function isNearLadder(p){
+  for(const l of ladders) if(Math.abs((p.x+p.w/2)-l.x)<12 && p.y+p.h>=l.y1 && p.y<=l.y2) return l;
+  return null;
+}
+function spawnBarrel(){
+  let barrelSpeed=0.5+(level*0.1);
+  barrels.push({x:60,y:110,r:10,dx:barrelSpeed,dy:0,scored:false,rotation:0});
+}
+function handleDeath(){
+  isPlaying=false; cancelAnimationFrame(reqId);
+  lives--; updateUI();
+  ctx.fillStyle='rgba(224,85,85,.4)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  if(lives>0){
+    showToast(`${window._T.msg_hit} ${lives}`, 1300);
+    setTimeout(()=>{ resetLevel(); isPlaying=true; gameLoop(); }, 1200);
+  } else {
+    document.getElementById('finalScore') && (document.getElementById('finalScore').textContent = score);
+    ctx.fillStyle='rgba(0,0,0,.7)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#ff9a9a'; ctx.font='bold 26px DM Sans'; ctx.textAlign='center';
+    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2);
+    ctx.fillStyle='#fff'; ctx.font='15px DM Sans';
+    ctx.fillText(`${score} (Lv.${level})`, canvas.width/2, canvas.height/2+28);
+  }
+}
+function checkLevelClear(){
+  if(player.x+player.w>goal.x && player.x<goal.x+goal.w && player.y<goal.y+goal.h){
+    isPlaying=false; cancelAnimationFrame(reqId);
+    score+=1000; level++; updateUI();
+    showToast(`${window._T.msg_clear} ${level}`, 1300);
+    setTimeout(()=>{ resetLevel(); isPlaying=true; gameLoop(); }, 1200);
+  }
+}
+function update(){
+  frameCount++;
+  let spawnRate=Math.max(120,180-(level*5));
+  if(frameCount%spawnRate===0) spawnBarrel();
+  let activeLadder=isNearLadder(player);
+  if(player.state==='climb'){
+    player.dx=0;
+    if(keys.up) player.dy=-CLIMB_SPEED; else if(keys.down) player.dy=CLIMB_SPEED; else player.dy=0;
+    if(!activeLadder || keys.left || keys.right) player.state='jump';
+    else player.x=activeLadder.x-player.w/2;
+  } else {
+    if(keys.left){ player.dx=-MOVE_SPEED; player.facingRight=false; }
+    else if(keys.right){ player.dx=MOVE_SPEED; player.facingRight=true; }
+    else player.dx=0;
+    player.dy+=GRAVITY;
+    if(activeLadder && (keys.up||keys.down)){ player.state='climb'; player.x=activeLadder.x-player.w/2; player.dx=0; }
+  }
+  player.x+=player.dx; player.y+=player.dy;
+  if(player.x<0) player.x=0; if(player.x>canvas.width-player.w) player.x=canvas.width-player.w;
+  if(player.state!=='climb'){
+    let floorY=getFloorY(player.x+player.w/2);
+    if(player.y+player.h>=floorY){ player.y=floorY-player.h; player.dy=0; player.grounded=true; player.state=player.dx===0?'idle':'walk'; }
+    else { player.grounded=false; player.state='jump'; }
+  }
+  for(let i=barrels.length-1;i>=0;i--){
+    let b=barrels[i];
+    b.dy+=GRAVITY; b.x+=b.dx; b.y+=b.dy; b.rotation+=b.dx*0.1;
+    let bFloor=getFloorY(b.x);
+    if(b.y+b.r>=bFloor){
+      b.y=bFloor-b.r; b.dy=0;
+      let fLeft=getFloorY(b.x-5), fRight=getFloorY(b.x+5);
+      if(fLeft<fRight) b.dx=Math.abs(b.dx); else if(fRight<fLeft) b.dx=-Math.abs(b.dx);
+    }
+    if(b.x<0||b.x>canvas.width) b.dx*=-1;
+    if(b.y>canvas.height){ barrels.splice(i,1); continue; }
+    let distX=(player.x+player.w/2)-b.x, distY=(player.y+player.h/2)-b.y;
+    if(Math.abs(distX)<player.w/2+b.r-2 && Math.abs(distY)<player.h/2+b.r-2) return handleDeath();
+    if(!b.scored && player.state==='jump' && player.y+player.h<b.y){
+      if(Math.abs(player.x-b.x)<20){ score+=100; b.scored=true; updateUI(); }
+    }
+  }
+  checkLevelClear();
+}
+function drawCutePlayer(x,y,w,h){
+  let cx=x+w/2, dir=player.facingRight?1:-1;
+  ctx.fillStyle='#3498db'; ctx.beginPath(); ctx.roundRect(x+2,y+16,w-4,12,4); ctx.fill();
+  ctx.fillStyle='#e74c3c'; ctx.beginPath(); ctx.roundRect(x+3,y+14,w-6,8,3); ctx.fill();
+  ctx.fillStyle='#8b4513';
+  let footOffset=(player.state==='walk' && Math.floor(frameCount/5)%2===0)?2:0;
+  ctx.beginPath(); ctx.ellipse(cx-5,y+27-footOffset,4,3,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+5,y+27+footOffset,4,3,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ffeaa7'; ctx.beginPath(); ctx.arc(cx,y+8,11,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e74c3c'; ctx.beginPath(); ctx.arc(cx,y+3,11,Math.PI,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+dir*3,y+3,12,4,0,0,Math.PI*2); ctx.fill();
+  let eyeX1=cx+dir*3, eyeX2=cx+dir*8;
+  if(!player.facingRight){ eyeX1=cx-3; eyeX2=cx-8; }
+  ctx.fillStyle='#2d3436'; ctx.beginPath(); ctx.ellipse(eyeX1,y+8,2.5,3.5,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(eyeX1-dir*0.5,y+6.5,1.2,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(eyeX1+dir*0.5,y+9,0.5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#2d3436'; ctx.beginPath(); ctx.ellipse(eyeX2,y+8,1.5,2.5,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(eyeX2-dir*0.5,y+6.5,0.8,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,118,117,.8)'; ctx.beginPath(); ctx.ellipse(cx+dir*5,y+12,3,1.5,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#d63031'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(cx+dir*7,y+10,2,0,Math.PI,false); ctx.stroke();
+}
+function drawCuteGorilla(x,y){
+  ctx.fillStyle='#8b4513'; ctx.beginPath(); ctx.roundRect(x,y,45,45,12); ctx.fill();
+  ctx.fillStyle='#d2b48c'; ctx.beginPath(); ctx.roundRect(x+5,y+10,35,30,10); ctx.fill();
+  ctx.fillStyle='black'; ctx.beginPath(); ctx.arc(x+14,y+20,3.5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x+31,y+20,3.5,0,Math.PI*2); ctx.fill();
+  ctx.lineWidth=3; ctx.strokeStyle='#5c2a0b';
+  ctx.beginPath(); ctx.moveTo(x+10,y+15); ctx.lineTo(x+18,y+17); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+35,y+15); ctx.lineTo(x+27,y+17); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+22.5,y+30,5,0,Math.PI,false); ctx.stroke();
+}
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.lineWidth=10; ctx.lineCap='round'; ctx.strokeStyle='#4a2a10';
+  for(const g of girders){
+    ctx.beginPath(); ctx.moveTo(g.x1,g.y1); ctx.lineTo(g.x2,g.y2); ctx.stroke();
+    ctx.lineWidth=4; ctx.strokeStyle='#7a4a2a'; ctx.stroke();
+    ctx.lineWidth=10; ctx.strokeStyle='#4a2a10';
+  }
+  ctx.lineWidth=4; ctx.strokeStyle='#4e7dbf';
+  for(const l of ladders){
+    ctx.beginPath(); ctx.moveTo(l.x-8,l.y1); ctx.lineTo(l.x-8,l.y2);
+    ctx.moveTo(l.x+8,l.y1); ctx.lineTo(l.x+8,l.y2); ctx.stroke();
+    for(let y=l.y1+10;y<l.y2;y+=15){ ctx.beginPath(); ctx.moveTo(l.x-8,y); ctx.lineTo(l.x+8,y); ctx.stroke(); }
+  }
+  ctx.fillStyle='#ff9ff3'; ctx.beginPath(); ctx.roundRect(goal.x,goal.y+10,goal.w,goal.h-10,6); ctx.fill();
+  ctx.fillStyle='#ffeaa7'; ctx.beginPath(); ctx.arc(goal.x+goal.w/2,goal.y+8,8,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='black'; ctx.beginPath(); ctx.arc(goal.x+goal.w/2-2,goal.y+8,1.5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(goal.x+goal.w/2+2,goal.y+8,1.5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#f0b060';
+  ctx.beginPath(); ctx.moveTo(goal.x+4,goal.y+2); ctx.lineTo(goal.x+8,goal.y-4); ctx.lineTo(goal.x+12,goal.y+2); ctx.lineTo(goal.x+16,goal.y-4); ctx.lineTo(goal.x+20,goal.y+2); ctx.fill();
+  drawCutePlayer(player.x,player.y,player.w,player.h);
+  drawCuteGorilla(10,65);
+  for(const b of barrels){
+    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.rotation);
+    ctx.fillStyle='#cd6133'; ctx.beginPath(); ctx.arc(0,0,b.r,0,Math.PI*2); ctx.fill();
+    ctx.lineWidth=3; ctx.strokeStyle='#84817a'; ctx.beginPath(); ctx.arc(0,0,b.r-2,0,Math.PI*2); ctx.stroke();
+    ctx.lineWidth=2; ctx.strokeStyle='#a0522d';
+    ctx.beginPath(); ctx.moveTo(-b.r+2,0); ctx.lineTo(b.r-2,0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,-b.r+2); ctx.lineTo(0,b.r-2); ctx.stroke();
+    ctx.restore();
+  }
+}
+function gameLoop(){ if(!isPlaying) return; update(); draw(); reqId=requestAnimationFrame(gameLoop); }
+
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  if(!isPlaying){ if(lives<=0) initGame(true); isPlaying=true; gameLoop(); }
+});
+document.getElementById('pauseBtn').addEventListener('click', ()=>{ isPlaying=false; cancelAnimationFrame(reqId); });
+document.getElementById('endBtn').addEventListener('click', ()=>{ isPlaying=false; cancelAnimationFrame(reqId); initGame(true); draw(); });
+
+window.addEventListener('keydown', e=>{
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+  if(!isPlaying) return;
+  if(e.code==='ArrowLeft') keys.left=true;
+  if(e.code==='ArrowRight') keys.right=true;
+  if(e.code==='ArrowUp') keys.up=true;
+  if(e.code==='ArrowDown') keys.down=true;
+  if((e.code==='Space'||e.code==='ArrowUp') && player.grounded && player.state!=='climb'){ player.dy=JUMP_POWER; player.grounded=false; }
+}, {passive:false});
+window.addEventListener('keyup', e=>{
+  if(e.code==='ArrowLeft') keys.left=false;
+  if(e.code==='ArrowRight') keys.right=false;
+  if(e.code==='ArrowUp') keys.up=false;
+  if(e.code==='ArrowDown') keys.down=false;
+});
+function addTouch(id,key){
+  const btn=document.getElementById(id);
+  const down=e=>{e.preventDefault(); keys[key]=true;}, up=e=>{keys[key]=false;};
+  btn.addEventListener('pointerdown',down); btn.addEventListener('pointerup',up);
+  btn.addEventListener('pointerleave',up); btn.addEventListener('pointercancel',up);
+}
+addTouch('leftBtn','left'); addTouch('rightBtn','right'); addTouch('upBtn','up'); addTouch('downBtn','down');
+document.getElementById('jumpBtn').addEventListener('pointerdown', e=>{
+  e.preventDefault();
+  if(player.grounded && player.state!=='climb' && isPlaying){ player.dy=JUMP_POWER; player.grounded=false; }
+});
+
+initGame(true);
+draw();
+
+</script>
+</body>
+</html>
