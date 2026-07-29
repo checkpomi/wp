@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<!--
+===================================================
+pomiai_toolbox.html — 버전 로그
+===================================================
+현재 버전: 2026.07.27
+최종 수정: 2026.07.27
+변경 내역 (최신순):
+  - 2026.07.27  최초 제작
+      · 모바일 활용도가 높다고 판단된 10개 도구(계산기/건강도구/증명사진/운세/
+        텍스트도구/정규식/자소에디터/비즈도구/지하철/QR코드)를 pomiai_arcade와
+        동일한 구조의 허브 페이지로 묶음
+      · PWA manifest2.json 연동 — 홈 화면에 추가 시 독립 앱처럼 실행(standalone)
+      · sw2.js(서비스 워커)로 허브+도구 파일 오프라인 캐싱
+      · 나머지 도구(zip관리자/파일목록/리네이머/미디어컨버터/영상메이커 등)는
+        PC 활용도가 높다고 판단해 이번 모바일 세트에서는 제외 — 별도 PC용
+        도구 모음 페이지로 추후 구성 예정
+      · ko/en/ja 다국어(§5 표준), 세로모드 고정, 브랜드 푸터 적용
+캐시 무효화: ?v=2026.07.27
+===================================================
+
+-->
+<title id="page-title">pomiai 도구함</title>
+<link rel="manifest" href="manifest2.json">
+<meta name="theme-color" content="#08080e">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%236c5ce8'/%3E%3Ctext x='96' y='128' font-size='104' text-anchor='middle'%3E%F0%9F%A7%B0%3C/text%3E%3C/svg%3E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="pomiai toolbox">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);--ac4:rgba(108,92,232,.08);
+  --go:#d4924a;--go2:#f0b060;--go3:rgba(212,146,74,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re3:rgba(224,85,85,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;overscroll-behavior:none}
+
+#shell{max-width:420px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding:0 0 18px}
+
+#header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;position:sticky;top:0;background:var(--s1);border-bottom:1px solid var(--bd);z-index:20}
+#logo{font-size:14px;font-weight:700;color:var(--ac2);letter-spacing:.5px}
+#logo span{color:var(--tx3);font-weight:400}
+#header .tagline{font-size:10px;color:var(--tx3);margin-top:1px}
+.icon-btn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);width:36px;height:36px;border-radius:10px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.icon-btn:active{background:var(--ac3);color:var(--ac2)}
+
+#stats-row{display:flex;gap:8px;padding:12px 16px 6px}
+.chip{flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:9px 6px;text-align:center}
+.chip-label{font-size:9px;color:var(--tx3);font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px}
+.chip-value{font-size:17px;font-weight:700;color:var(--tx);font-family:'DM Mono',monospace}
+
+#board-area{position:relative;display:flex;justify-content:center;padding:10px 16px 4px;flex:1}
+#canvas-wrap{position:relative;background:#000;border-radius:14px;overflow:hidden;box-shadow:var(--sh);border:1px solid var(--bd2);width:100%;max-width:300px}
+#pause-overlay{position:absolute;inset:0;background:rgba(8,8,14,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;border-radius:14px;z-index:5}
+#pause-overlay.show{display:flex}
+#pause-overlay .po-title{font-size:16px;font-weight:700;color:var(--ac2)}
+
+#action-row{display:flex;gap:8px;padding:12px 16px 4px}
+.btn{background:linear-gradient(135deg,var(--ac),#4a38c0);border:none;color:#fff;border-radius:11px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(108,92,232,.28);flex:1}
+.btn:active{filter:brightness(.92);transform:scale(.98)}
+.btn.outline{background:transparent;border:1px solid var(--bd2);color:var(--tx2);box-shadow:none}
+.btn.go{background:linear-gradient(135deg,var(--te),#1a8c72);box-shadow:0 4px 16px rgba(40,196,160,.22)}
+.btn.re{background:linear-gradient(135deg,var(--re),#a83232);box-shadow:0 4px 16px rgba(224,85,85,.22)}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+#control-pad{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;gap:14px;flex-wrap:wrap}
+#dpad{display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px;gap:6px;flex-shrink:0}
+#dpad button{background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.1s}
+#dpad button:active,#dpad button.active{background:var(--ac3);border-color:var(--ac);color:var(--ac2);transform:scale(.94)}
+#action-buttons{display:flex;gap:8px;flex-wrap:wrap}
+#action-buttons button{width:64px;height:56px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:18px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:.1s}
+#action-buttons button:active{background:var(--te3);border-color:var(--te);color:var(--te2);transform:scale(.94)}
+#action-buttons button.fire:active{background:var(--re3);border-color:var(--re);color:#ff9a9a}
+#action-buttons button span{font-size:8px;font-weight:600;color:var(--tx3);letter-spacing:.4px}
+#action-buttons button:active span{color:inherit}
+
+#touch-hint{text-align:center;font-size:11px;color:var(--tx3);padding:8px 16px 2px}
+#pc-hint{text-align:center;font-size:11px;color:var(--tx3);padding:6px 16px 2px}
+@media (hover:none) and (pointer:coarse){ #pc-hint{display:none} }
+@media (hover:hover) and (pointer:fine){ #touch-hint{display:none} }
+
+.brand-footer{margin:16px 16px 0;padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.brand-name{font-weight:700;font-size:13px;letter-spacing:-.01em;color:var(--tx)}
+.brand-by{font-weight:600;font-size:11px;color:var(--tx3);margin-right:4px}
+.brand-links{display:flex;gap:8px;flex-wrap:wrap}
+.brand-links a{font-size:11px;font-weight:700;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bd2);white-space:nowrap}
+.brand-links a:active{opacity:.7}
+
+#gameover-modal{position:fixed;inset:0;background:rgba(4,4,8,.82);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+#gameover-modal.show{display:flex}
+.go-card{background:var(--s1);border:1px solid var(--bd2);border-radius:18px;padding:28px 24px;text-align:center;max-width:300px;width:100%;box-shadow:var(--sh)}
+.go-title{font-size:20px;font-weight:700;color:var(--re);margin-bottom:8px}
+.go-score-label{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-top:14px}
+.go-score-val{font-size:30px;font-weight:700;color:var(--ac2);font-family:'DM Mono',monospace;margin-bottom:18px}
+
+#landscape-lock{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px}
+#landscape-lock .rot-ic{font-size:44px;animation:rotpulse 1.6s ease-in-out infinite}
+@keyframes rotpulse{0%,100%{transform:rotate(0)}50%{transform:rotate(-90deg)}}
+#landscape-lock .rot-txt{font-size:14px;color:var(--tx2);font-weight:600}
+@media (orientation:landscape) and (hover:none) and (pointer:coarse){
+  #landscape-lock{display:flex}
+}
+
+#shell{max-width:460px}
+#lang-switch{display:flex;gap:4px}
+#lang-switch button{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:11px;font-weight:700;padding:5px 9px;border-radius:8px;cursor:pointer}
+#lang-switch button.on{background:var(--ac3);border-color:var(--ac);color:var(--ac2)}
+
+#hero{padding:18px 16px 6px;text-align:center}
+#hero .big-title{font-size:22px;font-weight:800;letter-spacing:.5px}
+#hero .big-title span{color:var(--ac2)}
+#hero .sub{font-size:12.5px;color:var(--tx2);margin-top:6px;line-height:1.6}
+
+#game-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px}
+.game-card{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:14px 12px;text-align:center;text-decoration:none;color:var(--tx);display:flex;flex-direction:column;align-items:center;gap:6px;transition:.15s;cursor:pointer}
+.game-card:active{border-color:var(--ac);background:var(--ac4);transform:scale(.97)}
+.game-card .icon{font-size:30px;line-height:1}
+.game-card .name{font-size:12.5px;font-weight:700}
+.game-card .desc{font-size:10px;color:var(--tx3);line-height:1.4}
+
+#ad-slot{margin:6px 16px 0;padding:14px;border:1px dashed var(--bd3);border-radius:12px;text-align:center;font-size:10px;color:var(--tx4);letter-spacing:.5px}
+
+#install-banner{margin:14px 16px 0;padding:12px 14px;background:var(--ac3);border:1px solid var(--ac);border-radius:12px;display:none;align-items:center;justify-content:space-between;gap:10px}
+#install-banner.show{display:flex}
+#install-banner .txt{font-size:12px;color:var(--ac2);font-weight:600;flex:1}
+#install-banner button{background:var(--ac);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}
+
+</style>
+</head>
+<body>
+<div id="landscape-lock">
+  <div class="rot-ic">📱</div>
+  <div class="rot-txt" data-i18n="orientation_msg">화면을 세로로 돌려주세요</div>
+</div>
+<div id="shell">
+  <div id="header">
+    <div>
+      <div id="logo">pomiai <span>· TOOLBOX</span></div>
+      <div class="tagline" data-i18n="tagline">포켓 속 실용 도구함</div>
+    </div>
+    <div id="lang-switch">
+      <button data-lang="ko">한국어</button>
+      <button data-lang="en">EN</button>
+      <button data-lang="ja">日本語</button>
+    </div>
+  </div>
+
+  <div id="hero">
+    <div class="big-title" data-i18n="hero_title">10개 도구, <span data-i18n="hero_title_span">모바일로 바로</span></div>
+    <div class="sub" data-i18n="hero_sub">설치 없이 바로 사용 · 홈 화면에 추가하면 앱처럼 실행돼요</div>
+  </div>
+
+  <div id="install-banner">
+    <div class="txt" data-i18n="install_txt">홈 화면에 추가하고 앱처럼 써보세요</div>
+    <button id="installBtn" data-i18n="install_btn">추가</button>
+  </div>
+
+  <div id="game-grid"></div>
+
+  <div id="ad-slot" data-i18n="ad_placeholder">광고 영역 (도구 카드와 분리된 위치)</div>
+
+  <div class="brand-footer">
+    <div class="brand-name"><span class="brand-by" data-i18n="footer_by">Product by</span> pomiai</div>
+    <div class="brand-links">
+      <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
+      <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  ko:{ page_title:'pomiai 도구함', tagline:'포켓 속 실용 도구함',
+    hero_title:'10개 도구,', hero_title_span:'모바일로 바로',
+    hero_sub:'설치 없이 바로 사용 · 홈 화면에 추가하면 앱처럼 실행돼요',
+    install_txt:'홈 화면에 추가하고 앱처럼 써보세요', install_btn:'추가',
+    ad_placeholder:'광고 영역 (도구 카드와 분리된 위치)', footer_by:'Product by',
+    orientation_msg:'화면을 세로로 돌려주세요' },
+  en:{ page_title:'pomiai Toolbox', tagline:'Handy tools in your pocket',
+    hero_title:'10 tools,', hero_title_span:'ready on mobile',
+    hero_sub:'No install needed · Add to Home Screen for an app-like feel',
+    install_txt:'Add to Home Screen for the full app feel', install_btn:'Add',
+    ad_placeholder:'Ad space (separate from tool cards)', footer_by:'Product by',
+    orientation_msg:'Please rotate to portrait' },
+  ja:{ page_title:'pomiai ツールボックス', tagline:'ポケットの中の実用ツール集',
+    hero_title:'10個のツール、', hero_title_span:'モバイルですぐ使える',
+    hero_sub:'インストール不要 · ホーム画面に追加でアプリのように使えます',
+    install_txt:'ホーム画面に追加してアプリのように使おう', install_btn:'追加',
+    ad_placeholder:'広告スペース（ツールカードとは別の位置）', footer_by:'Product by',
+    orientation_msg:'画面を縦向きにしてください' }
+};
+
+const GAMES = [
+  { id:'calculator',  file:'pomiai_calculator.html',   icon:'🧮', name:{ko:'계산기',en:'Calculator',ja:'電卓'}, desc:{ko:'기본·공학·단위·환율',en:'Basic, scientific, unit, currency',ja:'基本・関数・単位・為替'} },
+  { id:'healthtools',  file:'pomiai_healthtools.html',  icon:'💪', name:{ko:'건강 도구',en:'Health Tools',ja:'健康ツール'}, desc:{ko:'BMI·칼로리·나이 계산',en:'BMI, calories, age',ja:'BMI・カロリー・年齢'} },
+  { id:'passport',     file:'pomiai_passport.html',     icon:'📷', name:{ko:'증명사진',en:'Passport Photo',ja:'証明写真'}, desc:{ko:'국가별 규격 자동 보정',en:'Auto-format by country',ja:'国別規格を自動補正'} },
+  { id:'fortune',      file:'pomiai_fortune.html',      icon:'🔮', name:{ko:'운세',en:'Fortune',ja:'占い'}, desc:{ko:'사주·타로·궁합·이름풀이',en:'Saju, tarot, compatibility',ja:'四柱推命・タロット・相性'} },
+  { id:'texttools',    file:'pomiai_texttools.html',    icon:'📝', name:{ko:'텍스트 도구',en:'Text Tools',ja:'テキストツール'}, desc:{ko:'변환·통계·파일 편집',en:'Transform, stats, file edit',ja:'変換・統計・ファイル編集'} },
+  { id:'regex',        file:'pomiai_regex.html',        icon:'🔎', name:{ko:'정규식 테스터',en:'Regex Tester',ja:'正規表現テスター'}, desc:{ko:'프리셋·치트시트 포함',en:'Presets & cheat sheet',ja:'プリセット・チートシート'} },
+  { id:'jaso',         file:'pomiai-jaso-editor.html',  icon:'✍️', name:{ko:'자소 에디터',en:'Jaso Editor',ja:'字素エディター'}, desc:{ko:'손글씨 폰트 제작',en:'Handwriting font maker',ja:'手書きフォント制作'} },
+  { id:'biztools',     file:'pomiai_biztools.html',     icon:'🧾', name:{ko:'비즈 도구',en:'Business Tools',ja:'ビジネスツール'}, desc:{ko:'인보이스·세금·대출',en:'Invoice, tax, loan',ja:'請求書・税金・ローン'} },
+  { id:'subway',       file:'pomiai_subway.html',       icon:'🚇', name:{ko:'지하철 노선도',en:'Subway Finder',ja:'地下鉄路線図'}, desc:{ko:'역 검색·최적 경로',en:'Station search & routes',ja:'駅検索・最適経路'} },
+  { id:'qr',           file:'pomiai_qr.html',           icon:'🔗', name:{ko:'QR 코드 생성기',en:'QR Generator',ja:'QRコード生成'}, desc:{ko:'URL·WiFi·명함·로고',en:'URL, WiFi, vCard, logo',ja:'URL・WiFi・名刺・ロゴ'} }
+];
+
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+function applyI18n() {
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+function bindHold(el, fn, repeatMs){
+  repeatMs = repeatMs || 130;
+  let iv=null;
+  const start=(e)=>{ e.preventDefault(); fn(); el.classList.add('active'); iv=setInterval(fn,repeatMs); };
+  const end=()=>{ clearInterval(iv); iv=null; el.classList.remove('active'); };
+  el.addEventListener('pointerdown', start);
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointerleave', end);
+  el.addEventListener('pointercancel', end);
+}
+
+function renderGrid(){
+  const grid = document.getElementById('game-grid');
+  grid.innerHTML = '';
+  const lang = window._LANG;
+  GAMES.forEach(g=>{
+    const a = document.createElement('a');
+    a.className = 'game-card';
+    a.href = `${g.file}?lang=${lang}`;
+    a.innerHTML = `
+      <div class="icon">${g.icon}</div>
+      <div class="name">${g.name[lang] || g.name.en}</div>
+      <div class="desc">${g.desc[lang] || g.desc.en}</div>
+    `;
+    grid.appendChild(a);
+  });
+}
+renderGrid();
+
+function setLangButtons(){
+  document.querySelectorAll('#lang-switch button').forEach(btn=>{
+    btn.classList.toggle('on', btn.dataset.lang === window._LANG);
+    btn.onclick = ()=>{
+      const lang = btn.dataset.lang;
+      const url = new URL(location.href);
+      url.searchParams.set('lang', lang);
+      history.replaceState(null,'',url);
+      window._LANG = lang;
+      window._T = I18N[lang];
+      document.getElementById('html-root').lang = lang;
+      applyI18n();
+      renderGrid();
+      setLangButtons();
+    };
+  });
+}
+setLangButtons();
+
+// --- PWA: install prompt ---
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('show');
+});
+document.getElementById('installBtn').addEventListener('click', async ()=>{
+  document.getElementById('install-banner').classList.remove('show');
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+});
+window.addEventListener('appinstalled', ()=>{
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+// --- PWA: service worker registration ---
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw2.js').catch(()=>{});
+  });
+}
+
+</script>
+</body>
+</html>
