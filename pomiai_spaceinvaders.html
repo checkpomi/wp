@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<!--
+===================================================
+pomiai_spaceinvaders.html — 버전 로그
+===================================================
+현재 버전: 2026.07.27
+최종 수정: 2026.07.27
+변경 내역 (최신순):
+  - 2026.07.27  최초 pomiai 표준 적용 (원본: pomi-spaceinvaders.html)
+      · pomiai 다크 UI 셸 리디자인(CRT 스캔라인 유지), 20레벨/쉴드/충돌 로직 그대로 유지
+      · alert() 기반 레벨업/게임오버 안내를 논블로킹 토스트+모달로 교체
+      · LEFT/RIGHT/FIRE 버튼 pointer 이벤트 기반 재구현, ko/en/ja 다국어, 브랜드 푸터 적용
+캐시 무효화: ?v=2026.07.27
+===================================================
+
+-->
+<title id="page-title">pomiai 스페이스 인베이더</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);--ac4:rgba(108,92,232,.08);
+  --go:#d4924a;--go2:#f0b060;--go3:rgba(212,146,74,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re3:rgba(224,85,85,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;overscroll-behavior:none}
+
+#shell{max-width:420px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding:0 0 18px}
+
+#header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;position:sticky;top:0;background:var(--s1);border-bottom:1px solid var(--bd);z-index:20}
+#logo{font-size:14px;font-weight:700;color:var(--ac2);letter-spacing:.5px}
+#logo span{color:var(--tx3);font-weight:400}
+#header .tagline{font-size:10px;color:var(--tx3);margin-top:1px}
+.icon-btn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);width:36px;height:36px;border-radius:10px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.icon-btn:active{background:var(--ac3);color:var(--ac2)}
+
+#stats-row{display:flex;gap:8px;padding:12px 16px 6px}
+.chip{flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:9px 6px;text-align:center}
+.chip-label{font-size:9px;color:var(--tx3);font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px}
+.chip-value{font-size:17px;font-weight:700;color:var(--tx);font-family:'DM Mono',monospace}
+
+#board-area{position:relative;display:flex;justify-content:center;padding:10px 16px 4px;flex:1}
+#canvas-wrap{position:relative;background:#000;border-radius:14px;overflow:hidden;box-shadow:var(--sh);border:1px solid var(--bd2);width:100%;max-width:300px}
+#pause-overlay{position:absolute;inset:0;background:rgba(8,8,14,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;border-radius:14px;z-index:5}
+#pause-overlay.show{display:flex}
+#pause-overlay .po-title{font-size:16px;font-weight:700;color:var(--ac2)}
+
+#action-row{display:flex;gap:8px;padding:12px 16px 4px}
+.btn{background:linear-gradient(135deg,var(--ac),#4a38c0);border:none;color:#fff;border-radius:11px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(108,92,232,.28);flex:1}
+.btn:active{filter:brightness(.92);transform:scale(.98)}
+.btn.outline{background:transparent;border:1px solid var(--bd2);color:var(--tx2);box-shadow:none}
+.btn.go{background:linear-gradient(135deg,var(--te),#1a8c72);box-shadow:0 4px 16px rgba(40,196,160,.22)}
+.btn.re{background:linear-gradient(135deg,var(--re),#a83232);box-shadow:0 4px 16px rgba(224,85,85,.22)}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+#control-pad{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;gap:14px;flex-wrap:wrap}
+#dpad{display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px;gap:6px;flex-shrink:0}
+#dpad button{background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.1s}
+#dpad button:active,#dpad button.active{background:var(--ac3);border-color:var(--ac);color:var(--ac2);transform:scale(.94)}
+#action-buttons{display:flex;gap:8px;flex-wrap:wrap}
+#action-buttons button{width:64px;height:56px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:18px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:.1s}
+#action-buttons button:active{background:var(--te3);border-color:var(--te);color:var(--te2);transform:scale(.94)}
+#action-buttons button.fire:active{background:var(--re3);border-color:var(--re);color:#ff9a9a}
+#action-buttons button span{font-size:8px;font-weight:600;color:var(--tx3);letter-spacing:.4px}
+#action-buttons button:active span{color:inherit}
+
+#touch-hint{text-align:center;font-size:11px;color:var(--tx3);padding:8px 16px 2px}
+#pc-hint{text-align:center;font-size:11px;color:var(--tx3);padding:6px 16px 2px}
+@media (hover:none) and (pointer:coarse){ #pc-hint{display:none} }
+@media (hover:hover) and (pointer:fine){ #touch-hint{display:none} }
+
+.brand-footer{margin:16px 16px 0;padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.brand-name{font-weight:700;font-size:13px;letter-spacing:-.01em;color:var(--tx)}
+.brand-by{font-weight:600;font-size:11px;color:var(--tx3);margin-right:4px}
+.brand-links{display:flex;gap:8px;flex-wrap:wrap}
+.brand-links a{font-size:11px;font-weight:700;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bd2);white-space:nowrap}
+.brand-links a:active{opacity:.7}
+
+#gameover-modal{position:fixed;inset:0;background:rgba(4,4,8,.82);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+#gameover-modal.show{display:flex}
+.go-card{background:var(--s1);border:1px solid var(--bd2);border-radius:18px;padding:28px 24px;text-align:center;max-width:300px;width:100%;box-shadow:var(--sh)}
+.go-title{font-size:20px;font-weight:700;color:var(--re);margin-bottom:8px}
+.go-score-label{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-top:14px}
+.go-score-val{font-size:30px;font-weight:700;color:var(--ac2);font-family:'DM Mono',monospace;margin-bottom:18px}
+
+#landscape-lock{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px}
+#landscape-lock .rot-ic{font-size:44px;animation:rotpulse 1.6s ease-in-out infinite}
+@keyframes rotpulse{0%,100%{transform:rotate(0)}50%{transform:rotate(-90deg)}}
+#landscape-lock .rot-txt{font-size:14px;color:var(--tx2);font-weight:600}
+@media (orientation:landscape) and (hover:none) and (pointer:coarse){
+  #landscape-lock{display:flex}
+}
+
+#canvas-wrap{max-width:300px}
+#siCanvas{display:block;width:100%;height:auto}
+.scanline{position:absolute;inset:0;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,.35) 50%);background-size:100% 4px;pointer-events:none;z-index:2}
+#msg-toast{position:absolute;top:10px;left:50%;transform:translateX(-50%) translateY(-6px);background:rgba(14,14,24,.94);border:1px solid var(--bd2);color:var(--tx);font-size:12px;font-weight:600;padding:8px 14px;border-radius:20px;opacity:0;transition:.2s;pointer-events:none;z-index:15;text-align:center;max-width:90%}
+#msg-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+</style>
+</head>
+<body>
+<div id="landscape-lock">
+  <div class="rot-ic">📱</div>
+  <div class="rot-txt" data-i18n="orientation_msg">화면을 세로로 돌려주세요</div>
+</div>
+<div id="shell">
+  <div id="header">
+    <div>
+      <div id="logo">pomiai <span>· SPACE INVADERS</span></div>
+      <div class="tagline" data-i18n="tagline">지구를 침공에서 지켜내세요</div>
+    </div>
+  </div>
+
+  <div id="stats-row">
+    <div class="chip"><div class="chip-label" data-i18n="level">레벨</div><div class="chip-value"><span id="levelDisplay">1</span>/20</div></div>
+    <div class="chip"><div class="chip-label" data-i18n="score">점수</div><div class="chip-value" id="scoreDisplay">0</div></div>
+    <div class="chip"><div class="chip-label" data-i18n="lives">라이프</div><div class="chip-value" id="livesDisplay">❤️❤️❤️</div></div>
+  </div>
+
+  <div id="board-area">
+    <div id="canvas-wrap">
+      <canvas id="siCanvas" width="400" height="500"></canvas>
+      <div class="scanline"></div>
+      <div id="msg-toast"></div>
+    </div>
+  </div>
+
+  <div id="touch-hint" data-i18n="touch_hint">좌우로 이동, FIRE로 발사하세요</div>
+  <div id="pc-hint" data-i18n="pc_hint">PC: 방향키 이동 · 스페이스 발사</div>
+
+  <div id="action-row">
+    <button class="btn" id="startBtn" data-i18n="btn_start">시작</button>
+    <button class="btn outline" id="pauseBtn" data-i18n="btn_pause">중지</button>
+    <button class="btn re" id="resetBtn" data-i18n="btn_reset">리셋</button>
+  </div>
+
+  <div id="control-pad">
+    <div style="display:flex;gap:8px">
+      <button id="leftBtn" style="width:56px;height:56px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:20px">◀</button>
+      <button id="rightBtn" style="width:56px;height:56px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:20px">▶</button>
+    </div>
+    <button id="fireBtn" class="fire" style="flex:1;height:56px;background:var(--s2);border:1px solid var(--bd2);border-radius:14px;color:var(--tx);font-size:16px;font-weight:700">🔥 <span data-i18n="lbl_fire">FIRE</span></button>
+  </div>
+
+  <div class="brand-footer">
+    <div class="brand-name"><span class="brand-by" data-i18n="footer_by">Product by</span> pomiai</div>
+    <div class="brand-links">
+      <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
+      <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube</a>
+    </div>
+  </div>
+</div>
+
+<div id="gameover-modal">
+  <div class="go-card">
+    <div class="go-title" id="goTitle" data-i18n="gameover_title">게임 오버</div>
+    <div class="go-score-label" data-i18n="final_score">최종 점수</div>
+    <div class="go-score-val" id="finalScore">0</div>
+    <button class="btn full" style="width:100%" id="retryBtn" data-i18n="btn_retry">다시하기</button>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  ko:{ page_title:'pomiai 스페이스 인베이더', tagline:'지구를 침공에서 지켜내세요',
+    level:'레벨', score:'점수', lives:'라이프', lbl_fire:'발사',
+    touch_hint:'좌우로 이동, FIRE로 발사하세요', pc_hint:'PC: 방향키 이동 · 스페이스 발사',
+    btn_start:'시작', btn_pause:'중지', btn_reset:'리셋', btn_retry:'다시하기',
+    orientation_msg:'화면을 세로로 돌려주세요',
+    gameover_title:'게임 오버', clear_title:'🏆 지구 방어 성공!', final_score:'최종 점수', footer_by:'Product by',
+    msg_invaded:'외계인이 기지에 침투했습니다', msg_dead:'목숨을 모두 잃었습니다', msg_levelup:'레벨' },
+  en:{ page_title:'pomiai Space Invaders', tagline:'Defend Earth from the invasion',
+    level:'Level', score:'Score', lives:'Lives', lbl_fire:'FIRE',
+    touch_hint:'Move left/right, FIRE to shoot', pc_hint:'PC: Arrows to move · Space to fire',
+    btn_start:'Start', btn_pause:'Stop', btn_reset:'Reset', btn_retry:'Retry',
+    orientation_msg:'Please rotate to portrait',
+    gameover_title:'Game Over', clear_title:'🏆 Earth Defended!', final_score:'Final Score', footer_by:'Product by',
+    msg_invaded:'Aliens invaded the base', msg_dead:'Out of lives', msg_levelup:'Level' },
+  ja:{ page_title:'pomiai スペースインベーダー', tagline:'侵略から地球を守れ',
+    level:'レベル', score:'スコア', lives:'ライフ', lbl_fire:'発射',
+    touch_hint:'左右移動、FIREで発射', pc_hint:'PC：矢印キー移動・スペースで発射',
+    btn_start:'スタート', btn_pause:'停止', btn_reset:'リセット', btn_retry:'もう一度',
+    orientation_msg:'画面を縦向きにしてください',
+    gameover_title:'ゲームオーバー', clear_title:'🏆 地球防衛成功！', final_score:'最終スコア', footer_by:'Product by',
+    msg_invaded:'エイリアンが基地に侵入', msg_dead:'ライフがなくなりました', msg_levelup:'レベル' }
+};
+
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+function applyI18n() {
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+function bindHold(el, fn, repeatMs){
+  repeatMs = repeatMs || 130;
+  let iv=null;
+  const start=(e)=>{ e.preventDefault(); fn(); el.classList.add('active'); iv=setInterval(fn,repeatMs); };
+  const end=()=>{ clearInterval(iv); iv=null; el.classList.remove('active'); };
+  el.addEventListener('pointerdown', start);
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointerleave', end);
+  el.addEventListener('pointercancel', end);
+}
+
+const canvas = document.getElementById('siCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl=document.getElementById('scoreDisplay'), levelEl=document.getElementById('levelDisplay'), livesEl=document.getElementById('livesDisplay');
+const toast=document.getElementById('msg-toast');
+function showToast(msg,ms){ toast.textContent=msg; toast.classList.add('show'); clearTimeout(showToast._tid); showToast._tid=setTimeout(()=>toast.classList.remove('show'), ms||1600); }
+
+const MAX_LEVEL=20;
+let reqId=null, isPlaying=false, isGameOverTriggered=false;
+let level=1, score=0, lives=3;
+let player, aliens=[], bullets=[], alienBullets=[], shields=[];
+let keys={ArrowLeft:false,ArrowRight:false,Space:false};
+let lastShotTime=0, alienDir=1, alienSpeed=0.5;
+
+class Player{
+  constructor(){ this.width=30; this.height=15; this.x=canvas.width/2-this.width/2; this.y=canvas.height-30; this.speed=4; this.color='#4eddb8'; this.isHit=false; this.hitTimer=0; }
+  draw(){
+    if(this.isHit){ if(Math.floor(this.hitTimer/10)%2===0) return; }
+    ctx.fillStyle=this.color; ctx.shadowBlur=10; ctx.shadowColor=this.color;
+    ctx.fillRect(this.x,this.y+5,this.width,this.height-5);
+    ctx.fillRect(this.x+12,this.y,6,5); ctx.fillRect(this.x+14,this.y-5,2,5);
+    ctx.shadowBlur=0;
+  }
+  update(){
+    if(keys.ArrowLeft && this.x>0) this.x-=this.speed;
+    if(keys.ArrowRight && this.x<canvas.width-this.width) this.x+=this.speed;
+    if(this.isHit){ this.hitTimer--; if(this.hitTimer<=0) this.isHit=false; }
+  }
+}
+class Alien{
+  constructor(x,y,row){ this.width=24; this.height=16; this.x=x; this.y=y; this.type=row; this.alive=true; }
+  draw(){
+    if(!this.alive) return;
+    ctx.fillStyle = this.type<2?'#e05555':(this.type<4?'#f0b060':'#9b8ff5');
+    ctx.fillRect(this.x,this.y,this.width,this.height);
+    ctx.fillStyle='#08080e'; ctx.fillRect(this.x+4,this.y+4,4,4); ctx.fillRect(this.x+16,this.y+4,4,4);
+  }
+}
+class Bullet{
+  constructor(x,y,speed,color){ this.x=x;this.y=y;this.width=4;this.height=10;this.speed=speed;this.color=color;this.active=true; }
+  draw(){ if(!this.active) return; ctx.fillStyle=this.color; ctx.fillRect(this.x,this.y,this.width,this.height); }
+  update(){ this.y+=this.speed; if(this.y<0||this.y>canvas.height) this.active=false; }
+}
+class ShieldBlock{
+  constructor(x,y){ this.x=x; this.y=y; this.size=6; this.active=true; }
+  draw(){ if(!this.active) return; ctx.fillStyle='#4eddb8'; ctx.fillRect(this.x,this.y,this.size,this.size); }
+}
+function initGame(full){
+  if(full){ level=1; score=0; lives=3; }
+  isGameOverTriggered=false; player=new Player(); bullets=[]; alienBullets=[];
+  initAliens(); initShields(); updateUI(); alienDir=1;
+}
+function initAliens(){
+  aliens=[]; alienSpeed=0.3+(level*0.15);
+  for(let r=0;r<5;r++) for(let c=0;c<8;c++) aliens.push(new Alien(40+c*40, 40+r*30, r));
+}
+function initShields(){
+  shields=[];
+  [45,145,245,345].forEach(startX=>{
+    for(let r=0;r<4;r++) for(let c=0;c<6;c++){ if(r===0&&(c===0||c===5)) continue; shields.push(new ShieldBlock(startX+c*6, 380+r*6)); }
+  });
+}
+function updateUI(){ scoreEl.textContent=score; levelEl.textContent=level; livesEl.textContent = lives>0?'❤️'.repeat(lives):'💀'; }
+function gameLoop(){
+  if(!isPlaying||isGameOverTriggered) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  updatePlayer(); updateAliens(); updateBullets(); checkCollisions(); drawAll();
+  if(!isGameOverTriggered) reqId=requestAnimationFrame(gameLoop);
+}
+function updatePlayer(){
+  player.update();
+  if(keys.Space && Date.now()-lastShotTime>400 && !player.isHit){
+    if(bullets.filter(b=>b.active).length<2){ bullets.push(new Bullet(player.x+player.width/2-2, player.y, -7, '#4eddb8')); lastShotTime=Date.now(); }
+  }
+}
+function updateAliens(){
+  let hitWall=false;
+  let aliveAliens=aliens.filter(a=>a.alive);
+  if(aliveAliens.length===0){ levelUp(); return; }
+  let currentSpeed = alienSpeed + (40-aliveAliens.length)*0.02;
+  for(const a of aliveAliens){
+    if(a.x+(currentSpeed*alienDir)<=10 || a.x+a.width+(currentSpeed*alienDir)>=canvas.width-10){ hitWall=true; break; }
+  }
+  if(hitWall){
+    alienDir*=-1;
+    for(const a of aliveAliens){
+      a.y+=20; a.x+=currentSpeed*alienDir;
+      if(a.y+a.height>=player.y){ handleGameOver(true); return; }
+    }
+  } else {
+    for(const a of aliveAliens) a.x+=currentSpeed*alienDir;
+  }
+  let fireRate=0.005+(level*0.002);
+  if(Math.random()<fireRate){
+    let shooter=aliveAliens[Math.floor(Math.random()*aliveAliens.length)];
+    alienBullets.push(new Bullet(shooter.x+shooter.width/2-2, shooter.y+shooter.height, 4+(level*0.2), '#fff'));
+  }
+}
+function updateBullets(){
+  bullets.forEach(b=>b.update()); alienBullets.forEach(b=>b.update());
+  bullets=bullets.filter(b=>b.active); alienBullets=alienBullets.filter(b=>b.active);
+}
+function checkCollisions(){
+  const rectIntersect=(r1,r2)=> !(r2.x>r1.x+r1.width||r2.x+r2.width<r1.x||r2.y>r1.y+r1.height||r2.y+r2.height<r1.y);
+  bullets.forEach(b=>{
+    if(!b.active) return;
+    for(const a of aliens){ if(a.alive && rectIntersect(b,a)){ a.alive=false; b.active=false; score+=(5-Math.floor(a.type/2))*10; updateUI(); break; } }
+    if(b.active) for(const s of shields){ if(s.active && rectIntersect(b,{x:s.x,y:s.y,width:s.size,height:s.size})){ s.active=false; b.active=false; break; } }
+  });
+  alienBullets.forEach(b=>{
+    if(!b.active) return;
+    if(!player.isHit && rectIntersect(b,player)){ b.active=false; handlePlayerHit(); }
+    if(b.active) for(const s of shields){ if(s.active && rectIntersect(b,{x:s.x,y:s.y,width:s.size,height:s.size})){ s.active=false; b.active=false; break; } }
+  });
+}
+function handlePlayerHit(){
+  lives--; updateUI(); player.isHit=true; player.hitTimer=90;
+  if(lives<=0) handleGameOver(false); else alienBullets=[];
+}
+function handleGameOver(invaded){
+  if(isGameOverTriggered) return;
+  isGameOverTriggered=true; isPlaying=false; cancelAnimationFrame(reqId);
+  document.getElementById('goTitle').textContent = invaded ? window._T.msg_invaded : window._T.msg_dead;
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('gameover-modal').classList.add('show');
+}
+function levelUp(){
+  isPlaying=false; cancelAnimationFrame(reqId);
+  if(level>=MAX_LEVEL){
+    document.getElementById('goTitle').textContent = window._T.clear_title;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('gameover-modal').classList.add('show');
+    return;
+  }
+  level++;
+  showToast(`🚀 ${window._T.msg_levelup} ${level}`, 1300);
+  setTimeout(()=>{ initAliens(); bullets=[]; alienBullets=[]; updateUI(); isPlaying=true; gameLoop(); }, 1100);
+}
+function drawAll(){ player.draw(); aliens.forEach(a=>a.draw()); bullets.forEach(b=>b.draw()); alienBullets.forEach(b=>b.draw()); shields.forEach(s=>s.draw()); }
+
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  document.getElementById('gameover-modal').classList.remove('show');
+  if(!isPlaying && lives>0 && !isGameOverTriggered){
+    if(aliens.length===0) initGame(true);
+    isPlaying=true; gameLoop();
+  }
+});
+document.getElementById('pauseBtn').addEventListener('click', ()=>{ isPlaying=false; });
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  isPlaying=false; cancelAnimationFrame(reqId); initGame(true);
+  ctx.clearRect(0,0,canvas.width,canvas.height); drawAll();
+});
+document.getElementById('retryBtn').addEventListener('click', ()=>{
+  document.getElementById('gameover-modal').classList.remove('show');
+  initGame(true); isPlaying=true; gameLoop();
+});
+window.addEventListener('keydown', e=>{
+  if(['ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+  if(e.code==='ArrowLeft') keys.ArrowLeft=true;
+  if(e.code==='ArrowRight') keys.ArrowRight=true;
+  if(e.code==='Space') keys.Space=true;
+}, {passive:false});
+window.addEventListener('keyup', e=>{
+  if(e.code==='ArrowLeft') keys.ArrowLeft=false;
+  if(e.code==='ArrowRight') keys.ArrowRight=false;
+  if(e.code==='Space') keys.Space=false;
+});
+function addTouch(id,key){
+  const el=document.getElementById(id);
+  el.addEventListener('pointerdown', e=>{e.preventDefault(); keys[key]=true;});
+  const up=()=>keys[key]=false;
+  el.addEventListener('pointerup', up); el.addEventListener('pointerleave', up); el.addEventListener('pointercancel', up);
+}
+addTouch('leftBtn','ArrowLeft'); addTouch('rightBtn','ArrowRight'); addTouch('fireBtn','Space');
+
+initGame(true); drawAll();
+
+</script>
+</body>
+</html>
