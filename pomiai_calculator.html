@@ -1,9 +1,22 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" id="html-root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>pomiai calculator</title>
+<!--
+===================================================
+pomiai_calculator.html — 버전 로그
+===================================================
+현재 버전: 2026.07.27
+최종 수정: 2026.07.27
+변경 내역 (최신순):
+  - 2026.07.27  pomiai 표준 적용
+      · 버전 로그 헤더, ko/en/ja 다국어(탭 4종+타이틀 기준), 브랜드 푸터 신규 적용
+      · 기존 기본/공학/단위/환율 계산 로직 및 UI는 그대로 유지
+캐시 무효화: ?v=2026.07.27
+===================================================
+-->
+<title id="page-title">pomiai calculator</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap');
 
@@ -185,6 +198,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
+.langbtn{background:var(--surface3);border:1px solid var(--border2);color:var(--accent2);font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer}
+.pomiai-brand-footer{max-width:900px;margin:16px auto 4px;padding:14px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.pomiai-brand-footer a{font-size:11px;font-weight:700;color:var(--accent2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--surface3);border:1px solid var(--border2);margin-left:6px}
 </style>
 </head>
 <body>
@@ -194,6 +210,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   <div id="calc-panel">
     <div id="header">
       <span id="logo">pomiai <span>calc</span></span>
+      <div id="lang-switch" style="margin-left:auto;display:flex;gap:4px">
+        <button data-lang="ko" class="langbtn">한</button>
+        <button data-lang="en" class="langbtn">EN</button>
+        <button data-lang="ja" class="langbtn">日</button>
+      </div>
     </div>
 
     <!-- 디스플레이 -->
@@ -206,10 +227,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 
     <!-- 탭 -->
     <div id="tabs">
-      <button class="tab active" data-tab="basic" onclick="switchTab('basic')">기본</button>
-      <button class="tab" data-tab="sci" onclick="switchTab('sci')">공학</button>
-      <button class="tab" data-tab="unit" onclick="switchTab('unit')">단위</button>
-      <button class="tab" data-tab="fx" onclick="switchTab('fx')">환율</button>
+      <button class="tab active" data-tab="basic" onclick="switchTab('basic')" data-i18n="tab_basic">기본</button>
+      <button class="tab" data-tab="sci" onclick="switchTab('sci')" data-i18n="tab_sci">공학</button>
+      <button class="tab" data-tab="unit" onclick="switchTab('unit')" data-i18n="tab_unit">단위</button>
+      <button class="tab" data-tab="fx" onclick="switchTab('fx')" data-i18n="tab_fx">환율</button>
     </div>
 
     <!-- 키패드 영역 -->
@@ -334,6 +355,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
       </div>
     </div>
 
+  </div>
+</div>
+
+<div class="pomiai-brand-footer">
+  <div style="font-size:13px;font-weight:700;color:var(--accent2)"><span style="color:var(--border2);font-weight:600;font-size:11px" data-i18n="footer_by">Product by</span> pomiai</div>
+  <div>
+    <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
+    <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube</a>
   </div>
 </div>
 
@@ -716,6 +745,37 @@ initConv();
 initFx();
 renderHistory();
 updateDisplay();
+
+/* ── pomiai i18n ── */
+const I18N = {
+  ko:{ page_title:'pomiai calculator', tab_basic:'기본', tab_sci:'공학', tab_unit:'단위', tab_fx:'환율', footer_by:'Product by' },
+  en:{ page_title:'pomiai calculator', tab_basic:'Basic', tab_sci:'Scientific', tab_unit:'Unit', tab_fx:'Currency', footer_by:'Product by' },
+  ja:{ page_title:'pomiai calculator', tab_basic:'基本', tab_sci:'関数', tab_unit:'単位', tab_fx:'為替', footer_by:'Product by' }
+};
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language||'ko').slice(0,2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
+  window._LANG=LANG; window._T=I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ if(typeof t[el.dataset.i18n]==='string') el.textContent = t[el.dataset.i18n]; });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+document.querySelectorAll('#lang-switch button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const lang = btn.dataset.lang;
+    const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url);
+    window._LANG = lang; window._T = I18N[lang];
+    document.getElementById('html-root').lang = lang;
+    applyI18n();
+  });
+});
 </script>
 </body>
 </html>
