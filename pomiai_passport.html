@@ -1,9 +1,19 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" id="html-root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>pomiai 여권 사진 메이커</title>
+<!--
+===================================================
+pomiai_passport.html — 버전 로그
+===================================================
+현재 버전: 2026.07.27 | 최종 수정: 2026.07.27
+변경 내역: 2026.07.27 pomiai 표준 적용 — 버전 로그, ko/en/ja 다국어(타이틀+헤더 기준),
+브랜드 푸터 신규 적용. 국가별 규격/배경교체/얼굴가이드/A4 인쇄 시트 로직은 원본 유지.
+캐시 무효화: ?v=2026.07.27
+===================================================
+-->
+<title id="page-title">pomiai 여권 사진 메이커</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -83,13 +93,22 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
   .country-grid{grid-template-columns:repeat(3,1fr)}
   #workspace{flex-direction:column}
 }
+.langbtn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer}
+.pomiai-brand-footer{max-width:640px;margin:16px auto 4px;padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.pomiai-brand-footer a{font-size:11px;font-weight:700;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bd2);margin-left:6px}
 </style>
 </head>
 <body>
-<div id="header"><span id="logo">pomiai <span>passport</span></span></div>
+<div id="header"><span id="logo">pomiai <span>passport</span></span>
+  <div id="lang-switch" style="margin-left:auto;display:flex;gap:4px">
+    <button data-lang="ko" class="langbtn">한</button>
+    <button data-lang="en" class="langbtn">EN</button>
+    <button data-lang="ja" class="langbtn">日</button>
+  </div>
+</div>
 <div id="app">
-<div class="sec-title">여권 사진 메이커</div>
-<div class="sec-sub">한국·미국·EU·일본·영국 등 주요국 규격 자동 적용 · 배경 교체 · 얼굴 가이드 · A4 인쇄 시트</div>
+<div class="sec-title" data-i18n="sec_title">여권 사진 메이커</div>
+<div class="sec-sub" data-i18n="sec_sub">한국·미국·EU·일본·영국 등 주요국 규격 자동 적용 · 배경 교체 · 얼굴 가이드 · A4 인쇄 시트</div>
 
 <!-- 국가 규격 -->
 <div class="card">
@@ -187,6 +206,14 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
   <div id="sheet-preview">
     <div style="font-size:12px;color:var(--tx3);margin-bottom:8px">A4 인쇄 시트 (6장) — 클릭하면 다운로드</div>
     <canvas id="sheet-canvas" onclick="dlSheet()"></canvas>
+  </div>
+</div>
+
+<div class="pomiai-brand-footer">
+  <div style="font-size:13px;font-weight:700;color:var(--tx)"><span style="color:var(--tx3);font-weight:600;font-size:11px" data-i18n="footer_by">Product by</span> pomiai</div>
+  <div>
+    <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
+    <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube</a>
   </div>
 </div>
 
@@ -440,6 +467,40 @@ function dlSheet(){
   toast('✅ 인쇄 시트 저장됨');
 }
 redraw();
+
+/* ── pomiai i18n ── */
+const I18N = {
+  ko:{ page_title:'pomiai 여권 사진 메이커', sec_title:'여권 사진 메이커',
+    sec_sub:'한국·미국·EU·일본·영국 등 주요국 규격 자동 적용 · 배경 교체 · 얼굴 가이드 · A4 인쇄 시트', footer_by:'Product by' },
+  en:{ page_title:'pomiai Passport Photo Maker', sec_title:'Passport Photo Maker',
+    sec_sub:'Auto specs for Korea·US·EU·Japan·UK & more · background swap · face guide · A4 print sheet', footer_by:'Product by' },
+  ja:{ page_title:'pomiai 証明写真メーカー', sec_title:'証明写真メーカー',
+    sec_sub:'韓国・米国・EU・日本・英国など主要国規格自動適用・背景変更・顔ガイド・A4印刷シート', footer_by:'Product by' }
+};
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language||'ko').slice(0,2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
+  window._LANG=LANG; window._T=I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ if(typeof t[el.dataset.i18n]==='string') el.textContent = t[el.dataset.i18n]; });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+document.querySelectorAll('#lang-switch button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const lang = btn.dataset.lang;
+    const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url);
+    window._LANG = lang; window._T = I18N[lang];
+    document.getElementById('html-root').lang = lang;
+    applyI18n();
+  });
+});
 </script>
 </body>
 </html>
