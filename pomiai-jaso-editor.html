@@ -14,7 +14,7 @@ JSON 내보내기 로직은 원본 유지.
 캐시 무효화: ?v=2026.07.27
 ===================================================
 -->
-<title id="page-title">pomiai 자소 에디터</title>
+<title id="page-title">pomiai 한국어 글꼴 생성기</title>
 <style>
 :root{
   --bg:#fdf8ee;--bg2:#f5edd8;--bg3:#e8d8b8;
@@ -143,7 +143,7 @@ select{flex:1;padding:3px 5px;font-size:11px;background:var(--bg);border:1px sol
 <body>
 
 <div id="tb">
-  <div class="logo">pomiai 자소 에디터<small>pomiai — 자소 67개 → 11,172자 TTF</small></div>
+  <div class="logo">pomiai 한국어 글꼴 생성기<small>손글씨 자소 67개로 11,172자 완성형 한글 폰트(TTF) 만들기</small></div>
   <div class="tgrp">
     <button class="tbtn on" id="t-free" onclick="setTool('free')" title="자유(F)">🖌 자유</button>
     <button class="tbtn" id="t-pen"  onclick="setTool('pen')"  title="펜(P)">✏️ 펜</button>
@@ -1063,11 +1063,11 @@ function onKey(e){
 init();
 
 const I18N = {
-  ko:{ page_title:'pomiai 자소 에디터', tab_cho:'초성 19', tab_jung:'중성 21', tab_jong:'종성 27',
+  ko:{ page_title:'pomiai 한국어 글꼴 생성기', tab_cho:'초성 19', tab_jung:'중성 21', tab_jong:'종성 27',
     btn_clear:'지우기', btn_preview:'미리보기', btn_export:'📦 JSON 내보내기' },
-  en:{ page_title:'pomiai Jaso Editor', tab_cho:'Initial 19', tab_jung:'Medial 21', tab_jong:'Final 27',
+  en:{ page_title:'pomiai Korean Font Generator', tab_cho:'Initial 19', tab_jung:'Medial 21', tab_jong:'Final 27',
     btn_clear:'Clear', btn_preview:'Preview', btn_export:'📦 Export JSON' },
-  ja:{ page_title:'pomiai 字素エディター', tab_cho:'初声19', tab_jung:'中声21', tab_jong:'終声27',
+  ja:{ page_title:'pomiai 韓国語フォント生成ツール', tab_cho:'初声19', tab_jung:'中声21', tab_jong:'終声27',
     btn_clear:'クリア', btn_preview:'プレビュー', btn_export:'📦 JSON書き出し' }
 };
 (function(){
