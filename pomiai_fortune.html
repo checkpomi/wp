@@ -1276,10 +1276,10 @@ applyI18n();
 document.querySelectorAll('#lang-switch .langbtn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const lang=btn.dataset.lang;
-    const url=new URL(location.href); url.searchParams.set('lang',lang); history.replaceState(null,'',url);
     window._LANG=lang;
     document.getElementById('html-root').lang=lang;
     applyI18n();
+    try{ const url=new URL(location.href); url.searchParams.set('lang',lang); history.replaceState(null,'',url); }catch(e){}
   });
 });
 </script>
