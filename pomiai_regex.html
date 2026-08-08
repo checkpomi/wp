@@ -183,16 +183,16 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 <div id="regex-bar">
   <div class="regex-row">
     <span class="regex-slash">/</span>
-    <input id="regex-input" placeholder="정규식을 입력하세요..." spellcheck="false" autocomplete="off" oninput="runRegex()">
+    <input id="regex-input" data-i18n-placeholder="ph_regex" placeholder="정규식을 입력하세요..." spellcheck="false" autocomplete="off" oninput="runRegex()">
     <span class="regex-slash">/</span>
     <input id="regex-flags-input" value="g" placeholder="gim" spellcheck="false" autocomplete="off" maxlength="6" oninput="syncFlags();runRegex()">
   </div>
   <div class="flag-row">
-    <button class="flag-btn on" id="fb-g" onclick="toggleFlag('g')" title="전체 매치">g <span style="font-weight:400;font-size:10px">global</span></button>
-    <button class="flag-btn" id="fb-i" onclick="toggleFlag('i')" title="대소문자 무시">i <span style="font-weight:400;font-size:10px">ignore</span></button>
-    <button class="flag-btn" id="fb-m" onclick="toggleFlag('m')" title="여러 줄">m <span style="font-weight:400;font-size:10px">multiline</span></button>
-    <button class="flag-btn" id="fb-s" onclick="toggleFlag('s')" title=". 줄바꿈 포함">s <span style="font-weight:400;font-size:10px">dotall</span></button>
-    <button class="flag-btn" id="fb-u" onclick="toggleFlag('u')" title="유니코드">u <span style="font-weight:400;font-size:10px">unicode</span></button>
+    <button class="flag-btn on" id="fb-g" onclick="toggleFlag('g')" data-i18n-title="flag_g">g <span style="font-weight:400;font-size:10px">global</span></button>
+    <button class="flag-btn" id="fb-i" onclick="toggleFlag('i')" data-i18n-title="flag_i">i <span style="font-weight:400;font-size:10px">ignore</span></button>
+    <button class="flag-btn" id="fb-m" onclick="toggleFlag('m')" data-i18n-title="flag_m">m <span style="font-weight:400;font-size:10px">multiline</span></button>
+    <button class="flag-btn" id="fb-s" onclick="toggleFlag('s')" data-i18n-title="flag_s">s <span style="font-weight:400;font-size:10px">dotall</span></button>
+    <button class="flag-btn" id="fb-u" onclick="toggleFlag('u')" data-i18n-title="flag_u">u <span style="font-weight:400;font-size:10px">unicode</span></button>
     <span class="flag-desc" id="match-time"></span>
   </div>
 </div>
@@ -200,60 +200,60 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 <!-- 테스트 문자열 -->
 <div style="position:relative;margin-bottom:14px">
   <div id="test-bg-real" aria-hidden="true"></div>
-  <textarea id="test-input" placeholder="테스트할 텍스트를 입력하세요..."
+  <textarea id="test-input" data-i18n-placeholder="ph_test" placeholder="테스트할 텍스트를 입력하세요..."
     style="background:var(--s1);border:1px solid var(--bd2);color:var(--tx);border-radius:14px;padding:14px 16px;font-family:'DM Mono',monospace;font-size:14px;line-height:1.8;outline:none;resize:vertical;min-height:160px;width:100%;box-shadow:var(--sh);position:relative;z-index:1;caret-color:var(--ac2)"
     oninput="runRegex()" spellcheck="false"></textarea>
 </div>
 
 <!-- 결과 탭 -->
 <div id="result-tabs">
-  <button class="rtab on" onclick="rTab('matches')">📋 매치 목록</button>
-  <button class="rtab" onclick="rTab('replace')">🔄 바꾸기</button>
-  <button class="rtab" onclick="rTab('explain')">💡 설명</button>
-  <button class="rtab" onclick="rTab('presets')">📚 프리셋</button>
-  <button class="rtab" onclick="rTab('cheat')">📖 치트시트</button>
+  <button class="rtab on" onclick="rTab('matches')" data-i18n="tab_matches">📋 매치 목록</button>
+  <button class="rtab" onclick="rTab('replace')" data-i18n="tab_replace">🔄 바꾸기</button>
+  <button class="rtab" onclick="rTab('explain')" data-i18n="tab_explain">💡 설명</button>
+  <button class="rtab" onclick="rTab('presets')" data-i18n="tab_presets">📚 프리셋</button>
+  <button class="rtab" onclick="rTab('cheat')" data-i18n="tab_cheat">📖 치트시트</button>
 </div>
 
 <!-- 매치 목록 -->
 <div class="result-panel rtab-sec on" id="rt-matches">
-  <div class="rp-title">매치 결과</div>
-  <div id="match-list"><div style="font-size:13px;color:var(--tx4)">정규식을 입력하면 매치 결과가 표시돼요</div></div>
+  <div class="rp-title" data-i18n="rp_matches">매치 결과</div>
+  <div id="match-list"><div style="font-size:13px;color:var(--tx4)" data-i18n="msg_empty">정규식을 입력하면 매치 결과가 표시돼요</div></div>
 </div>
 
 <!-- 바꾸기 -->
 <div class="result-panel rtab-sec" id="rt-replace">
-  <div class="rp-title">바꾸기</div>
+  <div class="rp-title" data-i18n="rp_replace">바꾸기</div>
   <div class="replace-row">
-    <input id="replace-input" placeholder="바꿀 텍스트 ($1, $2로 그룹 참조)" oninput="runReplace()">
-    <button style="background:var(--ac);border:none;color:#fff;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" onclick="copyReplace()">복사</button>
-    <button style="background:var(--te3);border:1px solid var(--te);color:var(--te2);border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" onclick="applyReplace()">적용</button>
+    <input id="replace-input" data-i18n-placeholder="ph_replace" placeholder="바꿀 텍스트 ($1, $2로 그룹 참조)" oninput="runReplace()">
+    <button style="background:var(--ac);border:none;color:#fff;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" onclick="copyReplace()" data-i18n="btn_copy">복사</button>
+    <button style="background:var(--te3);border:1px solid var(--te);color:var(--te2);border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" onclick="applyReplace()" data-i18n="btn_apply">적용</button>
   </div>
   <div id="replace-result"></div>
 </div>
 
 <!-- 설명 -->
 <div class="result-panel rtab-sec" id="rt-explain">
-  <div class="rp-title">정규식 분석</div>
+  <div class="rp-title" data-i18n="rp_explain">정규식 분석</div>
   <div id="explain-box"></div>
-  <div style="margin-top:10px;font-size:12px;color:var(--tx4)">정규식을 입력하면 각 토큰의 의미를 분석해요</div>
+  <div style="margin-top:10px;font-size:12px;color:var(--tx4)" data-i18n="msg_explain_empty">정규식을 입력하면 각 토큰의 의미를 분석해요</div>
 </div>
 
 <!-- 프리셋 -->
 <div class="result-panel rtab-sec" id="rt-presets">
-  <div class="rp-title">자주 쓰는 정규식</div>
+  <div class="rp-title" data-i18n="rp_presets">자주 쓰는 정규식</div>
   <div class="preset-grid" id="preset-grid"></div>
 </div>
 
 <!-- 치트시트 -->
 <div class="result-panel rtab-sec" id="rt-cheat">
-  <div class="rp-title">정규식 치트시트</div>
+  <div class="rp-title" data-i18n="rp_cheat">정규식 치트시트</div>
   <div class="cs-grid" id="cs-grid"></div>
 </div>
 
 </div>
 
 <div class="pomiai-brand-footer">
-  <div style="font-size:13px;font-weight:700;color:var(--tx)"><span style="color:var(--tx3);font-weight:600;font-size:11px">Product by</span> pomiai</div>
+  <div style="font-size:13px;font-weight:700;color:var(--tx)"><span style="color:var(--tx3);font-weight:600;font-size:11px" data-i18n="footer_by">Product by</span> pomiai</div>
   <div>
     <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
     <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube</a>
@@ -264,10 +264,21 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 
 <script>
 const $=id=>document.getElementById(id);
+function LANG(){return window._LANG||'ko';}
+const TOAST_TXT={
+  ko:{copied:'복사됨',applied:'적용됨',inserted:'삽입됨'},
+  en:{copied:'Copied',applied:'applied',inserted:'Inserted'},
+  ja:{copied:'コピーしました',applied:'適用しました',inserted:'挿入しました'}
+};
+const MSG_TXT={
+  ko:{matches:'매치',noMatch:'매치 없음',error:'오류',emptyMatches:'정규식을 입력하면 매치 결과가 표시돼요',emptyExplain:'정규식을 입력하면 각 토큰의 의미를 분석해요'},
+  en:{matches:'matches',noMatch:'No matches',error:'Error',emptyMatches:'Enter a regex to see match results',emptyExplain:'Enter a regex to see what each token means'},
+  ja:{matches:'マッチ',noMatch:'マッチなし',error:'エラー',emptyMatches:'正規表現を入力するとマッチ結果が表示されます',emptyExplain:'正規表現を入力すると各トークンの意味を解析します'}
+};
 let toastTid;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTid);toastTid=setTimeout(()=>t.classList.remove('show'),2200);}
-function copy(t){navigator.clipboard?.writeText(t).then(()=>toast('✅ 복사됨'))||fallbackCopy(t);}
-function fallbackCopy(t){const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('✅ 복사됨');}
+function copy(t){navigator.clipboard?.writeText(t).then(()=>toast('✅ '+(TOAST_TXT[LANG()]?.copied||TOAST_TXT.ko.copied)))||fallbackCopy(t);}
+function fallbackCopy(t){const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('✅ '+(TOAST_TXT[LANG()]?.copied||TOAST_TXT.ko.copied));}
 
 /* ── 플래그 관리 ── */
 let flags=new Set(['g']);
@@ -295,8 +306,8 @@ function runRegex(){
   const badge=$('match-badge'),err=$('err-badge');
 
   if(!pat){
-    bar.className='';badge.textContent='0 매치';err.style.display='none';
-    clearHighlight();$('match-list').innerHTML='<div style="font-size:13px;color:var(--tx4)">정규식을 입력하면 매치 결과가 표시돼요</div>';
+    bar.className='';badge.textContent='0 '+MSG_TXT[LANG()].matches;err.style.display='none';
+    clearHighlight();$('match-list').innerHTML=`<div style="font-size:13px;color:var(--tx4)">${MSG_TXT[LANG()].emptyMatches}</div>`;
     $('explain-box').style.display='none';lastMatches=[];return;
   }
 
@@ -306,7 +317,7 @@ function runRegex(){
     bar.className='ok';err.style.display='none';
   }catch(e){
     bar.className='err';err.textContent=e.message;err.style.display='block';
-    badge.textContent='오류';clearHighlight();
+    badge.textContent=MSG_TXT[LANG()].error;clearHighlight();
     $('match-list').innerHTML=`<div style="font-size:13px;color:var(--re2)">${e.message}</div>`;
     return;
   }
@@ -322,7 +333,7 @@ function runRegex(){
   const elapsed=(performance.now()-t0).toFixed(2);
   lastMatches=matches;
 
-  badge.textContent=matches.length+' 매치';
+  badge.textContent=matches.length+' '+MSG_TXT[LANG()].matches;
   $('match-time').textContent=elapsed+'ms';
 
   // 하이라이트
@@ -330,7 +341,7 @@ function runRegex(){
 
   // 매치 목록
   const list=$('match-list');
-  if(!matches.length){list.innerHTML='<div style="font-size:13px;color:var(--tx3)">매치 없음</div>';return;}
+  if(!matches.length){list.innerHTML=`<div style="font-size:13px;color:var(--tx3)">${MSG_TXT[LANG()].noMatch}</div>`;return;}
   list.innerHTML=matches.map((m,i)=>{
     const color=HL_COLORS[i%HL_COLORS.length];
     const groups=m.slice(1).map((g,gi)=>g!=null?`<span class="mi-grp">$${gi+1}: ${escHtml(g.slice(0,30))}</span>`:'').join('');
@@ -386,52 +397,50 @@ function runReplace(){
 function copyReplace(){const v=$('replace-result').textContent;if(v)copy(v);}
 function applyReplace(){
   const v=$('replace-result').textContent;
-  if(v){$('test-input').value=v;runRegex();toast('✅ 적용됨');}
+  if(v){$('test-input').value=v;runRegex();toast('✅ '+(TOAST_TXT[LANG()]?.applied||TOAST_TXT.ko.applied));}
 }
 
 /* 정규식 설명 */
 const TOKENS=[
-  [/^\./,'임의의 문자 1개 (줄바꿈 제외)'],
-  [/^\^/,'문자열 시작'],
-  [/^\$/,'문자열 끝'],
-  [/^\*/,'앞 요소 0번 이상 반복'],
-  [/^\+/,'앞 요소 1번 이상 반복'],
-  [/^\?/,'앞 요소 0번 또는 1번'],
-  [/^\|/,'또는 (OR)'],
-  [/^\(/,'그룹 시작'],
-  [/^\)/,'그룹 끝'],
-  [/^\[/,'문자 클래스 시작'],
-  [/^\]/,'문자 클래스 끝'],
-  [/^\{(\d+),?(\d*)\}/,'수량자 {n,m}'],
-  [/^\\d/,'숫자 [0-9]'],
-  [/^\\D/,'숫자가 아닌 문자'],
-  [/^\\w/,'단어 문자 [a-zA-Z0-9_]'],
-  [/^\\W/,'단어가 아닌 문자'],
-  [/^\\s/,'공백 문자'],
-  [/^\\S/,'공백이 아닌 문자'],
-  [/^\\b/,'단어 경계'],
-  [/^\\B/,'단어 경계가 아닌 곳'],
-  [/^\\n/,'줄바꿈 문자'],
-  [/^\\t/,'탭 문자'],
-  [/^\(\?:/,'비캡처 그룹 (?:...)'],
-  [/^\(\?=/,'긍정적 전방탐색 (?=...)'],
-  [/^\(\?!/,'부정적 전방탐색 (?!...)'],
-  [/^\(\?<=/,'긍정적 후방탐색 (?<=...)'],
-  [/^\(\?<!/,'부정적 후방탐색 (?<!...)'],
-  [/^\(\?<[^>]+>/,'명명된 캡처 그룹'],
+  [/^\./,'t0'],[/^\^/,'t1'],[/^\$/,'t2'],[/^\*/,'t3'],[/^\+/,'t4'],[/^\?/,'t5'],[/^\|/,'t6'],
+  [/^\(/,'t7'],[/^\)/,'t8'],[/^\[/,'t9'],[/^\]/,'t10'],[/^\{(\d+),?(\d*)\}/,'t11'],
+  [/^\\d/,'t12'],[/^\\D/,'t13'],[/^\\w/,'t14'],[/^\\W/,'t15'],[/^\\s/,'t16'],[/^\\S/,'t17'],
+  [/^\\b/,'t18'],[/^\\B/,'t19'],[/^\\n/,'t20'],[/^\\t/,'t21'],
+  [/^\(\?:/,'t22'],[/^\(\?=/,'t23'],[/^\(\?!/,'t24'],[/^\(\?<=/,'t25'],[/^\(\?<!/,'t26'],[/^\(\?<[^>]+>/,'t27'],
 ];
+const TOKEN_DESC={
+  ko:{t0:'임의의 문자 1개 (줄바꿈 제외)',t1:'문자열 시작',t2:'문자열 끝',t3:'앞 요소 0번 이상 반복',t4:'앞 요소 1번 이상 반복',
+    t5:'앞 요소 0번 또는 1번',t6:'또는 (OR)',t7:'그룹 시작',t8:'그룹 끝',t9:'문자 클래스 시작',t10:'문자 클래스 끝',
+    t11:'수량자 {n,m}',t12:'숫자 [0-9]',t13:'숫자가 아닌 문자',t14:'단어 문자 [a-zA-Z0-9_]',t15:'단어가 아닌 문자',
+    t16:'공백 문자',t17:'공백이 아닌 문자',t18:'단어 경계',t19:'단어 경계가 아닌 곳',t20:'줄바꿈 문자',t21:'탭 문자',
+    t22:'비캡처 그룹 (?:...)',t23:'긍정적 전방탐색 (?=...)',t24:'부정적 전방탐색 (?!...)',
+    t25:'긍정적 후방탐색 (?<=...)',t26:'부정적 후방탐색 (?<!...)',t27:'명명된 캡처 그룹', literal:'리터럴 문자'},
+  en:{t0:'Any character (except newline)',t1:'Start of string',t2:'End of string',t3:'0 or more of preceding',t4:'1 or more of preceding',
+    t5:'0 or 1 of preceding',t6:'OR',t7:'Start group',t8:'End group',t9:'Start character class',t10:'End character class',
+    t11:'Quantifier {n,m}',t12:'Digit [0-9]',t13:'Non-digit',t14:'Word character [a-zA-Z0-9_]',t15:'Non-word character',
+    t16:'Whitespace',t17:'Non-whitespace',t18:'Word boundary',t19:'Non-word boundary',t20:'Newline',t21:'Tab',
+    t22:'Non-capturing group (?:...)',t23:'Positive lookahead (?=...)',t24:'Negative lookahead (?!...)',
+    t25:'Positive lookbehind (?<=...)',t26:'Negative lookbehind (?<!...)',t27:'Named capture group', literal:'Literal character'},
+  ja:{t0:'任意の1文字(改行を除く)',t1:'文字列の先頭',t2:'文字列の末尾',t3:'直前の要素0回以上',t4:'直前の要素1回以上',
+    t5:'直前の要素0回または1回',t6:'または(OR)',t7:'グループ開始',t8:'グループ終了',t9:'文字クラス開始',t10:'文字クラス終了',
+    t11:'量指定子 {n,m}',t12:'数字 [0-9]',t13:'数字以外',t14:'単語文字 [a-zA-Z0-9_]',t15:'単語文字以外',
+    t16:'空白文字',t17:'空白以外',t18:'単語境界',t19:'単語境界でない箇所',t20:'改行文字',t21:'タブ文字',
+    t22:'非キャプチャグループ (?:...)',t23:'肯定先読み (?=...)',t24:'否定先読み (?!...)',
+    t25:'肯定後読み (?<=...)',t26:'否定後読み (?<!...)',t27:'名前付きキャプチャグループ', literal:'リテラル文字'}
+};
 function explainRegex(pat){
   const box=$('explain-box');
   if(!pat){box.style.display='none';return;}
+  const D=TOKEN_DESC[LANG()]||TOKEN_DESC.ko;
   // 간단 토큰 분해
   const parts=[];let i=0;
   while(i<pat.length){
     let matched=false;
-    for(const [re,desc] of TOKENS){
+    for(const [re,key] of TOKENS){
       const m=pat.slice(i).match(re);
-      if(m){parts.push({tok:m[0],desc});i+=m[0].length;matched=true;break;}
+      if(m){parts.push({tok:m[0],desc:D[key]});i+=m[0].length;matched=true;break;}
     }
-    if(!matched){parts.push({tok:pat[i],desc:'리터럴 문자'});i++;}
+    if(!matched){parts.push({tok:pat[i],desc:D.literal});i++;}
   }
   box.innerHTML=parts.map(p=>`<span class="token" title="${p.desc}">${escHtml(p.tok)}</span> <span class="token-desc">${p.desc}</span>  `).join('');
   box.style.display='block';
@@ -447,102 +456,192 @@ function rTab(id){
 
 /* 프리셋 */
 const PRESETS=[
-  {name:'이메일',regex:'^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$',flags:'i',desc:'이메일 주소 검증'},
-  {name:'URL',regex:'https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&\\/=]*)',flags:'gi',desc:'HTTP/HTTPS URL'},
-  {name:'한국 전화번호',regex:'0(?:2|[3-9][0-9])[-\\s]?\\d{3,4}[-\\s]?\\d{4}|01[016789][-\\s]?\\d{3,4}[-\\s]?\\d{4}',flags:'g',desc:'유선/휴대폰 번호'},
-  {name:'IP 주소',regex:'\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b',flags:'g',desc:'IPv4 주소'},
-  {name:'날짜 (YYYY-MM-DD)',regex:'\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])',flags:'g',desc:'ISO 날짜 형식'},
-  {name:'한국 날짜',regex:'\\d{4}[.년-]\\s?(?:0?[1-9]|1[0-2])[.월-]\\s?(?:0?[1-9]|[12]\\d|3[01])일?',flags:'g',desc:'한국식 날짜'},
-  {name:'시간 (HH:MM)',regex:'([01]?[0-9]|2[0-3]):[0-5][0-9]',flags:'g',desc:'24시간 형식'},
-  {name:'16진수 색상',regex:'#(?:[0-9a-fA-F]{3}){1,2}',flags:'g',desc:'CSS 색상 코드'},
-  {name:'우편번호 (한국)',regex:'\\b[0-9]{5}\\b',flags:'g',desc:'5자리 우편번호'},
-  {name:'HTML 태그',regex:'<[^>]+>',flags:'gi',desc:'HTML 태그 전체'},
-  {name:'줄 시작 공백',regex:'^\\s+',flags:'gm',desc:'각 줄 앞 공백'},
-  {name:'중복 공백',regex:'\\s{2,}',flags:'g',desc:'연속된 공백 2개 이상'},
-  {name:'빈 줄',regex:'^\\s*$',flags:'gm',desc:'공백만 있는 줄'},
-  {name:'한글',regex:'[가-힣]+',flags:'g',desc:'한글 문자'},
-  {name:'영문만',regex:'[a-zA-Z]+',flags:'g',desc:'영문자'},
-  {name:'숫자만',regex:'\\d+',flags:'g',desc:'숫자 시퀀스'},
-  {name:'특수문자',regex:'[^a-zA-Z0-9가-힣\\s]',flags:'g',desc:'특수문자'},
-  {name:'비밀번호 강도',regex:'^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$',flags:'',desc:'대소문자+숫자+특수문자 8자 이상'},
-  {name:'신용카드',regex:'\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\\b',flags:'g',desc:'Visa/MC/Amex'},
-  {name:'마크다운 볼드',regex:'\\*\\*(.+?)\\*\\*',flags:'g',desc:'**텍스트** 형식'},
+  {key:'email',regex:'^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$',flags:'i'},
+  {key:'url',regex:'https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&\\/=]*)',flags:'gi'},
+  {key:'kr_phone',regex:'0(?:2|[3-9][0-9])[-\\s]?\\d{3,4}[-\\s]?\\d{4}|01[016789][-\\s]?\\d{3,4}[-\\s]?\\d{4}',flags:'g'},
+  {key:'ip',regex:'\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b',flags:'g'},
+  {key:'date_iso',regex:'\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])',flags:'g'},
+  {key:'date_kr',regex:'\\d{4}[.년-]\\s?(?:0?[1-9]|1[0-2])[.월-]\\s?(?:0?[1-9]|[12]\\d|3[01])일?',flags:'g'},
+  {key:'time',regex:'([01]?[0-9]|2[0-3]):[0-5][0-9]',flags:'g'},
+  {key:'hexcolor',regex:'#(?:[0-9a-fA-F]{3}){1,2}',flags:'g'},
+  {key:'zipcode',regex:'\\b[0-9]{5}\\b',flags:'g'},
+  {key:'htmltag',regex:'<[^>]+>',flags:'gi'},
+  {key:'leading_ws',regex:'^\\s+',flags:'gm'},
+  {key:'multi_ws',regex:'\\s{2,}',flags:'g'},
+  {key:'blank_line',regex:'^\\s*$',flags:'gm'},
+  {key:'hangul',regex:'[가-힣]+',flags:'g'},
+  {key:'alpha',regex:'[a-zA-Z]+',flags:'g'},
+  {key:'digits',regex:'\\d+',flags:'g'},
+  {key:'special',regex:'[^a-zA-Z0-9가-힣\\s]',flags:'g'},
+  {key:'pw_strength',regex:'^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$',flags:''},
+  {key:'credit_card',regex:'\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\\b',flags:'g'},
+  {key:'md_bold',regex:'\\*\\*(.+?)\\*\\*',flags:'g'},
 ];
-(function initPresets(){
+const PRESET_I18N={
+  ko:{email:['이메일','이메일 주소 검증'],url:['URL','HTTP/HTTPS URL'],kr_phone:['한국 전화번호','유선/휴대폰 번호'],
+    ip:['IP 주소','IPv4 주소'],date_iso:['날짜 (YYYY-MM-DD)','ISO 날짜 형식'],date_kr:['한국 날짜','한국식 날짜'],
+    time:['시간 (HH:MM)','24시간 형식'],hexcolor:['16진수 색상','CSS 색상 코드'],zipcode:['우편번호 (한국)','5자리 우편번호'],
+    htmltag:['HTML 태그','HTML 태그 전체'],leading_ws:['줄 시작 공백','각 줄 앞 공백'],multi_ws:['중복 공백','연속된 공백 2개 이상'],
+    blank_line:['빈 줄','공백만 있는 줄'],hangul:['한글','한글 문자'],alpha:['영문만','영문자'],digits:['숫자만','숫자 시퀀스'],
+    special:['특수문자','특수문자'],pw_strength:['비밀번호 강도','대소문자+숫자+특수문자 8자 이상'],
+    credit_card:['신용카드','Visa/MC/Amex'],md_bold:['마크다운 볼드','**텍스트** 형식']},
+  en:{email:['Email','Validate email address'],url:['URL','HTTP/HTTPS URL'],kr_phone:['Korean Phone Number','Landline/mobile number'],
+    ip:['IP Address','IPv4 address'],date_iso:['Date (YYYY-MM-DD)','ISO date format'],date_kr:['Korean Date','Korean-style date'],
+    time:['Time (HH:MM)','24-hour format'],hexcolor:['Hex Color','CSS color code'],zipcode:['Zip Code (Korea)','5-digit postal code'],
+    htmltag:['HTML Tag','Any HTML tag'],leading_ws:['Leading Whitespace','Whitespace at start of each line'],multi_ws:['Repeated Whitespace','2+ consecutive spaces'],
+    blank_line:['Blank Line','Whitespace-only line'],hangul:['Hangul','Korean characters'],alpha:['Letters Only','Alphabetic characters'],digits:['Digits Only','Sequence of digits'],
+    special:['Special Characters','Special characters'],pw_strength:['Password Strength','Upper+lower+digit+special, 8+ chars'],
+    credit_card:['Credit Card','Visa/MC/Amex'],md_bold:['Markdown Bold','**text** format']},
+  ja:{email:['メールアドレス','メールアドレスの検証'],url:['URL','HTTP/HTTPS URL'],kr_phone:['韓国の電話番号','固定/携帯番号'],
+    ip:['IPアドレス','IPv4アドレス'],date_iso:['日付 (YYYY-MM-DD)','ISO日付形式'],date_kr:['韓国式日付','韓国式の日付'],
+    time:['時刻 (HH:MM)','24時間形式'],hexcolor:['16進数カラー','CSSカラーコード'],zipcode:['郵便番号(韓国)','5桁の郵便番号'],
+    htmltag:['HTMLタグ','HTMLタグ全体'],leading_ws:['行頭の空白','各行の先頭の空白'],multi_ws:['連続する空白','2つ以上の連続した空白'],
+    blank_line:['空行','空白のみの行'],hangul:['ハングル','ハングル文字'],alpha:['英字のみ','アルファベット文字'],digits:['数字のみ','数字の連続'],
+    special:['特殊文字','特殊文字'],pw_strength:['パスワード強度','大小英字+数字+特殊文字8文字以上'],
+    credit_card:['クレジットカード','Visa/MC/Amex'],md_bold:['Markdown太字','**テキスト**形式']}
+};
+function initPresets(){
   const grid=$('preset-grid');
+  const P=PRESET_I18N[LANG()]||PRESET_I18N.ko;
+  grid.innerHTML='';
   PRESETS.forEach(p=>{
+    const [name,desc]=P[p.key]||['','',''];
     const el=document.createElement('div');el.className='preset';
-    el.innerHTML=`<div class="pre-name">${p.name}</div><div class="pre-regex">${escHtml(p.regex)}</div><div class="pre-desc">${p.desc}</div>`;
+    el.innerHTML=`<div class="pre-name">${name}</div><div class="pre-regex">${escHtml(p.regex)}</div><div class="pre-desc">${desc}</div>`;
     el.onclick=()=>{
       $('regex-input').value=p.regex;
       flags=new Set([...p.flags]);
       $('regex-flags-input').value=p.flags;
       document.querySelectorAll('.flag-btn').forEach(b=>{const bf=b.id.replace('fb-','');b.classList.toggle('on',flags.has(bf));});
-      runRegex();rTab('matches');toast('✅ '+p.name+' 적용됨');
+      runRegex();rTab('matches');toast('✅ '+name+' '+(TOAST_TXT[LANG()]?.applied||TOAST_TXT.ko.applied));
     };
     grid.appendChild(el);
   });
-})();
+}
 
 /* 치트시트 */
 const CHEATSHEET=[
-  {t:'.',d:'임의 문자 1개'},{t:'^',d:'시작'},{t:'$',d:'끝'},{t:'*',d:'0번 이상'},{t:'+',d:'1번 이상'},
-  {t:'?',d:'0 또는 1번'},{t:'{n}',d:'정확히 n번'},{t:'{n,}',d:'n번 이상'},{t:'{n,m}',d:'n~m번'},
-  {t:'[abc]',d:'a 또는 b 또는 c'},{t:'[^abc]',d:'a,b,c 제외'},{t:'[a-z]',d:'a부터 z'},
-  {t:'(abc)',d:'캡처 그룹'},{t:'(?:abc)',d:'비캡처 그룹'},{t:'a|b',d:'a 또는 b'},
-  {t:'\\d',d:'숫자'},{t:'\\D',d:'숫자 아님'},{t:'\\w',d:'단어 문자'},{t:'\\W',d:'단어 아님'},
-  {t:'\\s',d:'공백'},{t:'\\S',d:'공백 아님'},{t:'\\b',d:'단어 경계'},{t:'\\n',d:'줄바꿈'},
-  {t:'(?=...)',d:'전방탐색'},{t:'(?!...)',d:'부정 전방탐색'},{t:'(?<=...)',d:'후방탐색'},
-  {t:'$1',d:'첫번째 그룹'},{t:'$&',d:'매치 전체'},{t:"$'",d:'매치 이후 텍스트'},
+  {t:'.',k:'c0'},{t:'^',k:'c1'},{t:'$',k:'c2'},{t:'*',k:'c3'},{t:'+',k:'c4'},
+  {t:'?',k:'c5'},{t:'{n}',k:'c6'},{t:'{n,}',k:'c7'},{t:'{n,m}',k:'c8'},
+  {t:'[abc]',k:'c9'},{t:'[^abc]',k:'c10'},{t:'[a-z]',k:'c11'},
+  {t:'(abc)',k:'c12'},{t:'(?:abc)',k:'c13'},{t:'a|b',k:'c14'},
+  {t:'\\d',k:'c15'},{t:'\\D',k:'c16'},{t:'\\w',k:'c17'},{t:'\\W',k:'c18'},
+  {t:'\\s',k:'c19'},{t:'\\S',k:'c20'},{t:'\\b',k:'c21'},{t:'\\n',k:'c22'},
+  {t:'(?=...)',k:'c23'},{t:'(?!...)',k:'c24'},{t:'(?<=...)',k:'c25'},
+  {t:'$1',k:'c26'},{t:'$&',k:'c27'},{t:"$'",k:'c28'},
 ];
-(function initCheat(){
+const CHEAT_DESC={
+  ko:{c0:'임의 문자 1개',c1:'시작',c2:'끝',c3:'0번 이상',c4:'1번 이상',c5:'0 또는 1번',c6:'정확히 n번',c7:'n번 이상',c8:'n~m번',
+    c9:'a 또는 b 또는 c',c10:'a,b,c 제외',c11:'a부터 z',c12:'캡처 그룹',c13:'비캡처 그룹',c14:'a 또는 b',
+    c15:'숫자',c16:'숫자 아님',c17:'단어 문자',c18:'단어 아님',c19:'공백',c20:'공백 아님',c21:'단어 경계',c22:'줄바꿈',
+    c23:'전방탐색',c24:'부정 전방탐색',c25:'후방탐색',c26:'첫번째 그룹',c27:'매치 전체',c28:'매치 이후 텍스트'},
+  en:{c0:'Any character',c1:'Start',c2:'End',c3:'0 or more',c4:'1 or more',c5:'0 or 1',c6:'Exactly n',c7:'n or more',c8:'n to m',
+    c9:'a or b or c',c10:'Not a,b,c',c11:'a through z',c12:'Capture group',c13:'Non-capture group',c14:'a or b',
+    c15:'Digit',c16:'Not a digit',c17:'Word character',c18:'Not a word char',c19:'Whitespace',c20:'Not whitespace',c21:'Word boundary',c22:'Newline',
+    c23:'Lookahead',c24:'Negative lookahead',c25:'Lookbehind',c26:'First group',c27:'Entire match',c28:'Text after match'},
+  ja:{c0:'任意の1文字',c1:'先頭',c2:'末尾',c3:'0回以上',c4:'1回以上',c5:'0回または1回',c6:'正確にn回',c7:'n回以上',c8:'n~m回',
+    c9:'aまたはbまたはc',c10:'a,b,c以外',c11:'aからz',c12:'キャプチャグループ',c13:'非キャプチャグループ',c14:'aまたはb',
+    c15:'数字',c16:'数字以外',c17:'単語文字',c18:'単語文字以外',c19:'空白',c20:'空白以外',c21:'単語境界',c22:'改行',
+    c23:'先読み',c24:'否定先読み',c25:'後読み',c26:'最初のグループ',c27:'マッチ全体',c28:'マッチ後のテキスト'}
+};
+function initCheat(){
   const grid=$('cs-grid');
+  const D=CHEAT_DESC[LANG()]||CHEAT_DESC.ko;
+  grid.innerHTML='';
   CHEATSHEET.forEach(c=>{
     const el=document.createElement('div');el.className='cs-item';
-    el.innerHTML=`<div class="cs-token">${escHtml(c.t)}</div><div class="cs-desc">${c.d}</div>`;
+    el.innerHTML=`<div class="cs-token">${escHtml(c.t)}</div><div class="cs-desc">${D[c.k]}</div>`;
     el.onclick=()=>{
       const cur=$('regex-input');const pos=cur.selectionStart;const v=cur.value;
       cur.value=v.slice(0,pos)+c.t+v.slice(pos);cur.setSelectionRange(pos+c.t.length,pos+c.t.length);
-      cur.focus();runRegex();toast('✅ 삽입됨: '+c.t);
+      cur.focus();runRegex();toast('✅ '+(TOAST_TXT[LANG()]?.inserted||TOAST_TXT.ko.inserted)+': '+c.t);
     };
     grid.appendChild(el);
   });
-})();
+}
 
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-// 초기 예제 텍스트
-$('test-input').value=`안녕하세요! 이메일은 test@example.com 이고
+const SAMPLE_TEXT={
+  ko:`안녕하세요! 이메일은 test@example.com 이고
 전화번호는 010-1234-5678 입니다.
 오늘 날짜: 2025-06-11
 웹사이트: https://checkpomi.com
 색상코드: #6c5ce8, #ffffff, #ff0000
-IP: 192.168.1.1`;
-$('regex-input').value='[\\w.-]+@[\\w.-]+\\.[a-z]{2,}';
-runRegex();
+IP: 192.168.1.1`,
+  en:`Hello! My email is test@example.com
+and my phone number is 010-1234-5678.
+Today's date: 2025-06-11
+Website: https://checkpomi.com
+Color codes: #6c5ce8, #ffffff, #ff0000
+IP: 192.168.1.1`,
+  ja:`こんにちは!メールアドレスはtest@example.comで
+電話番号は010-1234-5678です。
+今日の日付: 2025-06-11
+ウェブサイト: https://checkpomi.com
+カラーコード: #6c5ce8, #ffffff, #ff0000
+IP: 192.168.1.1`
+};
+let _sampleTextSet=false;
+function setSampleTextOnce(){
+  if(_sampleTextSet)return;
+  _sampleTextSet=true;
+  $('test-input').value=SAMPLE_TEXT[LANG()]||SAMPLE_TEXT.ko;
+  $('regex-input').value='[\\w.-]+@[\\w.-]+\\.[a-z]{2,}';
+  runRegex();
+}
 
 const I18N = {
-  ko:{ page_title:'pomiai Regex 테스터' },
-  en:{ page_title:'pomiai Regex Tester' },
-  ja:{ page_title:'pomiai 正規表現テスター' }
+  ko:{ page_title:'pomiai Regex 테스터',
+    ph_regex:'정규식을 입력하세요...', ph_test:'테스트할 텍스트를 입력하세요...', ph_replace:'바꿀 텍스트 ($1, $2로 그룹 참조)',
+    flag_g:'전체 매치', flag_i:'대소문자 무시', flag_m:'여러 줄', flag_s:'. 줄바꿈 포함', flag_u:'유니코드',
+    tab_matches:'📋 매치 목록', tab_replace:'🔄 바꾸기', tab_explain:'💡 설명', tab_presets:'📚 프리셋', tab_cheat:'📖 치트시트',
+    rp_matches:'매치 결과', rp_replace:'바꾸기', rp_explain:'정규식 분석', rp_presets:'자주 쓰는 정규식', rp_cheat:'정규식 치트시트',
+    msg_empty:'정규식을 입력하면 매치 결과가 표시돼요', msg_explain_empty:'정규식을 입력하면 각 토큰의 의미를 분석해요',
+    btn_copy:'복사', btn_apply:'적용', footer_by:'Product by' },
+  en:{ page_title:'pomiai Regex Tester',
+    ph_regex:'Enter a regular expression...', ph_test:'Enter text to test...', ph_replace:'Replacement text (use $1, $2 for groups)',
+    flag_g:'Match all', flag_i:'Ignore case', flag_m:'Multiline', flag_s:'. matches newline', flag_u:'Unicode',
+    tab_matches:'📋 Matches', tab_replace:'🔄 Replace', tab_explain:'💡 Explain', tab_presets:'📚 Presets', tab_cheat:'📖 Cheat Sheet',
+    rp_matches:'Match Results', rp_replace:'Replace', rp_explain:'Regex Breakdown', rp_presets:'Common Patterns', rp_cheat:'Regex Cheat Sheet',
+    msg_empty:'Enter a regex to see match results', msg_explain_empty:'Enter a regex to see what each token means',
+    btn_copy:'Copy', btn_apply:'Apply', footer_by:'Product by' },
+  ja:{ page_title:'pomiai 正規表現テスター',
+    ph_regex:'正規表現を入力してください...', ph_test:'テストするテキストを入力してください...', ph_replace:'置換テキスト($1、$2でグループ参照)',
+    flag_g:'全体マッチ', flag_i:'大文字小文字を無視', flag_m:'複数行', flag_s:'. が改行にもマッチ', flag_u:'Unicode',
+    tab_matches:'📋 マッチ一覧', tab_replace:'🔄 置換', tab_explain:'💡 解説', tab_presets:'📚 プリセット', tab_cheat:'📖 チートシート',
+    rp_matches:'マッチ結果', rp_replace:'置換', rp_explain:'正規表現の解析', rp_presets:'よく使う正規表現', rp_cheat:'正規表現チートシート',
+    msg_empty:'正規表現を入力するとマッチ結果が表示されます', msg_explain_empty:'正規表現を入力すると各トークンの意味を解析します',
+    btn_copy:'コピー', btn_apply:'適用', footer_by:'Product by' }
 };
+function applyI18n(){
+  const t=I18N[LANG()]||I18N.ko;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ if(typeof t[el.dataset.i18n]==='string') el.textContent=t[el.dataset.i18n]; });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ if(typeof t[el.dataset.i18nPlaceholder]==='string') el.placeholder=t[el.dataset.i18nPlaceholder]; });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{ if(typeof t[el.dataset.i18nTitle]==='string') el.title=t[el.dataset.i18nTitle]; });
+  document.getElementById('page-title').textContent=t.page_title;
+  document.title=t.page_title;
+  document.querySelectorAll('#lang-switch .langbtn').forEach(b=>b.classList.toggle('active',b.dataset.lang===LANG()));
+  initPresets();
+  initCheat();
+  setSampleTextOnce();
+  runRegex();
+}
 (function(){
   const params = new URLSearchParams(location.search);
   const urlLang = params.get('lang');
   const browserLang = (navigator.language||'ko').slice(0,2);
-  const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
-  window._LANG=LANG; window._T=I18N[LANG];
-  document.getElementById('html-root').lang = LANG;
-  document.getElementById('page-title').textContent = I18N[LANG].page_title;
-  document.title = I18N[LANG].page_title;
+  const detected = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
+  window._LANG=detected; window._T=I18N[detected];
+  document.getElementById('html-root').lang = detected;
 })();
+applyI18n();
 document.querySelectorAll('#lang-switch button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const lang = btn.dataset.lang;
-    document.getElementById('html-root').lang = lang;
-    document.getElementById('page-title').textContent = I18N[lang].page_title;
-    document.title = I18N[lang].page_title;
     window._LANG = lang; window._T = I18N[lang];
+    document.getElementById('html-root').lang = lang;
+    applyI18n();
     try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
   });
 });
