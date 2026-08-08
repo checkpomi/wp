@@ -539,11 +539,11 @@ const I18N = {
 document.querySelectorAll('#lang-switch button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const lang = btn.dataset.lang;
-    const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url);
     document.getElementById('html-root').lang = lang;
     document.getElementById('page-title').textContent = I18N[lang].page_title;
     document.title = I18N[lang].page_title;
     window._LANG = lang; window._T = I18N[lang];
+    try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
   });
 });
 </script>
