@@ -1,6 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root">
 <head>
+<!--
+  VERSION LOG (pomiai_devtools2.html)
+  ===================================================
+  2026.08.15 — v1.1.0 (기능 추가)
+    · ?tab= URL 파라미터로 특정 탭 딥링크 진입 지원 추가
+      (conv/grad/cron/tz/lorem) — 개별 SEO 포스트에서 embed 시
+      방문자가 목적 기능으로 바로 진입하도록 함
+      예) pomiai_devtools2.html?tab=tz
+    · 캐시 무효화 시 ?v=2026.08.15 쿼리스트링 사용 권장
+  (이전 버전: VERSION LOG 없음 — 최초 이력 미기록)
+-->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>pomiai Dev Tools 2</title>
@@ -280,7 +291,21 @@ function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show')
 function goTab(id){
   ['conv','grad','cron','tz','lorem'].forEach(t=>$('tab-'+t).classList.toggle('on',t===id));
   document.querySelectorAll('.htab').forEach((t,i)=>t.classList.toggle('on',['conv','grad','cron','tz','lorem'][i]===id));
+  try{
+    const url=new URL(location.href);
+    url.searchParams.set('tab',id);
+    history.replaceState(null,'',url);
+  }catch(e){}
 }
+/* ?tab= 딥링크: WordPress 포스트 embed에서 lang과 함께 전달되는
+   URL 파라미터를 읽어 시작 탭을 결정. 값이 없거나 잘못되면 기본값 conv 유지 */
+(function(){
+  const params=new URLSearchParams(location.search);
+  const wantTab=params.get('tab');
+  if(wantTab && ['conv','grad','cron','tz','lorem'].includes(wantTab)){
+    goTab(wantTab);
+  }
+})();
 function copyOut(id){const v=$(id).value;if(!v)return;if(navigator.clipboard)navigator.clipboard.writeText(v).then(()=>toast('✅ Copied'));else{const ta=document.createElement('textarea');ta.value=v;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('✅ Copied');}}
 function copyOut2(id){const v=$(id).textContent;navigator.clipboard?.writeText(v).then(()=>toast('✅ Copied'));}
 function dlOut(id){const v=$(id).value;if(!v)return;const t=$('conv-to').value;const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(v);a.download='converted.'+t;document.body.appendChild(a);a.click();document.body.removeChild(a);}
