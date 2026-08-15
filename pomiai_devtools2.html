@@ -4,6 +4,15 @@
 <!--
   VERSION LOG (pomiai_devtools2.html)
   ===================================================
+  2026.08.15 — v1.2.0 (다국어 지원 추가)
+    · §5 표준 구조(I18N 객체 + data-i18n) 적용, ko/en/ja 지원
+    · 효과성 분석 결과에 따라 "UI 셸(탭명/제목/설명/공용 버튼·라벨)"만
+      번역하고, JSON/CSV/XML/YAML, Linear/Radial/Conic, cron 필드값 같은
+      전 세계 개발자가 영어 그대로 통용하는 기술 용어는 의도적으로
+      번역하지 않음 — 번역 시 오히려 검색·이해도 저하 우려
+    · cron-desc(파싱 결과 설명 문구)는 JS 로직에서 동적 생성되는 텍스트라
+      이번 범위에서 제외 — 추후 buildCron()/parseCron() 함수 자체를
+      다국어 대응하는 별도 작업 필요
   2026.08.15 — v1.1.0 (기능 추가)
     · ?tab= URL 파라미터로 특정 탭 딥링크 진입 지원 추가
       (conv/grad/cron/tz/lorem) — 개별 SEO 포스트에서 embed 시
@@ -14,7 +23,7 @@
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>pomiai Dev Tools 2</title>
+<title id="page-title">pomiai Dev Tools 2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
 :root{
@@ -98,19 +107,19 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
   <span id="logo">pomiai <span>dev2</span></span>
   <div class="h-sep"></div>
   <div id="htabs">
-    <div class="htab on"  onclick="goTab('conv')">⇄ Data Convert</div>
-    <div class="htab"     onclick="goTab('grad')">🎨 CSS Gradient</div>
-    <div class="htab"     onclick="goTab('cron')">⏰ Cron</div>
-    <div class="htab"     onclick="goTab('tz')">🌍 Timezone</div>
-    <div class="htab"     onclick="goTab('lorem')">📝 Lorem Ipsum</div>
+    <div class="htab on"  onclick="goTab('conv')"  data-i18n-html="tab_conv"></div>
+    <div class="htab"     onclick="goTab('grad')"  data-i18n-html="tab_grad"></div>
+    <div class="htab"     onclick="goTab('cron')"  data-i18n-html="tab_cron"></div>
+    <div class="htab"     onclick="goTab('tz')"    data-i18n-html="tab_tz"></div>
+    <div class="htab"     onclick="goTab('lorem')" data-i18n-html="tab_lorem"></div>
   </div>
 </div>
 <div id="app">
 
 <!-- ══ DATA CONVERTER ══ -->
 <div class="sec on" id="tab-conv">
-  <div class="sec-title">Data Format Converter</div>
-  <div class="sec-sub">JSON ↔ CSV ↔ XML ↔ YAML — instant conversion · local processing · no upload</div>
+  <div class="sec-title" data-i18n="conv_title"></div>
+  <div class="sec-sub" data-i18n="conv_sub"></div>
   <div class="card">
     <div style="display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap">
       <select class="fs" id="conv-from" style="flex:1;min-width:100px;font-family:'DM Mono',monospace">
@@ -123,21 +132,21 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
         <option value="xml">XML</option><option value="yaml">YAML</option>
       </select>
     </div>
-    <span class="fl">Input</span>
-    <textarea class="fi" id="conv-in" rows="8" placeholder="Paste your data here..." style="resize:vertical;min-height:140px;margin-bottom:10px"></textarea>
+    <span class="fl" data-i18n="lbl_input"></span>
+    <textarea class="fi" id="conv-in" rows="8" data-i18n-placeholder="ph_paste" placeholder="Paste your data here..." style="resize:vertical;min-height:140px;margin-bottom:10px"></textarea>
     <div class="acts">
-      <button class="btn go" onclick="doConvert()">⚡ Convert</button>
-      <button class="btn outline sm" onclick="loadSample()">Load Sample</button>
-      <button class="btn outline sm" onclick="$('conv-in').value=''">Clear</button>
+      <button class="btn go" onclick="doConvert()" data-i18n-html="btn_convert"></button>
+      <button class="btn outline sm" onclick="loadSample()" data-i18n="btn_sample"></button>
+      <button class="btn outline sm" onclick="$('conv-in').value=''" data-i18n="btn_clear"></button>
     </div>
     <div class="err-msg" id="conv-err"></div>
     <div style="margin-top:12px">
-      <span class="fl">Output</span>
+      <span class="fl" data-i18n="lbl_output"></span>
       <textarea class="res-area" id="conv-out" readonly rows="8" style="min-height:140px"></textarea>
       <div class="acts">
-        <button class="btn outline sm" onclick="copyOut('conv-out')">📋 Copy</button>
-        <button class="btn outline sm" onclick="dlOut('conv-out')">⬇ Download</button>
-        <button class="btn outline sm" onclick="applyOut('conv-out','conv-in')">↑ Use as Input</button>
+        <button class="btn outline sm" onclick="copyOut('conv-out')" data-i18n-html="btn_copy"></button>
+        <button class="btn outline sm" onclick="dlOut('conv-out')" data-i18n-html="btn_download"></button>
+        <button class="btn outline sm" onclick="applyOut('conv-out','conv-in')" data-i18n-html="btn_useinput"></button>
       </div>
     </div>
   </div>
@@ -145,25 +154,25 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 
 <!-- ══ CSS GRADIENT ══ -->
 <div class="sec" id="tab-grad">
-  <div class="sec-title">CSS Gradient Generator</div>
-  <div class="sec-sub">Linear · Radial · Conic — live preview · copy CSS · stops editor</div>
+  <div class="sec-title" data-i18n="grad_title"></div>
+  <div class="sec-sub" data-i18n="grad_sub"></div>
   <div class="card">
     <div class="grad-preview" id="grad-preview"></div>
     <div class="g3" style="margin-bottom:14px">
-      <div><span class="fl">Type</span>
+      <div><span class="fl" data-i18n="lbl_type"></span>
         <select class="fs" id="grad-type" onchange="renderGrad()">
           <option value="linear">Linear</option>
           <option value="radial">Radial</option>
           <option value="conic">Conic</option>
         </select></div>
-      <div id="angle-wrap"><span class="fl">Angle</span>
+      <div id="angle-wrap"><span class="fl" data-i18n="lbl_angle"></span>
         <div style="display:flex;align-items:center;gap:8px">
           <input type="range" id="grad-angle" min="0" max="360" value="135" style="-webkit-appearance:none;height:4px;background:var(--bd2);border-radius:2px;cursor:pointer;flex:1;outline:none" oninput="$('grad-angle-v').textContent=this.value+'°';renderGrad()">
           <span style="font-size:12px;color:var(--ac2);font-family:'DM Mono',monospace;min-width:36px" id="grad-angle-v">135°</span>
         </div></div>
-      <div><span class="fl">Preset</span>
+      <div><span class="fl" data-i18n="lbl_preset"></span>
         <select class="fs" id="grad-preset" onchange="loadGradPreset()">
-          <option value="">Custom</option>
+          <option value="" data-i18n="opt_custom"></option>
           <option value="sunset">🌅 Sunset</option>
           <option value="ocean">🌊 Ocean</option>
           <option value="forest">🌲 Forest</option>
@@ -173,56 +182,56 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
           <option value="pomiai">💜 pomiai</option>
         </select></div>
     </div>
-    <div class="card-title">Color Stops</div>
+    <div class="card-title" data-i18n="lbl_colorstops"></div>
     <div id="grad-stops"></div>
-    <button class="btn outline sm" style="margin-bottom:14px" onclick="addStop()">+ Add Stop</button>
-    <span class="fl">CSS Output</span>
+    <button class="btn outline sm" style="margin-bottom:14px" onclick="addStop()" data-i18n-html="btn_addstop"></button>
+    <span class="fl" data-i18n="lbl_cssoutput"></span>
     <textarea class="res-area" id="grad-out" readonly rows="3" style="min-height:60px"></textarea>
     <div class="acts">
-      <button class="btn outline sm" onclick="copyOut('grad-out')">📋 Copy CSS</button>
-      <button class="btn outline sm" onclick="copyBg()">📋 Copy background</button>
+      <button class="btn outline sm" onclick="copyOut('grad-out')" data-i18n-html="btn_copycss"></button>
+      <button class="btn outline sm" onclick="copyBg()" data-i18n-html="btn_copybg"></button>
     </div>
   </div>
 </div>
 
 <!-- ══ CRON ══ -->
 <div class="sec" id="tab-cron">
-  <div class="sec-title">Cron Expression Generator</div>
-  <div class="sec-sub">Build cron expressions visually — supports standard 5-field & extended 6-field formats</div>
+  <div class="sec-title" data-i18n="cron_title"></div>
+  <div class="sec-sub" data-i18n="cron_sub"></div>
   <div class="card">
     <!-- 사람말 → Cron -->
-    <div class="card-title">Builder → Expression</div>
+    <div class="card-title" data-i18n="lbl_builder"></div>
     <div class="g3" style="margin-bottom:10px">
-      <div><span class="fl">Minute (0–59)</span><input class="fi" id="cr-min" value="0" oninput="buildCron()"></div>
-      <div><span class="fl">Hour (0–23)</span><input class="fi" id="cr-hr" value="9" oninput="buildCron()"></div>
-      <div><span class="fl">Day of Month (1–31)</span><input class="fi" id="cr-dom" value="*" oninput="buildCron()"></div>
-      <div><span class="fl">Month (1–12)</span><input class="fi" id="cr-mon" value="*" oninput="buildCron()"></div>
-      <div><span class="fl">Day of Week (0–7)</span><input class="fi" id="cr-dow" value="*" oninput="buildCron()"></div>
-      <div><span class="fl">Second (optional)</span><input class="fi" id="cr-sec" value="" placeholder="leave blank" oninput="buildCron()"></div>
+      <div><span class="fl" data-i18n="lbl_min"></span><input class="fi" id="cr-min" value="0" oninput="buildCron()"></div>
+      <div><span class="fl" data-i18n="lbl_hr"></span><input class="fi" id="cr-hr" value="9" oninput="buildCron()"></div>
+      <div><span class="fl" data-i18n="lbl_dom"></span><input class="fi" id="cr-dom" value="*" oninput="buildCron()"></div>
+      <div><span class="fl" data-i18n="lbl_mon"></span><input class="fi" id="cr-mon" value="*" oninput="buildCron()"></div>
+      <div><span class="fl" data-i18n="lbl_dow"></span><input class="fi" id="cr-dow" value="*" oninput="buildCron()"></div>
+      <div><span class="fl" data-i18n="lbl_sec"></span><input class="fi" id="cr-sec" value="" data-i18n-placeholder="ph_leaveblank" placeholder="leave blank" oninput="buildCron()"></div>
     </div>
     <div style="background:var(--s3);border:1px solid var(--bd2);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center">
       <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--ac2);letter-spacing:3px" id="cron-expr">0 9 * * *</div>
       <div style="font-size:13px;color:var(--tx2);margin-top:8px" id="cron-desc">Every day at 09:00</div>
     </div>
     <div class="acts">
-      <button class="btn outline sm" onclick="copyOut2('cron-expr')">📋 Copy</button>
+      <button class="btn outline sm" onclick="copyOut2('cron-expr')" data-i18n-html="btn_copy"></button>
     </div>
 
     <!-- 프리셋 -->
-    <div class="card-title" style="margin-top:16px">Quick Presets</div>
+    <div class="card-title" style="margin-top:16px" data-i18n="lbl_presets"></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px">
       <!-- JS로 채워짐 -->
     </div>
     <div id="cron-presets" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:7px"></div>
 
     <!-- 역방향: Expression → 설명 -->
-    <div class="card-title" style="margin-top:16px">Expression → Description</div>
+    <div class="card-title" style="margin-top:16px" data-i18n="lbl_exprdesc"></div>
     <div style="display:flex;gap:7px;margin-bottom:8px">
-      <input class="fi" id="cron-parse-in" placeholder="e.g.  */5 * * * *" style="flex:1">
-      <button class="btn sm" onclick="parseCron()">⚡ Parse</button>
+      <input class="fi" id="cron-parse-in" data-i18n-placeholder="ph_cronexample" placeholder="e.g.  */5 * * * *" style="flex:1">
+      <button class="btn sm" onclick="parseCron()" data-i18n-html="btn_parse"></button>
     </div>
     <div style="background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:12px 14px;min-height:42px;display:none" id="cron-parse-wrap">
-      <div style="font-size:11px;color:var(--tx3);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase">Meaning</div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase" data-i18n="lbl_meaning"></div>
       <div style="font-size:14px;color:var(--te2);font-weight:500" id="cron-parse-out"></div>
     </div>
   </div>
@@ -230,29 +239,29 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 
 <!-- ══ TIMEZONE ══ -->
 <div class="sec" id="tab-tz">
-  <div class="sec-title">Timezone Converter</div>
-  <div class="sec-sub">Convert time across global timezones — meeting planner · world clock</div>
+  <div class="sec-title" data-i18n="tz_title"></div>
+  <div class="sec-sub" data-i18n="tz_sub"></div>
   <div class="card">
     <div class="g2" style="margin-bottom:14px">
-      <div><span class="fl">Date & Time</span>
+      <div><span class="fl" data-i18n="lbl_datetime"></span>
         <input class="fi" id="tz-dt" type="datetime-local" oninput="convertTz()" style="font-family:'DM Sans',sans-serif"></div>
-      <div><span class="fl">From Timezone</span>
+      <div><span class="fl" data-i18n="lbl_fromtz"></span>
         <select class="fs" id="tz-from" onchange="convertTz()" style="font-family:'DM Sans',sans-serif"></select></div>
     </div>
-    <span class="fl">Convert To</span>
+    <span class="fl" data-i18n="lbl_convertto"></span>
     <div id="tz-targets" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px"></div>
     <div class="tz-grid" id="tz-result"></div>
   </div>
   <div class="card">
-    <div class="card-title">World Clock</div>
+    <div class="card-title" data-i18n="lbl_worldclock"></div>
     <div class="tz-grid" id="world-clock"></div>
   </div>
 </div>
 
 <!-- ══ LOREM IPSUM ══ -->
 <div class="sec" id="tab-lorem">
-  <div class="sec-title">Lorem Ipsum Generator</div>
-  <div class="sec-sub">English · Korean · Japanese · Chinese · Emoji — paragraphs, sentences, words</div>
+  <div class="sec-title" data-i18n="lorem_title"></div>
+  <div class="sec-sub" data-i18n="lorem_sub"></div>
   <div class="card">
     <div class="lorem-tag-row" id="lorem-lang-row">
       <button class="ltag on" onclick="setLoremLang('en',this)">English</button>
@@ -262,22 +271,22 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
       <button class="ltag" onclick="setLoremLang('emoji',this)">Emoji 🎉</button>
     </div>
     <div class="lorem-tag-row" id="lorem-type-row">
-      <button class="ltag on" onclick="setLoremType('paragraphs',this)">Paragraphs</button>
-      <button class="ltag" onclick="setLoremType('sentences',this)">Sentences</button>
-      <button class="ltag" onclick="setLoremType('words',this)">Words</button>
-      <button class="ltag" onclick="setLoremType('html',this)">HTML</button>
+      <button class="ltag on" onclick="setLoremType('paragraphs',this)" data-i18n="opt_paragraphs"></button>
+      <button class="ltag" onclick="setLoremType('sentences',this)" data-i18n="opt_sentences"></button>
+      <button class="ltag" onclick="setLoremType('words',this)" data-i18n="opt_words"></button>
+      <button class="ltag" onclick="setLoremType('html',this)" data-i18n="opt_html"></button>
     </div>
     <div class="g2" style="margin-bottom:14px">
-      <div><span class="fl">Count</span>
+      <div><span class="fl" data-i18n="lbl_count"></span>
         <input class="fi" id="lorem-n" type="number" value="3" min="1" max="100" style="font-family:'DM Sans',sans-serif"></div>
       <div style="display:flex;align-items:flex-end">
-        <button class="btn go full" onclick="genLorem()">⚡ Generate</button>
+        <button class="btn go full" onclick="genLorem()" data-i18n-html="btn_generate"></button>
       </div>
     </div>
     <textarea class="res-area" id="lorem-out" readonly rows="10" style="min-height:200px"></textarea>
     <div class="acts">
-      <button class="btn outline sm" onclick="copyOut('lorem-out')">📋 Copy</button>
-      <button class="btn outline sm" onclick="genLorem()">🔄 Refresh</button>
+      <button class="btn outline sm" onclick="copyOut('lorem-out')" data-i18n-html="btn_copy"></button>
+      <button class="btn outline sm" onclick="genLorem()" data-i18n-html="btn_refresh"></button>
     </div>
   </div>
 </div>
@@ -286,6 +295,143 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 <div id="toast"></div>
 <script>
 const $=id=>document.getElementById(id);
+
+/* ════ I18N (§5 표준 구조) ════
+   범위: 헤더 탭명 / 각 탭 제목·설명 / 공용 버튼·라벨류.
+   JSON/CSV/XML/YAML, cron 필드명(Minute/Hour 등), Linear/Radial/Conic 같은
+   개발자 전용 기술 용어는 전 세계 개발자가 영어 원문 그대로 통용하므로
+   의도적으로 번역하지 않음(효과성 분석 결과 — 하단 커밋 메시지 참고). */
+const I18N = {
+  ko: {
+    page_title: 'pomiai Dev Tools 2',
+    tab_conv: '⇄ 데이터 변환', tab_grad: '🎨 CSS 그라디언트', tab_cron: '⏰ Cron',
+    tab_tz: '🌍 타임존', tab_lorem: '📝 Lorem Ipsum',
+    conv_title: '데이터 포맷 변환기',
+    conv_sub: 'JSON ↔ CSV ↔ XML ↔ YAML — 즉시 변환 · 브라우저 내 처리 · 업로드 없음',
+    ph_paste: '여기에 데이터를 붙여넣으세요...',
+    lbl_input: '입력', lbl_output: '출력',
+    btn_convert: '⚡ 변환', btn_sample: '샘플 불러오기', btn_clear: '지우기',
+    btn_copy: '📋 복사', btn_download: '⬇ 다운로드', btn_useinput: '↑ 입력으로 사용',
+    grad_title: 'CSS 그라디언트 생성기',
+    grad_sub: 'Linear · Radial · Conic — 실시간 미리보기 · CSS 복사 · 색상 단계 편집',
+    lbl_type: '유형', lbl_angle: '각도', lbl_preset: '프리셋', opt_custom: '커스텀',
+    lbl_colorstops: '색상 단계', btn_addstop: '+ 단계 추가',
+    lbl_cssoutput: 'CSS 출력', btn_copycss: '📋 CSS 복사', btn_copybg: '📋 background 복사',
+    cron_title: 'Cron 표현식 생성기',
+    cron_sub: '클릭만으로 cron 표현식 생성 — 표준 5필드 및 확장 6필드 형식 지원',
+    lbl_builder: '빌더 → 표현식',
+    lbl_min: '분 (0–59)', lbl_hr: '시 (0–23)', lbl_dom: '일 (1–31)',
+    lbl_mon: '월 (1–12)', lbl_dow: '요일 (0–7)', lbl_sec: '초 (선택)',
+    ph_leaveblank: '비워두면 미사용', btn_parse: '⚡ 해석',
+    lbl_presets: '빠른 프리셋', lbl_exprdesc: '표현식 → 설명',
+    ph_cronexample: '예: */5 * * * *', lbl_meaning: '의미',
+    tz_title: '타임존 변환기',
+    tz_sub: '전 세계 시차를 한 번에 변환 — 회의 시간 계획 · 세계 시계',
+    lbl_datetime: '날짜 & 시간', lbl_fromtz: '기준 타임존', lbl_convertto: '변환 대상',
+    lbl_worldclock: '세계 시계',
+    lorem_title: 'Lorem Ipsum 생성기',
+    lorem_sub: '영어 · 한국어 · 일본어 · 중국어 · 이모지 — 문단·문장·단어 단위',
+    lbl_count: '개수', opt_paragraphs: '문단', opt_sentences: '문장', opt_words: '단어', opt_html: 'HTML',
+    btn_generate: '⚡ 생성', btn_refresh: '🔄 새로고침',
+  },
+  en: {
+    page_title: 'pomiai Dev Tools 2',
+    tab_conv: '⇄ Data Convert', tab_grad: '🎨 CSS Gradient', tab_cron: '⏰ Cron',
+    tab_tz: '🌍 Timezone', tab_lorem: '📝 Lorem Ipsum',
+    conv_title: 'Data Format Converter',
+    conv_sub: 'JSON ↔ CSV ↔ XML ↔ YAML — instant conversion · local processing · no upload',
+    ph_paste: 'Paste your data here...',
+    lbl_input: 'Input', lbl_output: 'Output',
+    btn_convert: '⚡ Convert', btn_sample: 'Load Sample', btn_clear: 'Clear',
+    btn_copy: '📋 Copy', btn_download: '⬇ Download', btn_useinput: '↑ Use as Input',
+    grad_title: 'CSS Gradient Generator',
+    grad_sub: 'Linear · Radial · Conic — live preview · copy CSS · stops editor',
+    lbl_type: 'Type', lbl_angle: 'Angle', lbl_preset: 'Preset', opt_custom: 'Custom',
+    lbl_colorstops: 'Color Stops', btn_addstop: '+ Add Stop',
+    lbl_cssoutput: 'CSS Output', btn_copycss: '📋 Copy CSS', btn_copybg: '📋 Copy background',
+    cron_title: 'Cron Expression Generator',
+    cron_sub: 'Build cron expressions visually — supports standard 5-field & extended 6-field formats',
+    lbl_builder: 'Builder → Expression',
+    lbl_min: 'Minute (0–59)', lbl_hr: 'Hour (0–23)', lbl_dom: 'Day of Month (1–31)',
+    lbl_mon: 'Month (1–12)', lbl_dow: 'Day of Week (0–7)', lbl_sec: 'Second (optional)',
+    ph_leaveblank: 'leave blank', btn_parse: '⚡ Parse',
+    lbl_presets: 'Quick Presets', lbl_exprdesc: 'Expression → Description',
+    ph_cronexample: 'e.g.  */5 * * * *', lbl_meaning: 'Meaning',
+    tz_title: 'Timezone Converter',
+    tz_sub: 'Convert time across global timezones — meeting planner · world clock',
+    lbl_datetime: 'Date & Time', lbl_fromtz: 'From Timezone', lbl_convertto: 'Convert To',
+    lbl_worldclock: 'World Clock',
+    lorem_title: 'Lorem Ipsum Generator',
+    lorem_sub: 'English · Korean · Japanese · Chinese · Emoji — paragraphs, sentences, words',
+    lbl_count: 'Count', opt_paragraphs: 'Paragraphs', opt_sentences: 'Sentences', opt_words: 'Words', opt_html: 'HTML',
+    btn_generate: '⚡ Generate', btn_refresh: '🔄 Refresh',
+  },
+  ja: {
+    page_title: 'pomiai Dev Tools 2',
+    tab_conv: '⇄ データ変換', tab_grad: '🎨 CSSグラデーション', tab_cron: '⏰ Cron',
+    tab_tz: '🌍 タイムゾーン', tab_lorem: '📝 Lorem Ipsum',
+    conv_title: 'データフォーマット変換ツール',
+    conv_sub: 'JSON ↔ CSV ↔ XML ↔ YAML — 即時変換 · ブラウザ内処理 · アップロード不要',
+    ph_paste: 'ここにデータを貼り付けてください...',
+    lbl_input: '入力', lbl_output: '出力',
+    btn_convert: '⚡ 変換', btn_sample: 'サンプルを読み込む', btn_clear: 'クリア',
+    btn_copy: '📋 コピー', btn_download: '⬇ ダウンロード', btn_useinput: '↑ 入力として使用',
+    grad_title: 'CSSグラデーション生成ツール',
+    grad_sub: 'Linear · Radial · Conic — リアルタイムプレビュー · CSSコピー · ストップ編集',
+    lbl_type: 'タイプ', lbl_angle: '角度', lbl_preset: 'プリセット', opt_custom: 'カスタム',
+    lbl_colorstops: 'カラーストップ', btn_addstop: '+ ストップ追加',
+    lbl_cssoutput: 'CSS出力', btn_copycss: '📋 CSSをコピー', btn_copybg: '📋 backgroundをコピー',
+    cron_title: 'Cron式ジェネレーター',
+    cron_sub: 'クリックだけでcron式を作成 — 標準5フィールド・拡張6フィールド対応',
+    lbl_builder: 'ビルダー → 式',
+    lbl_min: '分 (0–59)', lbl_hr: '時 (0–23)', lbl_dom: '日 (1–31)',
+    lbl_mon: '月 (1–12)', lbl_dow: '曜日 (0–7)', lbl_sec: '秒(任意)',
+    ph_leaveblank: '空欄で未使用', btn_parse: '⚡ 解析',
+    lbl_presets: 'クイックプリセット', lbl_exprdesc: '式 → 説明',
+    ph_cronexample: '例: */5 * * * *', lbl_meaning: '意味',
+    tz_title: 'タイムゾーン変換ツール',
+    tz_sub: '世界の時差を一度に変換 — 会議時間の調整 · 世界時計',
+    lbl_datetime: '日付と時刻', lbl_fromtz: '基準タイムゾーン', lbl_convertto: '変換先',
+    lbl_worldclock: '世界時計',
+    lorem_title: 'Lorem Ipsum ジェネレーター',
+    lorem_sub: '英語 · 韓国語 · 日本語 · 中国語 · 絵文字 — 段落・文・単語単位',
+    lbl_count: '個数', opt_paragraphs: '段落', opt_sentences: '文', opt_words: '単語', opt_html: 'HTML',
+    btn_generate: '⚡ 生成', btn_refresh: '🔄 更新',
+  },
+};
+
+/* 언어 감지 우선순위: URL ?lang= → 브라우저 언어 → 기본값(ko) — 프로젝트 §5 표준 */
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+    const k = el.dataset.i18nHtml;
+    if (typeof t[k] === 'string') el.innerHTML = t[k];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    const k = el.dataset.i18nPlaceholder;
+    if (typeof t[k] === 'string') el.placeholder = t[k];
+  });
+  const pt = document.getElementById('page-title');
+  if (pt) pt.textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+
 let toastTid;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTid);toastTid=setTimeout(()=>t.classList.remove('show'),2400);}
 function goTab(id){
