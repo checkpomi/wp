@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<!--
+  VERSION LOG (pomiai-media-converter.html)
+  ===================================================
+  2026.08.15 — v1.1.0 (다국어 표준 구조 적용)
+    · ?lang= URL 파라미터 → 브라우저 언어 → 기본값(ko) 자동 감지 추가
+      (프로젝트 §5 표준). 기존 수동 언어 전환 버튼은 그대로 유지되며,
+      버튼 클릭 시에도 currentLang이 갱신됨
+    · <title id="page-title"> 및 <html id="html-root"> 추가
+    · 캐시 무효화 시 ?v=2026.08.15 쿼리스트링 사용 권장
+  (이전 버전: VERSION LOG 없음 — 최초 이력 미기록)
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title id="page-title">pomiai Media Converter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/ffmpeg.min.js"></script>
+<style>
+  :root {
+    --bg: #0c0e13;
+    --panel: #14171f;
+    --panel-2: #1c202b;
+    --accent: #6c8cff;
+    --accent-2: #35e0a8;
+    --grad: linear-gradient(135deg, #6c8cff 0%, #8f6cff 100%);
+    --text: #eef0f5;
+    --muted: #99a0b0;
+    --border: #262b37;
+    --danger: #ff6b6b;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Noto Sans KR", "Noto Sans JP", sans-serif;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(108,140,255,0.12), transparent 40%),
+      radial-gradient(circle at 85% 10%, rgba(53,224,168,0.08), transparent 35%),
+      var(--bg);
+    color: var(--text);
+    padding: 28px 16px 60px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+
+  header.top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand .mark {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    background: var(--grad);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px; color: white;
+    flex-shrink: 0;
+  }
+  .brand .name { font-weight: 800; font-size: 17px; letter-spacing: -0.3px; }
+  .brand .name span { color: var(--accent-2); }
+
+  .lang-switch {
+    display: flex;
+    gap: 4px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3px;
+  }
+  .lang-switch button {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .lang-switch button.active {
+    background: var(--grad);
+    color: white;
+  }
+
+  h1 { font-size: 21px; margin: 6px 0 4px; letter-spacing: -0.3px; }
+  .sub { color: var(--muted); font-size: 13.5px; margin-bottom: 14px; line-height: 1.5; }
+
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .badge {
+    font-size: 12px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .badge b { color: var(--accent-2); font-weight: 700; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 18px;
+  }
+
+  .drop {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 32px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .drop:hover, .drop.drag {
+    border-color: var(--accent);
+    background: rgba(108,140,255,0.06);
+  }
+  .drop .icon { font-size: 30px; margin-bottom: 8px; }
+  .drop .main { font-size: 14.5px; font-weight: 700; }
+  .drop .hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
+  input[type=file] { display: none; }
+
+  .queue { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .bulk-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .bulk-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .item {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .item-name {
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 260px;
+  }
+  .item-size { font-size: 11.5px; color: var(--muted); flex-shrink: 0; }
+  .item-remove {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 16px; line-height: 1; padding: 2px 6px;
+  }
+  .item-remove:hover { color: var(--danger); }
+  .item-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  select {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .item-progress {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--panel);
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .item-progress-inner {
+    height: 100%; width: 0%;
+    background: var(--grad);
+    transition: width .2s ease;
+  }
+  .item-status { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+  .item-status.done { color: var(--accent-2); }
+  .item-status.error { color: var(--danger); }
+  .item-download {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #08251a;
+    background: var(--accent-2);
+    padding: 7px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--grad); color: white; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-ghost {
+    background: var(--panel-2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    flex: 0 0 auto;
+    padding: 13px 16px;
+  }
+
+  .faq h2 { font-size: 15px; margin: 0 0 12px; }
+  .faq-item { margin-bottom: 14px; }
+  .faq-item .q { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; }
+  .faq-item .a { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 24px;
+    line-height: 1.7;
+  }
+  footer a { color: var(--accent-2); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark">p</div>
+      <div class="name">pom<span>i</span>ai <span style="color:var(--muted);font-weight:600;font-size:13px;">converter</span></div>
+    </div>
+    <div class="lang-switch">
+      <button data-lang="ko" class="active">한국어</button>
+      <button data-lang="en">EN</button>
+      <button data-lang="ja">日本語</button>
+    </div>
+  </header>
+
+  <h1 data-i18n="title"></h1>
+  <div class="sub" data-i18n="subtitle"></div>
+
+  <div class="badge-row">
+    <div class="badge">🔒 <b data-i18n="badgePrivacy"></b></div>
+    <div class="badge">⚡ <b data-i18n="badgeFormats"></b></div>
+    <div class="badge">🌐 <b data-i18n="badgeFree"></b></div>
+  </div>
+
+  <div class="card">
+    <div class="drop" id="drop">
+      <div class="icon">🎧</div>
+      <div class="main" data-i18n="dropMain"></div>
+      <div class="hint" data-i18n="dropHint"></div>
+      <input type="file" id="fileInput" multiple accept=".mp3,.wav,.flac,.ogg,.m4a,.aac,.mp4,.webm,.mov,.avi,.mkv">
+    </div>
+
+    <div class="bulk-row" id="bulkRow" style="display:none;"></div>
+
+    <div class="queue" id="queue"></div>
+
+    <div class="actions" id="actionsRow" style="display:none;">
+      <button class="btn btn-primary" id="convertAllBtn" data-i18n="convertAll"></button>
+      <button class="btn btn-ghost" id="clearAllBtn" data-i18n="clearAll"></button>
+    </div>
+  </div>
+
+  <div class="card faq">
+    <h2 data-i18n="faqTitle"></h2>
+    <div class="faq-item">
+      <div class="q" data-i18n="faq1q"></div>
+      <div class="a" data-i18n="faq1a"></div>
+    </div>
+    <div class="faq-item">
+      <div class="q" data-i18n="faq2q"></div>
+      <div class="a" data-i18n="faq2a"></div>
+    </div>
+    <div class="faq-item">
+      <div class="q" data-i18n="faq3q"></div>
+      <div class="a" data-i18n="faq3a"></div>
+    </div>
+  </div>
+
+  <footer data-i18n="footer"></footer>
+</div>
+
+<script>
+/* ---------- i18n ---------- */
+const I18N = {
+  ko: {
+    title: "글로벌 미디어 포맷 변환기",
+    subtitle: "오디오·비디오 파일을 브라우저 안에서 바로 변환하세요. 서버 업로드 없이, 설치 없이, 회원가입 없이.",
+    badgePrivacy: "100% 브라우저 처리",
+    badgeFormats: "10+ 포맷 지원",
+    badgeFree: "무료 · 워터마크 없음",
+    dropMain: "파일을 드래그하거나 클릭해서 선택 (여러 개 가능)",
+    dropHint: "MP3 · WAV · FLAC · OGG · M4A · MP4 · WEBM · MOV · AVI · MKV",
+    convertAll: "전체 변환 시작",
+    clearAll: "전체 지우기",
+    formatLabel: "출력 포맷",
+    qualityLabel: "음질",
+    bulkAudioLabel: "🎧 오디오 전체 적용",
+    bulkVideoLabel: "🎬 비디오 전체 적용",
+    bulkHint: "대기 중인 파일에 한 번에 적용되고, 개별 항목에서 다시 바꿀 수 있어요",
+    statusPending: "대기 중",
+    statusConverting: "변환 중...",
+    statusLoadingEngine: "엔진 로딩 중 (최초 1회)...",
+    statusDone: "완료",
+    statusError: "오류",
+    download: "다운로드",
+    faqTitle: "자주 묻는 질문",
+    faq1q: "파일이 서버에 업로드되나요?",
+    faq1a: "아니요. 모든 변환은 ffmpeg.wasm 엔진을 통해 사용자 브라우저 내부에서만 처리됩니다. 파일이 외부 서버로 전송되지 않습니다.",
+    faq2q: "몇 개까지 한 번에 변환할 수 있나요?",
+    faq2a: "개수 제한은 없지만, 브라우저 메모리를 사용하므로 너무 큰 파일을 다수 올리면 느려질 수 있습니다. 일반적인 음원/짧은 영상 파일은 문제없이 처리됩니다.",
+    faq3q: "변환 품질은 어떻게 설정하나요?",
+    faq3a: "MP3, AAC, OGG처럼 압축 포맷으로 변환할 때는 128~320kbps 중 음질을 선택할 수 있습니다. WAV, FLAC은 무손실이라 별도 설정이 필요 없습니다.",
+    footer: "Built by <a href='#'>pomiai</a> · 브라우저에서 안전하게 변환하세요."
+  },
+  en: {
+    title: "Global Media Format Converter",
+    subtitle: "Convert audio and video files right in your browser. No upload, no install, no sign-up.",
+    badgePrivacy: "100% in-browser",
+    badgeFormats: "10+ formats",
+    badgeFree: "Free · No watermark",
+    dropMain: "Drag & drop files here, or click to select (multiple allowed)",
+    dropHint: "MP3 · WAV · FLAC · OGG · M4A · MP4 · WEBM · MOV · AVI · MKV",
+    convertAll: "Convert all",
+    clearAll: "Clear all",
+    formatLabel: "Output format",
+    qualityLabel: "Quality",
+    bulkAudioLabel: "🎧 Apply to all audio",
+    bulkVideoLabel: "🎬 Apply to all video",
+    bulkHint: "Applies to pending files; you can still override any file individually",
+    statusPending: "Pending",
+    statusConverting: "Converting...",
+    statusLoadingEngine: "Loading engine (first time only)...",
+    statusDone: "Done",
+    statusError: "Error",
+    download: "Download",
+    faqTitle: "FAQ",
+    faq1q: "Are my files uploaded to a server?",
+    faq1a: "No. Every conversion runs entirely inside your browser using ffmpeg.wasm. Nothing is sent to any server.",
+    faq2q: "How many files can I convert at once?",
+    faq2a: "There's no hard limit, but very large batches may slow down depending on your browser's available memory. Typical audio files and short clips work smoothly.",
+    faq3q: "How do I control output quality?",
+    faq3a: "For compressed formats like MP3, AAC, and OGG, you can pick a bitrate from 128 to 320 kbps. WAV and FLAC are lossless, so no bitrate setting is needed.",
+    footer: "Built by <a href='#'>pomiai</a> · Convert safely, right in your browser."
+  },
+  ja: {
+    title: "グローバルメディアフォーマット変換ツール",
+    subtitle: "音声・動画ファイルをブラウザ内で直接変換できます。アップロード不要、インストール不要、会員登録不要。",
+    badgePrivacy: "100%ブラウザ内処理",
+    badgeFormats: "10種類以上のフォーマット対応",
+    badgeFree: "無料・透かしなし",
+    dropMain: "ファイルをドラッグ、またはクリックして選択(複数可)",
+    dropHint: "MP3 · WAV · FLAC · OGG · M4A · MP4 · WEBM · MOV · AVI · MKV",
+    convertAll: "すべて変換",
+    clearAll: "すべてクリア",
+    formatLabel: "出力フォーマット",
+    qualityLabel: "音質",
+    bulkAudioLabel: "🎧 音声にすべて適用",
+    bulkVideoLabel: "🎬 動画にすべて適用",
+    bulkHint: "待機中のファイルに適用されます。個別に変更することも可能です",
+    statusPending: "待機中",
+    statusConverting: "変換中...",
+    statusLoadingEngine: "エンジン読み込み中(初回のみ)...",
+    statusDone: "完了",
+    statusError: "エラー",
+    download: "ダウンロード",
+    faqTitle: "よくある質問",
+    faq1q: "ファイルはサーバーにアップロードされますか?",
+    faq1a: "いいえ。すべての変換はffmpeg.wasmエンジンを使ってブラウザ内だけで処理されます。外部サーバーに送信されることはありません。",
+    faq2q: "一度に何個まで変換できますか?",
+    faq2a: "件数の上限はありませんが、ブラウザのメモリを使用するため、大量かつ大きなファイルは処理が遅くなる場合があります。一般的な音源や短い動画は問題なく処理できます。",
+    faq3q: "変換の音質はどう設定しますか?",
+    faq3a: "MP3、AAC、OGGなど圧縮フォーマットに変換する場合、128〜320kbpsの範囲でビットレートを選べます。WAVとFLACはロスレスのため設定は不要です。",
+    footer: "Built by <a href='#'>pomiai</a> · ブラウザで安全に変換しましょう。"
+  }
+};
+/* 언어 감지 우선순위: URL ?lang= → 브라우저 언어 → 기본값(ko) — 프로젝트 §5 표준 */
+let currentLang = (function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  return (urlLang && I18N[urlLang]) ? urlLang
+       : (I18N[browserLang]         ? browserLang : 'ko');
+})();
+function applyI18n() {
+  const dict = I18N[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) el.innerHTML = dict[key];
+  });
+  document.documentElement.lang = currentLang;
+  const pt = document.getElementById('page-title');
+  if (pt && dict.title) pt.textContent = dict.title;
+  if (dict.title) document.title = 'pomiai · ' + dict.title;
+  document.querySelectorAll('.lang-switch button').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === currentLang));
+  renderQueue();
+}
+document.querySelectorAll('.lang-switch button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentLang = btn.dataset.lang;
+    applyI18n();
+  });
+});
+
+/* ---------- format config ---------- */
+const AUDIO_EXT = ['mp3','wav','flac','ogg','m4a','aac'];
+const VIDEO_EXT = ['mp4','webm','mov','avi','mkv'];
+const AUDIO_OUTPUTS = ['mp3','wav','flac','ogg','m4a'];
+const VIDEO_OUTPUTS = ['mp4','webm'];
+const MIME = { mp3:'audio/mpeg', wav:'audio/wav', flac:'audio/flac', ogg:'audio/ogg', m4a:'audio/mp4', mp4:'video/mp4', webm:'video/webm' };
+
+function categoryOf(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (AUDIO_EXT.includes(ext)) return 'audio';
+  if (VIDEO_EXT.includes(ext)) return 'video';
+  return null;
+}
+function extOf(name) { return name.split('.').pop().toLowerCase(); }
+function defaultTarget(ext, category) {
+  const opts = category === 'audio' ? AUDIO_OUTPUTS : VIDEO_OUTPUTS;
+  if (ext === 'mp3') return 'wav';
+  if (ext === 'wav') return 'mp3';
+  if (ext === 'webm') return 'mp4';
+  if (ext === 'mp4') return 'webm';
+  return opts.find(o => o !== ext) || opts[0];
+}
+function needsBitrate(ext) { return ['mp3','ogg','m4a'].includes(ext); }
+function buildArgs(inName, outName, targetExt, bitrate, category) {
+  if (category === 'audio') {
+    if (targetExt === 'wav' || targetExt === 'flac') return ['-i', inName, outName];
+    if (targetExt === 'mp3') return ['-i', inName, '-b:a', bitrate + 'k', outName];
+    if (targetExt === 'm4a') return ['-i', inName, '-b:a', bitrate + 'k', '-c:a', 'aac', outName];
+    if (targetExt === 'ogg') return ['-i', inName, '-b:a', bitrate + 'k', '-c:a', 'libvorbis', outName];
+  } else {
+    if (targetExt === 'mp4') return ['-i', inName, '-c:v', 'libx264', '-preset', 'ultrafast', '-c:a', 'aac', outName];
+    if (targetExt === 'webm') return ['-i', inName, '-c:v', 'libvpx', '-crf', '30', '-b:v', '0', '-c:a', 'libvorbis', outName];
+  }
+  return ['-i', inName, outName];
+}
+
+/* ---------- state ---------- */
+let queueItems = [];
+let itemCounter = 0;
+let ffmpeg = null;
+let ffmpegLoaded = false;
+let converting = false;
+
+const dropEl = document.getElementById('drop');
+const fileInput = document.getElementById('fileInput');
+const queueEl = document.getElementById('queue');
+const actionsRow = document.getElementById('actionsRow');
+const convertAllBtn = document.getElementById('convertAllBtn');
+const clearAllBtn = document.getElementById('clearAllBtn');
+const bulkRowEl = document.getElementById('bulkRow');
+let bulkAudioTarget = AUDIO_OUTPUTS[0];
+let bulkVideoTarget = VIDEO_OUTPUTS[0];
+let bulkBitrate = 192;
+
+dropEl.addEventListener('click', () => fileInput.click());
+dropEl.addEventListener('dragover', e => { e.preventDefault(); dropEl.classList.add('drag'); });
+dropEl.addEventListener('dragleave', () => dropEl.classList.remove('drag'));
+dropEl.addEventListener('drop', e => {
+  e.preventDefault();
+  dropEl.classList.remove('drag');
+  addFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', e => { addFiles(e.target.files); fileInput.value = ''; });
+
+function addFiles(fileList) {
+  const hadAudioBefore = queueItems.some(i => i.category === 'audio');
+  const hadVideoBefore = queueItems.some(i => i.category === 'video');
+  Array.from(fileList).forEach(file => {
+    const category = categoryOf(file.name);
+    if (!category) return;
+    const ext = extOf(file.name);
+    itemCounter++;
+    queueItems.push({
+      id: 'f' + itemCounter,
+      file,
+      category,
+      ext,
+      target: defaultTarget(ext, category),
+      bitrate: 192,
+      status: 'pending',
+      progress: 0,
+      downloadUrl: null,
+      downloadName: null,
+      errorMsg: null
+    });
+  });
+  if (!hadAudioBefore) {
+    const firstAudio = queueItems.find(i => i.category === 'audio');
+    if (firstAudio) { bulkAudioTarget = firstAudio.target; bulkBitrate = firstAudio.bitrate; }
+  }
+  if (!hadVideoBefore) {
+    const firstVideo = queueItems.find(i => i.category === 'video');
+    if (firstVideo) bulkVideoTarget = firstVideo.target;
+  }
+  renderQueue();
+}
+
+function renderBulkRow() {
+  const dict = I18N[currentLang];
+  const hasAudio = queueItems.some(i => i.category === 'audio');
+  const hasVideo = queueItems.some(i => i.category === 'video');
+
+  if (!hasAudio && !hasVideo) {
+    bulkRowEl.style.display = 'none';
+    bulkRowEl.innerHTML = '';
+    return;
+  }
+  bulkRowEl.style.display = 'flex';
+
+  let html = '';
+  if (hasAudio) {
+    html += `
+      <div class="bulk-group">
+        ${dict.bulkAudioLabel}
+        <select data-role="bulk-audio-target">
+          ${AUDIO_OUTPUTS.map(o => `<option value="${o}" ${o === bulkAudioTarget ? 'selected' : ''}>${o.toUpperCase()}</option>`).join('')}
+        </select>
+        ${needsBitrate(bulkAudioTarget) ? `
+        <select data-role="bulk-bitrate">
+          ${[128,192,256,320].map(b => `<option value="${b}" ${b === bulkBitrate ? 'selected' : ''}>${b}kbps</option>`).join('')}
+        </select>` : ''}
+      </div>`;
+  }
+  if (hasVideo) {
+    html += `
+      <div class="bulk-group">
+        ${dict.bulkVideoLabel}
+        <select data-role="bulk-video-target">
+          ${VIDEO_OUTPUTS.map(o => `<option value="${o}" ${o === bulkVideoTarget ? 'selected' : ''}>${o.toUpperCase()}</option>`).join('')}
+        </select>
+      </div>`;
+  }
+  html += `<div style="flex-basis:100%;font-size:11px;color:var(--muted);">${dict.bulkHint}</div>`;
+  bulkRowEl.innerHTML = html;
+}
+
+bulkRowEl.addEventListener('change', e => {
+  const role = e.target.dataset.role;
+  if (!role) return;
+  if (role === 'bulk-audio-target') {
+    bulkAudioTarget = e.target.value;
+    queueItems.forEach(i => {
+      if (i.category === 'audio' && i.status !== 'converting' && i.status !== 'done') {
+        i.target = bulkAudioTarget;
+        i.bitrate = bulkBitrate;
+      }
+    });
+  } else if (role === 'bulk-video-target') {
+    bulkVideoTarget = e.target.value;
+    queueItems.forEach(i => {
+      if (i.category === 'video' && i.status !== 'converting' && i.status !== 'done') {
+        i.target = bulkVideoTarget;
+      }
+    });
+  } else if (role === 'bulk-bitrate') {
+    bulkBitrate = parseInt(e.target.value, 10);
+    queueItems.forEach(i => {
+      if (i.category === 'audio' && needsBitrate(i.target) && i.status !== 'converting' && i.status !== 'done') {
+        i.bitrate = bulkBitrate;
+      }
+    });
+  }
+  renderQueue();
+});
+
+function renderQueue() {
+  const dict = I18N[currentLang];
+  queueEl.innerHTML = '';
+  actionsRow.style.display = queueItems.length ? 'flex' : 'none';
+  renderBulkRow();
+
+  queueItems.forEach(item => {
+    const outputs = item.category === 'audio' ? AUDIO_OUTPUTS : VIDEO_OUTPUTS;
+    const div = document.createElement('div');
+    div.className = 'item';
+
+    const sizeMB = (item.file.size / (1024*1024)).toFixed(2) + ' MB';
+    let statusText = dict.statusPending;
+    let statusClass = '';
+    if (item.status === 'loading') statusText = dict.statusLoadingEngine;
+    if (item.status === 'converting') statusText = dict.statusConverting;
+    if (item.status === 'done') { statusText = dict.statusDone; statusClass = 'done'; }
+    if (item.status === 'error') { statusText = dict.statusError + ': ' + (item.errorMsg || ''); statusClass = 'error'; }
+
+    div.innerHTML = `
+      <div class="item-top">
+        <div class="item-name" title="${item.file.name}">${item.file.name}</div>
+        <div class="item-size">${sizeMB}</div>
+        <button class="item-remove" data-remove="${item.id}">✕</button>
+      </div>
+      <div class="item-controls">
+        <label style="font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:5px;">
+          ${dict.formatLabel}
+          <select data-role="target" data-id="${item.id}">
+            ${outputs.map(o => `<option value="${o}" ${o === item.target ? 'selected' : ''}>${o.toUpperCase()}</option>`).join('')}
+          </select>
+        </label>
+        ${needsBitrate(item.target) ? `
+        <label style="font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:5px;">
+          ${dict.qualityLabel}
+          <select data-role="bitrate" data-id="${item.id}">
+            ${[128,192,256,320].map(b => `<option value="${b}" ${b === item.bitrate ? 'selected' : ''}>${b}kbps</option>`).join('')}
+          </select>
+        </label>` : ''}
+      </div>
+      <div class="item-progress"><div class="item-progress-inner" style="width:${item.progress}%"></div></div>
+      <div class="item-status ${statusClass}">${statusText}</div>
+      ${item.status === 'done' ? `<a class="item-download" href="${item.downloadUrl}" download="${item.downloadName}">⬇ ${dict.download} (${item.downloadName})</a>` : ''}
+    `;
+    queueEl.appendChild(div);
+  });
+}
+
+queueEl.addEventListener('change', e => {
+  const id = e.target.dataset.id;
+  if (!id) return;
+  const item = queueItems.find(i => i.id === id);
+  if (!item) return;
+  if (e.target.dataset.role === 'target') item.target = e.target.value;
+  if (e.target.dataset.role === 'bitrate') item.bitrate = parseInt(e.target.value, 10);
+  renderQueue();
+});
+queueEl.addEventListener('click', e => {
+  const id = e.target.dataset.remove;
+  if (!id) return;
+  queueItems = queueItems.filter(i => i.id !== id);
+  renderQueue();
+});
+clearAllBtn.addEventListener('click', () => {
+  queueItems.forEach(i => { if (i.downloadUrl) URL.revokeObjectURL(i.downloadUrl); });
+  queueItems = [];
+  renderQueue();
+});
+
+async function toBlobURL(url, mimeType) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('resource load failed: ' + url);
+  const buf = await res.arrayBuffer();
+  return URL.createObjectURL(new Blob([buf], { type: mimeType }));
+}
+
+async function ensureFFmpeg(onProgress) {
+  if (ffmpegLoaded) return;
+  const { FFmpeg } = FFmpegWASM;
+  ffmpeg = new FFmpeg();
+  ffmpeg.on('progress', ({ progress }) => {
+    if (onProgress) onProgress(Math.min(100, Math.max(0, Math.round(progress * 100))));
+  });
+  const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm';
+  const classWorkerURL = 'https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/814.ffmpeg.js';
+  await ffmpeg.load({
+    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+    classWorkerURL: await toBlobURL(classWorkerURL, 'text/javascript'),
+  });
+  ffmpegLoaded = true;
+}
+
+convertAllBtn.addEventListener('click', async () => {
+  if (converting) return;
+  converting = true;
+  convertAllBtn.disabled = true;
+
+  for (const item of queueItems) {
+    if (item.status === 'done') continue;
+    try {
+      if (!ffmpegLoaded) {
+        item.status = 'loading';
+        renderQueue();
+        await ensureFFmpeg(pct => { item.progress = pct; renderQueue(); });
+      }
+      item.status = 'converting';
+      item.progress = 0;
+      renderQueue();
+
+      const inName = 'input_' + item.id + '.' + item.ext;
+      const outName = 'output_' + item.id + '.' + item.target;
+      const data = new Uint8Array(await item.file.arrayBuffer());
+      await ffmpeg.writeFile(inName, data);
+
+      const args = buildArgs(inName, outName, item.target, item.bitrate, item.category);
+      await ffmpeg.exec(args);
+
+      const outData = await ffmpeg.readFile(outName);
+      const mime = MIME[item.target] || 'application/octet-stream';
+      const blob = new Blob([outData.buffer], { type: mime });
+      const baseName = item.file.name.replace(/\.[^/.]+$/, '');
+
+      item.downloadUrl = URL.createObjectURL(blob);
+      item.downloadName = baseName + '.' + item.target;
+      item.status = 'done';
+      item.progress = 100;
+
+      await ffmpeg.deleteFile(inName);
+      await ffmpeg.deleteFile(outName);
+    } catch (err) {
+      console.error(err);
+      item.status = 'error';
+      item.errorMsg = (err && err.message) ? err.message : String(err);
+    }
+    renderQueue();
+  }
+
+  converting = false;
+  convertAllBtn.disabled = false;
+});
+
+applyI18n();
+</script>
+</body>
+</html>
