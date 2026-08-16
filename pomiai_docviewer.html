@@ -1,9 +1,20 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" id="html-root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>pomiai 문서 뷰어</title>
+<!--
+===================================================
+pomiai_docviewer.html — 버전 로그
+===================================================
+현재 버전: 2026.08.16 | 최종 수정: 2026.08.16
+변경 내역: §5 표준 다국어 구조(I18N 객체 + data-i18n) 적용, ko/en/ja 지원.
+범위: 툴바·드롭존 등 정적 UI 텍스트만 번역. 파일 파싱 오류 메시지 등
+JS 템플릿 리터럴 안에 깊게 박힌 동적 문구는 이번 범위에서 제외.
+캐시 무효화: ?v=2026.08.16
+===================================================
+-->
+<title id="page-title">pomiai 문서 뷰어</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -236,16 +247,16 @@ mark.hl.cur{background:#ff7800;color:#fff}
   <div class="tb-sep"></div>
   <button class="tb-btn" id="btn-sidebar" onclick="toggleSidebar()" title="목차">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    <span>목차</span>
+    <span data-i18n="btn_toc"></span>
   </button>
   <button class="tb-btn" onclick="document.getElementById('fi-main').click()">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-    <span>열기</span>
+    <span data-i18n="btn_open"></span>
   </button>
   <input type="file" id="fi-main" accept=".docx,.hwpx,.hwp" style="display:none">
   <div class="tb-sep"></div>
   <div id="search-wrap">
-    <input id="search-input" type="text" placeholder="🔍 검색..." autocomplete="off">
+    <input id="search-input" type="text" data-i18n-placeholder="ph_search" placeholder="🔍 검색..." autocomplete="off">
     <div id="search-nav">
       <button class="snav-btn" onclick="searchNav(-1)" title="이전 ▲">▲</button>
       <button class="snav-btn" onclick="searchNav(1)" title="다음 ▼">▼</button>
@@ -262,23 +273,23 @@ mark.hl.cur{background:#ff7800;color:#fff}
   <div class="tb-sep"></div>
   <button class="tb-btn" onclick="copyText()">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-    <span>복사</span>
+    <span data-i18n="btn_copy"></span>
   </button>
   <button class="tb-btn" onclick="doPrint()">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-    <span>인쇄</span>
+    <span data-i18n="btn_print"></span>
   </button>
   <button class="tb-btn" onclick="doPDF()">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
     <span>PDF</span>
   </button>
-  <span id="file-name">파일을 열어주세요</span>
+  <span id="file-name" data-i18n="msg_nofile"></span>
 </div>
 
 <div id="body">
   <div id="sidebar">
     <div id="sb-head">
-      <span id="sb-title">목차</span>
+      <span id="sb-title" data-i18n="lbl_toc"></span>
       <button id="sb-toggle" onclick="toggleSidebar()">✕</button>
     </div>
     <div id="toc-list"></div>
@@ -288,14 +299,14 @@ mark.hl.cur{background:#ff7800;color:#fff}
   <div id="viewer-wrap">
     <div id="drop-zone">
       <div class="dz-icon">📄</div>
-      <h2>문서를 열어주세요</h2>
-      <p>파일을 이곳에 드래그하거나<br>아래 버튼을 클릭해 선택하세요</p>
+      <h2 data-i18n="dz_title"></h2>
+      <p data-i18n-html="dz_sub"></p>
       <div class="dz-formats">
         <span class="fmt-badge word">Word .docx</span>
         <span class="fmt-badge hwp">한컴 .hwpx</span>
-        <span class="fmt-badge">최대 50MB</span>
+        <span class="fmt-badge" data-i18n="dz_maxsize"></span>
       </div>
-      <button id="open-btn-dz" onclick="document.getElementById('fi-dz').click()">파일 선택</button>
+      <button id="open-btn-dz" onclick="document.getElementById('fi-dz').click()" data-i18n="btn_selectfile"></button>
       <input type="file" id="fi-dz" accept=".docx,.hwpx,.hwp" style="display:none">
     </div>
     <div id="loading"><div class="spinner"></div><span id="loading-msg">불러오는 중...</span></div>
@@ -307,6 +318,62 @@ mark.hl.cur{background:#ff7800;color:#fff}
 
 <script>
 /* ── 상태 ── */
+/* ════ I18N (§5 표준 구조 — 정적 UI 셸만 적용) ════ */
+const I18N = {
+  ko: {
+    page_title: 'pomiai 문서 뷰어',
+    btn_toc: '목차', btn_open: '열기', ph_search: '🔍 검색...', btn_copy: '복사', btn_print: '인쇄',
+    msg_nofile: '파일을 열어주세요', lbl_toc: '목차',
+    dz_title: '문서를 열어주세요', dz_sub: '파일을 이곳에 드래그하거나<br>아래 버튼을 클릭해 선택하세요',
+    dz_maxsize: '최대 50MB', btn_selectfile: '파일 선택',
+  },
+  en: {
+    page_title: 'pomiai Document Viewer',
+    btn_toc: 'Contents', btn_open: 'Open', ph_search: '🔍 Search...', btn_copy: 'Copy', btn_print: 'Print',
+    msg_nofile: 'Open a file to get started', lbl_toc: 'Contents',
+    dz_title: 'Open a document', dz_sub: 'Drag a file here, or<br>click the button below to select one',
+    dz_maxsize: 'Up to 50MB', btn_selectfile: 'Select File',
+  },
+  ja: {
+    page_title: 'pomiai ドキュメントビューア',
+    btn_toc: '目次', btn_open: '開く', ph_search: '🔍 検索...', btn_copy: 'コピー', btn_print: '印刷',
+    msg_nofile: 'ファイルを開いてください', lbl_toc: '目次',
+    dz_title: 'ドキュメントを開いてください', dz_sub: 'ファイルをここにドラッグするか<br>下のボタンをクリックして選択してください',
+    dz_maxsize: '最大50MB', btn_selectfile: 'ファイルを選択',
+  },
+};
+
+(function(){
+  const dparams = new URLSearchParams(location.search);
+  const urlLang = dparams.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+    const k = el.dataset.i18nHtml;
+    if (typeof t[k] === 'string') el.innerHTML = t[k];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    const k = el.dataset.i18nPlaceholder;
+    if (typeof t[k] === 'string') el.placeholder = t[k];
+  });
+  const pt = document.getElementById('page-title');
+  if (pt) pt.textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+
 let zoomLevel=100, searchMatches=[], searchIdx=0, tocItems=[];
 let toastTid=null;
 
