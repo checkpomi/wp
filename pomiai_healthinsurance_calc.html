@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<!--
+====================================================================
+pomiai 건강보험료 계산기 (pomiai_healthinsurance_calc.html)
+현재 버전: v2026.08.16
+최종 수정일: 2026-08-16
+변경 내용: ?tab=local/job URL 파라미터 딥링크 지원 추가 — SEO 포스트에서
+           embed 시 지역가입자/직장가입자 탭으로 바로 진입 가능
+캐시 버스팅: iframe/script 태그에 ?v=2026.08.16 파라미터 사용 권장
+--------------------------------------------------------------------
+이전 버전: v2026.07.27
+변경 내용: 최초 제작 — 2026년 건강보험료율(7.19%) 및 장기요양보험료율(0.9448%) 반영,
+           지역가입자(소득/재산 추정) + 직장가입자 계산, ko/en/ja 다국어 표준 구조(§5) 적용
+====================================================================
+-->
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title id="page-title">pomiai 건강보험료 계산기</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#08080e;--s1:#0e0e18;--s2:#131320;--s3:#191928;--s4:#202032;
+  --bd:#1c1c2e;--bd2:#262640;--bd3:#303050;
+  --ac:#6c5ce8;--ac2:#9b8ff5;--ac3:rgba(108,92,232,.15);
+  --go:#c9963a;--go2:#e8b84b;--go3:rgba(201,150,58,.12);
+  --te:#28c4a0;--te2:#4eddb8;--te3:rgba(40,196,160,.12);
+  --re:#e05555;--re2:#ff9090;--re3:rgba(224,85,85,.12);
+  --tx:#eeeaf8;--tx2:#8e8aac;--tx3:#52506a;--tx4:#2c2a3c;
+  --sh:0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif}
+#header{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 18px;display:flex;align-items:center;gap:10px;height:52px;position:sticky;top:0;z-index:50;flex-wrap:wrap}
+#logo{font-size:14px;font-weight:600;color:var(--ac2);letter-spacing:1px}
+#logo span{color:var(--tx3);font-weight:400}
+.h-sep{width:1px;height:20px;background:var(--bd2);flex-shrink:0}
+#htabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}
+#htabs::-webkit-scrollbar{display:none}
+.htab{padding:8px 14px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-radius:8px;transition:.15s;white-space:nowrap;flex-shrink:0}
+.htab:hover{color:var(--tx2);background:var(--s3)}
+.htab.on{color:var(--ac2);background:var(--ac3)}
+#langsel{display:flex;gap:2px;margin-left:auto}
+.lbtn{padding:6px 10px;font-size:11px;font-weight:600;color:var(--tx3);cursor:pointer;border-radius:7px;border:1px solid var(--bd2);background:var(--s2)}
+.lbtn.on{color:var(--ac2);border-color:var(--ac);background:var(--ac3)}
+#app{max-width:760px;margin:0 auto;padding:22px 16px 70px}
+.sec{display:none}.sec.on{display:block;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sec-title{font-size:19px;font-weight:700;margin-bottom:5px}
+.sec-sub{font-size:12.5px;color:var(--tx2);margin-bottom:18px;line-height:1.6}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:var(--sh)}
+.card-title{font-size:12px;font-weight:700;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';width:3px;height:12px;background:linear-gradient(var(--ac2),var(--te));border-radius:2px}
+.fl{font-size:10px;color:var(--tx3);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block}
+.fi{background:var(--s3);border:1px solid var(--bd2);color:var(--tx);border-radius:10px;padding:10px 12px;font-size:14px;font-family:'DM Mono',monospace;outline:none;transition:.15s;width:100%}
+.fi:focus{border-color:var(--ac)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.fld{margin-bottom:12px}
+.hint{font-size:11px;color:var(--tx3);margin-top:4px;line-height:1.5}
+.btn{background:linear-gradient(135deg,var(--ac),#4a38c0);border:none;color:#fff;border-radius:11px;padding:13px 20px;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(108,92,232,.28);width:100%}
+.btn:hover{filter:brightness(1.08)}
+.res-box{background:var(--s2);border:1px solid var(--bd2);border-radius:14px;padding:18px;margin-top:14px;display:none}
+.res-box.show{display:block;animation:fi .25s ease}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bd)}
+.res-row:last-child{border-bottom:none}
+.res-label{font-size:12.5px;color:var(--tx2)}
+.res-val{font-size:14.5px;font-weight:600;font-family:'DM Mono',monospace;color:var(--te2)}
+.res-total{background:var(--ac3);border:1px solid var(--ac);border-radius:12px;padding:14px 16px;margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+.res-total .res-label{color:var(--ac2);font-weight:700;font-size:13px}
+.res-total .res-val{color:#fff;font-size:20px}
+.disclaimer{background:var(--go3);border:1px solid var(--go);border-radius:12px;padding:14px 16px;font-size:11.5px;color:var(--tx2);line-height:1.7;margin-top:14px}
+.disclaimer b{color:var(--go2)}
+.disclaimer a{color:var(--ac2)}
+#toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--bd2);color:var(--te2);border-radius:20px;padding:8px 18px;font-size:12px;opacity:0;transition:.22s;pointer-events:none;z-index:999;white-space:nowrap;box-shadow:var(--sh)}
+#toast.show{opacity:1}
+.brand-footer{max-width:760px;margin:0 auto;padding:0 16px 30px;text-align:center;font-size:11px;color:var(--tx3)}
+.brand-footer a{color:var(--ac2);text-decoration:none;margin:0 6px}
+@media(max-width:520px){.g2{grid-template-columns:1fr}#app{padding:16px 12px 60px}.res-total .res-val{font-size:17px}}
+[dir="rtl"] .res-row,[dir="rtl"] .res-total{flex-direction:row-reverse}
+</style>
+</head>
+<body>
+<div id="header">
+  <span id="logo">pomiai <span data-i18n="brand_sub">건강보험료</span></span>
+  <div class="h-sep"></div>
+  <div id="htabs">
+    <div class="htab on" id="tab-btn-local" onclick="goTab('local')" data-i18n="tab_local">지역가입자</div>
+    <div class="htab" id="tab-btn-job" onclick="goTab('job')" data-i18n="tab_job">직장가입자</div>
+  </div>
+  <div id="langsel">
+    <div class="lbtn on" id="lang-ko" onclick="setLang('ko')">KO</div>
+    <div class="lbtn" id="lang-en" onclick="setLang('en')">EN</div>
+    <div class="lbtn" id="lang-ja" onclick="setLang('ja')">JA</div>
+  </div>
+</div>
+
+<div id="app">
+
+<!-- ══ 지역가입자 ══ -->
+<div class="sec on" id="sec-local">
+  <div class="sec-title" data-i18n="local_title">2026년 지역가입자 건강보험료 계산기</div>
+  <div class="sec-sub" data-i18n="local_sub">소득과 재산을 입력하면 2026년 기준(보험료율 7.19%) 예상 건강보험료를 추정해요. 재산보험료는 등급표 근사치를 사용한 추정값이에요.</div>
+
+  <div class="card">
+    <div class="card-title" data-i18n="income_title">소득 정보 (연간)</div>
+    <div class="fld">
+      <span class="fl" data-i18n="income_biz_lbl">사업·이자·배당·기타소득 합계 (연, 100% 반영)</span>
+      <input class="fi" id="l-biz" type="number" placeholder="0" inputmode="numeric" oninput="calcLocal()">
+    </div>
+    <div class="fld">
+      <span class="fl" data-i18n="income_labor_lbl">근로·연금소득 합계 (연, 50% 반영)</span>
+      <input class="fi" id="l-labor" type="number" placeholder="0" inputmode="numeric" oninput="calcLocal()">
+      <div class="hint" data-i18n="income_hint">근로소득은 직장건강보험에 가입되어 있지 않은 경우만 해당돼요 (예: 일용직·단시간 근로).</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" data-i18n="property_title">재산 정보</div>
+    <div class="fld">
+      <span class="fl" data-i18n="property_base_lbl">주택·건물·토지 등 재산세 과세표준 합계 (원)</span>
+      <input class="fi" id="l-prop" type="number" placeholder="0" inputmode="numeric" oninput="calcLocal()">
+    </div>
+    <div class="g2">
+      <div class="fld">
+        <span class="fl" data-i18n="deposit_lbl">전월세 보증금 (원)</span>
+        <input class="fi" id="l-deposit" type="number" placeholder="0" inputmode="numeric" oninput="calcLocal()">
+      </div>
+      <div class="fld">
+        <span class="fl" data-i18n="monthly_rent_lbl">월세 (원/월)</span>
+        <input class="fi" id="l-rent" type="number" placeholder="0" inputmode="numeric" oninput="calcLocal()">
+      </div>
+    </div>
+    <div class="fld">
+      <span class="fl" data-i18n="debt_lbl">주택담보대출 공제액 (원, 최대 5천만원)</span>
+      <input class="fi" id="l-debt" type="number" placeholder="0" inputmode="numeric" oninput="calcLocal()">
+    </div>
+    <div class="hint" data-i18n="property_hint">자동차는 2024년 2월부터 보험료 산정에서 제외됐고, 재산 기본공제 1억원이 자동 적용돼요.</div>
+  </div>
+
+  <button class="btn" onclick="calcLocal()" data-i18n="calc_btn">계산하기</button>
+
+  <div class="res-box" id="l-result">
+    <div class="res-row"><span class="res-label" data-i18n="res_income_premium">소득보험료</span><span class="res-val" id="l-r-income">-</span></div>
+    <div class="res-row"><span class="res-label" data-i18n="res_property_premium">재산보험료 (추정)</span><span class="res-val" id="l-r-property">-</span></div>
+    <div class="res-row"><span class="res-label" data-i18n="res_health_sub">건강보험료 소계</span><span class="res-val" id="l-r-health">-</span></div>
+    <div class="res-row"><span class="res-label" data-i18n="res_ltc">장기요양보험료</span><span class="res-val" id="l-r-ltc">-</span></div>
+    <div class="res-total"><span class="res-label" data-i18n="res_total_monthly">월 예상 납부액</span><span class="res-val" id="l-r-total">-</span></div>
+  </div>
+
+  <div class="disclaimer">
+    <b data-i18n="disc_title">⚠️ 안내</b><br>
+    <span data-i18n="disc_local_body">이 계산기는 2026년 공개된 요율(건강보험료율 7.19%, 장기요양보험료율 0.9448%, 재산보험료부과점수당 금액 211.5원)을 기준으로 한 참고용 추정치예요. 특히 재산보험료는 60등급 점수표를 근사식으로 추정한 값이라 실제 고지액과 차이가 있을 수 있어요. 정확한 금액은 국민건강보험공단 홈페이지의 공식 모의계산에서 확인해 주세요.</span>
+  </div>
+</div>
+
+<!-- ══ 직장가입자 ══ -->
+<div class="sec" id="sec-job">
+  <div class="sec-title" data-i18n="job_title">2026년 직장가입자 건강보험료 계산기</div>
+  <div class="sec-sub" data-i18n="job_sub">월 보수월액(세전 급여)을 입력하면 근로자 본인이 부담하는 건강보험료와 장기요양보험료를 계산해요. 회사와 절반씩 부담해요.</div>
+
+  <div class="card">
+    <div class="card-title" data-i18n="job_input_title">급여 정보</div>
+    <div class="fld">
+      <span class="fl" data-i18n="job_wage_lbl">월 보수월액 (세전, 원)</span>
+      <input class="fi" id="j-wage" type="number" placeholder="0" inputmode="numeric" oninput="calcJob()">
+    </div>
+  </div>
+
+  <button class="btn" onclick="calcJob()" data-i18n="calc_btn">계산하기</button>
+
+  <div class="res-box" id="j-result">
+    <div class="res-row"><span class="res-label" data-i18n="res_health_total">건강보험료 (전체)</span><span class="res-val" id="j-r-health-total">-</span></div>
+    <div class="res-row"><span class="res-label" data-i18n="res_my_health">본인 부담 건강보험료</span><span class="res-val" id="j-r-health-mine">-</span></div>
+    <div class="res-row"><span class="res-label" data-i18n="res_my_ltc">본인 부담 장기요양보험료</span><span class="res-val" id="j-r-ltc-mine">-</span></div>
+    <div class="res-total"><span class="res-label" data-i18n="res_my_total">본인 월 총 공제액</span><span class="res-val" id="j-r-total">-</span></div>
+  </div>
+
+  <div class="disclaimer">
+    <b data-i18n="disc_title">⚠️ 안내</b><br>
+    <span data-i18n="disc_job_body">2026년 직장가입자 건강보험료율은 7.19%(근로자 3.595% + 회사 3.595%), 장기요양보험료율은 0.9448%예요. 상한액(전체 월 9,183,480원, 본인부담 최대 4,591,740원)과 하한액(20,160원)이 실제로 적용되며, 상여금·비과세소득 등 세부 항목에 따라 실제 고지액과 차이가 있을 수 있어요.</span>
+  </div>
+</div>
+
+</div>
+
+<div class="brand-footer">
+  <div>Product by pomiai</div>
+  <div style="margin-top:6px">
+    <a href="https://checkpomi.com" target="_blank" rel="noopener">🌐 checkpomi.com</a>
+    <a href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener">▶ YouTube</a>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =====================================================
+   I18N
+===================================================== */
+const I18N = {
+  ko: {
+    page_title:'pomiai 건강보험료 계산기', brand_sub:'건강보험료',
+    tab_local:'지역가입자', tab_job:'직장가입자',
+    local_title:'2026년 지역가입자 건강보험료 계산기',
+    local_sub:'소득과 재산을 입력하면 2026년 기준(보험료율 7.19%) 예상 건강보험료를 추정해요. 재산보험료는 등급표 근사치를 사용한 추정값이에요.',
+    income_title:'소득 정보 (연간)',
+    income_biz_lbl:'사업·이자·배당·기타소득 합계 (연, 100% 반영)',
+    income_labor_lbl:'근로·연금소득 합계 (연, 50% 반영)',
+    income_hint:'근로소득은 직장건강보험에 가입되어 있지 않은 경우만 해당돼요 (예: 일용직·단시간 근로).',
+    property_title:'재산 정보',
+    property_base_lbl:'주택·건물·토지 등 재산세 과세표준 합계 (원)',
+    deposit_lbl:'전월세 보증금 (원)', monthly_rent_lbl:'월세 (원/월)',
+    debt_lbl:'주택담보대출 공제액 (원, 최대 5천만원)',
+    property_hint:'자동차는 2024년 2월부터 보험료 산정에서 제외됐고, 재산 기본공제 1억원이 자동 적용돼요.',
+    calc_btn:'계산하기',
+    res_income_premium:'소득보험료', res_property_premium:'재산보험료 (추정)',
+    res_health_sub:'건강보험료 소계', res_ltc:'장기요양보험료', res_total_monthly:'월 예상 납부액',
+    disc_title:'⚠️ 안내',
+    disc_local_body:'이 계산기는 2026년 공개된 요율(건강보험료율 7.19%, 장기요양보험료율 0.9448%, 재산보험료부과점수당 금액 211.5원)을 기준으로 한 참고용 추정치예요. 특히 재산보험료는 60등급 점수표를 근사식으로 추정한 값이라 실제 고지액과 차이가 있을 수 있어요. 정확한 금액은 국민건강보험공단 홈페이지의 공식 모의계산에서 확인해 주세요.',
+    job_title:'2026년 직장가입자 건강보험료 계산기',
+    job_sub:'월 보수월액(세전 급여)을 입력하면 근로자 본인이 부담하는 건강보험료와 장기요양보험료를 계산해요. 회사와 절반씩 부담해요.',
+    job_input_title:'급여 정보', job_wage_lbl:'월 보수월액 (세전, 원)',
+    res_health_total:'건강보험료 (전체)', res_my_health:'본인 부담 건강보험료',
+    res_my_ltc:'본인 부담 장기요양보험료', res_my_total:'본인 월 총 공제액',
+    disc_job_body:'2026년 직장가입자 건강보험료율은 7.19%(근로자 3.595% + 회사 3.595%), 장기요양보험료율은 0.9448%예요. 상한액(전체 월 9,183,480원, 본인부담 최대 4,591,740원)과 하한액(20,160원)이 실제로 적용되며, 상여금·비과세소득 등 세부 항목에 따라 실제 고지액과 차이가 있을 수 있어요.',
+    unit_won:'원'
+  },
+  en: {
+    page_title:'pomiai Health Insurance Calculator', brand_sub:'Health Insurance',
+    tab_local:'Self-Employed', tab_job:'Employee',
+    local_title:'2026 Korea Self-Employed Health Insurance Calculator',
+    local_sub:'Enter income and property to estimate your 2026 Korean National Health Insurance premium (rate 7.19%). The property-based premium is an approximation of the official point-score table.',
+    income_title:'Income (Annual)',
+    income_biz_lbl:'Business / Interest / Dividend / Other income (annual, 100% counted)',
+    income_labor_lbl:'Wage / Pension income (annual, 50% counted)',
+    income_hint:'Wage income only applies if you are not already covered under an employer\'s health insurance (e.g. daily or short-term work).',
+    property_title:'Property',
+    property_base_lbl:'Property tax base of house / building / land, etc. (KRW)',
+    deposit_lbl:'Jeonse/monthly-rent deposit (KRW)', monthly_rent_lbl:'Monthly rent (KRW/month)',
+    debt_lbl:'Mortgage deduction (KRW, up to 50 million)',
+    property_hint:'Vehicles have been excluded from the calculation since February 2024, and a base property deduction of 100 million KRW is applied automatically.',
+    calc_btn:'Calculate',
+    res_income_premium:'Income-based premium', res_property_premium:'Property-based premium (est.)',
+    res_health_sub:'Health insurance subtotal', res_ltc:'Long-term care insurance', res_total_monthly:'Estimated monthly total',
+    disc_title:'⚠️ Notice',
+    disc_local_body:'This calculator uses the publicly announced 2026 rates (health insurance 7.19%, long-term care 0.9448%, property score value 211.5 KRW) for reference only. The property premium is approximated from the 60-tier score table and may differ from your actual bill. For an exact figure, use the official simulator on the National Health Insurance Service (NHIS) website.',
+    job_title:'2026 Korea Employee Health Insurance Calculator',
+    job_sub:'Enter your monthly gross wage to calculate the health and long-term care insurance you personally pay — split 50/50 with your employer.',
+    job_input_title:'Wage', job_wage_lbl:'Monthly gross wage (KRW)',
+    res_health_total:'Health insurance (total)', res_my_health:'Your share of health insurance',
+    res_my_ltc:'Your share of long-term care insurance', res_my_total:'Your total monthly deduction',
+    disc_job_body:'The 2026 employee health insurance rate is 7.19% (employee 3.595% + employer 3.595%), and long-term care rate is 0.9448%. Statutory caps (max ~9,183,480 KRW total / 4,591,740 KRW personal share; min 20,160 KRW) apply. Actual withholding may differ based on bonuses and non-taxable income.',
+    unit_won:'KRW'
+  },
+  ja: {
+    page_title:'pomiai 健康保険料計算機', brand_sub:'健康保険料',
+    tab_local:'地域加入者', tab_job:'職場加入者',
+    local_title:'2026年 韓国 地域加入者健康保険料計算機',
+    local_sub:'所得と財産を入力すると、2026年基準(保険料率7.19%)の予想健康保険料を推定します。財産保険料は等級表の近似値による推定額です。',
+    income_title:'所得情報(年間)',
+    income_biz_lbl:'事業・利子・配当・その他所得の合計(年間、100%反映)',
+    income_labor_lbl:'勤労・年金所得の合計(年間、50%反映)',
+    income_hint:'勤労所得は職場健康保険に加入していない場合のみ該当します(例:日雇い・短時間労働)。',
+    property_title:'財産情報',
+    property_base_lbl:'住宅・建物・土地などの財産税課税標準額の合計(ウォン)',
+    deposit_lbl:'伝貰・月払い保証金(ウォン)', monthly_rent_lbl:'月家賃(ウォン/月)',
+    debt_lbl:'住宅担保ローン控除額(ウォン、最大5千万ウォン)',
+    property_hint:'自動車は2024年2月から保険料算定から除外され、財産基本控除1億ウォンが自動適用されます。',
+    calc_btn:'計算する',
+    res_income_premium:'所得保険料', res_property_premium:'財産保険料(推定)',
+    res_health_sub:'健康保険料小計', res_ltc:'長期療養保険料', res_total_monthly:'月の予想納付額',
+    disc_title:'⚠️ ご案内',
+    disc_local_body:'この計算機は2026年に公開された料率(健康保険料率7.19%、長期療養保険料率0.9448%、財産保険料賦課点数当たり金額211.5ウォン)を基準にした参考用の推定値です。特に財産保険料は60等級点数表を近似式で推定した値のため、実際の請求額と差がある場合があります。正確な金額は国民健康保険公団のホームページの公式シミュレーションでご確認ください。',
+    job_title:'2026年 韓国 職場加入者健康保険料計算機',
+    job_sub:'月の報酬月額(税引き前給与)を入力すると、勤労者本人が負担する健康保険料と長期療養保険料を計算します。会社と折半で負担します。',
+    job_input_title:'給与情報', job_wage_lbl:'月の報酬月額(税引き前、ウォン)',
+    res_health_total:'健康保険料(全体)', res_my_health:'本人負担の健康保険料',
+    res_my_ltc:'本人負担の長期療養保険料', res_my_total:'本人の月間総控除額',
+    disc_job_body:'2026年の職場加入者健康保険料率は7.19%(本人3.595%+会社3.595%)、長期療養保険料率は0.9448%です。上限額(全体月9,183,480ウォン、本人負担最大4,591,740ウォン)と下限額(20,160ウォン)が適用され、賞与や非課税所得などにより実際の請求額とは差が生じる場合があります。',
+    unit_won:'ウォン'
+  }
+};
+
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+
+function applyI18n() {
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const k = el.dataset.i18nPlaceholder;
+    if (typeof t[k] === 'string') el.placeholder = t[k];
+  });
+  document.getElementById('page-title').textContent = t.page_title;
+  document.title = t.page_title;
+  document.querySelectorAll('.lbtn').forEach(el=>el.classList.remove('on'));
+  const btn = document.getElementById('lang-'+window._LANG);
+  if(btn) btn.classList.add('on');
+}
+function setLang(l){
+  if(!I18N[l]) return;
+  window._LANG = l; window._T = I18N[l];
+  document.getElementById('html-root').lang = l;
+  applyI18n();
+}
+applyI18n();
+
+/* ════ 탭 전환 ════ */
+function goTab(id){
+  document.querySelectorAll('.sec').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.htab').forEach(e=>e.classList.remove('on'));
+  document.getElementById('sec-'+id).classList.add('on');
+  document.getElementById('tab-btn-'+id).classList.add('on');
+  try{
+    const url=new URL(location.href);
+    url.searchParams.set('tab',id);
+    history.replaceState(null,'',url);
+  }catch(e){}
+}
+/* ?tab= 딥링크: SEO 포스트에서 embed 시 local/job 탭으로 바로 진입 */
+(function(){
+  const tparams=new URLSearchParams(location.search);
+  const wantTab=tparams.get('tab');
+  if(wantTab && ['local','job'].includes(wantTab)){
+    goTab(wantTab);
+  }
+})();
+
+/* ════ 계산 상수 (2026년 기준) ════ */
+const RATE_HEALTH = 0.0719;              // 건강보험료율
+const RATE_LTC = 0.009448;               // 장기요양보험료율
+const LTC_RATIO = RATE_LTC / RATE_HEALTH; // 건강보험료 대비 장기요양보험료 비율 (약 13.14%)
+const PROPERTY_POINT_VALUE = 211.5;      // 재산보험료부과점수당 금액(원)
+const PROPERTY_DEDUCTION = 100000000;    // 재산 기본공제 1억원
+const INCOME_MIN_MONTHLY = 280000;       // 소득월액 최저 기준(원)
+const MIN_PREMIUM = 20160;               // 2026년 하한액
+const MAX_PREMIUM = 4591740;             // 2026년 상한액(지역가입자/직장가입자 본인부담 동일)
+
+function fmt(n){
+  return Math.round(n).toLocaleString('ko-KR') + (window._T.unit_won || '원');
+}
+
+// 재산 순액(net property base)을 재산보험료(추정)로 환산
+// 공식 60등급 점수표를 공개된 두 기준점(19등급 465점=순액1.1억, 26등급 637점=순액2.5억)으로 보간한 근사식이에요.
+function estimatePropertyPremium(net){
+  if(net<=0) return 0;
+  const score = 0.3864 * Math.pow(net, 0.383);
+  return Math.round(score) * PROPERTY_POINT_VALUE;
+}
+
+function calcLocal(){
+  const biz = parseFloat(document.getElementById('l-biz').value)||0;
+  const labor = parseFloat(document.getElementById('l-labor').value)||0;
+  const propBase = parseFloat(document.getElementById('l-prop').value)||0;
+  const deposit = parseFloat(document.getElementById('l-deposit').value)||0;
+  const rent = parseFloat(document.getElementById('l-rent').value)||0;
+  const debt = Math.min(parseFloat(document.getElementById('l-debt').value)||0, 50000000);
+
+  // 소득월액 및 소득보험료
+  const incomeMonthly = (biz + labor*0.5) / 12;
+  let incomePremium;
+  if(incomeMonthly > INCOME_MIN_MONTHLY){
+    incomePremium = incomeMonthly * RATE_HEALTH;
+  } else {
+    incomePremium = MIN_PREMIUM; // 소득 최저보험료 (하한액과 동일하게 적용)
+  }
+
+  // 재산 순액 및 재산보험료(추정)
+  const jeonseValue = (deposit + rent*40) * 0.30;
+  const netProperty = Math.max(0, propBase + jeonseValue - PROPERTY_DEDUCTION - debt);
+  const propertyPremium = estimatePropertyPremium(netProperty);
+
+  let healthTotal = incomePremium + propertyPremium;
+  healthTotal = Math.min(Math.max(healthTotal, MIN_PREMIUM), MAX_PREMIUM);
+
+  const ltc = healthTotal * LTC_RATIO;
+  const total = healthTotal + ltc;
+
+  document.getElementById('l-r-income').textContent = fmt(incomePremium);
+  document.getElementById('l-r-property').textContent = fmt(propertyPremium);
+  document.getElementById('l-r-health').textContent = fmt(healthTotal);
+  document.getElementById('l-r-ltc').textContent = fmt(ltc);
+  document.getElementById('l-r-total').textContent = fmt(total);
+  document.getElementById('l-result').classList.add('show');
+}
+
+function calcJob(){
+  const wage = parseFloat(document.getElementById('j-wage').value)||0;
+  let healthTotal = wage * RATE_HEALTH;
+  healthTotal = Math.min(Math.max(healthTotal, MIN_PREMIUM*2), MAX_PREMIUM*2); // 전체 기준 상하한(본인+회사)
+  const healthMine = healthTotal/2;
+  const ltcTotal = healthTotal * LTC_RATIO;
+  const ltcMine = ltcTotal/2;
+  const totalMine = healthMine + ltcMine;
+
+  document.getElementById('j-r-health-total').textContent = fmt(healthTotal);
+  document.getElementById('j-r-health-mine').textContent = fmt(healthMine);
+  document.getElementById('j-r-ltc-mine').textContent = fmt(ltcMine);
+  document.getElementById('j-r-total').textContent = fmt(totalMine);
+  document.getElementById('j-result').classList.add('show');
+}
+</script>
+</body>
+</html>
