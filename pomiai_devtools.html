@@ -1,9 +1,21 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" id="html-root">
 <head>
+<!--
+  VERSION LOG (pomiai_devtools.html)
+  ===================================================
+  2026.08.15 — v1.1.0 (다국어 및 딥링크 지원 추가)
+    · ?tab= URL 파라미터로 특정 탭 딥링크 진입 지원 추가 (qr/pw/color)
+      예) pomiai_devtools.html?tab=pw
+    · §5 표준 구조(I18N 객체 + data-i18n) 적용, ko/en/ja 지원
+      (UI 셸: 탭명/제목/설명/공용 버튼·라벨만 번역, hex/rgb 등
+      색상 코드 표기나 QR 콘텐츠 타입 같은 기술 용어는 영어 유지)
+    · 캐시 무효화 시 ?v=2026.08.15 쿼리스트링 사용 권장
+  (이전 버전: VERSION LOG 없음 — 최초 이력 미기록)
+-->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>pomiai 개발자 도구</title>
+<title id="page-title">pomiai 개발자 도구</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
 :root{
@@ -198,9 +210,9 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
   <span id="logo">pomiai <span>dev</span></span>
   <div class="h-sep"></div>
   <div id="htabs">
-    <div class="htab on"   onclick="goTab('qr')">📱 QR코드</div>
-    <div class="htab"      onclick="goTab('pw')">🔐 비밀번호</div>
-    <div class="htab"      onclick="goTab('color')">🎨 컬러 팔레트</div>
+    <div class="htab on"   onclick="goTab('qr')"    data-i18n-html="tab_qr"></div>
+    <div class="htab"      onclick="goTab('pw')"    data-i18n-html="tab_pw"></div>
+    <div class="htab"      onclick="goTab('color')" data-i18n-html="tab_color"></div>
   </div>
 </div>
 
@@ -208,7 +220,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 
 <!-- ══ QR 코드 생성기 ══ -->
 <div class="sec on" id="tab-qr">
-  <div class="sec-title">QR 코드 생성기</div>
+  <div class="sec-title" data-i18n="qr_title"></div>
   <div class="sec-sub">URL · 텍스트 · WiFi · 명함 · 이메일 · 전화번호 — 로고 삽입, 색상 커스터마이징, PNG/SVG 다운로드</div>
 
   <div class="card">
@@ -345,11 +357,11 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 
 <!-- ══ 비밀번호 생성기 ══ -->
 <div class="sec" id="tab-pw">
-  <div class="sec-title">비밀번호 생성기</div>
-  <div class="sec-sub">강력하고 안전한 비밀번호 즉시 생성 — 모든 처리는 브라우저 로컬에서만 이루어져요</div>
+  <div class="sec-title" data-i18n="pw_title"></div>
+  <div class="sec-sub" data-i18n="pw_sub"></div>
 
   <div class="card">
-    <div class="card-title">비밀번호</div>
+    <div class="card-title" data-i18n="lbl_password"></div>
     <div class="pw-display">
       <span class="pw-text" id="pw-val">—</span>
       <button class="copy-btn" onclick="copyPw()" style="flex-shrink:0">📋</button>
@@ -366,33 +378,33 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
   </div>
 
   <div class="card">
-    <div class="card-title">설정</div>
+    <div class="card-title" data-i18n="lbl_settings"></div>
     <!-- 길이 -->
     <div style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <span class="fl" style="margin-bottom:0">길이</span>
+        <span class="fl" style="margin-bottom:0" data-i18n="lbl_length"></span>
         <span style="font-family:'DM Mono',monospace;font-size:14px;color:var(--ac2)" id="pw-len-v">16</span>
       </div>
       <input type="range" style="width:100%" id="pw-len" min="4" max="128" value="16" oninput="$('pw-len-v').textContent=this.value;genPw()">
     </div>
     <!-- 문자 옵션 -->
-    <div class="cb-row"><input type="checkbox" id="pw-upper" checked onchange="genPw()"><label for="pw-upper">대문자 (A–Z)</label></div>
-    <div class="cb-row"><input type="checkbox" id="pw-lower" checked onchange="genPw()"><label for="pw-lower">소문자 (a–z)</label></div>
-    <div class="cb-row"><input type="checkbox" id="pw-num" checked onchange="genPw()"><label for="pw-num">숫자 (0–9)</label></div>
-    <div class="cb-row"><input type="checkbox" id="pw-sym" checked onchange="genPw()"><label for="pw-sym">특수문자 (!@#$%^&*)</label></div>
-    <div class="cb-row"><input type="checkbox" id="pw-noamb" onchange="genPw()"><label for="pw-noamb">혼동 문자 제외 (0 O l 1 I)</label></div>
+    <div class="cb-row"><input type="checkbox" id="pw-upper" checked onchange="genPw()"><label for="pw-upper" data-i18n="opt_upper"></label></div>
+    <div class="cb-row"><input type="checkbox" id="pw-lower" checked onchange="genPw()"><label for="pw-lower" data-i18n="opt_lower"></label></div>
+    <div class="cb-row"><input type="checkbox" id="pw-num" checked onchange="genPw()"><label for="pw-num" data-i18n="opt_num"></label></div>
+    <div class="cb-row"><input type="checkbox" id="pw-sym" checked onchange="genPw()"><label for="pw-sym" data-i18n="opt_sym"></label></div>
+    <div class="cb-row"><input type="checkbox" id="pw-noamb" onchange="genPw()"><label for="pw-noamb" data-i18n="opt_noamb"></label></div>
     <!-- 커스텀 제외 -->
     <div style="margin-top:12px">
-      <span class="fl">제외할 문자 (선택)</span>
-      <input class="fi" id="pw-excl" placeholder="예: @#$" oninput="genPw()">
+      <span class="fl" data-i18n="lbl_exclude"></span>
+      <input class="fi" id="pw-excl" data-i18n-placeholder="ph_exclude" placeholder="예: @#$" oninput="genPw()">
     </div>
     <!-- 일괄 생성 -->
     <div style="margin-top:14px">
       <div class="g2">
-        <div><span class="fl">개수</span>
+        <div><span class="fl" data-i18n="lbl_count"></span>
           <input class="fi" id="pw-count" type="number" value="5" min="1" max="50"></div>
         <div style="display:flex;align-items:flex-end">
-          <button class="btn full" onclick="genBatch()" style="height:42px">일괄 생성</button>
+          <button class="btn full" onclick="genBatch()" style="height:42px" data-i18n="btn_batch"></button>
         </div>
       </div>
     </div>
@@ -401,34 +413,34 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
   <!-- 히스토리 -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div class="card-title" style="margin-bottom:0">생성 기록</div>
-      <button class="btn outline sm" onclick="clearPwHist()">지우기</button>
+      <div class="card-title" style="margin-bottom:0" data-i18n="lbl_history"></div>
+      <button class="btn outline sm" onclick="clearPwHist()" data-i18n="btn_clear"></button>
     </div>
-    <div id="pw-hist"><div style="font-size:13px;color:var(--tx4)">비밀번호를 생성하면 여기에 기록돼요</div></div>
+    <div id="pw-hist"><div style="font-size:13px;color:var(--tx4)" data-i18n="msg_pwhist_empty"></div></div>
   </div>
 </div>
 
 <!-- ══ 컬러 팔레트 ══ -->
 <div class="sec" id="tab-color">
-  <div class="sec-title">컬러 팔레트 생성기</div>
-  <div class="sec-sub">베이스 색상으로 보색·유사색·삼원색·단색 팔레트 자동 생성 — CSS·HEX·HSL 내보내기</div>
+  <div class="sec-title" data-i18n="color_title"></div>
+  <div class="sec-sub" data-i18n="color_sub"></div>
 
   <div class="card">
-    <div class="card-title">베이스 색상</div>
+    <div class="card-title" data-i18n="lbl_basecolor"></div>
     <div class="base-color-input">
       <div class="bc-preview" id="bc-prev" onclick="$('bc-picker').click()" style="background:#6c5ce8"></div>
       <input type="color" id="bc-picker" value="#6c5ce8" style="display:none" oninput="onColorPick(this.value)">
       <input class="bc-hex" id="bc-hex" value="#6c5ce8" maxlength="7" onchange="onHexInput(this.value)" spellcheck="false">
-      <button class="btn sm" onclick="randomColor()">🎲 랜덤</button>
+      <button class="btn sm" onclick="randomColor()" data-i18n-html="btn_random"></button>
     </div>
-    <div class="card-title" style="margin-top:4px">팔레트 모드</div>
+    <div class="card-title" style="margin-top:4px" data-i18n="lbl_palettemode"></div>
     <div class="palette-modes">
-      <button class="pm on" onclick="setPaletteMode('complementary')">보색</button>
-      <button class="pm" onclick="setPaletteMode('analogous')">유사색</button>
-      <button class="pm" onclick="setPaletteMode('triadic')">삼원색</button>
-      <button class="pm" onclick="setPaletteMode('tetradic')">사각형</button>
-      <button class="pm" onclick="setPaletteMode('monochromatic')">단색</button>
-      <button class="pm" onclick="setPaletteMode('split')">분할보색</button>
+      <button class="pm on" onclick="setPaletteMode('complementary')" data-i18n="pm_complementary"></button>
+      <button class="pm" onclick="setPaletteMode('analogous')" data-i18n="pm_analogous"></button>
+      <button class="pm" onclick="setPaletteMode('triadic')" data-i18n="pm_triadic"></button>
+      <button class="pm" onclick="setPaletteMode('tetradic')" data-i18n="pm_tetradic"></button>
+      <button class="pm" onclick="setPaletteMode('monochromatic')" data-i18n="pm_mono"></button>
+      <button class="pm" onclick="setPaletteMode('split')" data-i18n="pm_split"></button>
     </div>
     <!-- 팔레트 시각화 -->
     <div class="palette-grid" id="palette-grid"></div>
@@ -436,23 +448,23 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     <div class="palette-list" id="palette-list"></div>
     <!-- 내보내기 -->
     <div class="export-row">
-      <button class="btn outline sm" onclick="exportPalette('css')">CSS 변수</button>
-      <button class="btn outline sm" onclick="exportPalette('hex')">HEX 목록</button>
-      <button class="btn outline sm" onclick="exportPalette('hsl')">HSL 목록</button>
+      <button class="btn outline sm" onclick="exportPalette('css')" data-i18n="btn_exportcss"></button>
+      <button class="btn outline sm" onclick="exportPalette('hex')" data-i18n="btn_exporthex"></button>
+      <button class="btn outline sm" onclick="exportPalette('hsl')" data-i18n="btn_exporthsl"></button>
       <button class="btn outline sm" onclick="exportPalette('json')">JSON</button>
     </div>
     <div class="result" id="export-result">
-      <div class="res-label" id="export-label">내보내기</div>
+      <div class="res-label" id="export-label" data-i18n="lbl_export"></div>
       <pre class="res-val" id="export-val" style="white-space:pre-wrap"></pre>
       <div class="res-actions">
-        <button class="copy-btn" onclick="copyExport()">📋 복사</button>
+        <button class="copy-btn" onclick="copyExport()" data-i18n-html="btn_copy"></button>
       </div>
     </div>
   </div>
 
   <!-- 색상 이론 정보 -->
   <div class="card">
-    <div class="card-title">선택된 색상 정보</div>
+    <div class="card-title" data-i18n="lbl_colorinfo"></div>
     <div id="color-info" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
   </div>
 </div>
@@ -465,6 +477,108 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
    공통 헬퍼
 ───────────────────────────────── */
 const $=id=>document.getElementById(id);
+
+/* ════ I18N (§5 표준 구조) ════ */
+const I18N = {
+  ko: {
+    page_title: 'pomiai 개발자 도구',
+    tab_qr: '📱 QR코드', tab_pw: '🔐 비밀번호', tab_color: '🎨 컬러 팔레트',
+    qr_title: 'QR 코드 생성기',
+    pw_title: '비밀번호 생성기',
+    pw_sub: '강력하고 안전한 비밀번호 즉시 생성 — 모든 처리는 브라우저 로컬에서만 이루어져요',
+    lbl_password: '비밀번호', lbl_settings: '설정', lbl_length: '길이',
+    opt_upper: '대문자 (A–Z)', opt_lower: '소문자 (a–z)', opt_num: '숫자 (0–9)',
+    opt_sym: '특수문자 (!@#$%^&*)', opt_noamb: '혼동 문자 제외 (0 O l 1 I)',
+    lbl_exclude: '제외할 문자 (선택)', ph_exclude: '예: @#$',
+    lbl_count: '개수', btn_batch: '일괄 생성',
+    lbl_history: '생성 기록', btn_clear: '지우기',
+    msg_pwhist_empty: '비밀번호를 생성하면 여기에 기록돼요',
+    color_title: '컬러 팔레트 생성기',
+    color_sub: '베이스 색상으로 보색·유사색·삼원색·단색 팔레트 자동 생성 — CSS·HEX·HSL 내보내기',
+    lbl_basecolor: '베이스 색상', btn_random: '🎲 랜덤',
+    lbl_palettemode: '팔레트 모드',
+    pm_complementary: '보색', pm_analogous: '유사색', pm_triadic: '삼원색',
+    pm_tetradic: '사각형', pm_mono: '단색', pm_split: '분할보색',
+    btn_exportcss: 'CSS 변수', btn_exporthex: 'HEX 목록', btn_exporthsl: 'HSL 목록',
+    lbl_export: '내보내기', btn_copy: '📋 복사', lbl_colorinfo: '선택된 색상 정보',
+  },
+  en: {
+    page_title: 'pomiai Dev Tools',
+    tab_qr: '📱 QR Code', tab_pw: '🔐 Password', tab_color: '🎨 Color Palette',
+    qr_title: 'QR Code Generator',
+    pw_title: 'Password Generator',
+    pw_sub: 'Generate strong, secure passwords instantly — everything runs locally in your browser',
+    lbl_password: 'Password', lbl_settings: 'Settings', lbl_length: 'Length',
+    opt_upper: 'Uppercase (A–Z)', opt_lower: 'Lowercase (a–z)', opt_num: 'Numbers (0–9)',
+    opt_sym: 'Symbols (!@#$%^&*)', opt_noamb: 'Exclude ambiguous (0 O l 1 I)',
+    lbl_exclude: 'Exclude characters (optional)', ph_exclude: 'e.g. @#$',
+    lbl_count: 'Count', btn_batch: 'Batch Generate',
+    lbl_history: 'History', btn_clear: 'Clear',
+    msg_pwhist_empty: 'Generated passwords will show up here',
+    color_title: 'Color Palette Generator',
+    color_sub: 'Auto-generate complementary, analogous, triadic, or monochromatic palettes from a base color — export as CSS, HEX, or HSL',
+    lbl_basecolor: 'Base Color', btn_random: '🎲 Random',
+    lbl_palettemode: 'Palette Mode',
+    pm_complementary: 'Complementary', pm_analogous: 'Analogous', pm_triadic: 'Triadic',
+    pm_tetradic: 'Tetradic', pm_mono: 'Monochromatic', pm_split: 'Split Comp.',
+    btn_exportcss: 'CSS Variables', btn_exporthex: 'HEX List', btn_exporthsl: 'HSL List',
+    lbl_export: 'Export', btn_copy: '📋 Copy', lbl_colorinfo: 'Selected Color Info',
+  },
+  ja: {
+    page_title: 'pomiai 開発者ツール',
+    tab_qr: '📱 QRコード', tab_pw: '🔐 パスワード', tab_color: '🎨 カラーパレット',
+    qr_title: 'QRコード生成ツール',
+    pw_title: 'パスワード生成ツール',
+    pw_sub: '強力で安全なパスワードを即座に生成 — すべての処理はブラウザ内だけで行われます',
+    lbl_password: 'パスワード', lbl_settings: '設定', lbl_length: '長さ',
+    opt_upper: '大文字 (A–Z)', opt_lower: '小文字 (a–z)', opt_num: '数字 (0–9)',
+    opt_sym: '記号 (!@#$%^&*)', opt_noamb: '紛らわしい文字を除外 (0 O l 1 I)',
+    lbl_exclude: '除外する文字(任意)', ph_exclude: '例: @#$',
+    lbl_count: '個数', btn_batch: '一括生成',
+    lbl_history: '生成履歴', btn_clear: 'クリア',
+    msg_pwhist_empty: 'パスワードを生成するとここに記録されます',
+    color_title: 'カラーパレット生成ツール',
+    color_sub: 'ベースカラーから補色・類似色・三角配色・単色パレットを自動生成 — CSS・HEX・HSLでエクスポート',
+    lbl_basecolor: 'ベースカラー', btn_random: '🎲 ランダム',
+    lbl_palettemode: 'パレットモード',
+    pm_complementary: '補色', pm_analogous: '類似色', pm_triadic: '三角配色',
+    pm_tetradic: '四角配色', pm_mono: '単色', pm_split: '分割補色',
+    btn_exportcss: 'CSS変数', btn_exporthex: 'HEXリスト', btn_exporthsl: 'HSLリスト',
+    lbl_export: 'エクスポート', btn_copy: '📋 コピー', lbl_colorinfo: '選択した色の情報',
+  },
+};
+
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+    const k = el.dataset.i18nHtml;
+    if (typeof t[k] === 'string') el.innerHTML = t[k];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    const k = el.dataset.i18nPlaceholder;
+    if (typeof t[k] === 'string') el.placeholder = t[k];
+  });
+  const pt = document.getElementById('page-title');
+  if (pt) pt.textContent = t.page_title;
+  document.title = t.page_title;
+}
+applyI18n();
+
 let toastTid;
 function toast(msg,dur=2400){
   const t=$('toast');t.textContent=msg;t.classList.add('show');
@@ -482,7 +596,20 @@ function goTab(id){
     $('tab-'+t).classList.toggle('on',t===id);
   });
   document.querySelectorAll('.htab').forEach((t,i)=>t.classList.toggle('on',['qr','pw','color'][i]===id));
+  try{
+    const url=new URL(location.href);
+    url.searchParams.set('tab',id);
+    history.replaceState(null,'',url);
+  }catch(e){}
 }
+/* ?tab= 딥링크: WordPress 포스트 embed에서 전달되는 시작 탭 결정 */
+(function(){
+  const params=new URLSearchParams(location.search);
+  const wantTab=params.get('tab');
+  if(wantTab && ['qr','pw','color'].includes(wantTab)){
+    goTab(wantTab);
+  }
+})();
 
 /* ─────────────────────────────────
    QR 코드 생성기
@@ -688,7 +815,7 @@ function addPwHist(pw){
 }
 function renderPwHist(){
   const h=$('pw-hist');
-  if(!pwHistory.length){h.innerHTML='<div style="font-size:13px;color:var(--tx4)">비밀번호를 생성하면 여기에 기록돼요</div>';return;}
+  if(!pwHistory.length){h.innerHTML='<div style="font-size:13px;color:var(--tx4)" data-i18n="msg_pwhist_empty"></div>';return;}
   h.innerHTML=pwHistory.map(p=>`
     <div class="ph-item">
       <span class="ph-val">${p}</span>
