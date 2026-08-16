@@ -7,6 +7,11 @@
 ===================================================
 pomiai_passport.html — 버전 로그
 ===================================================
+현재 버전: 2026.08.16 | 최종 수정: 2026.08.16
+변경 내역: 2026.08.16 ?country= URL 파라미터 딥링크 지원 추가 — 국가별 SEO
+포스트(미국/EU/영국/캐나다/중국/인도 등)에서 embed 시 해당 국가 규격으로
+바로 진입 가능 (예: ?country=us&lang=en). 캐시 무효화: ?v=2026.08.16
+---------------------------------------------------
 현재 버전: 2026.07.27 | 최종 수정: 2026.07.27
 변경 내역: 2026.07.27 pomiai 표준 적용 — 버전 로그, ko/en/ja 다국어(타이틀+헤더 기준),
 브랜드 푸터 신규 적용. 국가별 규격/배경교체/얼굴가이드/A4 인쇄 시트 로직은 원본 유지.
@@ -294,6 +299,15 @@ let isDragging=false,dragStartX=0,dragStartY=0,imgStartX=0,imgStartY=0;
     sw.appendChild(el);
   });
   updateSpecInfo();
+  /* ?country= 딥링크: SEO 포스트에서 embed 시 해당 국가 규격으로 바로 진입 */
+  (function(){
+    const cparams = new URLSearchParams(location.search);
+    const wantCountry = cparams.get('country');
+    if (wantCountry) {
+      const idx = COUNTRIES.findIndex(c => c.id === wantCountry);
+      if (idx > -1) selectCountry(idx);
+    }
+  })();
 })();
 
 function selectCountry(i){
