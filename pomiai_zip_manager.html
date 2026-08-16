@@ -1,9 +1,21 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" id="html-root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>pomiai 압축 관리자</title>
+<!--
+===================================================
+pomiai_zip_manager.html — 버전 로그
+===================================================
+현재 버전: 2026.08.16 | 최종 수정: 2026.08.16
+변경 내역: §5 표준 다국어 구조(I18N 객체 + data-i18n) 적용, ko/en/ja 지원.
+범위: 툴바·빈 상태·테이블 헤더 등 정적 UI 텍스트(약 20개)만 번역.
+토스트 메시지·비밀번호 모달 설명문 등 JS 템플릿 리터럴 안에 깊게
+박힌 동적 문구는 이번 범위에서 제외 — 추후 별도 작업으로 전체 전환 필요.
+캐시 무효화: ?v=2026.08.16
+===================================================
+-->
+<title id="page-title">pomiai 압축 관리자</title>
 <!-- zip.js: AES-256 암호화/복호화 지원 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/zip.js/2.7.44/zip-full.min.js"></script>
 <style>
@@ -225,59 +237,59 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   <div class="sep"></div>
   <button class="tbtn" onclick="triggerOpen()">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-    <span>열기</span>
+    <span data-i18n="btn_open"></span>
   </button>
   <button class="tbtn ok" onclick="triggerNewZip()">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    <span>새 ZIP</span>
+    <span data-i18n="btn_newzip"></span>
   </button>
   <div class="sep"></div>
   <button class="tbtn" id="btn-addfile" onclick="triggerAddFile()" disabled>
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-    <span>파일 추가</span>
+    <span data-i18n="btn_addfiles"></span>
   </button>
   <button class="tbtn" id="btn-extract-sel" onclick="extractSelected()" disabled>
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
-    <span>선택 추출</span>
+    <span data-i18n="btn_extractsel"></span>
   </button>
   <button class="tbtn ok" id="btn-extract-all" onclick="extractAll()" disabled>
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
-    <span>전체 추출</span>
+    <span data-i18n="btn_extractall"></span>
   </button>
   <button class="tbtn danger" id="btn-delete-sel" onclick="deleteSelected()" disabled>
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-    <span>삭제</span>
+    <span data-i18n="btn_delete"></span>
   </button>
   <div class="sep"></div>
   <!-- 암호 관련 버튼들 -->
   <button class="tbtn" id="btn-pw-open" onclick="showPwModal('open')" disabled>
-    🔓 <span>암호 열기</span>
+    🔓 <span data-i18n="btn_pwopen"></span>
   </button>
   <button class="tbtn" id="btn-pw-set" onclick="showPwModal('set')" disabled>
-    🔐 <span>암호 설정</span>
+    🔐 <span data-i18n="btn_pwset"></span>
   </button>
   <button class="tbtn" id="btn-pw-change" onclick="showPwModal('change')" disabled style="display:none">
-    🔑 <span>암호 변경</span>
+    🔑 <span data-i18n="btn_pwchange"></span>
   </button>
   <button class="tbtn danger" id="btn-pw-remove" onclick="showPwModal('remove')" disabled style="display:none">
-    🔓 <span>암호 제거</span>
+    🔓 <span data-i18n="btn_pwremove"></span>
   </button>
   <div class="sep"></div>
   <button class="tbtn ok" id="btn-save" onclick="saveZip()" disabled>
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-    <span>ZIP 저장</span>
+    <span data-i18n="btn_save"></span>
   </button>
   <input type="file" id="file-input" accept=".zip">
   <input type="file" id="add-input" multiple>
   <span id="lock-badge">🔒 암호 설정됨</span>
-  <span id="archive-name">파일을 열거나 새 ZIP을 만드세요</span>
+  <span id="archive-name" data-i18n="msg_noarchive"></span>
 </div>
 
 <div id="body">
   <!-- LEFT -->
   <div id="left">
     <div id="left-head">
-      <span id="left-title">폴더 트리</span>
+      <span id="left-title" data-i18n="lbl_tree"></span>
       <button id="left-toggle" onclick="toggleLeft()">✕</button>
     </div>
     <div id="tree"></div>
@@ -286,24 +298,24 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 
   <!-- MAIN -->
   <div id="main">
-    <div id="breadcrumb"><span class="bcrumb cur">🏠 루트</span></div>
+    <div id="breadcrumb"><span class="bcrumb cur" data-i18n-html="lbl_root"></span></div>
     <div id="list-head">
       <div class="col-chk"><input type="checkbox" id="chk-all" onchange="toggleAll(this.checked)"></div>
       <div class="col-icon"></div>
-      <div class="col-name lh" onclick="sortBy('name')" id="sh-name">이름</div>
-      <div class="col-size lh" onclick="sortBy('size')" id="sh-size">크기</div>
-      <div class="col-date lh" onclick="sortBy('date')" id="sh-date">날짜</div>
-      <div class="col-ratio">압축률</div>
+      <div class="col-name lh" onclick="sortBy('name')" id="sh-name" data-i18n="col_name"></div>
+      <div class="col-size lh" onclick="sortBy('size')" id="sh-size" data-i18n="col_size"></div>
+      <div class="col-date lh" onclick="sortBy('date')" id="sh-date" data-i18n="col_date"></div>
+      <div class="col-ratio" data-i18n="col_ratio"></div>
     </div>
     <div id="file-list">
       <div id="empty-state">
         <div class="ei">🗜️</div>
-        <h3>ZIP 파일을 열어주세요</h3>
-        <p>ZIP 파일을 열거나 새 ZIP을 만들 수 있어요<br>파일을 드래그해서 바로 열 수 있습니다</p>
+        <h3 data-i18n="empty_title"></h3>
+        <p data-i18n-html="empty_sub"></p>
         <div class="dz-hint" id="drop-hint">
-          <p style="font-size:12px;color:#555">여기에 드래그하거나</p>
-          <button class="ebtn" onclick="triggerOpen()">ZIP 파일 열기</button>
-          <button class="ebtn green" onclick="triggerNewZip()">새 ZIP 만들기</button>
+          <p style="font-size:12px;color:#555" data-i18n="empty_draghint"></p>
+          <button class="ebtn" onclick="triggerOpen()" data-i18n="btn_openzip"></button>
+          <button class="ebtn green" onclick="triggerNewZip()" data-i18n="btn_makenewzip"></button>
         </div>
       </div>
     </div>
@@ -364,6 +376,81 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 
 <script>
 const $=id=>document.getElementById(id);
+
+/* ════ I18N (§5 표준 구조 — 정적 UI 셸만 적용) ════ */
+const I18N = {
+  ko: {
+    page_title: 'pomiai 압축 관리자',
+    btn_open: '열기', btn_newzip: '새 ZIP', btn_addfiles: '파일 추가',
+    btn_extractsel: '선택 추출', btn_extractall: '전체 추출', btn_delete: '삭제',
+    btn_pwopen: '암호 열기', btn_pwset: '암호 설정', btn_pwchange: '암호 변경', btn_pwremove: '암호 제거',
+    btn_save: 'ZIP 저장',
+    msg_noarchive: '파일을 열거나 새 ZIP을 만드세요',
+    lbl_tree: '폴더 트리', lbl_root: '🏠 루트',
+    col_name: '이름', col_size: '크기', col_date: '날짜', col_ratio: '압축률', lbl_encrypted: '암호화',
+    empty_title: 'ZIP 파일을 열어주세요',
+    empty_sub: 'ZIP 파일을 열거나 새 ZIP을 만들 수 있어요<br>파일을 드래그해서 바로 열 수 있습니다',
+    empty_draghint: '여기에 드래그하거나',
+    btn_openzip: 'ZIP 파일 열기', btn_makenewzip: '새 ZIP 만들기',
+  },
+  en: {
+    page_title: 'pomiai Zip Manager',
+    btn_open: 'Open', btn_newzip: 'New ZIP', btn_addfiles: 'Add Files',
+    btn_extractsel: 'Extract Selected', btn_extractall: 'Extract All', btn_delete: 'Delete',
+    btn_pwopen: 'Unlock', btn_pwset: 'Set Password', btn_pwchange: 'Change Password', btn_pwremove: 'Remove Password',
+    btn_save: 'Save ZIP',
+    msg_noarchive: 'Open a file or create a new ZIP',
+    lbl_tree: 'Folder Tree', lbl_root: '🏠 Root',
+    col_name: 'Name', col_size: 'Size', col_date: 'Date', col_ratio: 'Ratio', lbl_encrypted: 'Encrypted',
+    empty_title: 'Open a ZIP file',
+    empty_sub: 'Open an existing ZIP or create a new one<br>You can also drag a file in to open it instantly',
+    empty_draghint: 'Drag a file here, or',
+    btn_openzip: 'Open ZIP File', btn_makenewzip: 'Create New ZIP',
+  },
+  ja: {
+    page_title: 'pomiai 圧縮マネージャー',
+    btn_open: '開く', btn_newzip: '新規ZIP', btn_addfiles: 'ファイル追加',
+    btn_extractsel: '選択を展開', btn_extractall: 'すべて展開', btn_delete: '削除',
+    btn_pwopen: 'パスワード解除', btn_pwset: 'パスワード設定', btn_pwchange: 'パスワード変更', btn_pwremove: 'パスワード削除',
+    btn_save: 'ZIP保存',
+    msg_noarchive: 'ファイルを開くか新規ZIPを作成してください',
+    lbl_tree: 'フォルダツリー', lbl_root: '🏠 ルート',
+    col_name: '名前', col_size: 'サイズ', col_date: '日付', col_ratio: '圧縮率', lbl_encrypted: '暗号化',
+    empty_title: 'ZIPファイルを開いてください',
+    empty_sub: 'ZIPファイルを開くか、新規作成できます<br>ファイルをドラッグしてすぐに開くこともできます',
+    empty_draghint: 'ここにドラッグするか、',
+    btn_openzip: 'ZIPファイルを開く', btn_makenewzip: '新規ZIPを作成',
+  },
+};
+
+(function(){
+  const lparams = new URLSearchParams(location.search);
+  const urlLang = lparams.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+    const k = el.dataset.i18nHtml;
+    if (typeof t[k] === 'string') el.innerHTML = t[k];
+  });
+  const pt = document.getElementById('page-title');
+  if (pt) pt.textContent = t.page_title;
+  document.title = t.page_title;
+  const an = $('archive-name');
+  if (an && !window._hasZipOpened) an.textContent = t.msg_noarchive;
+}
+applyI18n();
 
 /* ── 상태 ── */
 // 파일 목록: [{name, path, isDir, size, compSize, date, ext, data(Uint8Array)}]
@@ -770,7 +857,7 @@ function updateLockUI(){
 function updateAll(){
   const setBtns=['btn-addfile','btn-extract-all','btn-save','btn-pw-set','btn-pw-open'];
   setBtns.forEach(id=>{const el=$(id);if(el)el.disabled=!hasZip;});
-  const an=$('archive-name');if(an)an.textContent=hasZip?zipName:'파일을 열거나 새 ZIP을 만드세요';
+  const an=$('archive-name');if(an)an.textContent=hasZip?zipName:window._T.msg_noarchive;
   updateLockUI();renderTree();renderList();updateStats();updateBreadcrumb();
 }
 
@@ -882,7 +969,7 @@ function updateBreadcrumb(){
     if(!isCur)s.addEventListener('click',()=>navigateTo(path));
     bc.appendChild(s);
   };
-  addCrumb('🏠 루트','',!curPath);
+  addCrumb(window._T.lbl_root,'',!curPath);
   parts.forEach((p,i)=>{
     const sep=document.createElement('span');sep.className='bcsep';sep.textContent=' › ';bc.appendChild(sep);
     addCrumb(p,parts.slice(0,i+1).join('/'),i===parts.length-1);
@@ -935,7 +1022,7 @@ async function previewFile(item){
   const pt=$('prev-title'),pm=$('prev-meta'),pb=$('prev-body'),pv=$('preview');
   if(!pt||!pb||!pv)return;
   pt.textContent=item.name.slice(0,24);
-  if(pm)pm.innerHTML=`<b>크기</b> ${fmtSize(item.size)}<br>${item.encrypted?'<b>암호화</b> 🔒<br>':''}${item.date?'<b>날짜</b> '+fmtDate(item.date):''}`;
+  if(pm)pm.innerHTML=`<b>${window._T.col_size}</b> ${fmtSize(item.size)}<br>${item.encrypted?'<b>'+(window._T.lbl_encrypted||'Encrypted')+'</b> \ud83d\udd12<br>':''}${item.date?'<b>'+window._T.col_date+'</b> '+fmtDate(item.date):''}`;
   pb.innerHTML='<div style="color:#555;padding:20px;text-align:center">로딩 중...</div>';
   pv.classList.remove('hidden');
   try{
