@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!--
+===================================================
+pomiai_rename.html — 버전 로그
+===================================================
+현재 버전: 2026.08.16 | 최종 수정: 2026.08.16
+변경 내역: 2026.08.16 §5 표준 다국어 구조(I18N 객체 + data-i18n) 적용,
+ko/en/ja 지원. ?lang= URL 파라미터 → 브라우저 언어 → 기본값(ko) 자동 감지.
+캐시 무효화: ?v=2026.08.16
+===================================================
+-->
+<title id="page-title">pomiai · rename</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root{
+  --paper:#F6F3EC;
+  --surface:#FFFFFF;
+  --line:#E4DFD1;
+  --ink:#211E19;
+  --muted:#7C7768;
+  --accent:#E2571E;
+  --accent-soft:#FDE9DE;
+  --ok:#2E6B4F;
+  --ok-bg:#E7F1EB;
+  --warn:#B5451C;
+  --warn-bg:#FBEAE2;
+  --tape:#FFF6E6;
+  --tape-line:#EFD8AA;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+  --sans:'Inter', system-ui, sans-serif;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1000px 400px at 100% -10%, #FBEEDC 0%, transparent 60%),
+    var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  padding:0 0 70px;
+  min-height:100vh;
+}
+.wrap{max-width:920px;margin:0 auto;padding:0 20px;}
+
+/* ===== brand bar ===== */
+.brandbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 0 16px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:26px;
+}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand svg{display:block;}
+.brand .word{font-family:var(--mono);font-weight:700;font-size:16px;letter-spacing:-0.02em;}
+.brand .word b{color:var(--accent);}
+.brand .module{
+  font-family:var(--mono);font-size:11px;color:var(--muted);
+  border-left:1px solid var(--line);padding-left:10px;margin-left:2px;
+  letter-spacing:.04em;
+}
+.status-pill{
+  font-family:var(--mono);font-size:11px;padding:6px 11px;border-radius:100px;
+  border:1px solid var(--line);background:var(--surface);color:var(--muted);
+  display:flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.status-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);}
+.status-pill.on{border-color:var(--ok);color:var(--ok);background:var(--ok-bg);}
+.status-pill.on .dot{background:var(--ok);}
+
+.intro{margin-bottom:20px;}
+.intro h1{font-family:var(--mono);font-size:20px;margin:0 0 6px;letter-spacing:-0.01em;}
+.intro p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5;}
+
+.fallback-note{
+  font-size:12.5px;color:var(--warn);background:var(--warn-bg);
+  border:1px solid #EBCBB8;border-radius:10px;padding:10px 13px;margin-bottom:16px;display:none;
+}
+.fallback-note.show{display:block;}
+
+/* ===== source / dropzone ===== */
+.source{
+  background:var(--surface);border:1.5px dashed var(--line);border-radius:var(--radius);
+  padding:20px;margin-bottom:16px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  transition:border-color .15s ease, background .15s ease;
+}
+.source.dragover{border-color:var(--accent);background:var(--accent-soft);}
+.btn{
+  font-family:var(--sans);font-weight:600;font-size:13.5px;padding:10px 16px;border-radius:9px;
+  border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;
+  transition:transform .12s ease, opacity .12s ease;
+}
+.btn:hover{transform:translateY(-1px);}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.btn.secondary{background:transparent;color:var(--ink);}
+.btn.accent{background:var(--accent);border-color:var(--accent);}
+.btn.ghost{background:transparent;color:var(--muted);border-color:var(--line);font-weight:500;}
+.btn.small{padding:7px 11px;font-size:12px;}
+.source-info{font-size:13px;color:var(--muted);flex:1;min-width:200px;}
+.source-info b{color:var(--ink);}
+input[type=file]{display:none;}
+
+/* ===== rules ===== */
+.section-label{
+  font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.06em;
+  margin:26px 0 10px;text-transform:uppercase;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:"";flex:1;height:1px;background:var(--line);}
+
+.rules{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:4px;margin-bottom:8px;}
+.rule{display:flex;gap:14px;align-items:flex-start;padding:14px 12px;border-bottom:1px dashed var(--line);}
+.rule:last-child{border-bottom:none;}
+.rule.disabled .rule-controls{opacity:.4;pointer-events:none;}
+.tag{
+  font-family:var(--mono);font-size:11px;font-weight:700;color:#fff;background:var(--ink);
+  border-radius:5px;padding:3px 7px;margin-top:2px;flex-shrink:0;letter-spacing:.02em;
+}
+.rule-body{flex:1;min-width:0;}
+.rule-title{font-size:13.5px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.rule-title .hint{font-weight:400;color:var(--muted);font-size:11.5px;font-family:var(--mono);}
+.rule-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.rule-controls label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+input[type=text],input[type=number],select{
+  font-family:var(--mono);font-size:13px;padding:7px 9px;border-radius:7px;
+  border:1px solid var(--line);background:var(--paper);color:var(--ink);min-width:0;
+}
+input[type=text]{width:160px;}
+input[type=number]{width:60px;}
+input[type=checkbox]{accent-color:var(--accent);}
+.chip-select{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;}
+.chip-select button{font-family:var(--mono);font-size:12px;padding:6px 10px;border:none;background:var(--paper);color:var(--muted);cursor:pointer;}
+.chip-select button.active{background:var(--ink);color:#fff;}
+.chip-select button+button{border-left:1px solid var(--line);}
+
+.preset-row{display:flex;gap:8px;justify-content:flex-end;margin:10px 2px 0;}
+input[type=file]#presetInput{display:none;}
+
+/* ===== preview ===== */
+.preview-head{display:flex;justify-content:space-between;align-items:center;margin:24px 0 10px;}
+.preview-head h2{font-family:var(--mono);font-size:14px;margin:0;}
+.count{font-size:12px;color:var(--muted);font-family:var(--mono);}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;max-height:420px;overflow-y:auto;}
+.row{
+  display:grid;grid-template-columns:1fr 20px 1fr 56px;gap:10px;align-items:center;
+  padding:10px 14px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12.5px;
+}
+.row:last-child{border-bottom:none;}
+.row.dup{background:var(--warn-bg);}
+.row .old{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.row .arrow{color:var(--line);text-align:center;}
+.row .new{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.new-tape{display:inline-block;background:var(--tape);border:1px solid var(--tape-line);border-radius:4px;padding:2px 7px;font-weight:600;}
+.row .flag{font-size:10.5px;color:var(--warn);text-align:right;}
+.empty{padding:44px 20px;text-align:center;color:var(--muted);font-size:13px;}
+
+.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center;}
+.result-msg{font-size:12.5px;color:var(--ok);font-family:var(--mono);}
+.result-msg.err{color:var(--warn);}
+
+.footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brandbar">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <circle cx="13" cy="13" r="12" stroke="#211E19" stroke-width="1.4"/>
+        <circle cx="13" cy="13" r="4.2" fill="#E2571E"/>
+        <circle cx="13" cy="13" r="1.4" fill="#211E19"/>
+      </svg>
+      <span class="word">pomi<b>ai</b></span>
+      <span class="module">RENAME</span>
+    </div>
+    <span class="status-pill" id="statusPill"><span class="dot"></span><span data-i18n="status_none"></span></span>
+  </div>
+
+  <div class="intro">
+    <h1 data-i18n="intro_title"></h1>
+    <p data-i18n="intro_sub"></p>
+  </div>
+
+  <div class="fallback-note" id="fallbackNote">
+    <span data-i18n="fallback_note"></span>
+  </div>
+
+  <div class="source" id="dropzone">
+    <button class="btn" id="pickFolderBtn" data-i18n-html="btn_pickfolder"></button>
+    <button class="btn secondary" id="pickFilesBtn" data-i18n="btn_pickfiles"></button>
+    <input type="file" id="fileInput" multiple>
+    <div class="source-info" id="sourceInfo" data-i18n="source_default"></div>
+  </div>
+
+  <div class="section-label" data-i18n="section_rules"></div>
+  <div class="rules">
+
+    <div class="rule">
+      <span class="tag">01</span>
+      <div class="rule-body">
+        <div class="rule-title" data-i18n="r1_title"></div>
+        <div class="rule-controls">
+          <input type="text" id="findText" data-i18n-placeholder="ph_find" placeholder="찾을 문자열 / 정규식">
+          <span style="color:var(--muted);font-family:var(--mono);">→</span>
+          <input type="text" id="replaceText" data-i18n-placeholder="ph_replace" placeholder="바꿀 문자열">
+          <label><input type="checkbox" id="useRegex"> <span data-i18n="lbl_regex"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule">
+      <span class="tag">02</span>
+      <div class="rule-body">
+        <div class="rule-title" data-i18n="r2_title"></div>
+        <div class="rule-controls">
+          <label data-i18n="lbl_trimstart"><input type="number" id="trimStart" value="0" min="0"></label>
+          <label data-i18n="lbl_trimend"><input type="number" id="trimEnd" value="0" min="0"></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule">
+      <span class="tag">03</span>
+      <div class="rule-body">
+        <div class="rule-title" data-i18n="r3_title"></div>
+        <div class="rule-controls chip-select" id="spaceMode">
+          <button data-v="none" class="active" data-i18n="sp_none"></button>
+          <button data-v="underscore" data-i18n="sp_underscore"></button>
+          <button data-v="dash" data-i18n="sp_dash"></button>
+          <button data-v="remove" data-i18n="sp_remove"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule">
+      <span class="tag">04</span>
+      <div class="rule-body">
+        <div class="rule-title" data-i18n="r4_title"></div>
+        <div class="rule-controls chip-select" id="caseMode">
+          <button data-v="none" class="active" data-i18n="case_none"></button>
+          <button data-v="lower" data-i18n="case_lower"></button>
+          <button data-v="upper" data-i18n="case_upper"></button>
+          <button data-v="title" data-i18n="case_title"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule">
+      <span class="tag">05</span>
+      <div class="rule-body">
+        <div class="rule-title" data-i18n="r5_title"></div>
+        <div class="rule-controls">
+          <label data-i18n="lbl_prefix"><input type="text" id="prefixText" data-i18n-placeholder="ph_prefix" placeholder="예: pomiai_"></label>
+          <label data-i18n="lbl_suffix"><input type="text" id="suffixText" data-i18n-placeholder="ph_suffix" placeholder="예: _final"></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule">
+      <span class="tag">06</span>
+      <div class="rule-body">
+        <div class="rule-title" data-i18n="r6_title"></div>
+        <div class="rule-controls">
+          <label><input type="checkbox" id="numEnabled"> <span data-i18n="lbl_use"></span></label>
+          <label data-i18n="lbl_numstart"><input type="number" id="numStart" value="1" min="0"></label>
+          <label data-i18n="lbl_numpad"><input type="number" id="numPad" value="2" min="1" max="6"></label>
+          <div class="chip-select" id="numPos">
+            <button data-v="prefix" class="active" data-i18n="pos_prefix"></button>
+            <button data-v="suffix" data-i18n="pos_suffix"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule">
+      <span class="tag">07</span>
+      <div class="rule-body">
+        <div class="rule-title" data-i18n="r7_title"></div>
+        <div class="rule-controls">
+          <div class="chip-select" id="dateSource">
+            <button data-v="none" class="active" data-i18n="ds_none"></button>
+            <button data-v="today" data-i18n="ds_today"></button>
+            <button data-v="mtime" data-i18n="ds_mtime"></button>
+          </div>
+          <select id="dateFormat">
+            <option value="YYYYMMDD">20260726</option>
+            <option value="YYYY-MM-DD">2026-07-26</option>
+          </select>
+          <div class="chip-select" id="datePos">
+            <button data-v="prefix" class="active" data-i18n="pos_prefix"></button>
+            <button data-v="suffix" data-i18n="pos_suffix"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule" id="extRule">
+      <span class="tag">08</span>
+      <div class="rule-body">
+        <div class="rule-title" data-i18n="r8_title"><span class="hint" data-i18n="r8_hint"></span></div>
+        <div class="rule-controls">
+          <label><input type="checkbox" id="extProtect" checked> <span data-i18n="lbl_extprotect"></span></label>
+          <input type="text" id="extText" data-i18n-placeholder="ph_ext" placeholder="예: jpg (보호 해제 시 입력)" disabled>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="preset-row">
+    <button class="btn ghost small" id="savePresetBtn" data-i18n="btn_savepreset"></button>
+    <button class="btn ghost small" id="loadPresetBtn" data-i18n="btn_loadpreset"></button>
+    <input type="file" id="presetInput" accept="application/json">
+  </div>
+
+  <div class="preview-head">
+    <h2 data-i18n="preview_title"></h2>
+    <span class="count" id="countInfo">0개 파일</span>
+  </div>
+  <div class="list" id="list">
+    <div class="empty" data-i18n="preview_empty"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn accent" id="applyBtn" disabled data-i18n="btn_apply"></button>
+    <button class="btn secondary" id="undoBtn" disabled data-i18n="btn_undo"></button>
+    <button class="btn secondary" id="zipBtn" disabled data-i18n="btn_zip"></button>
+    <span class="result-msg" id="resultMsg"></span>
+  </div>
+
+  <div class="footer">
+    <span>pomiai tools</span>
+    <span data-i18n="footer_privacy"></span>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+/* ════ I18N (§5 표준 구조) ════ */
+const I18N = {
+  ko: {
+    page_title: 'pomiai · rename',
+    status_none: '폴더 미선택', status_folder_on: '폴더 연결됨 (쓰기 가능)', status_files: '파일 선택됨 (사본 모드)',
+    intro_title: '로컬 파일 일괄 이름변경',
+    intro_sub: '규칙을 순서대로 쌓아 파일명을 한 번에 정리해요. 실시간 미리보기와 실행취소, 규칙 프리셋 저장까지 지원해요.',
+    fallback_note: '이 브라우저는 폴더 내 실제 이름변경을 지원하지 않아요(Chrome/Edge 전용 기능). 대신 파일을 선택하거나 드래그하면 이름이 바뀐 사본을 ZIP으로 받을 수 있어요.',
+    btn_pickfolder: '📁 폴더 선택 (실제 변경)', btn_pickfiles: '파일 선택 / 드래그 (사본 ZIP)',
+    source_default: '폴더를 선택하거나, 파일을 이 영역에 드래그해서 놓으세요.',
+    section_rules: '규칙 파이프라인',
+    r1_title: '찾기 → 바꾸기', ph_find: '찾을 문자열 / 정규식', ph_replace: '바꿀 문자열',
+    lbl_regex: '정규식 (그룹 $1 사용 가능)',
+    r2_title: '문자 잘라내기', lbl_trimstart: '앞에서 {n} 자 삭제', lbl_trimend: '뒤에서 {n} 자 삭제',
+    r3_title: '공백 처리', sp_none: '그대로', sp_underscore: '밑줄로', sp_dash: '하이픈으로', sp_remove: '제거',
+    r4_title: '대소문자 변환', case_none: '그대로', case_lower: '소문자', case_upper: '대문자', case_title: '첫 글자만 대문자',
+    r5_title: '접두사 / 접미사 추가', lbl_prefix: '앞 {n}', ph_prefix: '예: pomiai_', lbl_suffix: '뒤 {n}', ph_suffix: '예: _final',
+    r6_title: '순번 매기기', lbl_use: '사용', lbl_numstart: '시작 {n}', lbl_numpad: '자릿수 {n}',
+    pos_prefix: '이름 앞', pos_suffix: '이름 뒤',
+    r7_title: '날짜 삽입', ds_none: '사용 안 함', ds_today: '오늘 날짜', ds_mtime: '파일 수정일',
+    r8_title: '확장자 변경', r8_hint: '(끄면 확장자 보호)', lbl_extprotect: '확장자 보호', ph_ext: '예: jpg (보호 해제 시 입력)',
+    btn_savepreset: '규칙 저장', btn_loadpreset: '규칙 불러오기',
+    preview_title: '미리보기', preview_empty: '폴더나 파일을 선택하면 여기에서 미리 확인할 수 있어요.',
+    btn_apply: '폴더에 실제로 이름 적용', btn_undo: '마지막 변경 실행취소', btn_zip: '사본 ZIP 다운로드',
+    footer_privacy: '파일은 브라우저 안에서만 처리돼요 · 서버 업로드 없음',
+    msg_countfiles: '{n}개 파일', msg_dup: '중복',
+    msg_writeperm: '쓰기 권한이 필요해요. 다시 시도해주세요.',
+    msg_folder_selected: '선택된 폴더: <b>{n}</b> · 파일 {c}개',
+    msg_files_selected: '선택된 파일: <b>{c}개</b> (사본 ZIP만 가능)',
+    msg_applying: '적용 중...', msg_apply_done: '{n}개 파일 이름 변경 완료', msg_apply_partial: '완료 {done}개, 실패 {failed}개',
+    msg_undoing: '실행취소 중...', msg_undo_done: '{n}개 파일을 원래 이름으로 되돌렸어요', msg_undo_partial: '되돌리기 완료 {done}개, 실패 {failed}개',
+    msg_zipping: 'ZIP 생성 중...', msg_zip_done: '{n}개 파일이 담긴 ZIP을 내려받았어요',
+    msg_dup_warning: '이름이 중복돼요. 규칙을 조정해주세요.',
+    msg_preset_error: '프리셋 파일을 읽지 못했어요.',
+  },
+  en: {
+    page_title: 'pomiai · rename',
+    status_none: 'No folder selected', status_folder_on: 'Folder connected (writable)', status_files: 'Files selected (copy mode)',
+    intro_title: 'Local Batch File Renamer',
+    intro_sub: 'Stack rules in order to clean up filenames in one pass. Live preview, undo, and rule presets included.',
+    fallback_note: 'This browser doesn\\'t support renaming files in place (Chrome/Edge only feature). Select or drag files instead to download renamed copies as a ZIP.',
+    btn_pickfolder: '📁 Select Folder (rename in place)', btn_pickfiles: 'Select / Drag Files (copy ZIP)',
+    source_default: 'Select a folder, or drag files into this area.',
+    section_rules: 'Rule Pipeline',
+    r1_title: 'Find → Replace', ph_find: 'Text or regex to find', ph_replace: 'Replacement text',
+    lbl_regex: 'Regex (supports $1 groups)',
+    r2_title: 'Trim Characters', lbl_trimstart: 'Remove {n} chars from start', lbl_trimend: 'Remove {n} chars from end',
+    r3_title: 'Whitespace', sp_none: 'Keep', sp_underscore: 'To underscore', sp_dash: 'To hyphen', sp_remove: 'Remove',
+    r4_title: 'Case Conversion', case_none: 'Keep', case_lower: 'lowercase', case_upper: 'UPPERCASE', case_title: 'Title Case',
+    r5_title: 'Add Prefix / Suffix', lbl_prefix: 'Before {n}', ph_prefix: 'e.g. pomiai_', lbl_suffix: 'After {n}', ph_suffix: 'e.g. _final',
+    r6_title: 'Sequential Numbering', lbl_use: 'Enable', lbl_numstart: 'Start {n}', lbl_numpad: 'Digits {n}',
+    pos_prefix: 'Before name', pos_suffix: 'After name',
+    r7_title: 'Insert Date', ds_none: 'Off', ds_today: "Today's date", ds_mtime: 'File modified date',
+    r8_title: 'Change Extension', r8_hint: '(off = keep original extension)', lbl_extprotect: 'Keep extension', ph_ext: 'e.g. jpg (enter when unprotected)',
+    btn_savepreset: 'Save Rules', btn_loadpreset: 'Load Rules',
+    preview_title: 'Preview', preview_empty: 'Select a folder or files to preview the results here.',
+    btn_apply: 'Apply Renames to Folder', btn_undo: 'Undo Last Change', btn_zip: 'Download Copy as ZIP',
+    footer_privacy: 'Files are processed entirely in your browser · nothing is uploaded',
+    msg_countfiles: '{n} files', msg_dup: 'duplicate',
+    msg_writeperm: 'Write permission is required. Please try again.',
+    msg_folder_selected: 'Selected folder: <b>{n}</b> · {c} files',
+    msg_files_selected: 'Selected files: <b>{c}</b> (copy ZIP only)',
+    msg_applying: 'Applying...', msg_apply_done: 'Renamed {n} files', msg_apply_partial: '{done} done, {failed} failed',
+    msg_undoing: 'Undoing...', msg_undo_done: 'Restored {n} files to their original names', msg_undo_partial: '{done} restored, {failed} failed',
+    msg_zipping: 'Building ZIP...', msg_zip_done: 'Downloaded a ZIP with {n} files',
+    msg_dup_warning: 'Names collide. Please adjust the rules.',
+    msg_preset_error: 'Could not read the preset file.',
+  },
+  ja: {
+    page_title: 'pomiai · rename',
+    status_none: 'フォルダ未選択', status_folder_on: 'フォルダ接続済み(書き込み可能)', status_files: 'ファイル選択済み(コピーモード)',
+    intro_title: 'ローカルファイル一括リネーム',
+    intro_sub: 'ルールを順番に積み重ねてファイル名を一度に整理します。リアルタイムプレビュー、元に戻す、ルールプリセット保存に対応しています。',
+    fallback_note: 'このブラウザはフォルダ内の実際のリネームに対応していません(Chrome/Edge専用機能)。代わりにファイルを選択またはドラッグすると、名前を変更したコピーをZIPでダウンロードできます。',
+    btn_pickfolder: '📁 フォルダを選択(実際に変更)', btn_pickfiles: 'ファイル選択 / ドラッグ(コピーZIP)',
+    source_default: 'フォルダを選択するか、ファイルをこのエリアにドラッグしてください。',
+    section_rules: 'ルールパイプライン',
+    r1_title: '検索 → 置換', ph_find: '検索する文字列 / 正規表現', ph_replace: '置換する文字列',
+    lbl_regex: '正規表現(グループ$1使用可)',
+    r2_title: '文字の切り取り', lbl_trimstart: '先頭から{n}文字削除', lbl_trimend: '末尾から{n}文字削除',
+    r3_title: '空白の処理', sp_none: 'そのまま', sp_underscore: 'アンダースコアに', sp_dash: 'ハイフンに', sp_remove: '削除',
+    r4_title: '大文字・小文字変換', case_none: 'そのまま', case_lower: '小文字', case_upper: '大文字', case_title: '先頭のみ大文字',
+    r5_title: '接頭辞 / 接尾辞を追加', lbl_prefix: '前 {n}', ph_prefix: '例: pomiai_', lbl_suffix: '後 {n}', ph_suffix: '例: _final',
+    r6_title: '連番を振る', lbl_use: '使用', lbl_numstart: '開始 {n}', lbl_numpad: '桁数 {n}',
+    pos_prefix: '名前の前', pos_suffix: '名前の後',
+    r7_title: '日付を挿入', ds_none: '使用しない', ds_today: '今日の日付', ds_mtime: 'ファイル更新日',
+    r8_title: '拡張子を変更', r8_hint: '(オフで拡張子を保護)', lbl_extprotect: '拡張子を保護', ph_ext: '例: jpg(保護解除時に入力)',
+    btn_savepreset: 'ルールを保存', btn_loadpreset: 'ルールを読み込む',
+    preview_title: 'プレビュー', preview_empty: 'フォルダやファイルを選択すると、ここでプレビューできます。',
+    btn_apply: 'フォルダに実際に名前を適用', btn_undo: '最後の変更を元に戻す', btn_zip: 'コピーをZIPでダウンロード',
+    footer_privacy: 'ファイルはブラウザ内だけで処理されます・サーバーへのアップロードなし',
+    msg_countfiles: '{n}個のファイル', msg_dup: '重複',
+    msg_writeperm: '書き込み権限が必要です。もう一度お試しください。',
+    msg_folder_selected: '選択したフォルダ: <b>{n}</b> · ファイル{c}個',
+    msg_files_selected: '選択したファイル: <b>{c}個</b>(コピーZIPのみ可能)',
+    msg_applying: '適用中...', msg_apply_done: '{n}個のファイル名を変更しました', msg_apply_partial: '完了{done}個、失敗{failed}個',
+    msg_undoing: '元に戻しています...', msg_undo_done: '{n}個のファイルを元の名前に戻しました', msg_undo_partial: '復元完了{done}個、失敗{failed}個',
+    msg_zipping: 'ZIP作成中...', msg_zip_done: '{n}個のファイルが入ったZIPをダウンロードしました',
+    msg_dup_warning: '名前が重複しています。ルールを調整してください。',
+    msg_preset_error: 'プリセットファイルを読み込めませんでした。',
+  },
+};
+
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[browserLang]         ? browserLang : 'ko');
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+})();
+function t(key, vars){
+  let s = window._T[key] || key;
+  if (vars) Object.keys(vars).forEach(k => { s = s.replace('{'+k+'}', vars[k]); });
+  return s;
+}
+function applyI18n(){
+  const dict = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.dataset.i18n;
+    if (typeof dict[k] !== 'string') return;
+    const val = dict[k];
+    if (val.includes('{n}') && el.querySelector('input')) {
+      const inp = el.querySelector('input');
+      const [before, after] = val.split('{n}');
+      el.textContent = '';
+      el.appendChild(document.createTextNode(before));
+      el.appendChild(inp);
+      el.appendChild(document.createTextNode(after));
+    } else {
+      el.textContent = val;
+    }
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+    const k = el.dataset.i18nHtml;
+    if (typeof dict[k] === 'string') el.innerHTML = dict[k];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    const k = el.dataset.i18nPlaceholder;
+    if (typeof dict[k] === 'string') el.placeholder = dict[k];
+  });
+  const pt = document.getElementById('page-title');
+  if (pt) pt.textContent = dict.page_title;
+  document.title = dict.page_title;
+}
+applyI18n();
+
+const supportsFS = 'showDirectoryPicker' in window;
+if(!supportsFS){
+  document.getElementById('fallbackNote').classList.add('show');
+  document.getElementById('pickFolderBtn').disabled = true;
+}
+
+let mode = null; // 'folder' | 'files'
+let dirHandle = null;
+let entries = []; // {name, handle?, file?, mtime}
+let lastApplyHistory = null; // [{oldName newName}] for undo
+let state = { spaceMode:'none', caseMode:'none', numPos:'prefix', dateSource:'none', datePos:'prefix' };
+
+function bindChips(id, key, after){
+  const el = document.getElementById(id);
+  el.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      el.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      state[key] = b.dataset.v;
+      if(after) after(b.dataset.v);
+      render();
+    });
+  });
+}
+bindChips('spaceMode','spaceMode');
+bindChips('caseMode','caseMode');
+bindChips('numPos','numPos');
+bindChips('datePos','datePos');
+bindChips('dateSource','dateSource');
+
+['findText','replaceText','useRegex','trimStart','trimEnd','prefixText','suffixText',
+ 'numEnabled','numStart','numPad','dateFormat','extText']
+  .forEach(id => document.getElementById(id).addEventListener('input', render));
+
+document.getElementById('extProtect').addEventListener('change', (e)=>{
+  document.getElementById('extText').disabled = e.target.checked;
+  render();
+});
+
+function splitExt(name){
+  const idx = name.lastIndexOf('.');
+  if(idx <= 0) return [name, ''];
+  return [name.slice(0, idx), name.slice(idx+1)];
+}
+function sanitize(name){ return name.replace(/[\\/:*?"<>|]/g, '_'); }
+function pad(n, width){ return String(n).padStart(width, '0'); }
+function formatDate(d, fmt){
+  const y = d.getFullYear(), m = pad(d.getMonth()+1,2), day = pad(d.getDate(),2);
+  return fmt === 'YYYY-MM-DD' ? `${y}-${m}-${day}` : `${y}${m}${day}`;
+}
+
+function computeNewName(entry, index){
+  let [base, ext] = splitExt(entry.name);
+
+  // 01 find/replace
+  const find = document.getElementById('findText').value;
+  const replace = document.getElementById('replaceText').value;
+  const useRegex = document.getElementById('useRegex').checked;
+  if(find){
+    try{
+      base = useRegex ? base.replace(new RegExp(find,'g'), replace) : base.split(find).join(replace);
+    }catch(e){}
+  }
+
+  // 02 trim
+  const trimStart = parseInt(document.getElementById('trimStart').value || '0', 10);
+  const trimEnd = parseInt(document.getElementById('trimEnd').value || '0', 10);
+  if(trimStart > 0) base = base.slice(trimStart);
+  if(trimEnd > 0) base = base.slice(0, Math.max(0, base.length - trimEnd));
+
+  // 03 space
+  if(state.spaceMode==='underscore') base = base.replace(/\s+/g,'_');
+  else if(state.spaceMode==='dash') base = base.replace(/\s+/g,'-');
+  else if(state.spaceMode==='remove') base = base.replace(/\s+/g,'');
+
+  // 04 case
+  if(state.caseMode==='lower') base = base.toLowerCase();
+  else if(state.caseMode==='upper') base = base.toUpperCase();
+  else if(state.caseMode==='title') base = base.replace(/\b\w/g, c=>c.toUpperCase());
+
+  // 05 prefix/suffix
+  const prefix = document.getElementById('prefixText').value;
+  const suffix = document.getElementById('suffixText').value;
+  base = prefix + base + suffix;
+
+  // 06 numbering
+  if(document.getElementById('numEnabled').checked){
+    const start = parseInt(document.getElementById('numStart').value || '0', 10);
+    const padW = parseInt(document.getElementById('numPad').value || '1', 10);
+    const num = pad(start + index, padW);
+    base = state.numPos === 'prefix' ? `${num}_${base}` : `${base}_${num}`;
+  }
+
+  // 07 date
+  if(state.dateSource !== 'none'){
+    const fmt = document.getElementById('dateFormat').value;
+    const d = state.dateSource === 'mtime' && entry.mtime ? new Date(entry.mtime) : new Date();
+    const ds = formatDate(d, fmt);
+    base = state.datePos === 'prefix' ? `${ds}_${base}` : `${base}_${ds}`;
+  }
+
+  // 08 extension
+  const extProtect = document.getElementById('extProtect').checked;
+  const extOverride = extProtect ? '' : document.getElementById('extText').value.trim().replace(/^\./,'');
+  const finalExt = extOverride || ext;
+
+  base = sanitize(base);
+  return finalExt ? `${base}.${finalExt}` : base;
+}
+
+function render(){
+  const list = document.getElementById('list');
+  document.getElementById('countInfo').textContent = t('msg_countfiles',{n:entries.length});
+
+  if(entries.length === 0){
+    list.innerHTML = '<div class="empty" data-i18n="preview_empty"></div>';
+    document.getElementById('applyBtn').disabled = true;
+    document.getElementById('zipBtn').disabled = true;
+    return;
+  }
+
+  const newNames = entries.map((e,i)=>computeNewName(e,i));
+  const counts = {};
+  newNames.forEach(n => counts[n] = (counts[n]||0)+1);
+
+  list.innerHTML = entries.map((e,i)=>{
+    const nn = newNames[i];
+    const isDup = counts[nn] > 1;
+    return `<div class="row ${isDup?'dup':''}">
+      <span class="old" title="${e.name}">${e.name}</span>
+      <span class="arrow">→</span>
+      <span class="new"><span class="new-tape">${nn}</span></span>
+      <span class="flag">${isDup?t('msg_dup'):''}</span>
+    </div>`;
+  }).join('');
+
+  const hasDup = Object.values(counts).some(c=>c>1);
+  document.getElementById('applyBtn').disabled = !(mode==='folder') || hasDup;
+  document.getElementById('zipBtn').disabled = entries.length===0 || hasDup;
+  const rm = document.getElementById('resultMsg');
+  if(hasDup){ rm.textContent = t('msg_dup_warning'); rm.className='result-msg err'; }
+  else if(rm.textContent === t('msg_dup_warning')){ rm.textContent=''; rm.className='result-msg'; }
+}
+
+async function loadFolderEntries(){
+  entries = [];
+  for await (const [name, handle] of dirHandle.entries()){
+    if(handle.kind === 'file'){
+      let mtime = null;
+      try{ const f = await handle.getFile(); mtime = f.lastModified; }catch(e){}
+      entries.push({name, handle, mtime});
+    }
+  }
+}
+
+document.getElementById('pickFolderBtn').addEventListener('click', async ()=>{
+  try{
+    dirHandle = await window.showDirectoryPicker();
+    const perm = await dirHandle.requestPermission({mode:'readwrite'});
+    if(perm !== 'granted'){
+      document.getElementById('sourceInfo').textContent = t('msg_writeperm');
+      return;
+    }
+    mode = 'folder';
+    await loadFolderEntries();
+    document.getElementById('sourceInfo').innerHTML = t('msg_folder_selected',{n:dirHandle.name,c:entries.length});
+    const pill = document.getElementById('statusPill');
+    pill.innerHTML = '<span class="dot"></span>' + t('status_folder_on');
+    pill.classList.add('on');
+    lastApplyHistory = null;
+    document.getElementById('undoBtn').disabled = true;
+    render();
+  }catch(e){}
+});
+
+function setFilesMode(fileList){
+  const files = Array.from(fileList);
+  if(files.length === 0) return;
+  mode = 'files';
+  entries = files.map(f => ({name:f.name, file:f, mtime:f.lastModified}));
+  document.getElementById('sourceInfo').innerHTML = t('msg_files_selected',{c:entries.length});
+  const pill = document.getElementById('statusPill');
+  pill.innerHTML = '<span class="dot"></span>' + t('status_files');
+  pill.classList.remove('on');
+  render();
+}
+
+document.getElementById('pickFilesBtn').addEventListener('click', ()=>document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', e=>setFilesMode(e.target.files));
+
+const dz = document.getElementById('dropzone');
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev, e=>{e.preventDefault();dz.classList.add('dragover');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev, e=>{e.preventDefault();dz.classList.remove('dragover');}));
+dz.addEventListener('drop', e=>{
+  if(e.dataTransfer.files && e.dataTransfer.files.length) setFilesMode(e.dataTransfer.files);
+});
+
+document.getElementById('applyBtn').addEventListener('click', async ()=>{
+  const rm = document.getElementById('resultMsg');
+  rm.className = 'result-msg'; rm.textContent = t('msg_applying');
+  let done=0, failed=0;
+  const newNames = entries.map((e,i)=>computeNewName(e,i));
+  const history = [];
+
+  for(let i=0;i<entries.length;i++){
+    const e = entries[i]; const newName = newNames[i];
+    if(newName === e.name){ done++; continue; }
+    try{
+      const file = await e.handle.getFile();
+      const buf = await file.arrayBuffer();
+      const newHandle = await dirHandle.getFileHandle(newName, {create:true});
+      const writable = await newHandle.createWritable();
+      await writable.write(buf); await writable.close();
+      await dirHandle.removeEntry(e.name);
+      history.push({oldName:e.name, newName});
+      done++;
+    }catch(err){ failed++; }
+  }
+
+  await loadFolderEntries();
+  render();
+  lastApplyHistory = history.length ? history : null;
+  document.getElementById('undoBtn').disabled = !lastApplyHistory;
+  rm.className = failed ? 'result-msg err' : 'result-msg';
+  rm.textContent = failed ? t('msg_apply_partial',{done:done,failed:failed}) : t('msg_apply_done',{n:done});
+});
+
+document.getElementById('undoBtn').addEventListener('click', async ()=>{
+  if(!lastApplyHistory) return;
+  const rm = document.getElementById('resultMsg');
+  rm.className='result-msg'; rm.textContent=t('msg_undoing');
+  let done=0, failed=0;
+  for(const {oldName, newName} of lastApplyHistory.slice().reverse()){
+    try{
+      const handle = await dirHandle.getFileHandle(newName);
+      const file = await handle.getFile();
+      const buf = await file.arrayBuffer();
+      const restored = await dirHandle.getFileHandle(oldName, {create:true});
+      const writable = await restored.createWritable();
+      await writable.write(buf); await writable.close();
+      await dirHandle.removeEntry(newName);
+      done++;
+    }catch(err){ failed++; }
+  }
+  await loadFolderEntries();
+  render();
+  lastApplyHistory = null;
+  document.getElementById('undoBtn').disabled = true;
+  rm.className = failed ? 'result-msg err' : 'result-msg';
+  rm.textContent = failed ? t('msg_undo_partial',{done:done,failed:failed}) : t('msg_undo_done',{n:done});
+});
+
+document.getElementById('zipBtn').addEventListener('click', async ()=>{
+  const rm = document.getElementById('resultMsg');
+  rm.className='result-msg'; rm.textContent=t('msg_zipping');
+  const zip = new JSZip();
+  const newNames = entries.map((e,i)=>computeNewName(e,i));
+  for(let i=0;i<entries.length;i++){
+    const e = entries[i];
+    const blob = e.file ? e.file : await e.handle.getFile();
+    zip.file(newNames[i], blob);
+  }
+  const content = await zip.generateAsync({type:'blob'});
+  const url = URL.createObjectURL(content);
+  const a = document.createElement('a'); a.href = url; a.download = 'pomiai_renamed.zip'; a.click();
+  URL.revokeObjectURL(url);
+  rm.className='result-msg';
+  rm.textContent = t('msg_zip_done',{n:entries.length});
+});
+
+// ---- presets ----
+function gatherPreset(){
+  return {
+    findText: val('findText'), replaceText: val('replaceText'), useRegex: chk('useRegex'),
+    trimStart: val('trimStart'), trimEnd: val('trimEnd'),
+    spaceMode: state.spaceMode, caseMode: state.caseMode,
+    prefixText: val('prefixText'), suffixText: val('suffixText'),
+    numEnabled: chk('numEnabled'), numStart: val('numStart'), numPad: val('numPad'), numPos: state.numPos,
+    dateSource: state.dateSource, dateFormat: val('dateFormat'), datePos: state.datePos,
+    extProtect: chk('extProtect'), extText: val('extText')
+  };
+}
+function val(id){ return document.getElementById(id).value; }
+function chk(id){ return document.getElementById(id).checked; }
+function setChip(groupId, key, v){
+  const el = document.getElementById(groupId);
+  el.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.v === v));
+  state[key] = v;
+}
+
+document.getElementById('savePresetBtn').addEventListener('click', ()=>{
+  const preset = gatherPreset();
+  const blob = new Blob([JSON.stringify(preset,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='pomiai-rename-preset.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('loadPresetBtn').addEventListener('click', ()=>document.getElementById('presetInput').click());
+document.getElementById('presetInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  try{
+    const p = JSON.parse(await file.text());
+    document.getElementById('findText').value = p.findText || '';
+    document.getElementById('replaceText').value = p.replaceText || '';
+    document.getElementById('useRegex').checked = !!p.useRegex;
+    document.getElementById('trimStart').value = p.trimStart || 0;
+    document.getElementById('trimEnd').value = p.trimEnd || 0;
+    document.getElementById('prefixText').value = p.prefixText || '';
+    document.getElementById('suffixText').value = p.suffixText || '';
+    document.getElementById('numEnabled').checked = !!p.numEnabled;
+    document.getElementById('numStart').value = p.numStart || 1;
+    document.getElementById('numPad').value = p.numPad || 2;
+    document.getElementById('dateFormat').value = p.dateFormat || 'YYYYMMDD';
+    document.getElementById('extProtect').checked = p.extProtect !== false;
+    document.getElementById('extText').value = p.extText || '';
+    document.getElementById('extText').disabled = document.getElementById('extProtect').checked;
+    setChip('spaceMode','spaceMode', p.spaceMode || 'none');
+    setChip('caseMode','caseMode', p.caseMode || 'none');
+    setChip('numPos','numPos', p.numPos || 'prefix');
+    setChip('dateSource','dateSource', p.dateSource || 'none');
+    setChip('datePos','datePos', p.datePos || 'prefix');
+    render();
+  }catch(err){
+    const rm = document.getElementById('resultMsg');
+    rm.className='result-msg err'; rm.textContent=t('msg_preset_error');
+  }
+});
+
+render();
+</script>
+</body>
+</html>
