@@ -7,13 +7,17 @@
 ===================================================
 pomiai_calculator.html — 버전 로그
 ===================================================
-현재 버전: 2026.07.27
-최종 수정: 2026.07.27
+현재 버전: 2026.08.16
+최종 수정: 2026.08.16
 변경 내역 (최신순):
+  - 2026.08.16  ?tab=/&type=/&from=/&to= URL 파라미터 딥링크 지원 추가
+      · SEO 롱테일 포스트(평↔㎡, 인치↔cm, °F↔°C, kg↔lb, mph↔km/h 등)에서
+        embed 시 특정 변환 조합으로 바로 진입 가능
+      · 예) pomiai_calculator.html?tab=unit&type=넓이&from=평&to=m2
   - 2026.07.27  pomiai 표준 적용
       · 버전 로그 헤더, ko/en/ja 다국어(탭 4종+타이틀 기준), 브랜드 푸터 신규 적용
       · 기존 기본/공학/단위/환율 계산 로직 및 UI는 그대로 유지
-캐시 무효화: ?v=2026.07.27
+캐시 무효화: ?v=2026.08.16
 ===================================================
 -->
 <title id="page-title">pomiai calculator</title>
@@ -745,6 +749,27 @@ initConv();
 initFx();
 renderHistory();
 updateDisplay();
+
+/* ?tab=/&type=/&from=/&to= 딥링크: SEO 포스트에서 embed 시
+   특정 탭·변환 카테고리·단위 조합으로 바로 진입 (프로젝트 §5 표준 확장) */
+(function(){
+  const dparams = new URLSearchParams(location.search);
+  const wantTab = dparams.get('tab');
+  if (wantTab && ['basic','sci','unit','fx'].includes(wantTab)) {
+    switchTab(wantTab);
+  }
+  const wantType = dparams.get('type');
+  if (wantType && unitTypes.hasOwnProperty(wantType)) {
+    convType = wantType;
+    document.querySelectorAll('.conv-type').forEach(x=>x.classList.toggle('active', x.textContent===wantType));
+    populateConvSelects();
+  }
+  const wantFrom = dparams.get('from');
+  const wantTo = dparams.get('to');
+  if (wantFrom) { const el=document.getElementById('conv-from'); if([...el.options].some(o=>o.value===wantFrom)) el.value=wantFrom; }
+  if (wantTo)   { const el=document.getElementById('conv-to');   if([...el.options].some(o=>o.value===wantTo))   el.value=wantTo; }
+  if (wantFrom || wantTo) doConvert();
+})();
 
 /* ── pomiai i18n ── */
 const I18N = {
