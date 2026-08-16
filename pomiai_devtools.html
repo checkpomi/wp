@@ -4,6 +4,14 @@
 <!--
   VERSION LOG (pomiai_devtools.html)
   ===================================================
+  2026.08.16 — v1.2.0 (QR 타입 딥링크 지원 추가)
+    · ?type= URL 파라미터로 QR 콘텐츠 타입(url/text/wifi/vcard/email/tel)
+      바로 선택 지원 — 용도별 SEO 롱테일 포스트(와이파이 QR, 명함 QR 등)에서
+      embed 시 원하는 타입으로 바로 진입 가능
+      예) pomiai_devtools.html?tab=qr&type=wifi
+    · setQrType() 함수가 클릭 이벤트 없이도(딥링크로) 정상 동작하도록 수정
+    · 캐시 무효화 시 ?v=2026.08.16 쿼리스트링 사용 권장
+  ---------------------------------------------------
   2026.08.15 — v1.1.0 (다국어 및 딥링크 지원 추가)
     · ?tab= URL 파라미터로 특정 탭 딥링크 진입 지원 추가 (qr/pw/color)
       예) pomiai_devtools.html?tab=pw
@@ -227,12 +235,12 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     <!-- 타입 선택 -->
     <div class="card-title">콘텐츠 타입</div>
     <div class="qr-type-row">
-      <button class="qt on" onclick="setQrType('url')">🔗 URL</button>
-      <button class="qt" onclick="setQrType('text')">📝 텍스트</button>
-      <button class="qt" onclick="setQrType('wifi')">📶 WiFi</button>
-      <button class="qt" onclick="setQrType('vcard')">👤 명함</button>
-      <button class="qt" onclick="setQrType('email')">✉️ 이메일</button>
-      <button class="qt" onclick="setQrType('tel')">📞 전화</button>
+      <button class="qt on" data-type="url" onclick="setQrType('url')">🔗 URL</button>
+      <button class="qt" data-type="text" onclick="setQrType('text')">📝 텍스트</button>
+      <button class="qt" data-type="wifi" onclick="setQrType('wifi')">📶 WiFi</button>
+      <button class="qt" data-type="vcard" onclick="setQrType('vcard')">👤 명함</button>
+      <button class="qt" data-type="email" onclick="setQrType('email')">✉️ 이메일</button>
+      <button class="qt" data-type="tel" onclick="setQrType('tel')">📞 전화</button>
     </div>
 
     <!-- URL -->
@@ -610,7 +618,6 @@ function goTab(id){
     goTab(wantTab);
   }
 })();
-
 /* ─────────────────────────────────
    QR 코드 생성기
    (순수 Canvas 구현 — 외부 라이브러리 없음)
@@ -618,14 +625,24 @@ function goTab(id){
 let qrType='url', qrLogoImg=null;
 let qrAutoTimer=null;
 
-function setQrType(t){
+function setQrType(t, btnEl){
   qrType=t;
   document.querySelectorAll('.qt').forEach(b=>b.classList.remove('on'));
-  event.target.classList.add('on');
+  const active = btnEl || (typeof event!=='undefined' && event && event.target) || document.querySelector(`.qt[data-type="${t}"]`);
+  if (active) active.classList.add('on');
   document.querySelectorAll('.qr-input-group').forEach(g=>g.classList.remove('show'));
   $('qi-'+t).classList.add('show');
   autoGenQr();
 }
+/* ?type= 딥링크: QR 콘텐츠 타입(url/text/wifi/vcard/email/tel)을
+   SEO 포스트에서 embed 시 바로 선택되도록 지원 */
+(function(){
+  const qparams=new URLSearchParams(location.search);
+  const wantType=qparams.get('type');
+  if(wantType && ['url','text','wifi','vcard','email','tel'].includes(wantType)){
+    setQrType(wantType, document.querySelector(`.qt[data-type="${wantType}"]`));
+  }
+})();
 function getQrContent(){
   if(qrType==='url') return $('qr-url').value||'https://checkpomi.com';
   if(qrType==='text') return $('qr-text').value||'pomiai';
