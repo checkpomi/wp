@@ -7,6 +7,12 @@
 ===================================================
 pomiai_texttools.html — 버전 로그
 ===================================================
+현재 버전: 2026.08.16 | 최종 수정: 2026.08.16
+변경 내역: 2026.08.16 ?tab= URL 파라미터 딥링크 지원 추가 — 글자수(stats)/JSON
+포맷터(json)/인코딩(encode) 등 우측 패널 SEO 포스트에서 embed 시 해당 패널로
+바로 진입 가능 (예: ?tab=stats&lang=ko)
+캐시 무효화: ?v=2026.08.16
+---------------------------------------------------
 현재 버전: 2026.07.27 | 최종 수정: 2026.07.27
 변경 내역: 2026.07.27 pomiai 표준 적용 — 버전 로그, ko/en/ja 다국어(상단바+타이틀 기준),
 브랜드 푸터 신규 적용. 텍스트 변환/통계/파일 열기·저장 로직은 원본 유지.
@@ -771,6 +777,15 @@ function rTab(id){
   document.querySelectorAll('.rsec').forEach(s=>s.classList.remove('on'));
   const el=$('rs-'+id);if(el)el.classList.add('on');
 }
+/* ?tab= 딥링크: SEO 포스트에서 embed 시 우측 패널(글자수/JSON/인코딩 등)로 바로 진입 */
+(function(){
+  const ttparams=new URLSearchParams(location.search);
+  const wantRTab=ttparams.get('tab');
+  if(wantRTab && ['spell','trans','encode','json','stats'].includes(wantRTab)){
+    rTab(wantRTab);
+    if(window.innerWidth<=680){ const r=$('right'); if(r) r.classList.add('mob-open'); }
+  }
+})();
 
 /* ── 모바일 퀵탭 ── */
 function mTab(id){

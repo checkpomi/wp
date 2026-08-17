@@ -7,6 +7,11 @@
 ===================================================
 pomiai_biztools.html — 버전 로그
 ===================================================
+현재 버전: 2026.08.16 | 최종 수정: 2026.08.16
+변경 내역: 2026.08.16 ?tab= URL 파라미터 딥링크 지원 추가 — 인보이스/세금/대출
+계산기 SEO 포스트에서 embed 시 해당 탭으로 바로 진입 가능 (예: ?tab=inv&lang=ko)
+캐시 무효화: ?v=2026.08.16
+---------------------------------------------------
 현재 버전: 2026.07.27 | 최종 수정: 2026.07.27
 변경 내역: 2026.07.27 pomiai 표준 적용 — 버전 로그, ko/en/ja 다국어(탭+타이틀 기준),
 브랜드 푸터 신규 적용. 인보이스 생성기는 기존에도 INV_LABELS로 en/ko 등 언어별 PDF
@@ -359,7 +364,20 @@ function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show')
 function goTab(id){
   ['inv','tax','loan'].forEach(t=>{$('tab-'+t).classList.toggle('on',t===id);});
   document.querySelectorAll('.htab').forEach((t,i)=>t.classList.toggle('on',['inv','tax','loan'][i]===id));
+  try{
+    const url=new URL(location.href);
+    url.searchParams.set('tab',id);
+    history.replaceState(null,'',url);
+  }catch(e){}
 }
+/* ?tab= 딥링크: SEO 포스트에서 embed 시 인보이스/세금/대출 탭으로 바로 진입 */
+(function(){
+  const tparams=new URLSearchParams(location.search);
+  const wantTab=tparams.get('tab');
+  if(wantTab && ['inv','tax','loan'].includes(wantTab)){
+    goTab(wantTab);
+  }
+})();
 
 /* ── 통화 포맷 ── */
 const CUR_SYM={USD:'$',EUR:'€',KRW:'₩',JPY:'¥',GBP:'£',CNY:'¥',CAD:'CA$',AUD:'A$',SGD:'S$',INR:'₹'};
