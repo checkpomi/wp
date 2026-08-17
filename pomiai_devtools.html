@@ -4,6 +4,14 @@
 <!--
   VERSION LOG (pomiai_devtools.html)
   ===================================================
+  2026.08.17 — v1.3.0 (8개 언어 UI 확장)
+    · I18N 객체에 zh_CN, zh_TW, de, fr, nl, sv, no, da 8개 언어 블록 추가
+      (ko/en/ja와 동일한 39개 키 전체 번역)
+    · 언어 감지 로직 개선 — navigator.language의 zh-TW/zh-HK를 zh_TW로,
+      zh-CN 등 나머지 zh 계열은 zh_CN으로 정규화. nb(노르웨이 보크몰)는 no로 매핑
+    · ?lang=zh_CN, ?lang=de 등 8개 언어 코드로 직접 진입 가능
+    · 캐시 무효화 시 ?v=2026.08.17 쿼리스트링 사용 권장
+  ---------------------------------------------------
   2026.08.16 — v1.2.0 (QR 타입 딥링크 지원 추가)
     · ?type= URL 파라미터로 QR 콘텐츠 타입(url/text/wifi/vcard/email/tel)
       바로 선택 지원 — 용도별 SEO 롱테일 포스트(와이파이 QR, 명함 QR 등)에서
@@ -554,14 +562,200 @@ const I18N = {
     btn_exportcss: 'CSS変数', btn_exporthex: 'HEXリスト', btn_exporthsl: 'HSLリスト',
     lbl_export: 'エクスポート', btn_copy: '📋 コピー', lbl_colorinfo: '選択した色の情報',
   },
+  zh_CN: {
+    page_title: 'pomiai 开发者工具',
+    tab_qr: '📱 二维码', tab_pw: '🔐 密码', tab_color: '🎨 调色板',
+    qr_title: '二维码生成器',
+    pw_title: '密码生成器',
+    pw_sub: '立即生成强大安全的密码 — 所有处理都只在浏览器本地进行',
+    lbl_password: '密码', lbl_settings: '设置', lbl_length: '长度',
+    opt_upper: '大写字母 (A–Z)', opt_lower: '小写字母 (a–z)', opt_num: '数字 (0–9)',
+    opt_sym: '特殊符号 (!@#$%^&*)', opt_noamb: '排除易混淆字符 (0 O l 1 I)',
+    lbl_exclude: '排除字符（可选）', ph_exclude: '例如: @#$',
+    lbl_count: '数量', btn_batch: '批量生成',
+    lbl_history: '生成记录', btn_clear: '清除',
+    msg_pwhist_empty: '生成的密码会显示在这里',
+    color_title: '调色板生成器',
+    color_sub: '根据基准色自动生成互补色、类似色、三角色、单色调色板 — 导出为CSS、HEX、HSL',
+    lbl_basecolor: '基准色', btn_random: '🎲 随机',
+    lbl_palettemode: '调色板模式',
+    pm_complementary: '互补色', pm_analogous: '类似色', pm_triadic: '三角色',
+    pm_tetradic: '四角色', pm_mono: '单色', pm_split: '分裂互补色',
+    btn_exportcss: 'CSS变量', btn_exporthex: 'HEX列表', btn_exporthsl: 'HSL列表',
+    lbl_export: '导出', btn_copy: '📋 复制', lbl_colorinfo: '所选颜色信息',
+  },
+  zh_TW: {
+    page_title: 'pomiai 開發者工具',
+    tab_qr: '📱 QR碼', tab_pw: '🔐 密碼', tab_color: '🎨 調色盤',
+    qr_title: 'QR碼產生器',
+    pw_title: '密碼產生器',
+    pw_sub: '立即產生強大安全的密碼 — 所有處理都只在瀏覽器本機進行',
+    lbl_password: '密碼', lbl_settings: '設定', lbl_length: '長度',
+    opt_upper: '大寫字母 (A–Z)', opt_lower: '小寫字母 (a–z)', opt_num: '數字 (0–9)',
+    opt_sym: '特殊符號 (!@#$%^&*)', opt_noamb: '排除易混淆字元 (0 O l 1 I)',
+    lbl_exclude: '排除字元（選填）', ph_exclude: '例如: @#$',
+    lbl_count: '數量', btn_batch: '批次產生',
+    lbl_history: '產生紀錄', btn_clear: '清除',
+    msg_pwhist_empty: '產生的密碼會顯示在這裡',
+    color_title: '調色盤產生器',
+    color_sub: '依基準色自動產生互補色、類似色、三角色、單色調色盤 — 匯出為CSS、HEX、HSL',
+    lbl_basecolor: '基準色', btn_random: '🎲 隨機',
+    lbl_palettemode: '調色盤模式',
+    pm_complementary: '互補色', pm_analogous: '類似色', pm_triadic: '三角色',
+    pm_tetradic: '四角色', pm_mono: '單色', pm_split: '分裂互補色',
+    btn_exportcss: 'CSS變數', btn_exporthex: 'HEX清單', btn_exporthsl: 'HSL清單',
+    lbl_export: '匯出', btn_copy: '📋 複製', lbl_colorinfo: '所選顏色資訊',
+  },
+  de: {
+    page_title: 'pomiai Entwicklertools',
+    tab_qr: '📱 QR-Code', tab_pw: '🔐 Passwort', tab_color: '🎨 Farbpalette',
+    qr_title: 'QR-Code-Generator',
+    pw_title: 'Passwort-Generator',
+    pw_sub: 'Sofort starke, sichere Passwörter erstellen — alles läuft lokal im Browser',
+    lbl_password: 'Passwort', lbl_settings: 'Einstellungen', lbl_length: 'Länge',
+    opt_upper: 'Großbuchstaben (A–Z)', opt_lower: 'Kleinbuchstaben (a–z)', opt_num: 'Zahlen (0–9)',
+    opt_sym: 'Sonderzeichen (!@#$%^&*)', opt_noamb: 'Mehrdeutige Zeichen ausschließen (0 O l 1 I)',
+    lbl_exclude: 'Zeichen ausschließen (optional)', ph_exclude: 'z.B. @#$',
+    lbl_count: 'Anzahl', btn_batch: 'Stapel erstellen',
+    lbl_history: 'Verlauf', btn_clear: 'Löschen',
+    msg_pwhist_empty: 'Erstellte Passwörter erscheinen hier',
+    color_title: 'Farbpaletten-Generator',
+    color_sub: 'Komplementär-, analoge, triadische oder monochrome Paletten automatisch erstellen — als CSS, HEX oder HSL exportieren',
+    lbl_basecolor: 'Basisfarbe', btn_random: '🎲 Zufällig',
+    lbl_palettemode: 'Palettenmodus',
+    pm_complementary: 'Komplementär', pm_analogous: 'Analog', pm_triadic: 'Triadisch',
+    pm_tetradic: 'Tetradisch', pm_mono: 'Monochrom', pm_split: 'Split-Komplementär',
+    btn_exportcss: 'CSS-Variablen', btn_exporthex: 'HEX-Liste', btn_exporthsl: 'HSL-Liste',
+    lbl_export: 'Exportieren', btn_copy: '📋 Kopieren', lbl_colorinfo: 'Ausgewählte Farbinfo',
+  },
+  fr: {
+    page_title: 'pomiai Outils Dev',
+    tab_qr: '📱 QR Code', tab_pw: '🔐 Mot de passe', tab_color: '🎨 Palette de couleurs',
+    qr_title: 'Générateur de QR Code',
+    pw_title: 'Générateur de mot de passe',
+    pw_sub: 'Créez instantanément des mots de passe forts et sécurisés — tout se passe localement dans le navigateur',
+    lbl_password: 'Mot de passe', lbl_settings: 'Paramètres', lbl_length: 'Longueur',
+    opt_upper: 'Majuscules (A–Z)', opt_lower: 'Minuscules (a–z)', opt_num: 'Chiffres (0–9)',
+    opt_sym: 'Symboles (!@#$%^&*)', opt_noamb: 'Exclure caractères ambigus (0 O l 1 I)',
+    lbl_exclude: 'Exclure des caractères (facultatif)', ph_exclude: 'ex. @#$',
+    lbl_count: 'Nombre', btn_batch: 'Génération en lot',
+    lbl_history: 'Historique', btn_clear: 'Effacer',
+    msg_pwhist_empty: 'Les mots de passe générés apparaîtront ici',
+    color_title: 'Générateur de palette de couleurs',
+    color_sub: 'Générez automatiquement des palettes complémentaires, analogues, triadiques ou monochromes — exportez en CSS, HEX ou HSL',
+    lbl_basecolor: 'Couleur de base', btn_random: '🎲 Aléatoire',
+    lbl_palettemode: 'Mode de palette',
+    pm_complementary: 'Complémentaire', pm_analogous: 'Analogue', pm_triadic: 'Triadique',
+    pm_tetradic: 'Tétradique', pm_mono: 'Monochrome', pm_split: 'Complémentaire divisée',
+    btn_exportcss: 'Variables CSS', btn_exporthex: 'Liste HEX', btn_exporthsl: 'Liste HSL',
+    lbl_export: 'Exporter', btn_copy: '📋 Copier', lbl_colorinfo: 'Infos couleur sélectionnée',
+  },
+  nl: {
+    page_title: 'pomiai Ontwikkelaarstools',
+    tab_qr: '📱 QR-code', tab_pw: '🔐 Wachtwoord', tab_color: '🎨 Kleurenpalet',
+    qr_title: 'QR-codegenerator',
+    pw_title: 'Wachtwoordgenerator',
+    pw_sub: 'Maak direct sterke, veilige wachtwoorden — alles gebeurt lokaal in de browser',
+    lbl_password: 'Wachtwoord', lbl_settings: 'Instellingen', lbl_length: 'Lengte',
+    opt_upper: 'Hoofdletters (A–Z)', opt_lower: 'Kleine letters (a–z)', opt_num: 'Cijfers (0–9)',
+    opt_sym: 'Symbolen (!@#$%^&*)', opt_noamb: 'Verwarrende tekens uitsluiten (0 O l 1 I)',
+    lbl_exclude: 'Tekens uitsluiten (optioneel)', ph_exclude: 'bijv. @#$',
+    lbl_count: 'Aantal', btn_batch: 'Batch genereren',
+    lbl_history: 'Geschiedenis', btn_clear: 'Wissen',
+    msg_pwhist_empty: 'Gegenereerde wachtwoorden verschijnen hier',
+    color_title: 'Kleurenpaletgenerator',
+    color_sub: 'Genereer automatisch complementaire, analoge, triadische of monochrome paletten — exporteer als CSS, HEX of HSL',
+    lbl_basecolor: 'Basiskleur', btn_random: '🎲 Willekeurig',
+    lbl_palettemode: 'Paletmodus',
+    pm_complementary: 'Complementair', pm_analogous: 'Analoog', pm_triadic: 'Triadisch',
+    pm_tetradic: 'Tetradisch', pm_mono: 'Monochroom', pm_split: 'Gesplitst complementair',
+    btn_exportcss: 'CSS-variabelen', btn_exporthex: 'HEX-lijst', btn_exporthsl: 'HSL-lijst',
+    lbl_export: 'Exporteren', btn_copy: '📋 Kopiëren', lbl_colorinfo: 'Info geselecteerde kleur',
+  },
+  sv: {
+    page_title: 'pomiai Utvecklarverktyg',
+    tab_qr: '📱 QR-kod', tab_pw: '🔐 Lösenord', tab_color: '🎨 Färgpalett',
+    qr_title: 'QR-kodgenerator',
+    pw_title: 'Lösenordsgenerator',
+    pw_sub: 'Skapa starka, säkra lösenord direkt — allt körs lokalt i webbläsaren',
+    lbl_password: 'Lösenord', lbl_settings: 'Inställningar', lbl_length: 'Längd',
+    opt_upper: 'Versaler (A–Z)', opt_lower: 'Gemener (a–z)', opt_num: 'Siffror (0–9)',
+    opt_sym: 'Specialtecken (!@#$%^&*)', opt_noamb: 'Uteslut förvirrande tecken (0 O l 1 I)',
+    lbl_exclude: 'Uteslut tecken (valfritt)', ph_exclude: 't.ex. @#$',
+    lbl_count: 'Antal', btn_batch: 'Skapa i bulk',
+    lbl_history: 'Historik', btn_clear: 'Rensa',
+    msg_pwhist_empty: 'Genererade lösenord visas här',
+    color_title: 'Färgpalettgenerator',
+    color_sub: 'Skapa automatiskt komplementära, analoga, triadiska eller monokroma paletter — exportera som CSS, HEX eller HSL',
+    lbl_basecolor: 'Basfärg', btn_random: '🎲 Slumpmässig',
+    lbl_palettemode: 'Palettläge',
+    pm_complementary: 'Komplementär', pm_analogous: 'Analog', pm_triadic: 'Triadisk',
+    pm_tetradic: 'Tetradisk', pm_mono: 'Monokrom', pm_split: 'Delad komplementär',
+    btn_exportcss: 'CSS-variabler', btn_exporthex: 'HEX-lista', btn_exporthsl: 'HSL-lista',
+    lbl_export: 'Exportera', btn_copy: '📋 Kopiera', lbl_colorinfo: 'Vald färginfo',
+  },
+  no: {
+    page_title: 'pomiai Utviklerverktøy',
+    tab_qr: '📱 QR-kode', tab_pw: '🔐 Passord', tab_color: '🎨 Fargepalett',
+    qr_title: 'QR-kodegenerator',
+    pw_title: 'Passordgenerator',
+    pw_sub: 'Lag sterke, sikre passord umiddelbart — alt kjører lokalt i nettleseren',
+    lbl_password: 'Passord', lbl_settings: 'Innstillinger', lbl_length: 'Lengde',
+    opt_upper: 'Store bokstaver (A–Z)', opt_lower: 'Små bokstaver (a–z)', opt_num: 'Tall (0–9)',
+    opt_sym: 'Spesialtegn (!@#$%^&*)', opt_noamb: 'Utelat forvirrende tegn (0 O l 1 I)',
+    lbl_exclude: 'Utelat tegn (valgfritt)', ph_exclude: 'f.eks. @#$',
+    lbl_count: 'Antall', btn_batch: 'Lag flere',
+    lbl_history: 'Historikk', btn_clear: 'Tøm',
+    msg_pwhist_empty: 'Genererte passord vises her',
+    color_title: 'Fargepalettgenerator',
+    color_sub: 'Lag automatisk komplementære, analoge, triadiske eller monokrome paletter — eksporter som CSS, HEX eller HSL',
+    lbl_basecolor: 'Basisfarge', btn_random: '🎲 Tilfeldig',
+    lbl_palettemode: 'Palettmodus',
+    pm_complementary: 'Komplementær', pm_analogous: 'Analog', pm_triadic: 'Triadisk',
+    pm_tetradic: 'Tetradisk', pm_mono: 'Monokrom', pm_split: 'Delt komplementær',
+    btn_exportcss: 'CSS-variabler', btn_exporthex: 'HEX-liste', btn_exporthsl: 'HSL-liste',
+    lbl_export: 'Eksporter', btn_copy: '📋 Kopier', lbl_colorinfo: 'Info om valgt farge',
+  },
+  da: {
+    page_title: 'pomiai Udviklerværktøjer',
+    tab_qr: '📱 QR-kode', tab_pw: '🔐 Adgangskode', tab_color: '🎨 Farvepalet',
+    qr_title: 'QR-kodegenerator',
+    pw_title: 'Adgangskodegenerator',
+    pw_sub: 'Opret stærke, sikre adgangskoder øjeblikkeligt — alt sker lokalt i browseren',
+    lbl_password: 'Adgangskode', lbl_settings: 'Indstillinger', lbl_length: 'Længde',
+    opt_upper: 'Store bogstaver (A–Z)', opt_lower: 'Små bogstaver (a–z)', opt_num: 'Tal (0–9)',
+    opt_sym: 'Specialtegn (!@#$%^&*)', opt_noamb: 'Udeluk forvirrende tegn (0 O l 1 I)',
+    lbl_exclude: 'Udeluk tegn (valgfrit)', ph_exclude: 'f.eks. @#$',
+    lbl_count: 'Antal', btn_batch: 'Batch-generering',
+    lbl_history: 'Historik', btn_clear: 'Ryd',
+    msg_pwhist_empty: 'Genererede adgangskoder vises her',
+    color_title: 'Farvepaletgenerator',
+    color_sub: 'Generer automatisk komplementære, analoge, triadiske eller monokrome paletter — eksporter som CSS, HEX eller HSL',
+    lbl_basecolor: 'Basisfarve', btn_random: '🎲 Tilfældig',
+    lbl_palettemode: 'Palettilstand',
+    pm_complementary: 'Komplementær', pm_analogous: 'Analog', pm_triadic: 'Triadisk',
+    pm_tetradic: 'Tetradisk', pm_mono: 'Monokrom', pm_split: 'Split-komplementær',
+    btn_exportcss: 'CSS-variabler', btn_exporthex: 'HEX-liste', btn_exporthsl: 'HSL-liste',
+    lbl_export: 'Eksporter', btn_copy: '📋 Kopiér', lbl_colorinfo: 'Valgt farveinfo',
+  },
 };
 
 (function(){
   const params = new URLSearchParams(location.search);
   const urlLang = params.get('lang');
-  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  /* 중국어 간체/번체 및 노르웨이어(nb/no) 구분을 위한 정규화 함수 */
+  function normalizeLang(raw){
+    if(!raw) return '';
+    if(/^zh/i.test(raw)) return /tw|hk|mo/i.test(raw) ? 'zh_TW' : 'zh_CN';
+    const two = raw.slice(0,2).toLowerCase();
+    if(two === 'nb') return 'no';
+    return two;
+  }
+  const urlKey = normalizeLang(urlLang);
+  const browserKey = normalizeLang(navigator.language || 'ko');
   const LANG = (urlLang && I18N[urlLang]) ? urlLang
-             : (I18N[browserLang]         ? browserLang : 'ko');
+             : (I18N[urlKey] ? urlKey
+             : (I18N[browserKey] ? browserKey : 'ko'));
   window._LANG = LANG;
   window._T    = I18N[LANG];
   document.getElementById('html-root').lang = LANG;
