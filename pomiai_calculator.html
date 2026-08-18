@@ -7,9 +7,25 @@
 ===================================================
 pomiai_calculator.html — 버전 로그
 ===================================================
-현재 버전: 2026.08.16
-최종 수정: 2026.08.16
+현재 버전: 2026.08.18
+최종 수정: 2026.08.18
 변경 내역 (최신순):
+  - 2026.08.18  11개 언어(ko/en/ja + zh_CN/zh_TW/de/fr/nl/sv/no/da/ar) UI 완전 지원
+      · I18N 키를 6개(탭+타이틀)→48개로 확장: mode-badge, 히스토리, 메모,
+        환율 상태 메시지, 단위변환 8개 카테고리명, 특수 단위명(에이커/평),
+        통화 15종 표시명 전부 번역
+      · 헤더 언어 스위처를 ko/en/ja 3버튼 → 12개 언어 드롭다운(select)으로 교체
+      · unitTypes 객체의 내부 키(길이/무게/…/에이커/평)는 변경하지 않음
+        → 기존 발행된 SEO 포스트의 ?type=/&from=/&to= 딥링크 URL 100% 호환 유지
+        (표시 라벨만 unitCatI18nKey/unitLabelI18nKey 매핑으로 번역)
+      · currencies 배열([flag,name]) → currencyFlags(flag만)+I18N cur_* 구조로 리팩터링
+      · 날짜·시간·숫자 포맷을 언어별 로케일(LOCALE_MAP)로 동적 적용
+        (기존엔 'ko-KR' 고정 → 환율 갱신시각/히스토리 시각/환율 숫자 포맷)
+      · ar(아랍어) 선택 시 html-root에 dir="rtl" 자동 적용
+      · 버그 수정: 계산 히스토리 배열명이 전역 `history` 객체를 가리는 문제로
+        언어 전환 시 URL ?lang= 파라미터 갱신이 조용히 실패하던 것을 `calcHistory`로
+        개명하여 해결
+      · 언어 변경 시 단위 탭 라벨·통화 드롭다운 라벨·모드 배지를 즉시 재렌더링
   - 2026.08.16  ?tab=/&type=/&from=/&to= URL 파라미터 딥링크 지원 추가
       · SEO 롱테일 포스트(평↔㎡, 인치↔cm, °F↔°C, kg↔lb, mph↔km/h 등)에서
         embed 시 특정 변환 조합으로 바로 진입 가능
@@ -17,7 +33,7 @@ pomiai_calculator.html — 버전 로그
   - 2026.07.27  pomiai 표준 적용
       · 버전 로그 헤더, ko/en/ja 다국어(탭 4종+타이틀 기준), 브랜드 푸터 신규 적용
       · 기존 기본/공학/단위/환율 계산 로직 및 UI는 그대로 유지
-캐시 무효화: ?v=2026.08.16
+캐시 무효화: ?v=2026.08.18
 ===================================================
 -->
 <title id="page-title">pomiai calculator</title>
@@ -203,6 +219,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   *{animation:none!important;transition:none!important}
 }
 .langbtn{background:var(--surface3);border:1px solid var(--border2);color:var(--accent2);font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer}
+.langsel{margin-left:auto;background:var(--surface3);border:1px solid var(--border2);color:var(--accent2);
+  font-size:11px;font-weight:600;padding:4px 8px;border-radius:7px;cursor:pointer;outline:none;max-width:120px}
+.langsel:hover{border-color:var(--accent)}
 .pomiai-brand-footer{max-width:900px;margin:16px auto 4px;padding:14px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .pomiai-brand-footer a{font-size:11px;font-weight:700;color:var(--accent2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--surface3);border:1px solid var(--border2);margin-left:6px}
 </style>
@@ -214,17 +233,26 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   <div id="calc-panel">
     <div id="header">
       <span id="logo">pomiai <span>calc</span></span>
-      <div id="lang-switch" style="margin-left:auto;display:flex;gap:4px">
-        <button data-lang="ko" class="langbtn">한</button>
-        <button data-lang="en" class="langbtn">EN</button>
-        <button data-lang="ja" class="langbtn">日</button>
-      </div>
+      <select id="lang-switch" class="langsel">
+        <option value="ko">🇰🇷 한국어</option>
+        <option value="en">🇺🇸 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="zh_CN">🇨🇳 简体中文</option>
+        <option value="zh_TW">🇹🇼 繁體中文</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="nl">🇳🇱 Nederlands</option>
+        <option value="sv">🇸🇪 Svenska</option>
+        <option value="no">🇳🇴 Norsk</option>
+        <option value="da">🇩🇰 Dansk</option>
+        <option value="ar">🇸🇦 العربية</option>
+      </select>
     </div>
 
     <!-- 디스플레이 -->
     <div id="display">
       <div id="memory-ind">M</div>
-      <div id="mode-badge">기본</div>
+      <div id="mode-badge" data-i18n="mode_basic">기본</div>
       <div id="expr"></div>
       <div id="result">0</div>
     </div>
@@ -311,7 +339,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
         <div class="conv-group">
           <div class="conv-row">
             <select class="conv-select" id="conv-from" onchange="doConvert()"></select>
-            <input class="conv-input" id="conv-val" type="number" value="1" oninput="doConvert()" placeholder="값">
+            <input class="conv-input" id="conv-val" type="number" value="1" oninput="doConvert()" placeholder="값" data-i18n-placeholder="conv_val_placeholder">
           </div>
           <div class="conv-row">
             <select class="conv-select" id="conv-to" onchange="doConvert()"></select>
@@ -328,15 +356,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
             <span class="fx-flag" id="fx-flag1">🇺🇸</span>
             <select class="fx-select" id="fx-from" onchange="doFx()"></select>
           </div>
-          <input class="fx-input" id="fx-val" type="number" value="1" oninput="doFx()" placeholder="금액">
+          <input class="fx-input" id="fx-val" type="number" value="1" oninput="doFx()" placeholder="금액" data-i18n-placeholder="fx_val_placeholder">
           <div class="fx-result" id="fx-result">—</div>
           <div class="fx-row" style="margin-top:4px">
             <span class="fx-flag" id="fx-flag2">🇰🇷</span>
             <select class="fx-select" id="fx-to" onchange="doFx()"></select>
           </div>
           <div class="fx-rate" id="fx-rate"></div>
-          <button id="fx-refresh" onclick="fetchRates()">🔄 환율 업데이트</button>
-          <div id="fx-update">환율 정보를 불러오는 중...</div>
+          <button id="fx-refresh" onclick="fetchRates()" data-i18n="fx_refresh">🔄 환율 업데이트</button>
+          <div id="fx-update" data-i18n="fx_loading">환율 정보를 불러오는 중...</div>
         </div>
       </div>
 
@@ -349,13 +377,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <!-- 히스토리 -->
     <div class="side-card" style="flex:1;overflow:hidden">
       <div class="side-head">
-        <span class="side-head-title">기록</span>
-        <button class="side-head-btn" onclick="clearHistory()">지우기</button>
+        <span class="side-head-title" data-i18n="hist_title">기록</span>
+        <button class="side-head-btn" onclick="clearHistory()" data-i18n="hist_clear">지우기</button>
       </div>
-      <div id="hist-list"><div id="hist-empty">계산 기록이 여기에 표시됩니다</div></div>
+      <div id="hist-list"><div id="hist-empty" data-i18n="hist_empty">계산 기록이 여기에 표시됩니다</div></div>
       <div id="memo-wrap">
-        <textarea id="memo-input" placeholder="다음 계산에 메모를 추가하세요..."></textarea>
-        <button id="memo-save" onclick="saveMemo()">메모 저장</button>
+        <textarea id="memo-input" placeholder="다음 계산에 메모를 추가하세요..." data-i18n-placeholder="memo_placeholder"></textarea>
+        <button id="memo-save" onclick="saveMemo()" data-i18n="memo_save">메모 저장</button>
       </div>
     </div>
 
@@ -381,7 +409,274 @@ let memory = 0;
 let hasMemory = false;
 let degMode = true; // true=deg, false=rad
 let pendingMemo = '';
-const history = [];
+const calcHistory = [];
+
+/* ── pomiai i18n (48 keys x 12 languages) ── */
+const I18N = {
+  ko: {
+    page_title: 'pomiai calculator', tab_basic: '기본', tab_sci: '공학',
+    tab_unit: '단위', tab_fx: '환율', footer_by: 'Product by',
+    mode_basic: '기본', mode_sci: '공학', mode_unit: '단위변환',
+    mode_fx: '환율', hist_title: '기록', hist_clear: '지우기',
+    hist_empty: '계산 기록이 여기에 표시됩니다', memo_placeholder: '다음 계산에 메모를 추가하세요...', memo_save: '메모 저장',
+    memo_toast: '메모가 다음 계산에 추가됩니다 📝', conv_val_placeholder: '값', fx_val_placeholder: '금액',
+    fx_refresh: '🔄 환율 업데이트', fx_loading: '환율 정보를 불러오는 중...', fx_updating: '환율 업데이트 중...',
+    fx_updated_prefix: '최종 업데이트: ', fx_offline: '오프라인 모드 (근사 환율)', unit_length: '길이',
+    unit_weight: '무게', unit_temp: '온도', unit_area: '넓이',
+    unit_volume: '부피', unit_speed: '속도', unit_time: '시간',
+    unit_data: '데이터', unit_acre: '에이커', unit_pyeong: '평',
+    cur_USD: '미국 달러', cur_KRW: '한국 원', cur_EUR: '유로',
+    cur_JPY: '일본 엔', cur_CNY: '중국 위안', cur_GBP: '영국 파운드',
+    cur_HKD: '홍콩 달러', cur_SGD: '싱가포르 달러', cur_AUD: '호주 달러',
+    cur_CAD: '캐나다 달러', cur_CHF: '스위스 프랑', cur_THB: '태국 바트',
+    cur_MXN: '멕시코 페소', cur_BRL: '브라질 헤알', cur_INR: '인도 루피'
+  },
+  en: {
+    page_title: 'pomiai calculator', tab_basic: 'Basic', tab_sci: 'Scientific',
+    tab_unit: 'Unit', tab_fx: 'Currency', footer_by: 'Product by',
+    mode_basic: 'Basic', mode_sci: 'Scientific', mode_unit: 'Unit Conversion',
+    mode_fx: 'Currency', hist_title: 'History', hist_clear: 'Clear',
+    hist_empty: 'Calculation history will appear here', memo_placeholder: 'Add a memo for the next calculation...', memo_save: 'Save Memo',
+    memo_toast: 'Memo will be added to the next calculation 📝', conv_val_placeholder: 'Value', fx_val_placeholder: 'Amount',
+    fx_refresh: '🔄 Update Rate', fx_loading: 'Loading exchange rate...', fx_updating: 'Updating exchange rate...',
+    fx_updated_prefix: 'Last updated: ', fx_offline: 'Offline mode (approx. rates)', unit_length: 'Length',
+    unit_weight: 'Weight', unit_temp: 'Temperature', unit_area: 'Area',
+    unit_volume: 'Volume', unit_speed: 'Speed', unit_time: 'Time',
+    unit_data: 'Data', unit_acre: 'Acre', unit_pyeong: 'Pyeong (Korean unit)',
+    cur_USD: 'US Dollar', cur_KRW: 'Korean Won', cur_EUR: 'Euro',
+    cur_JPY: 'Japanese Yen', cur_CNY: 'Chinese Yuan', cur_GBP: 'British Pound',
+    cur_HKD: 'Hong Kong Dollar', cur_SGD: 'Singapore Dollar', cur_AUD: 'Australian Dollar',
+    cur_CAD: 'Canadian Dollar', cur_CHF: 'Swiss Franc', cur_THB: 'Thai Baht',
+    cur_MXN: 'Mexican Peso', cur_BRL: 'Brazilian Real', cur_INR: 'Indian Rupee'
+  },
+  ja: {
+    page_title: 'pomiai calculator', tab_basic: '基本', tab_sci: '関数',
+    tab_unit: '単位', tab_fx: '為替', footer_by: 'Product by',
+    mode_basic: '基本', mode_sci: '関数', mode_unit: '単位変換',
+    mode_fx: '為替', hist_title: '履歴', hist_clear: '消去',
+    hist_empty: '計算履歴はここに表示されます', memo_placeholder: '次の計算にメモを追加...', memo_save: 'メモを保存',
+    memo_toast: 'メモが次の計算に追加されます 📝', conv_val_placeholder: '値', fx_val_placeholder: '金額',
+    fx_refresh: '🔄 為替更新', fx_loading: '為替情報を読み込み中...', fx_updating: '為替更新中...',
+    fx_updated_prefix: '最終更新: ', fx_offline: 'オフラインモード(概算レート)', unit_length: '長さ',
+    unit_weight: '重さ', unit_temp: '温度', unit_area: '面積',
+    unit_volume: '体積', unit_speed: '速度', unit_time: '時間',
+    unit_data: 'データ', unit_acre: 'エーカー', unit_pyeong: '坪(韓国の面積単位)',
+    cur_USD: '米ドル', cur_KRW: '韓国ウォン', cur_EUR: 'ユーロ',
+    cur_JPY: '日本円', cur_CNY: '中国元', cur_GBP: '英ポンド',
+    cur_HKD: '香港ドル', cur_SGD: 'シンガポールドル', cur_AUD: '豪ドル',
+    cur_CAD: 'カナダドル', cur_CHF: 'スイスフラン', cur_THB: 'タイバーツ',
+    cur_MXN: 'メキシコペソ', cur_BRL: 'ブラジルレアル', cur_INR: 'インドルピー'
+  },
+  zh_CN: {
+    page_title: 'pomiai calculator', tab_basic: '基础', tab_sci: '科学',
+    tab_unit: '单位', tab_fx: '汇率', footer_by: 'Product by',
+    mode_basic: '基础', mode_sci: '科学', mode_unit: '单位换算',
+    mode_fx: '汇率', hist_title: '历史记录', hist_clear: '清除',
+    hist_empty: '计算记录将显示在此处', memo_placeholder: '为下次计算添加备注...', memo_save: '保存备注',
+    memo_toast: '备注将添加到下次计算 📝', conv_val_placeholder: '数值', fx_val_placeholder: '金额',
+    fx_refresh: '🔄 更新汇率', fx_loading: '正在加载汇率信息...', fx_updating: '正在更新汇率...',
+    fx_updated_prefix: '最后更新: ', fx_offline: '离线模式(近似汇率)', unit_length: '长度',
+    unit_weight: '重量', unit_temp: '温度', unit_area: '面积',
+    unit_volume: '体积', unit_speed: '速度', unit_time: '时间',
+    unit_data: '数据', unit_acre: '英亩', unit_pyeong: '坪(韩国面积单位)',
+    cur_USD: '美元', cur_KRW: '韩元', cur_EUR: '欧元',
+    cur_JPY: '日元', cur_CNY: '人民币', cur_GBP: '英镑',
+    cur_HKD: '港币', cur_SGD: '新加坡元', cur_AUD: '澳元',
+    cur_CAD: '加元', cur_CHF: '瑞士法郎', cur_THB: '泰铢',
+    cur_MXN: '墨西哥比索', cur_BRL: '巴西雷亚尔', cur_INR: '印度卢比'
+  },
+  zh_TW: {
+    page_title: 'pomiai calculator', tab_basic: '基本', tab_sci: '科學',
+    tab_unit: '單位', tab_fx: '匯率', footer_by: 'Product by',
+    mode_basic: '基本', mode_sci: '科學', mode_unit: '單位換算',
+    mode_fx: '匯率', hist_title: '歷史記錄', hist_clear: '清除',
+    hist_empty: '計算記錄將顯示在此處', memo_placeholder: '為下次計算新增備註...', memo_save: '儲存備註',
+    memo_toast: '備註將加入下次計算 📝', conv_val_placeholder: '數值', fx_val_placeholder: '金額',
+    fx_refresh: '🔄 更新匯率', fx_loading: '正在載入匯率資訊...', fx_updating: '正在更新匯率...',
+    fx_updated_prefix: '最後更新: ', fx_offline: '離線模式(概略匯率)', unit_length: '長度',
+    unit_weight: '重量', unit_temp: '溫度', unit_area: '面積',
+    unit_volume: '體積', unit_speed: '速度', unit_time: '時間',
+    unit_data: '資料', unit_acre: '英畝', unit_pyeong: '坪(韓國面積單位)',
+    cur_USD: '美元', cur_KRW: '韓元', cur_EUR: '歐元',
+    cur_JPY: '日圓', cur_CNY: '人民幣', cur_GBP: '英鎊',
+    cur_HKD: '港幣', cur_SGD: '新加坡元', cur_AUD: '澳幣',
+    cur_CAD: '加幣', cur_CHF: '瑞士法郎', cur_THB: '泰銖',
+    cur_MXN: '墨西哥披索', cur_BRL: '巴西雷亞爾', cur_INR: '印度盧比'
+  },
+  de: {
+    page_title: 'pomiai calculator', tab_basic: 'Basis', tab_sci: 'Wissenschaftlich',
+    tab_unit: 'Einheit', tab_fx: 'Währung', footer_by: 'Product by',
+    mode_basic: 'Basis', mode_sci: 'Wissenschaftlich', mode_unit: 'Einheitenumrechnung',
+    mode_fx: 'Währung', hist_title: 'Verlauf', hist_clear: 'Löschen',
+    hist_empty: 'Der Rechenverlauf wird hier angezeigt', memo_placeholder: 'Notiz für die nächste Berechnung hinzufügen...', memo_save: 'Notiz speichern',
+    memo_toast: 'Notiz wird zur nächsten Berechnung hinzugefügt 📝', conv_val_placeholder: 'Wert', fx_val_placeholder: 'Betrag',
+    fx_refresh: '🔄 Kurs aktualisieren', fx_loading: 'Wechselkurs wird geladen...', fx_updating: 'Wechselkurs wird aktualisiert...',
+    fx_updated_prefix: 'Zuletzt aktualisiert: ', fx_offline: 'Offline-Modus (ungefähre Kurse)', unit_length: 'Länge',
+    unit_weight: 'Gewicht', unit_temp: 'Temperatur', unit_area: 'Fläche',
+    unit_volume: 'Volumen', unit_speed: 'Geschwindigkeit', unit_time: 'Zeit',
+    unit_data: 'Daten', unit_acre: 'Acre', unit_pyeong: 'Pyeong (koreanische Einheit)',
+    cur_USD: 'US-Dollar', cur_KRW: 'Südkoreanischer Won', cur_EUR: 'Euro',
+    cur_JPY: 'Japanischer Yen', cur_CNY: 'Chinesischer Yuan', cur_GBP: 'Britisches Pfund',
+    cur_HKD: 'Hongkong-Dollar', cur_SGD: 'Singapur-Dollar', cur_AUD: 'Australischer Dollar',
+    cur_CAD: 'Kanadischer Dollar', cur_CHF: 'Schweizer Franken', cur_THB: 'Thailändischer Baht',
+    cur_MXN: 'Mexikanischer Peso', cur_BRL: 'Brasilianischer Real', cur_INR: 'Indische Rupie'
+  },
+  fr: {
+    page_title: 'pomiai calculator', tab_basic: 'Basique', tab_sci: 'Scientifique',
+    tab_unit: 'Unité', tab_fx: 'Devise', footer_by: 'Product by',
+    mode_basic: 'Basique', mode_sci: 'Scientifique', mode_unit: 'Conversion d\'unités',
+    mode_fx: 'Devise', hist_title: 'Historique', hist_clear: 'Effacer',
+    hist_empty: 'L\'historique des calculs s\'affichera ici', memo_placeholder: 'Ajouter une note pour le prochain calcul...', memo_save: 'Enregistrer la note',
+    memo_toast: 'La note sera ajoutée au prochain calcul 📝', conv_val_placeholder: 'Valeur', fx_val_placeholder: 'Montant',
+    fx_refresh: '🔄 Mettre à jour le taux', fx_loading: 'Chargement du taux de change...', fx_updating: 'Mise à jour du taux de change...',
+    fx_updated_prefix: 'Dernière mise à jour : ', fx_offline: 'Mode hors ligne (taux approximatifs)', unit_length: 'Longueur',
+    unit_weight: 'Poids', unit_temp: 'Température', unit_area: 'Surface',
+    unit_volume: 'Volume', unit_speed: 'Vitesse', unit_time: 'Temps',
+    unit_data: 'Données', unit_acre: 'Acre', unit_pyeong: 'Pyeong (unité coréenne)',
+    cur_USD: 'Dollar américain', cur_KRW: 'Won sud-coréen', cur_EUR: 'Euro',
+    cur_JPY: 'Yen japonais', cur_CNY: 'Yuan chinois', cur_GBP: 'Livre sterling',
+    cur_HKD: 'Dollar de Hong Kong', cur_SGD: 'Dollar de Singapour', cur_AUD: 'Dollar australien',
+    cur_CAD: 'Dollar canadien', cur_CHF: 'Franc suisse', cur_THB: 'Baht thaïlandais',
+    cur_MXN: 'Peso mexicain', cur_BRL: 'Réal brésilien', cur_INR: 'Roupie indienne'
+  },
+  nl: {
+    page_title: 'pomiai calculator', tab_basic: 'Basis', tab_sci: 'Wetenschappelijk',
+    tab_unit: 'Eenheid', tab_fx: 'Valuta', footer_by: 'Product by',
+    mode_basic: 'Basis', mode_sci: 'Wetenschappelijk', mode_unit: 'Eenheidsconversie',
+    mode_fx: 'Valuta', hist_title: 'Geschiedenis', hist_clear: 'Wissen',
+    hist_empty: 'Berekeningsgeschiedenis wordt hier weergegeven', memo_placeholder: 'Notitie toevoegen voor volgende berekening...', memo_save: 'Notitie opslaan',
+    memo_toast: 'Notitie wordt toegevoegd aan volgende berekening 📝', conv_val_placeholder: 'Waarde', fx_val_placeholder: 'Bedrag',
+    fx_refresh: '🔄 Koers bijwerken', fx_loading: 'Wisselkoers wordt geladen...', fx_updating: 'Wisselkoers wordt bijgewerkt...',
+    fx_updated_prefix: 'Laatst bijgewerkt: ', fx_offline: 'Offline modus (geschatte koersen)', unit_length: 'Lengte',
+    unit_weight: 'Gewicht', unit_temp: 'Temperatuur', unit_area: 'Oppervlakte',
+    unit_volume: 'Volume', unit_speed: 'Snelheid', unit_time: 'Tijd',
+    unit_data: 'Gegevens', unit_acre: 'Acre', unit_pyeong: 'Pyeong (Koreaanse eenheid)',
+    cur_USD: 'Amerikaanse dollar', cur_KRW: 'Zuid-Koreaanse won', cur_EUR: 'Euro',
+    cur_JPY: 'Japanse yen', cur_CNY: 'Chinese yuan', cur_GBP: 'Britse pond',
+    cur_HKD: 'Hongkongse dollar', cur_SGD: 'Singaporese dollar', cur_AUD: 'Australische dollar',
+    cur_CAD: 'Canadese dollar', cur_CHF: 'Zwitserse frank', cur_THB: 'Thaise baht',
+    cur_MXN: 'Mexicaanse peso', cur_BRL: 'Braziliaanse real', cur_INR: 'Indiase roepie'
+  },
+  sv: {
+    page_title: 'pomiai calculator', tab_basic: 'Grund', tab_sci: 'Vetenskaplig',
+    tab_unit: 'Enhet', tab_fx: 'Valuta', footer_by: 'Product by',
+    mode_basic: 'Grund', mode_sci: 'Vetenskaplig', mode_unit: 'Enhetsomvandling',
+    mode_fx: 'Valuta', hist_title: 'Historik', hist_clear: 'Rensa',
+    hist_empty: 'Beräkningshistorik visas här', memo_placeholder: 'Lägg till anteckning för nästa beräkning...', memo_save: 'Spara anteckning',
+    memo_toast: 'Anteckningen läggs till i nästa beräkning 📝', conv_val_placeholder: 'Värde', fx_val_placeholder: 'Belopp',
+    fx_refresh: '🔄 Uppdatera kurs', fx_loading: 'Laddar växelkurs...', fx_updating: 'Uppdaterar växelkurs...',
+    fx_updated_prefix: 'Senast uppdaterad: ', fx_offline: 'Offlineläge (ungefärliga kurser)', unit_length: 'Längd',
+    unit_weight: 'Vikt', unit_temp: 'Temperatur', unit_area: 'Area',
+    unit_volume: 'Volym', unit_speed: 'Hastighet', unit_time: 'Tid',
+    unit_data: 'Data', unit_acre: 'Acre', unit_pyeong: 'Pyeong (koreansk enhet)',
+    cur_USD: 'Amerikansk dollar', cur_KRW: 'Sydkoreansk won', cur_EUR: 'Euro',
+    cur_JPY: 'Japansk yen', cur_CNY: 'Kinesisk yuan', cur_GBP: 'Brittiskt pund',
+    cur_HKD: 'Hongkongdollar', cur_SGD: 'Singaporiansk dollar', cur_AUD: 'Australisk dollar',
+    cur_CAD: 'Kanadensisk dollar', cur_CHF: 'Schweizisk franc', cur_THB: 'Thailändsk baht',
+    cur_MXN: 'Mexikansk peso', cur_BRL: 'Brasiliansk real', cur_INR: 'Indisk rupie'
+  },
+  no: {
+    page_title: 'pomiai calculator', tab_basic: 'Grunnleggende', tab_sci: 'Vitenskapelig',
+    tab_unit: 'Enhet', tab_fx: 'Valuta', footer_by: 'Product by',
+    mode_basic: 'Grunnleggende', mode_sci: 'Vitenskapelig', mode_unit: 'Enhetsomregning',
+    mode_fx: 'Valuta', hist_title: 'Historikk', hist_clear: 'Tøm',
+    hist_empty: 'Beregningshistorikk vises her', memo_placeholder: 'Legg til notat for neste beregning...', memo_save: 'Lagre notat',
+    memo_toast: 'Notatet legges til i neste beregning 📝', conv_val_placeholder: 'Verdi', fx_val_placeholder: 'Beløp',
+    fx_refresh: '🔄 Oppdater kurs', fx_loading: 'Laster valutakurs...', fx_updating: 'Oppdaterer valutakurs...',
+    fx_updated_prefix: 'Sist oppdatert: ', fx_offline: 'Offlinemodus (omtrentlige kurser)', unit_length: 'Lengde',
+    unit_weight: 'Vekt', unit_temp: 'Temperatur', unit_area: 'Areal',
+    unit_volume: 'Volum', unit_speed: 'Hastighet', unit_time: 'Tid',
+    unit_data: 'Data', unit_acre: 'Acre', unit_pyeong: 'Pyeong (koreansk enhet)',
+    cur_USD: 'Amerikanske dollar', cur_KRW: 'Sørkoreanske won', cur_EUR: 'Euro',
+    cur_JPY: 'Japanske yen', cur_CNY: 'Kinesiske yuan', cur_GBP: 'Britiske pund',
+    cur_HKD: 'Hongkong-dollar', cur_SGD: 'Singapore-dollar', cur_AUD: 'Australske dollar',
+    cur_CAD: 'Kanadiske dollar', cur_CHF: 'Sveitsiske franc', cur_THB: 'Thailandske baht',
+    cur_MXN: 'Meksikanske peso', cur_BRL: 'Brasilianske real', cur_INR: 'Indiske rupi'
+  },
+  da: {
+    page_title: 'pomiai calculator', tab_basic: 'Grundlæggende', tab_sci: 'Videnskabelig',
+    tab_unit: 'Enhed', tab_fx: 'Valuta', footer_by: 'Product by',
+    mode_basic: 'Grundlæggende', mode_sci: 'Videnskabelig', mode_unit: 'Enhedsomregning',
+    mode_fx: 'Valuta', hist_title: 'Historik', hist_clear: 'Ryd',
+    hist_empty: 'Beregningshistorik vises her', memo_placeholder: 'Tilføj note til næste beregning...', memo_save: 'Gem note',
+    memo_toast: 'Noten tilføjes til næste beregning 📝', conv_val_placeholder: 'Værdi', fx_val_placeholder: 'Beløb',
+    fx_refresh: '🔄 Opdater kurs', fx_loading: 'Indlæser valutakurs...', fx_updating: 'Opdaterer valutakurs...',
+    fx_updated_prefix: 'Sidst opdateret: ', fx_offline: 'Offlinetilstand (omtrentlige kurser)', unit_length: 'Længde',
+    unit_weight: 'Vægt', unit_temp: 'Temperatur', unit_area: 'Areal',
+    unit_volume: 'Volumen', unit_speed: 'Hastighed', unit_time: 'Tid',
+    unit_data: 'Data', unit_acre: 'Acre', unit_pyeong: 'Pyeong (koreansk enhed)',
+    cur_USD: 'Amerikanske dollar', cur_KRW: 'Sydkoreanske won', cur_EUR: 'Euro',
+    cur_JPY: 'Japanske yen', cur_CNY: 'Kinesiske yuan', cur_GBP: 'Britiske pund',
+    cur_HKD: 'Hongkong-dollar', cur_SGD: 'Singapore-dollar', cur_AUD: 'Australske dollar',
+    cur_CAD: 'Canadiske dollar', cur_CHF: 'Schweiziske franc', cur_THB: 'Thailandske baht',
+    cur_MXN: 'Mexicanske peso', cur_BRL: 'Brasilianske real', cur_INR: 'Indiske rupees'
+  },
+  ar: {
+    page_title: 'pomiai calculator', tab_basic: 'أساسي', tab_sci: 'علمي',
+    tab_unit: 'وحدة', tab_fx: 'عملة', footer_by: 'Product by',
+    mode_basic: 'أساسي', mode_sci: 'علمي', mode_unit: 'تحويل الوحدات',
+    mode_fx: 'عملة', hist_title: 'السجل', hist_clear: 'مسح',
+    hist_empty: 'سيظهر سجل الحسابات هنا', memo_placeholder: 'أضف ملاحظة للحساب التالي...', memo_save: 'حفظ الملاحظة',
+    memo_toast: 'ستتم إضافة الملاحظة إلى الحساب التالي 📝', conv_val_placeholder: 'القيمة', fx_val_placeholder: 'المبلغ',
+    fx_refresh: '🔄 تحديث السعر', fx_loading: 'جارٍ تحميل سعر الصرف...', fx_updating: 'جارٍ تحديث سعر الصرف...',
+    fx_updated_prefix: 'آخر تحديث: ', fx_offline: 'وضع عدم الاتصال (أسعار تقريبية)', unit_length: 'الطول',
+    unit_weight: 'الوزن', unit_temp: 'درجة الحرارة', unit_area: 'المساحة',
+    unit_volume: 'الحجم', unit_speed: 'السرعة', unit_time: 'الوقت',
+    unit_data: 'البيانات', unit_acre: 'فدان', unit_pyeong: 'بيونغ (وحدة كورية)',
+    cur_USD: 'دولار أمريكي', cur_KRW: 'وون كوري جنوبي', cur_EUR: 'يورو',
+    cur_JPY: 'ين ياباني', cur_CNY: 'يوان صيني', cur_GBP: 'جنيه إسترليني',
+    cur_HKD: 'دولار هونغ كونغ', cur_SGD: 'دولار سنغافوري', cur_AUD: 'دولار أسترالي',
+    cur_CAD: 'دولار كندي', cur_CHF: 'فرنك سويسري', cur_THB: 'بات تايلاندي',
+    cur_MXN: 'بيزو مكسيكي', cur_BRL: 'ريال برازيلي', cur_INR: 'روبية هندية'
+  },
+};
+const LOCALE_MAP = { ko:'ko-KR', en:'en-US', ja:'ja-JP', zh_CN:'zh-CN', zh_TW:'zh-TW', de:'de-DE', fr:'fr-FR', nl:'nl-NL', sv:'sv-SE', no:'nb-NO', da:'da-DK', ar:'ar-SA' };
+function currentLocale(){ return LOCALE_MAP[window._LANG] || 'en-US'; }
+
+/* 단위변환 카테고리·특수 단위명 → i18n 키 매핑 (내부 식별자는 기존 값 유지, 표시 라벨만 번역) */
+const unitCatI18nKey  = { '길이':'unit_length','무게':'unit_weight','온도':'unit_temp','넓이':'unit_area','부피':'unit_volume','속도':'unit_speed','시간':'unit_time','데이터':'unit_data' };
+const unitLabelI18nKey = { '에이커':'unit_acre','평':'unit_pyeong' };
+
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  /* 중국어 간체/번체 및 노르웨이어(nb/no) 구분을 위한 정규화 함수 */
+  function normalizeLang(raw){
+    if(!raw) return '';
+    if(/^zh/i.test(raw)) return /tw|hk|mo/i.test(raw) ? 'zh_TW' : 'zh_CN';
+    const two = raw.slice(0,2).toLowerCase();
+    if(two === 'nb') return 'no';
+    return two;
+  }
+  const urlKey = normalizeLang(urlLang);
+  const browserKey = normalizeLang(navigator.language || 'ko');
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[urlKey] ? urlKey
+             : (I18N[browserKey] ? browserKey : 'ko'));
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+  document.getElementById('html-root').setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
+})();
+
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    const k = el.dataset.i18nPlaceholder;
+    if (typeof t[k] === 'string') el.placeholder = t[k];
+  });
+  const pt = document.getElementById('page-title');
+  if (pt) pt.textContent = t.page_title;
+  document.title = t.page_title;
+  const langSel = document.getElementById('lang-switch');
+  if (langSel) langSel.value = window._LANG;
+}
+applyI18n();
+
 
 /* ── 디스플레이 ── */
 function updateDisplay(animate){
@@ -559,18 +854,18 @@ function sciFn(fn){
 /* ── 히스토리 ── */
 function addHistory(expression, result, memo){
   const now = new Date();
-  const time = now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  const time = now.toLocaleTimeString(currentLocale(),{hour:'2-digit',minute:'2-digit'});
   const item = {expression, result, memo: memo||'', time};
-  history.unshift(item);
-  if(history.length > 60) history.pop();
+  calcHistory.unshift(item);
+  if(calcHistory.length > 60) calcHistory.pop();
   renderHistory();
 }
 function renderHistory(){
   const list = document.getElementById('hist-list');
   const empty = document.getElementById('hist-empty');
-  if(!history.length){ list.innerHTML=''; list.appendChild(empty); return; }
+  if(!calcHistory.length){ list.innerHTML=''; list.appendChild(empty); return; }
   list.innerHTML = '';
-  history.forEach((h,i)=>{
+  calcHistory.forEach((h,i)=>{
     const d = document.createElement('div');
     d.className = 'hist-item slide-up';
     d.style.animationDelay = i===0 ? '0ms' : '0ms';
@@ -587,12 +882,12 @@ function renderHistory(){
     list.appendChild(d);
   });
 }
-function clearHistory(){ history.length=0; renderHistory(); }
+function clearHistory(){ calcHistory.length=0; renderHistory(); }
 
 /* ── 메모 ── */
 function saveMemo(){
   const v = document.getElementById('memo-input').value.trim();
-  if(v){ pendingMemo = v; showToast('메모가 다음 계산에 추가됩니다 📝'); }
+  if(v){ pendingMemo = v; showToast(window._T.memo_toast); }
 }
 function showToast(msg){
   let t = document.getElementById('toast-msg');
@@ -611,8 +906,8 @@ function switchTab(tab){
   document.getElementById('kp-sci').classList.toggle('show', tab==='sci');
   document.getElementById('kp-unit').classList.toggle('show', tab==='unit');
   document.getElementById('kp-fx').classList.toggle('show', tab==='fx');
-  const badges = {basic:'기본',sci:'공학',unit:'단위변환',fx:'환율'};
-  document.getElementById('mode-badge').textContent = badges[tab];
+  const modeKeys = {basic:'mode_basic',sci:'mode_sci',unit:'mode_unit',fx:'mode_fx'};
+  document.getElementById('mode-badge').textContent = window._T[modeKeys[tab]];
 }
 
 /* ── 단위 변환 ── */
@@ -634,8 +929,9 @@ function initConv(){
   Object.keys(unitTypes).forEach(k=>{
     const b = document.createElement('button');
     b.className = 'conv-type' + (k===convType?' active':'');
-    b.textContent = k;
-    b.onclick = ()=>{ convType=k; document.querySelectorAll('.conv-type').forEach(x=>x.classList.toggle('active',x.textContent===k)); populateConvSelects(); doConvert(); };
+    b.dataset.unitKey = k;
+    b.textContent = (window._T && unitCatI18nKey[k] && window._T[unitCatI18nKey[k]]) || k;
+    b.onclick = ()=>{ convType=k; document.querySelectorAll('.conv-type').forEach(x=>x.classList.toggle('active',x.dataset.unitKey===k)); populateConvSelects(); doConvert(); };
     tabs.appendChild(b);
   });
   populateConvSelects();
@@ -647,7 +943,11 @@ function populateConvSelects(){
   const keys = units==='special'?['°C','°F','K']:Object.keys(units);
   [from,to].forEach((sel,i)=>{
     sel.innerHTML='';
-    keys.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k; sel.appendChild(o); });
+    keys.forEach(k=>{
+      const o=document.createElement('option'); o.value=k;
+      o.textContent = (window._T && unitLabelI18nKey[k] && window._T[unitLabelI18nKey[k]]) || k;
+      sel.appendChild(o);
+    });
     if(i===1&&keys.length>1) sel.selectedIndex=1;
   });
   doConvert();
@@ -675,43 +975,55 @@ function doConvert(){
 }
 
 /* ── 환율 ── */
-const currencies = {
-  USD:['🇺🇸','미국 달러'],KRW:['🇰🇷','한국 원'],EUR:['🇪🇺','유로'],
-  JPY:['🇯🇵','일본 엔'],CNY:['🇨🇳','중국 위안'],GBP:['🇬🇧','영국 파운드'],
-  HKD:['🇭🇰','홍콩 달러'],SGD:['🇸🇬','싱가포르 달러'],AUD:['🇦🇺','호주 달러'],
-  CAD:['🇨🇦','캐나다 달러'],CHF:['🇨🇭','스위스 프랑'],THB:['🇹🇭','태국 바트'],
-  MXN:['🇲🇽','멕시코 페소'],BRL:['🇧🇷','브라질 헤알'],INR:['🇮🇳','인도 루피'],
+const currencyFlags = {
+  USD:'🇺🇸',KRW:'🇰🇷',EUR:'🇪🇺',JPY:'🇯🇵',CNY:'🇨🇳',GBP:'🇬🇧',
+  HKD:'🇭🇰',SGD:'🇸🇬',AUD:'🇦🇺',CAD:'🇨🇦',CHF:'🇨🇭',THB:'🇹🇭',
+  MXN:'🇲🇽',BRL:'🇧🇷',INR:'🇮🇳',
 };
+function currencyName(code){ return (window._T && window._T['cur_'+code]) || code; }
+function initFxLabelsOnly(){
+  // 언어 변경 시 통화 드롭다운의 표시 라벨만 갱신 (선택값·환율은 유지)
+  ['fx-from','fx-to'].forEach(id=>{
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    const cur = sel.value;
+    Array.from(sel.options).forEach(o=>{
+      const flag = currencyFlags[o.value] || '🌐';
+      o.textContent = `${flag} ${o.value} — ${currencyName(o.value)}`;
+    });
+    sel.value = cur;
+  });
+}
 let fxRates = {};
 let fxUpdated = '';
 
 function initFx(){
   const from = document.getElementById('fx-from');
   const to = document.getElementById('fx-to');
-  Object.entries(currencies).forEach(([code,[flag,name]])=>{
+  Object.entries(currencyFlags).forEach(([code,flag])=>{
     [from,to].forEach(sel=>{
-      const o=document.createElement('option');o.value=code;o.textContent=`${flag} ${code} — ${name}`;sel.appendChild(o);
+      const o=document.createElement('option');o.value=code;o.textContent=`${flag} ${code} — ${currencyName(code)}`;sel.appendChild(o);
     });
   });
   from.value='USD'; to.value='KRW';
-  from.addEventListener('change',()=>{ document.getElementById('fx-flag1').textContent=(currencies[from.value]||['🌐'])[0]; doFx(); });
-  to.addEventListener('change',()=>{ document.getElementById('fx-flag2').textContent=(currencies[to.value]||['🌐'])[0]; doFx(); });
+  from.addEventListener('change',()=>{ document.getElementById('fx-flag1').textContent=currencyFlags[from.value]||'🌐'; doFx(); });
+  to.addEventListener('change',()=>{ document.getElementById('fx-flag2').textContent=currencyFlags[to.value]||'🌐'; doFx(); });
   fetchRates();
 }
 async function fetchRates(){
-  document.getElementById('fx-update').textContent='환율 업데이트 중...';
+  document.getElementById('fx-update').textContent = window._T.fx_updating;
   try{
     const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-    if(!res.ok) throw new Error('API 오류');
+    if(!res.ok) throw new Error('fetch failed');
     const data = await res.json();
     fxRates = data.rates;
-    fxUpdated = new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-    document.getElementById('fx-update').textContent = '최종 업데이트: ' + fxUpdated;
+    fxUpdated = new Date().toLocaleString(currentLocale(),{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('fx-update').textContent = window._T.fx_updated_prefix + fxUpdated;
     doFx();
   }catch(e){
     // 폴백 환율 (근사값)
     fxRates = {USD:1,KRW:1380,EUR:0.92,JPY:149,CNY:7.24,GBP:0.79,HKD:7.82,SGD:1.34,AUD:1.53,CAD:1.36,CHF:0.88,THB:35.1,MXN:17.2,BRL:4.97,INR:83.1};
-    document.getElementById('fx-update').textContent='오프라인 모드 (근사 환율)';
+    document.getElementById('fx-update').textContent = window._T.fx_offline;
     doFx();
   }
 }
@@ -723,9 +1035,10 @@ function doFx(){
   if(!fxRates[from]||!fxRates[to]) return;
   const rate = fxRates[to]/fxRates[from];
   const result = val*rate;
+  const loc = currentLocale();
   const fmt = n=>{
-    if(n>=100) return n.toLocaleString('ko-KR',{maximumFractionDigits:2});
-    return n.toLocaleString('ko-KR',{maximumFractionDigits:4});
+    if(n>=100) return n.toLocaleString(loc,{maximumFractionDigits:2});
+    return n.toLocaleString(loc,{maximumFractionDigits:4});
   };
   document.getElementById('fx-result').textContent = `${fmt(result)} ${to}`;
   document.getElementById('fx-rate').textContent = `1 ${from} = ${fmt(rate)} ${to}`;
@@ -761,7 +1074,7 @@ updateDisplay();
   const wantType = dparams.get('type');
   if (wantType && unitTypes.hasOwnProperty(wantType)) {
     convType = wantType;
-    document.querySelectorAll('.conv-type').forEach(x=>x.classList.toggle('active', x.textContent===wantType));
+    document.querySelectorAll('.conv-type').forEach(x=>x.classList.toggle('active', x.dataset.unitKey===wantType));
     populateConvSelects();
   }
   const wantFrom = dparams.get('from');
@@ -771,36 +1084,22 @@ updateDisplay();
   if (wantFrom || wantTo) doConvert();
 })();
 
-/* ── pomiai i18n ── */
-const I18N = {
-  ko:{ page_title:'pomiai calculator', tab_basic:'기본', tab_sci:'공학', tab_unit:'단위', tab_fx:'환율', footer_by:'Product by' },
-  en:{ page_title:'pomiai calculator', tab_basic:'Basic', tab_sci:'Scientific', tab_unit:'Unit', tab_fx:'Currency', footer_by:'Product by' },
-  ja:{ page_title:'pomiai calculator', tab_basic:'基本', tab_sci:'関数', tab_unit:'単位', tab_fx:'為替', footer_by:'Product by' }
-};
-(function(){
-  const params = new URLSearchParams(location.search);
-  const urlLang = params.get('lang');
-  const browserLang = (navigator.language||'ko').slice(0,2);
-  const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
-  window._LANG=LANG; window._T=I18N[LANG];
-  document.getElementById('html-root').lang = LANG;
-})();
-function applyI18n(){
-  const t = window._T;
-  document.querySelectorAll('[data-i18n]').forEach(el=>{ if(typeof t[el.dataset.i18n]==='string') el.textContent = t[el.dataset.i18n]; });
-  document.getElementById('page-title').textContent = t.page_title;
-  document.title = t.page_title;
-}
-applyI18n();
-document.querySelectorAll('#lang-switch button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const lang = btn.dataset.lang;
+const langSelEl = document.getElementById('lang-switch');
+if (langSelEl) {
+  langSelEl.value = window._LANG;
+  langSelEl.addEventListener('change', ()=>{
+    const lang = langSelEl.value;
+    if (!I18N[lang]) return;
     window._LANG = lang; window._T = I18N[lang];
     document.getElementById('html-root').lang = lang;
+    document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
     applyI18n();
+    initConv();       // 카테고리·단위 라벨 재렌더
+    initFxLabelsOnly();
+    switchTab(document.querySelector('.tab.active')?.dataset.tab || 'basic');
     try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
   });
-});
+}
 </script>
 </body>
 </html>
