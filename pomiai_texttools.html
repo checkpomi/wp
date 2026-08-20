@@ -239,6 +239,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
   #cnt-bar{gap:5px}
 }
 .langbtn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer}
+#lang-switch{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 6px;border-radius:7px;cursor:pointer;max-width:120px}
 </style>
 </head>
 <body>
@@ -248,11 +249,20 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
 <div id="topbar">
   <span id="logo">pomiai <span>text</span></span>
   <div class="sep"></div>
-  <div id="lang-switch" style="margin-left:auto;display:flex;gap:4px">
-    <button data-lang="ko" class="langbtn">한</button>
-    <button data-lang="en" class="langbtn">EN</button>
-    <button data-lang="ja" class="langbtn">日</button>
-  </div>
+  <select id="lang-switch" style="margin-left:auto">
+    <option value="ko">🇰🇷 한국어</option>
+    <option value="en">🇺🇸 English</option>
+    <option value="ja">🇯🇵 日本語</option>
+    <option value="zh_CN">🇨🇳 中文(简体)</option>
+    <option value="zh_TW">🇹🇼 中文(繁體)</option>
+    <option value="de_DE">🇩🇪 Deutsch</option>
+    <option value="fr_FR">🇫🇷 Français</option>
+    <option value="nl_NL">🇳🇱 Nederlands</option>
+    <option value="sv_SE">🇸🇪 Svenska</option>
+    <option value="nn_NO">🇳🇴 Norsk</option>
+    <option value="da_DK">🇩🇰 Dansk</option>
+    <option value="ar">🇸🇦 العربية</option>
+  </select>
   <a href="https://checkpomi.com" target="_blank" rel="noopener" style="font-size:10px;font-weight:700;color:var(--tx3);text-decoration:none;padding:4px 8px;border-radius:7px;background:var(--s3);border:1px solid var(--bd2);flex-shrink:0">🌐 pomiai</a>
   <div class="sep"></div>
   <button class="tb-btn" onclick="document.getElementById('file-in').click()">
@@ -854,15 +864,15 @@ function applyI18n(){
   document.title = t.page_title;
 }
 applyI18n();
-document.querySelectorAll('#lang-switch button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const lang = btn.dataset.lang;
+const langSwitchEl = document.getElementById('lang-switch');
+langSwitchEl.value = window._LANG;
+langSwitchEl.addEventListener('change', ()=>{
+    const lang = langSwitchEl.value;
     window._LANG = lang; window._T = I18N[lang];
     document.getElementById('html-root').lang = lang;
     document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
     applyI18n();
     try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
-  });
 });
 </script>
 </body>

@@ -160,6 +160,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
   .preset-grid,.cs-grid{grid-template-columns:1fr 1fr}
 }
 .langbtn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer}
+#lang-switch{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 6px;border-radius:7px;cursor:pointer;max-width:120px}
 .pomiai-brand-footer{max-width:900px;margin:16px auto 4px;padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .pomiai-brand-footer a{font-size:11px;font-weight:700;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bd2);margin-left:6px}
 </style>
@@ -170,11 +171,20 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
   <div class="h-sep"></div>
   <span id="match-badge">0 매치</span>
   <span id="err-badge"></span>
-  <div id="lang-switch" style="margin-left:auto;display:flex;gap:4px">
-    <button data-lang="ko" class="langbtn">한</button>
-    <button data-lang="en" class="langbtn">EN</button>
-    <button data-lang="ja" class="langbtn">日</button>
-  </div>
+  <select id="lang-switch" style="margin-left:auto">
+    <option value="ko">🇰🇷 한국어</option>
+    <option value="en">🇺🇸 English</option>
+    <option value="ja">🇯🇵 日本語</option>
+    <option value="zh_CN">🇨🇳 中文(简体)</option>
+    <option value="zh_TW">🇹🇼 中文(繁體)</option>
+    <option value="de_DE">🇩🇪 Deutsch</option>
+    <option value="fr_FR">🇫🇷 Français</option>
+    <option value="nl_NL">🇳🇱 Nederlands</option>
+    <option value="sv_SE">🇸🇪 Svenska</option>
+    <option value="nn_NO">🇳🇴 Norsk</option>
+    <option value="da_DK">🇩🇰 Dansk</option>
+    <option value="ar">🇸🇦 العربية</option>
+  </select>
 </div>
 
 <div id="app">
@@ -268,12 +278,30 @@ function LANG(){return window._LANG||'ko';}
 const TOAST_TXT={
   ko:{copied:'복사됨',applied:'적용됨',inserted:'삽입됨'},
   en:{copied:'Copied',applied:'applied',inserted:'Inserted'},
-  ja:{copied:'コピーしました',applied:'適用しました',inserted:'挿入しました'}
+  ja:{copied:'コピーしました',applied:'適用しました',inserted:'挿入しました'},
+  zh_CN:{copied:'已复制',applied:'已应用',inserted:'已插入'},
+  zh_TW:{copied:'已複製',applied:'已套用',inserted:'已插入'},
+  de_DE:{copied:'Kopiert',applied:'Angewendet',inserted:'Eingefügt'},
+  fr_FR:{copied:'Copié',applied:'Appliqué',inserted:'Inséré'},
+  nl_NL:{copied:'Gekopieerd',applied:'Toegepast',inserted:'Ingevoegd'},
+  sv_SE:{copied:'Kopierad',applied:'Tillämpad',inserted:'Infogad'},
+  nn_NO:{copied:'Kopiert',applied:'Nytta',inserted:'Sett inn'},
+  da_DK:{copied:'Kopieret',applied:'Anvendt',inserted:'Indsat'},
+  ar:{copied:'تم النسخ',applied:'تم التطبيق',inserted:'تم الإدراج'}
 };
 const MSG_TXT={
   ko:{matches:'매치',noMatch:'매치 없음',error:'오류',emptyMatches:'정규식을 입력하면 매치 결과가 표시돼요',emptyExplain:'정규식을 입력하면 각 토큰의 의미를 분석해요'},
   en:{matches:'matches',noMatch:'No matches',error:'Error',emptyMatches:'Enter a regex to see match results',emptyExplain:'Enter a regex to see what each token means'},
-  ja:{matches:'マッチ',noMatch:'マッチなし',error:'エラー',emptyMatches:'正規表現を入力するとマッチ結果が表示されます',emptyExplain:'正規表現を入力すると各トークンの意味を解析します'}
+  ja:{matches:'マッチ',noMatch:'マッチなし',error:'エラー',emptyMatches:'正規表現を入力するとマッチ結果が表示されます',emptyExplain:'正規表現を入力すると各トークンの意味を解析します'},
+  zh_CN:{matches:'匹配项',noMatch:'无匹配项',error:'错误',emptyMatches:'输入正则表达式即可查看匹配结果',emptyExplain:'输入正则表达式即可解析各个标记的含义'},
+  zh_TW:{matches:'符合項目',noMatch:'無符合項目',error:'錯誤',emptyMatches:'輸入正規表示式即可查看符合結果',emptyExplain:'輸入正規表示式即可解析各個標記的意義'},
+  de_DE:{matches:'Treffer',noMatch:'Keine Treffer',error:'Fehler',emptyMatches:'Geben Sie einen regulären Ausdruck ein, um Treffer anzuzeigen',emptyExplain:'Geben Sie einen regulären Ausdruck ein, um die Bedeutung jedes Tokens zu analysieren'},
+  fr_FR:{matches:'correspondances',noMatch:'Aucune correspondance',error:'Erreur',emptyMatches:'Saisissez une expression régulière pour voir les résultats',emptyExplain:'Saisissez une expression régulière pour analyser la signification de chaque token'},
+  nl_NL:{matches:'overeenkomsten',noMatch:'Geen overeenkomsten',error:'Fout',emptyMatches:'Voer een reguliere expressie in om overeenkomsten te zien',emptyExplain:'Voer een reguliere expressie in om de betekenis van elk token te analyseren'},
+  sv_SE:{matches:'träffar',noMatch:'Inga träffar',error:'Fel',emptyMatches:'Ange ett reguljärt uttryck för att se träffresultat',emptyExplain:'Ange ett reguljärt uttryck för att analysera betydelsen av varje token'},
+  nn_NO:{matches:'treff',noMatch:'Ingen treff',error:'Feil',emptyMatches:'Skriv inn eit regulært uttrykk for å sjå treffresultat',emptyExplain:'Skriv inn eit regulært uttrykk for å analysere kva kvart token betyr'},
+  da_DK:{matches:'match',noMatch:'Ingen match',error:'Fejl',emptyMatches:'Indtast et regulært udtryk for at se matchresultater',emptyExplain:'Indtast et regulært udtryk for at analysere betydningen af hvert token'},
+  ar:{matches:'تطابقات',noMatch:'لا توجد تطابقات',error:'خطأ',emptyMatches:'أدخل تعبيرًا نمطيًا لعرض نتائج التطابق',emptyExplain:'أدخل تعبيرًا نمطيًا لتحليل معنى كل رمز'}
 };
 let toastTid;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTid);toastTid=setTimeout(()=>t.classList.remove('show'),2200);}
@@ -426,7 +454,61 @@ const TOKEN_DESC={
     t11:'量指定子 {n,m}',t12:'数字 [0-9]',t13:'数字以外',t14:'単語文字 [a-zA-Z0-9_]',t15:'単語文字以外',
     t16:'空白文字',t17:'空白以外',t18:'単語境界',t19:'単語境界でない箇所',t20:'改行文字',t21:'タブ文字',
     t22:'非キャプチャグループ (?:...)',t23:'肯定先読み (?=...)',t24:'否定先読み (?!...)',
-    t25:'肯定後読み (?<=...)',t26:'否定後読み (?<!...)',t27:'名前付きキャプチャグループ', literal:'リテラル文字'}
+    t25:'肯定後読み (?<=...)',t26:'否定後読み (?<!...)',t27:'名前付きキャプチャグループ', literal:'リテラル文字'},
+  zh_CN:{t0:'任意字符(不含换行符)',t1:'字符串开头',t2:'字符串结尾',t3:'前面的元素出现0次或多次',t4:'前面的元素出现1次或多次',
+    t5:'前面的元素出现0次或1次',t6:'或(OR)',t7:'分组开始',t8:'分组结束',t9:'字符集开始',t10:'字符集结束',
+    t11:'量词 {n,m}',t12:'数字 [0-9]',t13:'非数字',t14:'单词字符 [a-zA-Z0-9_]',t15:'非单词字符',
+    t16:'空白字符',t17:'非空白字符',t18:'单词边界',t19:'非单词边界',t20:'换行符',t21:'制表符',
+    t22:'非捕获组 (?:...)',t23:'正向先行断言 (?=...)',t24:'负向先行断言 (?!...)',
+    t25:'正向后行断言 (?<=...)',t26:'负向后行断言 (?<!...)',t27:'命名捕获组', literal:'字面字符'},
+  zh_TW:{t0:'任意字元(不含換行符)',t1:'字串開頭',t2:'字串結尾',t3:'前面的元素出現0次或多次',t4:'前面的元素出現1次或多次',
+    t5:'前面的元素出現0次或1次',t6:'或(OR)',t7:'分組開始',t8:'分組結束',t9:'字元集開始',t10:'字元集結束',
+    t11:'量詞 {n,m}',t12:'數字 [0-9]',t13:'非數字',t14:'單詞字元 [a-zA-Z0-9_]',t15:'非單詞字元',
+    t16:'空白字元',t17:'非空白字元',t18:'單詞邊界',t19:'非單詞邊界',t20:'換行符',t21:'定位符',
+    t22:'非捕獲組 (?:...)',t23:'正向先行斷言 (?=...)',t24:'負向先行斷言 (?!...)',
+    t25:'正向後行斷言 (?<=...)',t26:'負向後行斷言 (?<!...)',t27:'命名捕獲組', literal:'字面字元'},
+  de_DE:{t0:'Beliebiges Zeichen (außer Zeilenumbruch)',t1:'Anfang der Zeichenkette',t2:'Ende der Zeichenkette',t3:'0 oder mehr des vorangehenden Elements',t4:'1 oder mehr des vorangehenden Elements',
+    t5:'0 oder 1 des vorangehenden Elements',t6:'ODER',t7:'Gruppenanfang',t8:'Gruppenende',t9:'Beginn der Zeichenklasse',t10:'Ende der Zeichenklasse',
+    t11:'Quantifizierer {n,m}',t12:'Ziffer [0-9]',t13:'Keine Ziffer',t14:'Wortzeichen [a-zA-Z0-9_]',t15:'Kein Wortzeichen',
+    t16:'Leerraumzeichen',t17:'Kein Leerraumzeichen',t18:'Wortgrenze',t19:'Keine Wortgrenze',t20:'Zeilenumbruch',t21:'Tabulator',
+    t22:'Nicht-erfassende Gruppe (?:...)',t23:'Positiver Lookahead (?=...)',t24:'Negativer Lookahead (?!...)',
+    t25:'Positiver Lookbehind (?<=...)',t26:'Negativer Lookbehind (?<!...)',t27:'Benannte Erfassungsgruppe', literal:'Literales Zeichen'},
+  fr_FR:{t0:'Caractère quelconque (sauf saut de ligne)',t1:'Début de la chaîne',t2:'Fin de la chaîne',t3:'0 ou plusieurs fois l\'élément précédent',t4:'1 ou plusieurs fois l\'élément précédent',
+    t5:'0 ou 1 fois l\'élément précédent',t6:'OU',t7:'Début de groupe',t8:'Fin de groupe',t9:'Début de la classe de caractères',t10:'Fin de la classe de caractères',
+    t11:'Quantificateur {n,m}',t12:'Chiffre [0-9]',t13:'Non-chiffre',t14:'Caractère de mot [a-zA-Z0-9_]',t15:'Caractère non-mot',
+    t16:'Espace',t17:'Non-espace',t18:'Limite de mot',t19:'Pas une limite de mot',t20:'Saut de ligne',t21:'Tabulation',
+    t22:'Groupe non capturant (?:...)',t23:'Lookahead positif (?=...)',t24:'Lookahead négatif (?!...)',
+    t25:'Lookbehind positif (?<=...)',t26:'Lookbehind négatif (?<!...)',t27:'Groupe de capture nommé', literal:'Caractère littéral'},
+  nl_NL:{t0:'Willekeurig teken (behalve nieuwe regel)',t1:'Begin van de string',t2:'Einde van de string',t3:'0 of meer keer het voorgaande element',t4:'1 of meer keer het voorgaande element',
+    t5:'0 of 1 keer het voorgaande element',t6:'OF',t7:'Begin van groep',t8:'Einde van groep',t9:'Begin van tekenklasse',t10:'Einde van tekenklasse',
+    t11:'Kwantificator {n,m}',t12:'Cijfer [0-9]',t13:'Geen cijfer',t14:'Woordteken [a-zA-Z0-9_]',t15:'Geen woordteken',
+    t16:'Witruimte',t17:'Geen witruimte',t18:'Woordgrens',t19:'Geen woordgrens',t20:'Nieuwe regel',t21:'Tab',
+    t22:'Niet-vastleggende groep (?:...)',t23:'Positieve lookahead (?=...)',t24:'Negatieve lookahead (?!...)',
+    t25:'Positieve lookbehind (?<=...)',t26:'Negatieve lookbehind (?<!...)',t27:'Benoemde vastlegggroep', literal:'Letterlijk teken'},
+  sv_SE:{t0:'Valfritt tecken (utom radbrytning)',t1:'Början av strängen',t2:'Slutet av strängen',t3:'0 eller fler av föregående element',t4:'1 eller fler av föregående element',
+    t5:'0 eller 1 av föregående element',t6:'ELLER',t7:'Gruppstart',t8:'Gruppslut',t9:'Start på teckenklass',t10:'Slut på teckenklass',
+    t11:'Kvantifierare {n,m}',t12:'Siffra [0-9]',t13:'Icke-siffra',t14:'Ordtecken [a-zA-Z0-9_]',t15:'Icke-ordtecken',
+    t16:'Blanksteg',t17:'Icke-blanksteg',t18:'Ordgräns',t19:'Icke-ordgräns',t20:'Radbrytning',t21:'Tabb',
+    t22:'Icke-fångande grupp (?:...)',t23:'Positiv lookahead (?=...)',t24:'Negativ lookahead (?!...)',
+    t25:'Positiv lookbehind (?<=...)',t26:'Negativ lookbehind (?<!...)',t27:'Namngiven fångstgrupp', literal:'Bokstavligt tecken'},
+  nn_NO:{t0:'Eit vilkårleg teikn (unntatt linjeskift)',t1:'Start av strengen',t2:'Slutten av strengen',t3:'0 eller fleire av føregåande element',t4:'1 eller fleire av føregåande element',
+    t5:'0 eller 1 av føregåande element',t6:'ELLER',t7:'Gruppestart',t8:'Gruppeslutt',t9:'Start på teiknklasse',t10:'Slutt på teiknklasse',
+    t11:'Kvantifikator {n,m}',t12:'Siffer [0-9]',t13:'Ikkje siffer',t14:'Ordteikn [a-zA-Z0-9_]',t15:'Ikkje ordteikn',
+    t16:'Kvitrom',t17:'Ikkje kvitrom',t18:'Ordgrense',t19:'Ikkje ordgrense',t20:'Linjeskift',t21:'Tabulator',
+    t22:'Ikkje-fangande gruppe (?:...)',t23:'Positiv lookahead (?=...)',t24:'Negativ lookahead (?!...)',
+    t25:'Positiv lookbehind (?<=...)',t26:'Negativ lookbehind (?<!...)',t27:'Namngjeven fangstgruppe', literal:'Bokstaveleg teikn'},
+  da_DK:{t0:'Vilkårligt tegn (undtagen linjeskift)',t1:'Start af strengen',t2:'Slutning af strengen',t3:'0 eller flere af det foregående element',t4:'1 eller flere af det foregående element',
+    t5:'0 eller 1 af det foregående element',t6:'ELLER',t7:'Gruppestart',t8:'Gruppeafslutning',t9:'Start på tegnklasse',t10:'Slutning på tegnklasse',
+    t11:'Kvantifikator {n,m}',t12:'Ciffer [0-9]',t13:'Ikke-ciffer',t14:'Ordtegn [a-zA-Z0-9_]',t15:'Ikke-ordtegn',
+    t16:'Blanktegn',t17:'Ikke-blanktegn',t18:'Ordgrænse',t19:'Ikke-ordgrænse',t20:'Linjeskift',t21:'Tabulator',
+    t22:'Ikke-indfangende gruppe (?:...)',t23:'Positivt lookahead (?=...)',t24:'Negativt lookahead (?!...)',
+    t25:'Positivt lookbehind (?<=...)',t26:'Negativt lookbehind (?<!...)',t27:'Navngivet indfangningsgruppe', literal:'Bogstaveligt tegn'},
+  ar:{t0:'أي حرف (باستثناء سطر جديد)',t1:'بداية السلسلة النصية',t2:'نهاية السلسلة النصية',t3:'العنصر السابق صفر مرة أو أكثر',t4:'العنصر السابق مرة واحدة أو أكثر',
+    t5:'العنصر السابق صفر أو مرة واحدة',t6:'أو (OR)',t7:'بداية المجموعة',t8:'نهاية المجموعة',t9:'بداية فئة الأحرف',t10:'نهاية فئة الأحرف',
+    t11:'المحدد الكمي {n,m}',t12:'رقم [0-9]',t13:'ليس رقمًا',t14:'حرف كلمة [a-zA-Z0-9_]',t15:'ليس حرف كلمة',
+    t16:'مسافة بيضاء',t17:'ليست مسافة بيضاء',t18:'حد الكلمة',t19:'ليس حد كلمة',t20:'سطر جديد',t21:'علامة جدولة',
+    t22:'مجموعة غير ملتقطة (?:...)',t23:'استباق موجب (?=...)',t24:'استباق سالب (?!...)',
+    t25:'استرجاع موجب (?<=...)',t26:'استرجاع سالب (?<!...)',t27:'مجموعة التقاط مسماة', literal:'حرف حرفي'}
 };
 function explainRegex(pat){
   const box=$('explain-box');
@@ -498,7 +580,70 @@ const PRESET_I18N={
     htmltag:['HTMLタグ','HTMLタグ全体'],leading_ws:['行頭の空白','各行の先頭の空白'],multi_ws:['連続する空白','2つ以上の連続した空白'],
     blank_line:['空行','空白のみの行'],hangul:['ハングル','ハングル文字'],alpha:['英字のみ','アルファベット文字'],digits:['数字のみ','数字の連続'],
     special:['特殊文字','特殊文字'],pw_strength:['パスワード強度','大小英字+数字+特殊文字8文字以上'],
-    credit_card:['クレジットカード','Visa/MC/Amex'],md_bold:['Markdown太字','**テキスト**形式']}
+    credit_card:['クレジットカード','Visa/MC/Amex'],md_bold:['Markdown太字','**テキスト**形式']},
+  zh_CN:{email:['邮箱','验证邮箱地址'],url:['URL','HTTP/HTTPS 网址'],kr_phone:['韩国电话号码','座机/手机号码'],
+    ip:['IP 地址','IPv4 地址'],date_iso:['日期 (YYYY-MM-DD)','ISO 日期格式'],date_kr:['韩国日期','韩式日期格式'],
+    time:['时间 (HH:MM)','24 小时制'],hexcolor:['十六进制颜色','CSS 颜色代码'],zipcode:['邮政编码(韩国)','5 位邮政编码'],
+    htmltag:['HTML 标签','任意 HTML 标签'],leading_ws:['行首空白','每行开头的空白'],multi_ws:['重复空白','2 个以上连续空格'],
+    blank_line:['空行','仅含空白的行'],hangul:['韩文','韩文字符'],alpha:['仅字母','英文字母'],digits:['仅数字','连续数字'],
+    special:['特殊字符','特殊字符'],pw_strength:['密码强度','大小写+数字+特殊字符,8位以上'],
+    credit_card:['信用卡','Visa/MC/Amex'],md_bold:['Markdown 加粗','**文本** 格式']},
+  zh_TW:{email:['電子郵件','驗證電子郵件地址'],url:['URL','HTTP/HTTPS 網址'],kr_phone:['韓國電話號碼','市話/手機號碼'],
+    ip:['IP 位址','IPv4 位址'],date_iso:['日期 (YYYY-MM-DD)','ISO 日期格式'],date_kr:['韓國日期','韓式日期格式'],
+    time:['時間 (HH:MM)','24 小時制'],hexcolor:['十六進位色碼','CSS 色碼'],zipcode:['郵遞區號(韓國)','5 位郵遞區號'],
+    htmltag:['HTML 標籤','任意 HTML 標籤'],leading_ws:['行首空白','每行開頭的空白'],multi_ws:['重複空白','2 個以上連續空格'],
+    blank_line:['空白行','僅含空白的行'],hangul:['韓文','韓文字元'],alpha:['僅字母','英文字母'],digits:['僅數字','連續數字'],
+    special:['特殊字元','特殊字元'],pw_strength:['密碼強度','大小寫+數字+特殊字元,8碼以上'],
+    credit_card:['信用卡','Visa/MC/Amex'],md_bold:['Markdown 粗體','**文字** 格式']},
+  de_DE:{email:['E-Mail','E-Mail-Adresse validieren'],url:['URL','HTTP/HTTPS-URL'],kr_phone:['Koreanische Telefonnummer','Festnetz-/Mobilnummer'],
+    ip:['IP-Adresse','IPv4-Adresse'],date_iso:['Datum (YYYY-MM-DD)','ISO-Datumsformat'],date_kr:['Koreanisches Datum','Datum im koreanischen Format'],
+    time:['Uhrzeit (HH:MM)','24-Stunden-Format'],hexcolor:['Hex-Farbe','CSS-Farbcode'],zipcode:['Postleitzahl (Korea)','5-stellige Postleitzahl'],
+    htmltag:['HTML-Tag','Beliebiges HTML-Tag'],leading_ws:['Führende Leerzeichen','Leerzeichen am Zeilenanfang'],multi_ws:['Wiederholte Leerzeichen','2 oder mehr aufeinanderfolgende Leerzeichen'],
+    blank_line:['Leere Zeile','Zeile nur mit Leerzeichen'],hangul:['Hangeul','Koreanische Zeichen'],alpha:['Nur Buchstaben','Alphabetische Zeichen'],digits:['Nur Ziffern','Zahlenfolge'],
+    special:['Sonderzeichen','Sonderzeichen'],pw_strength:['Passwortstärke','Groß-/Kleinbuchstaben+Ziffer+Sonderzeichen, 8+ Zeichen'],
+    credit_card:['Kreditkarte','Visa/MC/Amex'],md_bold:['Markdown fett','**Text**-Format']},
+  fr_FR:{email:['E-mail','Valider une adresse e-mail'],url:['URL','URL HTTP/HTTPS'],kr_phone:['Numéro de téléphone coréen','Numéro fixe/mobile'],
+    ip:['Adresse IP','Adresse IPv4'],date_iso:['Date (AAAA-MM-JJ)','Format de date ISO'],date_kr:['Date coréenne','Format de date coréen'],
+    time:['Heure (HH:MM)','Format 24 heures'],hexcolor:['Couleur hexadécimale','Code couleur CSS'],zipcode:['Code postal (Corée)','Code postal à 5 chiffres'],
+    htmltag:['Balise HTML','Toute balise HTML'],leading_ws:['Espaces en début de ligne','Espaces au début de chaque ligne'],multi_ws:['Espaces répétés','2 espaces consécutifs ou plus'],
+    blank_line:['Ligne vide','Ligne contenant uniquement des espaces'],hangul:['Hangeul','Caractères coréens'],alpha:['Lettres uniquement','Caractères alphabétiques'],digits:['Chiffres uniquement','Séquence de chiffres'],
+    special:['Caractères spéciaux','Caractères spéciaux'],pw_strength:['Force du mot de passe','Maj+min+chiffre+spécial, 8+ caractères'],
+    credit_card:['Carte de crédit','Visa/MC/Amex'],md_bold:['Gras Markdown','Format **texte**']},
+  nl_NL:{email:['E-mail','E-mailadres valideren'],url:['URL','HTTP/HTTPS-URL'],kr_phone:['Koreaans telefoonnummer','Vast/mobiel nummer'],
+    ip:['IP-adres','IPv4-adres'],date_iso:['Datum (JJJJ-MM-DD)','ISO-datumnotatie'],date_kr:['Koreaanse datum','Koreaanse datumnotatie'],
+    time:['Tijd (UU:MM)','24-uursnotatie'],hexcolor:['Hex-kleur','CSS-kleurcode'],zipcode:['Postcode (Korea)','5-cijferige postcode'],
+    htmltag:['HTML-tag','Elke HTML-tag'],leading_ws:['Beginwitruimte','Witruimte aan het begin van elke regel'],multi_ws:['Herhaalde witruimte','2 of meer opeenvolgende spaties'],
+    blank_line:['Lege regel','Regel met alleen witruimte'],hangul:['Hangeul','Koreaanse tekens'],alpha:['Alleen letters','Alfabetische tekens'],digits:['Alleen cijfers','Reeks cijfers'],
+    special:['Speciale tekens','Speciale tekens'],pw_strength:['Wachtwoordsterkte','Hoofdletter+kleine letter+cijfer+speciaal teken, 8+ tekens'],
+    credit_card:['Creditcard','Visa/MC/Amex'],md_bold:['Markdown vet','**tekst**-notatie']},
+  sv_SE:{email:['E-post','Validera e-postadress'],url:['URL','HTTP/HTTPS-URL'],kr_phone:['Koreanskt telefonnummer','Fast/mobilnummer'],
+    ip:['IP-adress','IPv4-adress'],date_iso:['Datum (ÅÅÅÅ-MM-DD)','ISO-datumformat'],date_kr:['Koreanskt datum','Koreanskt datumformat'],
+    time:['Tid (HH:MM)','24-timmarsformat'],hexcolor:['Hexfärg','CSS-färgkod'],zipcode:['Postnummer (Korea)','5-siffrigt postnummer'],
+    htmltag:['HTML-tagg','Valfri HTML-tagg'],leading_ws:['Inledande blanksteg','Blanksteg i början av varje rad'],multi_ws:['Upprepade blanksteg','2 eller fler på varandra följande mellanslag'],
+    blank_line:['Tom rad','Rad med endast blanksteg'],hangul:['Hangul','Koreanska tecken'],alpha:['Endast bokstäver','Alfabetiska tecken'],digits:['Endast siffror','Sekvens av siffror'],
+    special:['Specialtecken','Specialtecken'],pw_strength:['Lösenordsstyrka','Versal+gemen+siffra+specialtecken, 8+ tecken'],
+    credit_card:['Kreditkort','Visa/MC/Amex'],md_bold:['Markdown fetstil','**text**-format']},
+  nn_NO:{email:['E-post','Valider e-postadresse'],url:['URL','HTTP/HTTPS-URL'],kr_phone:['Koreansk telefonnummer','Fast/mobilnummer'],
+    ip:['IP-adresse','IPv4-adresse'],date_iso:['Dato (ÅÅÅÅ-MM-DD)','ISO-datoformat'],date_kr:['Koreansk dato','Koreansk datoformat'],
+    time:['Klokkeslett (TT:MM)','24-timarsformat'],hexcolor:['Heksadesimal farge','CSS-fargekode'],zipcode:['Postnummer (Korea)','5-sifra postnummer'],
+    htmltag:['HTML-tagg','Vilken som helst HTML-tagg'],leading_ws:['Innleiande mellomrom','Mellomrom i starten av kvar linje'],multi_ws:['Gjentekne mellomrom','2 eller fleire samanhengande mellomrom'],
+    blank_line:['Tom linje','Linje med berre mellomrom'],hangul:['Hangul','Koreanske teikn'],alpha:['Berre bokstavar','Alfabetiske teikn'],digits:['Berre siffer','Sekvens av siffer'],
+    special:['Spesialteikn','Spesialteikn'],pw_strength:['Passordstyrke','Stor+liten bokstav+siffer+spesialteikn, 8+ teikn'],
+    credit_card:['Kredittkort','Visa/MC/Amex'],md_bold:['Markdown feit skrift','**tekst**-format']},
+  da_DK:{email:['E-mail','Valider e-mailadresse'],url:['URL','HTTP/HTTPS-URL'],kr_phone:['Koreansk telefonnummer','Fastnet-/mobilnummer'],
+    ip:['IP-adresse','IPv4-adresse'],date_iso:['Dato (ÅÅÅÅ-MM-DD)','ISO-datoformat'],date_kr:['Koreansk dato','Koreansk datoformat'],
+    time:['Klokkeslæt (TT:MM)','24-timers format'],hexcolor:['Hex-farve','CSS-farvekode'],zipcode:['Postnummer (Korea)','5-cifret postnummer'],
+    htmltag:['HTML-tag','Enhver HTML-tag'],leading_ws:['Indledende mellemrum','Mellemrum i starten af hver linje'],multi_ws:['Gentagne mellemrum','2 eller flere sammenhængende mellemrum'],
+    blank_line:['Tom linje','Linje med kun mellemrum'],hangul:['Hangul','Koreanske tegn'],alpha:['Kun bogstaver','Alfabetiske tegn'],digits:['Kun tal','Talrække'],
+    special:['Specialtegn','Specialtegn'],pw_strength:['Adgangskodestyrke','Stort+lille bogstav+tal+specialtegn, 8+ tegn'],
+    credit_card:['Kreditkort','Visa/MC/Amex'],md_bold:['Markdown fed','**tekst**-format']},
+  ar:{email:['البريد الإلكتروني','التحقق من صحة عنوان البريد الإلكتروني'],url:['رابط URL','رابط HTTP/HTTPS'],kr_phone:['رقم هاتف كوري','رقم أرضي/جوال'],
+    ip:['عنوان IP','عنوان IPv4'],date_iso:['التاريخ (YYYY-MM-DD)','تنسيق تاريخ ISO'],date_kr:['تاريخ كوري','تنسيق التاريخ الكوري'],
+    time:['الوقت (HH:MM)','تنسيق 24 ساعة'],hexcolor:['لون سداسي عشري','كود لون CSS'],zipcode:['الرمز البريدي (كوريا)','رمز بريدي من 5 أرقام'],
+    htmltag:['وسم HTML','أي وسم HTML'],leading_ws:['مسافات بداية السطر','مسافات في بداية كل سطر'],multi_ws:['مسافات متكررة','مسافتان متتاليتان أو أكثر'],
+    blank_line:['سطر فارغ','سطر يحتوي على مسافات فقط'],hangul:['الهانغل','الأحرف الكورية'],alpha:['أحرف فقط','أحرف أبجدية'],digits:['أرقام فقط','سلسلة أرقام'],
+    special:['أحرف خاصة','أحرف خاصة'],pw_strength:['قوة كلمة المرور','حرف كبير+صغير+رقم+رمز خاص، 8 أحرف فأكثر'],
+    credit_card:['بطاقة ائتمان','Visa/MC/Amex'],md_bold:['نص عريض Markdown','تنسيق **نص**']}
 };
 function initPresets(){
   const grid=$('preset-grid');
@@ -542,7 +687,43 @@ const CHEAT_DESC={
   ja:{c0:'任意の1文字',c1:'先頭',c2:'末尾',c3:'0回以上',c4:'1回以上',c5:'0回または1回',c6:'正確にn回',c7:'n回以上',c8:'n~m回',
     c9:'aまたはbまたはc',c10:'a,b,c以外',c11:'aからz',c12:'キャプチャグループ',c13:'非キャプチャグループ',c14:'aまたはb',
     c15:'数字',c16:'数字以外',c17:'単語文字',c18:'単語文字以外',c19:'空白',c20:'空白以外',c21:'単語境界',c22:'改行',
-    c23:'先読み',c24:'否定先読み',c25:'後読み',c26:'最初のグループ',c27:'マッチ全体',c28:'マッチ後のテキスト'}
+    c23:'先読み',c24:'否定先読み',c25:'後読み',c26:'最初のグループ',c27:'マッチ全体',c28:'マッチ後のテキスト'},
+  zh_CN:{c0:'任意字符',c1:'开头',c2:'结尾',c3:'0次或多次',c4:'1次或多次',c5:'0次或1次',c6:'恰好n次',c7:'n次以上',c8:'n到m次',
+    c9:'a或b或c',c10:'排除a,b,c',c11:'a到z',c12:'捕获组',c13:'非捕获组',c14:'a或b',
+    c15:'数字',c16:'非数字',c17:'单词字符',c18:'非单词字符',c19:'空白',c20:'非空白',c21:'单词边界',c22:'换行符',
+    c23:'先行断言',c24:'负向先行断言',c25:'后行断言',c26:'第一个分组',c27:'整个匹配',c28:'匹配后的文本'},
+  zh_TW:{c0:'任意字元',c1:'開頭',c2:'結尾',c3:'0次或多次',c4:'1次或多次',c5:'0次或1次',c6:'恰好n次',c7:'n次以上',c8:'n到m次',
+    c9:'a或b或c',c10:'排除a,b,c',c11:'a到z',c12:'捕獲組',c13:'非捕獲組',c14:'a或b',
+    c15:'數字',c16:'非數字',c17:'單詞字元',c18:'非單詞字元',c19:'空白',c20:'非空白',c21:'單詞邊界',c22:'換行符',
+    c23:'先行斷言',c24:'負向先行斷言',c25:'後行斷言',c26:'第一個分組',c27:'整個符合項目',c28:'符合後的文字'},
+  de_DE:{c0:'Beliebiges Zeichen',c1:'Anfang',c2:'Ende',c3:'0 oder mehr',c4:'1 oder mehr',c5:'0 oder 1',c6:'Genau n',c7:'n oder mehr',c8:'n bis m',
+    c9:'a oder b oder c',c10:'Nicht a,b,c',c11:'a bis z',c12:'Erfassungsgruppe',c13:'Nicht-erfassende Gruppe',c14:'a oder b',
+    c15:'Ziffer',c16:'Keine Ziffer',c17:'Wortzeichen',c18:'Kein Wortzeichen',c19:'Leerzeichen',c20:'Kein Leerzeichen',c21:'Wortgrenze',c22:'Zeilenumbruch',
+    c23:'Lookahead',c24:'Negativer Lookahead',c25:'Lookbehind',c26:'Erste Gruppe',c27:'Gesamter Treffer',c28:'Text nach dem Treffer'},
+  fr_FR:{c0:'Caractère quelconque',c1:'Début',c2:'Fin',c3:'0 ou plus',c4:'1 ou plus',c5:'0 ou 1',c6:'Exactement n',c7:'n ou plus',c8:'n à m',
+    c9:'a ou b ou c',c10:'Pas a,b,c',c11:'a à z',c12:'Groupe de capture',c13:'Groupe non capturant',c14:'a ou b',
+    c15:'Chiffre',c16:'Pas un chiffre',c17:'Caractère de mot',c18:'Pas un caractère de mot',c19:'Espace',c20:'Pas un espace',c21:'Limite de mot',c22:'Saut de ligne',
+    c23:'Lookahead',c24:'Lookahead négatif',c25:'Lookbehind',c26:'Premier groupe',c27:'Correspondance entière',c28:'Texte après la correspondance'},
+  nl_NL:{c0:'Willekeurig teken',c1:'Begin',c2:'Einde',c3:'0 of meer',c4:'1 of meer',c5:'0 of 1',c6:'Precies n',c7:'n of meer',c8:'n tot m',
+    c9:'a of b of c',c10:'Niet a,b,c',c11:'a tot z',c12:'Vastleggroep',c13:'Niet-vastleggende groep',c14:'a of b',
+    c15:'Cijfer',c16:'Geen cijfer',c17:'Woordteken',c18:'Geen woordteken',c19:'Witruimte',c20:'Geen witruimte',c21:'Woordgrens',c22:'Nieuwe regel',
+    c23:'Lookahead',c24:'Negatieve lookahead',c25:'Lookbehind',c26:'Eerste groep',c27:'Volledige overeenkomst',c28:'Tekst na de overeenkomst'},
+  sv_SE:{c0:'Valfritt tecken',c1:'Start',c2:'Slut',c3:'0 eller fler',c4:'1 eller fler',c5:'0 eller 1',c6:'Exakt n',c7:'n eller fler',c8:'n till m',
+    c9:'a eller b eller c',c10:'Inte a,b,c',c11:'a till z',c12:'Fångstgrupp',c13:'Icke-fångande grupp',c14:'a eller b',
+    c15:'Siffra',c16:'Inte en siffra',c17:'Ordtecken',c18:'Inte ett ordtecken',c19:'Blanksteg',c20:'Inte blanksteg',c21:'Ordgräns',c22:'Radbrytning',
+    c23:'Lookahead',c24:'Negativ lookahead',c25:'Lookbehind',c26:'Första gruppen',c27:'Hela träffen',c28:'Text efter träffen'},
+  nn_NO:{c0:'Vilkårleg teikn',c1:'Start',c2:'Slutt',c3:'0 eller fleire',c4:'1 eller fleire',c5:'0 eller 1',c6:'Nøyaktig n',c7:'n eller fleire',c8:'n til m',
+    c9:'a eller b eller c',c10:'Ikkje a,b,c',c11:'a til z',c12:'Fangstgruppe',c13:'Ikkje-fangande gruppe',c14:'a eller b',
+    c15:'Siffer',c16:'Ikkje eit siffer',c17:'Ordteikn',c18:'Ikkje eit ordteikn',c19:'Mellomrom',c20:'Ikkje mellomrom',c21:'Ordgrense',c22:'Linjeskift',
+    c23:'Lookahead',c24:'Negativ lookahead',c25:'Lookbehind',c26:'Første gruppa',c27:'Heile treffet',c28:'Tekst etter treffet'},
+  da_DK:{c0:'Vilkårligt tegn',c1:'Start',c2:'Slut',c3:'0 eller flere',c4:'1 eller flere',c5:'0 eller 1',c6:'Præcis n',c7:'n eller flere',c8:'n til m',
+    c9:'a eller b eller c',c10:'Ikke a,b,c',c11:'a til z',c12:'Indfangningsgruppe',c13:'Ikke-indfangende gruppe',c14:'a eller b',
+    c15:'Ciffer',c16:'Ikke et ciffer',c17:'Ordtegn',c18:'Ikke et ordtegn',c19:'Mellemrum',c20:'Ikke mellemrum',c21:'Ordgrænse',c22:'Linjeskift',
+    c23:'Lookahead',c24:'Negativt lookahead',c25:'Lookbehind',c26:'Første gruppe',c27:'Hele matchet',c28:'Tekst efter matchet'},
+  ar:{c0:'أي حرف',c1:'البداية',c2:'النهاية',c3:'0 أو أكثر',c4:'1 أو أكثر',c5:'0 أو 1',c6:'بالضبط n',c7:'n أو أكثر',c8:'من n إلى m',
+    c9:'a أو b أو c',c10:'ليس a,b,c',c11:'من a إلى z',c12:'مجموعة التقاط',c13:'مجموعة غير ملتقطة',c14:'a أو b',
+    c15:'رقم',c16:'ليس رقمًا',c17:'حرف كلمة',c18:'ليس حرف كلمة',c19:'مسافة بيضاء',c20:'ليست مسافة بيضاء',c21:'حد كلمة',c22:'سطر جديد',
+    c23:'استباق (lookahead)',c24:'استباق سالب',c25:'استرجاع (lookbehind)',c26:'المجموعة الأولى',c27:'التطابق بالكامل',c28:'النص بعد التطابق'}
 };
 function initCheat(){
   const grid=$('cs-grid');
@@ -580,7 +761,61 @@ IP: 192.168.1.1`,
 今日の日付: 2025-06-11
 ウェブサイト: https://checkpomi.com
 カラーコード: #6c5ce8, #ffffff, #ff0000
-IP: 192.168.1.1`
+IP: 192.168.1.1`,
+  zh_CN:`你好！我的邮箱是test@example.com，
+电话号码是010-1234-5678。
+今天的日期：2025-06-11
+网站：https://checkpomi.com
+颜色代码：#6c5ce8, #ffffff, #ff0000
+IP：192.168.1.1`,
+  zh_TW:`你好！我的電子郵件是test@example.com，
+電話號碼是010-1234-5678。
+今天的日期：2025-06-11
+網站：https://checkpomi.com
+色碼：#6c5ce8, #ffffff, #ff0000
+IP：192.168.1.1`,
+  de_DE:`Hallo! Meine E-Mail-Adresse ist test@example.com
+und meine Telefonnummer ist 030-1234-5678.
+Heutiges Datum: 2025-06-11
+Webseite: https://checkpomi.com
+Farbcodes: #6c5ce8, #ffffff, #ff0000
+IP: 192.168.1.1`,
+  fr_FR:`Bonjour ! Mon e-mail est test@example.com
+et mon numéro de téléphone est 01-23-45-67-89.
+Date d'aujourd'hui : 2025-06-11
+Site web : https://checkpomi.com
+Codes couleur : #6c5ce8, #ffffff, #ff0000
+IP : 192.168.1.1`,
+  nl_NL:`Hallo! Mijn e-mailadres is test@example.com
+en mijn telefoonnummer is 06-12345678.
+Datum van vandaag: 2025-06-11
+Website: https://checkpomi.com
+Kleurcodes: #6c5ce8, #ffffff, #ff0000
+IP: 192.168.1.1`,
+  sv_SE:`Hej! Min e-post är test@example.com
+och mitt telefonnummer är 070-123 45 67.
+Dagens datum: 2025-06-11
+Webbplats: https://checkpomi.com
+Färgkoder: #6c5ce8, #ffffff, #ff0000
+IP: 192.168.1.1`,
+  nn_NO:`Hei! E-posten min er test@example.com
+og telefonnummeret mitt er 400 12 345.
+Dagens dato: 2025-06-11
+Nettside: https://checkpomi.com
+Fargekodar: #6c5ce8, #ffffff, #ff0000
+IP: 192.168.1.1`,
+  da_DK:`Hej! Min e-mail er test@example.com
+og mit telefonnummer er 12 34 56 78.
+Dagens dato: 2025-06-11
+Websted: https://checkpomi.com
+Farvekoder: #6c5ce8, #ffffff, #ff0000
+IP: 192.168.1.1`,
+  ar:`مرحبًا! بريدي الإلكتروني هو test@example.com
+ورقم هاتفي هو 010-1234-5678.
+تاريخ اليوم: 2025-06-11
+الموقع الإلكتروني: https://checkpomi.com
+أكواد الألوان: #6c5ce8, #ffffff, #ff0000
+عنوان IP: 192.168.1.1`
 };
 let _sampleTextSet=false;
 function setSampleTextOnce(){
@@ -684,7 +919,8 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n-title]').forEach(el=>{ if(typeof t[el.dataset.i18nTitle]==='string') el.title=t[el.dataset.i18nTitle]; });
   document.getElementById('page-title').textContent=t.page_title;
   document.title=t.page_title;
-  document.querySelectorAll('#lang-switch .langbtn').forEach(b=>b.classList.toggle('active',b.dataset.lang===LANG()));
+  const langSwitchEl0=document.getElementById('lang-switch');
+  if(langSwitchEl0) langSwitchEl0.value=LANG();
   initPresets();
   initCheat();
   setSampleTextOnce();
@@ -700,15 +936,14 @@ function applyI18n(){
   document.getElementById('html-root').setAttribute('dir', detected === 'ar' ? 'rtl' : 'ltr');
 })();
 applyI18n();
-document.querySelectorAll('#lang-switch button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const lang = btn.dataset.lang;
-    window._LANG = lang; window._T = I18N[lang];
-    document.getElementById('html-root').lang = lang;
-    document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-    applyI18n();
-    try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
-  });
+document.getElementById('lang-switch').addEventListener('change', (e)=>{
+  const lang = e.target.value;
+  if (!I18N[lang]) return;
+  window._LANG = lang; window._T = I18N[lang];
+  document.getElementById('html-root').lang = lang;
+  document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+  applyI18n();
+  try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
 });
 </script>
 </body>

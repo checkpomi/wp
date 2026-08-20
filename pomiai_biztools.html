@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" id="html-root">
+<html lang="ko" id="html-root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
@@ -114,7 +114,8 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
   #app{padding:16px 12px 60px}
   .inv-header{flex-direction:column}
 }
-.langbtn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer}
+.langsel{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:11px;font-weight:600;padding:4px 8px;border-radius:7px;cursor:pointer;outline:none;max-width:150px}
+.langsel:hover{border-color:var(--ac)}
 .pomiai-brand-footer{max-width:900px;margin:16px auto 4px;padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .pomiai-brand-footer a{font-size:11px;font-weight:700;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bd2);margin-left:6px}
 </style>
@@ -128,54 +129,34 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
     <div class="htab"      onclick="goTab('tax')" data-i18n="tab_tax">🧮 Tax Calc</div>
     <div class="htab"      onclick="goTab('loan')" data-i18n="tab_loan">🏦 Loan Calc</div>
   </div>
-  <div id="lang-switch" style="margin-left:auto;display:flex;gap:4px">
-    <button data-lang="ko" class="langbtn">한</button>
-    <button data-lang="en" class="langbtn">EN</button>
-    <button data-lang="ja" class="langbtn">日</button>
-  </div>
+  <select id="lang-switch" class="langsel" style="margin-left:auto"></select>
 </div>
 <div id="app">
 
 <!-- ══ INVOICE ══ -->
 <div class="sec on" id="tab-inv">
   <div class="sec-title" data-i18n="inv_title">Invoice Generator</div>
-  <div class="sec-sub">Create professional invoices instantly — no signup required · PDF download · multi-currency</div>
+  <div class="sec-sub" data-i18n="inv_sub">Create professional invoices instantly — no signup required · PDF download · multi-currency</div>
 
   <!-- 통화 + 로고 -->
   <div class="card">
     <div class="g2" style="margin-bottom:14px">
-      <div><span class="fl">Currency</span>
-        <select class="fs" id="inv-currency" onchange="calcInv()">
-          <option value="USD">🇺🇸 USD — US Dollar</option>
-          <option value="EUR">🇪🇺 EUR — Euro</option>
-          <option value="KRW">🇰🇷 KRW — Korean Won</option>
-          <option value="JPY">🇯🇵 JPY — Japanese Yen</option>
-          <option value="GBP">🇬🇧 GBP — British Pound</option>
-          <option value="CNY">🇨🇳 CNY — Chinese Yuan</option>
-          <option value="CAD">🇨🇦 CAD — Canadian Dollar</option>
-          <option value="AUD">🇦🇺 AUD — Australian Dollar</option>
-          <option value="SGD">🇸🇬 SGD — Singapore Dollar</option>
-          <option value="INR">🇮🇳 INR — Indian Rupee</option>
-        </select></div>
-      <div><span class="fl">Invoice Language</span>
-        <select class="fs" id="inv-lang">
-          <option value="en">English</option>
-          <option value="ko">한국어</option>
-          <option value="ja">日本語</option>
-          <option value="zh">中文</option>
-        </select></div>
+      <div><span class="fl" data-i18n="inv_currency_label">Currency</span>
+        <select class="fs" id="inv-currency" onchange="calcInv()"></select></div>
+      <div><span class="fl" data-i18n="inv_lang_label">Invoice Language</span>
+        <select class="fs" id="inv-lang"></select></div>
     </div>
     <!-- 발신/수신 -->
     <div class="g2">
       <div>
-        <span class="fl">From (Your Business)</span>
-        <input class="fi" id="inv-from-name" placeholder="Your Company Name" style="margin-bottom:6px">
-        <textarea class="fi" id="inv-from-addr" placeholder="Address, City, Country&#10;Email | Phone" rows="3" style="resize:none;font-size:12px"></textarea>
+        <span class="fl" data-i18n="inv_from_label">From (Your Business)</span>
+        <input class="fi" id="inv-from-name" placeholder="Your Company Name" data-i18n-placeholder="inv_from_name_ph" style="margin-bottom:6px">
+        <textarea class="fi" id="inv-from-addr" placeholder="Address, City, Country&#10;Email | Phone" data-i18n-placeholder="inv_from_addr_ph" rows="3" style="resize:none;font-size:12px"></textarea>
       </div>
       <div>
-        <span class="fl">Bill To (Client)</span>
-        <input class="fi" id="inv-to-name" placeholder="Client Name / Company" style="margin-bottom:6px">
-        <textarea class="fi" id="inv-to-addr" placeholder="Client Address, City&#10;Email | Phone" rows="3" style="resize:none;font-size:12px"></textarea>
+        <span class="fl" data-i18n="inv_to_label">Bill To (Client)</span>
+        <input class="fi" id="inv-to-name" placeholder="Client Name / Company" data-i18n-placeholder="inv_to_name_ph" style="margin-bottom:6px">
+        <textarea class="fi" id="inv-to-addr" placeholder="Client Address, City&#10;Email | Phone" data-i18n-placeholder="inv_to_addr_ph" rows="3" style="resize:none;font-size:12px"></textarea>
       </div>
     </div>
   </div>
@@ -183,44 +164,44 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
   <!-- 인보이스 정보 -->
   <div class="card">
     <div class="g4">
-      <div><span class="fl">Invoice #</span><input class="fi mono" id="inv-num" value="INV-001"></div>
-      <div><span class="fl">Issue Date</span><input class="fi" id="inv-date" type="date"></div>
-      <div><span class="fl">Due Date</span><input class="fi" id="inv-due" type="date"></div>
-      <div><span class="fl">PO Number</span><input class="fi mono" id="inv-po" placeholder="Optional"></div>
+      <div><span class="fl" data-i18n="inv_num_label">Invoice #</span><input class="fi mono" id="inv-num" value="INV-001"></div>
+      <div><span class="fl" data-i18n="inv_date_label">Issue Date</span><input class="fi" id="inv-date" type="date"></div>
+      <div><span class="fl" data-i18n="inv_due_label">Due Date</span><input class="fi" id="inv-due" type="date"></div>
+      <div><span class="fl" data-i18n="inv_po_label">PO Number</span><input class="fi mono" id="inv-po" placeholder="Optional" data-i18n-placeholder="inv_po_ph"></div>
     </div>
   </div>
 
   <!-- 항목 -->
   <div class="card">
-    <div class="card-title">Line Items</div>
+    <div class="card-title" data-i18n="inv_items_title">Line Items</div>
     <div style="display:grid;grid-template-columns:1fr 80px 90px 90px 32px;gap:7px;margin-bottom:8px">
-      <span class="fl">Description</span><span class="fl">Qty</span><span class="fl">Unit Price</span><span class="fl">Amount</span><span></span>
+      <span class="fl" data-i18n="inv_col_desc">Description</span><span class="fl" data-i18n="inv_col_qty">Qty</span><span class="fl" data-i18n="inv_col_price">Unit Price</span><span class="fl" data-i18n="inv_col_amount">Amount</span><span></span>
     </div>
     <div id="inv-items"></div>
-    <button class="btn outline sm" style="margin-top:8px" onclick="addInvItem()">+ Add Item</button>
+    <button class="btn outline sm" style="margin-top:8px" onclick="addInvItem()" data-i18n="inv_add_item">+ Add Item</button>
 
     <!-- 소계/세금/합계 -->
     <div class="inv-total-box">
       <div class="g2" style="margin-bottom:14px">
-        <div><span class="fl">Tax Rate (%)</span><input class="fi mono" id="inv-tax" type="number" value="0" min="0" max="100" step=".1" oninput="calcInv()"></div>
-        <div><span class="fl">Discount (%)</span><input class="fi mono" id="inv-disc" type="number" value="0" min="0" max="100" step=".1" oninput="calcInv()"></div>
+        <div><span class="fl" data-i18n="inv_tax_rate_label">Tax Rate (%)</span><input class="fi mono" id="inv-tax" type="number" value="0" min="0" max="100" step=".1" oninput="calcInv()"></div>
+        <div><span class="fl" data-i18n="inv_disc_label">Discount (%)</span><input class="fi mono" id="inv-disc" type="number" value="0" min="0" max="100" step=".1" oninput="calcInv()"></div>
       </div>
-      <div class="inv-total-row"><span>Subtotal</span><span id="it-sub" class="mono">0.00</span></div>
-      <div class="inv-total-row"><span>Discount</span><span id="it-disc" class="mono">-0.00</span></div>
-      <div class="inv-total-row"><span>Tax</span><span id="it-tax" class="mono">+0.00</span></div>
-      <div class="inv-total-row grand"><span>TOTAL</span><span id="it-total" class="mono">0.00</span></div>
+      <div class="inv-total-row"><span data-i18n="inv_subtotal">Subtotal</span><span id="it-sub" class="mono">0.00</span></div>
+      <div class="inv-total-row"><span data-i18n="inv_discount">Discount</span><span id="it-disc" class="mono">-0.00</span></div>
+      <div class="inv-total-row"><span data-i18n="inv_tax_row">Tax</span><span id="it-tax" class="mono">+0.00</span></div>
+      <div class="inv-total-row grand"><span data-i18n="inv_total_row">TOTAL</span><span id="it-total" class="mono">0.00</span></div>
     </div>
   </div>
 
   <!-- 메모 -->
   <div class="card">
     <div class="g2">
-      <div><span class="fl">Notes</span><textarea class="fi" id="inv-notes" placeholder="Payment instructions, thank you message..." rows="3" style="resize:none"></textarea></div>
-      <div><span class="fl">Terms & Conditions</span><textarea class="fi" id="inv-terms" placeholder="e.g. Payment due within 30 days..." rows="3" style="resize:none"></textarea></div>
+      <div><span class="fl" data-i18n="inv_notes_label">Notes</span><textarea class="fi" id="inv-notes" placeholder="Payment instructions, thank you message..." data-i18n-placeholder="inv_notes_ph" rows="3" style="resize:none"></textarea></div>
+      <div><span class="fl" data-i18n="inv_terms_label">Terms & Conditions</span><textarea class="fi" id="inv-terms" placeholder="e.g. Payment due within 30 days..." data-i18n-placeholder="inv_terms_ph" rows="3" style="resize:none"></textarea></div>
     </div>
     <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
-      <button class="btn go full" onclick="printInvoice()">🖨 Download / Print PDF</button>
-      <button class="btn outline sm" onclick="clearInvoice()">Clear</button>
+      <button class="btn go full" onclick="printInvoice()" data-i18n="inv_btn_print">🖨 Download / Print PDF</button>
+      <button class="btn outline sm" onclick="clearInvoice()" data-i18n="inv_btn_clear">Clear</button>
     </div>
   </div>
 </div>
@@ -228,56 +209,36 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 <!-- ══ TAX CALC ══ -->
 <div class="sec" id="tab-tax">
   <div class="sec-title" data-i18n="tax_title">Tax Calculator</div>
-  <div class="sec-sub">VAT · GST · Sales Tax — add/remove tax instantly · supports 150+ countries</div>
+  <div class="sec-sub" data-i18n="tax_sub">VAT · GST · Sales Tax — add/remove tax instantly · supports 150+ countries</div>
 
   <div class="card">
     <div class="g2" style="margin-bottom:14px">
-      <div><span class="fl">Country / Tax Type</span>
-        <select class="fs" id="tax-preset" onchange="applyTaxPreset()">
-          <option value="10">🇰🇷 Korea — VAT 10%</option>
-          <option value="20">🇬🇧 UK — VAT 20%</option>
-          <option value="19">🇩🇪 Germany — VAT 19%</option>
-          <option value="20">🇫🇷 France — VAT 20%</option>
-          <option value="10">🇦🇺 Australia — GST 10%</option>
-          <option value="5">🇨🇦 Canada — GST 5%</option>
-          <option value="18">🇮🇳 India — GST 18%</option>
-          <option value="10">🇯🇵 Japan — CT 10%</option>
-          <option value="9">🇸🇬 Singapore — GST 9%</option>
-          <option value="7">🇹🇭 Thailand — VAT 7%</option>
-          <option value="0">🇦🇪 UAE — VAT 5% (custom)</option>
-          <option value="custom">⚙️ Custom Rate</option>
-        </select></div>
-      <div><span class="fl">Tax Rate (%)</span>
+      <div><span class="fl" data-i18n="tax_preset_label">Country / Tax Type</span>
+        <select class="fs" id="tax-preset" onchange="applyTaxPreset()"></select></div>
+      <div><span class="fl" data-i18n="tax_rate_label">Tax Rate (%)</span>
         <input class="fi mono" id="tax-rate" type="number" value="10" min="0" max="100" step=".1" oninput="calcTax()"></div>
     </div>
     <div class="g2" style="margin-bottom:14px">
-      <div><span class="fl">Amount</span>
-        <input class="fi mono" id="tax-amount" type="number" placeholder="0.00" oninput="calcTax()"></div>
-      <div><span class="fl">Currency</span>
-        <select class="fs" id="tax-cur">
-          <option>USD</option><option>EUR</option><option selected>KRW</option>
-          <option>JPY</option><option>GBP</option><option>AUD</option>
-          <option>CAD</option><option>SGD</option><option>INR</option>
-        </select></div>
+      <div><span class="fl" data-i18n="tax_amount_label">Amount</span>
+        <input class="fi mono" id="tax-amount" type="number" placeholder="0.00" data-i18n-placeholder="tax_amount_ph" oninput="calcTax()"></div>
+      <div><span class="fl" data-i18n="tax_currency_label">Currency</span>
+        <select class="fs" id="tax-cur"></select></div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:14px">
-      <button class="btn full" onclick="setTaxMode('excl')">Price EXCL. Tax → Add Tax</button>
-      <button class="btn full go" onclick="setTaxMode('incl')">Price INCL. Tax → Extract Tax</button>
+      <button class="btn full" onclick="setTaxMode('excl')" data-i18n="tax_btn_excl">Price EXCL. Tax → Add Tax</button>
+      <button class="btn full go" onclick="setTaxMode('incl')" data-i18n="tax_btn_incl">Price INCL. Tax → Extract Tax</button>
     </div>
     <div class="res-box show" id="tax-result">
-      <div class="res-row"><span class="res-label">Pre-tax Amount</span><span class="res-val" id="tr-pretax">—</span></div>
-      <div class="res-row"><span class="res-label">Tax Amount</span><span class="res-val" id="tr-tax">—</span></div>
-      <div class="res-row"><span class="res-label">Total (incl. tax)</span><span class="res-val big" id="tr-total">—</span></div>
-      <div class="res-row"><span class="res-label">Effective Rate</span><span class="res-val" id="tr-rate">—</span></div>
+      <div class="res-row"><span class="res-label" data-i18n="tax_result_pretax">Pre-tax Amount</span><span class="res-val" id="tr-pretax">—</span></div>
+      <div class="res-row"><span class="res-label" data-i18n="tax_result_tax">Tax Amount</span><span class="res-val" id="tr-tax">—</span></div>
+      <div class="res-row"><span class="res-label" data-i18n="tax_result_total">Total (incl. tax)</span><span class="res-val big" id="tr-total">—</span></div>
+      <div class="res-row"><span class="res-label" data-i18n="tax_result_rate">Effective Rate</span><span class="res-val" id="tr-rate">—</span></div>
     </div>
   </div>
 
   <!-- 세율 빠른 참조 -->
   <div class="card">
-    <div class="card-title">Quick Reference — Global VAT/GST Rates</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">
-      <!-- JS로 채워짐 -->
-    </div>
+    <div class="card-title" data-i18n="tax_quickref_title">Quick Reference — Global VAT/GST Rates</div>
     <div id="vat-refs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:7px"></div>
   </div>
 </div>
@@ -285,37 +246,34 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 <!-- ══ LOAN CALC ══ -->
 <div class="sec" id="tab-loan">
   <div class="sec-title" data-i18n="loan_title">Loan Calculator</div>
-  <div class="sec-sub">Monthly payment · total interest · amortization schedule — mortgage · auto · personal loan</div>
+  <div class="sec-sub" data-i18n="loan_sub">Monthly payment · total interest · amortization schedule — mortgage · auto · personal loan</div>
 
   <div class="card">
     <div class="g3" style="margin-bottom:14px">
-      <div><span class="fl">Loan Amount</span>
+      <div><span class="fl" data-i18n="loan_amount_label">Loan Amount</span>
         <div style="display:flex;align-items:center;gap:6px">
-          <select class="fs" id="loan-cur" style="width:75px">
-            <option>USD</option><option>EUR</option><option selected>KRW</option>
-            <option>JPY</option><option>GBP</option><option>AUD</option>
-          </select>
-          <input class="fi mono" id="loan-amt" type="number" placeholder="100,000" oninput="calcLoan()">
+          <select class="fs" id="loan-cur" style="width:75px"></select>
+          <input class="fi mono" id="loan-amt" type="number" placeholder="100,000" data-i18n-placeholder="loan_amount_ph" oninput="calcLoan()">
         </div></div>
-      <div><span class="fl">Annual Interest Rate (%)</span>
+      <div><span class="fl" data-i18n="loan_rate_label">Annual Interest Rate (%)</span>
         <input class="fi mono" id="loan-rate" type="number" value="4.5" step=".1" min="0" max="100" oninput="calcLoan()"></div>
-      <div><span class="fl">Loan Term</span>
+      <div><span class="fl" data-i18n="loan_term_label">Loan Term</span>
         <div style="display:flex;gap:6px">
           <input class="fi mono" id="loan-term" type="number" value="30" min="1" oninput="calcLoan()" style="flex:1">
           <select class="fs" id="loan-term-unit" style="width:85px" onchange="calcLoan()">
-            <option value="years">Years</option>
-            <option value="months">Months</option>
+            <option value="years" data-i18n="loan_term_unit_years">Years</option>
+            <option value="months" data-i18n="loan_term_unit_months">Months</option>
           </select>
         </div></div>
     </div>
     <div class="g2" style="margin-bottom:14px">
-      <div><span class="fl">Loan Type</span>
+      <div><span class="fl" data-i18n="loan_type_label">Loan Type</span>
         <select class="fs" id="loan-type" onchange="calcLoan()">
-          <option value="equal">Equal Payment (원리금균등)</option>
-          <option value="principal">Equal Principal (원금균등)</option>
-          <option value="bullet">Bullet / Interest-Only</option>
+          <option value="equal" data-i18n="loan_type_equal">Equal Payment (Principal + Interest)</option>
+          <option value="principal" data-i18n="loan_type_principal">Equal Principal</option>
+          <option value="bullet" data-i18n="loan_type_bullet">Bullet / Interest-Only</option>
         </select></div>
-      <div><span class="fl">Start Date</span>
+      <div><span class="fl" data-i18n="loan_start_label">Start Date</span>
         <input class="fi" id="loan-start" type="date" onchange="calcLoan()"></div>
     </div>
 
@@ -332,14 +290,14 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
   <!-- 상환 일정 -->
   <div class="card" id="amort-card" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div class="card-title" style="margin-bottom:0">Amortization Schedule</div>
-      <button class="btn outline sm" onclick="downloadAmort()">⬇ CSV</button>
+      <div class="card-title" style="margin-bottom:0" data-i18n="amort_title">Amortization Schedule</div>
+      <button class="btn outline sm" onclick="downloadAmort()" data-i18n="amort_btn_csv">⬇ CSV</button>
     </div>
     <div class="amort-wrap">
       <table class="amort-table">
         <thead><tr>
-          <th style="text-align:center">#</th>
-          <th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th>
+          <th style="text-align:center" data-i18n="amort_col_num">#</th>
+          <th data-i18n="amort_col_payment">Payment</th><th data-i18n="amort_col_principal">Principal</th><th data-i18n="amort_col_interest">Interest</th><th data-i18n="amort_col_balance">Balance</th>
         </tr></thead>
         <tbody id="amort-body"></tbody>
       </table>
@@ -379,7 +337,447 @@ function goTab(id){
   }
 })();
 
-/* ── 통화 포맷 ── */
+/* ════════════════════════════════
+   I18N — 12개 언어
+════════════════════════════════ */
+const I18N = {
+  ko:{ page_title:'pomiai 비즈니스 도구', tab_inv:'🧾 인보이스', tab_tax:'🧮 세금계산', tab_loan:'🏦 대출계산',
+    inv_title:'인보이스 생성기', tax_title:'세금 계산기', loan_title:'대출 계산기', footer_by:'Product by',
+    inv_sub:'전문적인 인보이스를 즉시 생성 — 가입 불필요 · PDF 다운로드 · 다중 통화 지원',
+    inv_currency_label:'통화', inv_lang_label:'인보이스 언어',
+    inv_from_label:'발신 (귀사 정보)', inv_from_name_ph:'회사명', inv_from_addr_ph:'주소, 도시, 국가\n이메일 | 전화번호',
+    inv_to_label:'수신 (고객)', inv_to_name_ph:'고객명 / 회사명', inv_to_addr_ph:'고객 주소, 도시\n이메일 | 전화번호',
+    inv_num_label:'청구서 번호', inv_date_label:'발행일', inv_due_label:'납부기한', inv_po_label:'주문번호(PO)', inv_po_ph:'선택 사항',
+    inv_items_title:'항목 내역', inv_col_desc:'항목 설명', inv_col_qty:'수량', inv_col_price:'단가', inv_col_amount:'금액',
+    inv_add_item:'+ 항목 추가', inv_tax_rate_label:'세율 (%)', inv_disc_label:'할인율 (%)',
+    inv_subtotal:'소계', inv_discount:'할인', inv_tax_row:'세금', inv_total_row:'합계',
+    inv_notes_label:'메모', inv_notes_ph:'결제 안내, 감사 인사 등...', inv_terms_label:'거래 조건', inv_terms_ph:'예: 발행일로부터 30일 이내 결제...',
+    inv_btn_print:'🖨 PDF 다운로드 / 인쇄', inv_btn_clear:'초기화', inv_toast_pdf_ready:'✅ PDF 준비 완료 — 브라우저 인쇄 기능으로 저장하세요',
+    inv_pdf_title:'청구서', inv_pdf_from:'발신', inv_pdf_to:'수신',
+    tax_sub:'VAT · GST · 판매세 — 세금 추가/제외 즉시 계산 · 150개 이상 국가 지원',
+    tax_preset_label:'국가 / 세금 유형', tax_rate_label:'세율 (%)', tax_amount_label:'금액', tax_amount_ph:'0.00', tax_currency_label:'통화',
+    tax_btn_excl:'세전 금액 → 세금 추가', tax_btn_incl:'세포함 금액 → 세금 분리',
+    tax_result_pretax:'세전 금액', tax_result_tax:'세액', tax_result_total:'합계 (세포함)', tax_result_rate:'실효세율',
+    tax_quickref_title:'빠른 참조 — 국가별 VAT/GST 세율', tax_toast_rate_applied:'✅ {country} 세율 적용됨',
+    tax_type_vat:'부가가치세', tax_type_gst:'GST(소비세)', tax_type_ct:'소비세', tax_type_custom:'사용자 지정 세율',
+    loan_sub:'월 상환액 · 총 이자 · 상환 일정 — 주택담보대출 · 자동차 · 개인대출',
+    loan_amount_label:'대출 금액', loan_amount_ph:'100,000', loan_rate_label:'연이자율 (%)', loan_term_label:'대출 기간',
+    loan_term_unit_years:'년', loan_term_unit_months:'개월', loan_type_label:'상환 방식',
+    loan_type_equal:'원리금균등상환', loan_type_principal:'원금균등상환', loan_type_bullet:'만기일시상환',
+    loan_start_label:'대출 시작일', loan_result_monthly:'월 상환액', loan_result_total_payment:'총 상환액',
+    loan_result_total_interest:'총 이자', loan_result_principal:'원금', loan_result_period:'대출 기간', loan_unit_months:'개월',
+    loan_legend_interest:'이자', amort_title:'상환 일정표', amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'상환액', amort_col_principal:'원금', amort_col_interest:'이자', amort_col_balance:'잔액',
+    cur_USD:'미국 달러', cur_EUR:'유로', cur_KRW:'한국 원', cur_JPY:'일본 엔', cur_GBP:'영국 파운드',
+    cur_CNY:'중국 위안', cur_CAD:'캐나다 달러', cur_AUD:'호주 달러', cur_SGD:'싱가포르 달러', cur_INR:'인도 루피' },
+  en:{ page_title:'pomiai Business Tools', tab_inv:'🧾 Invoice', tab_tax:'🧮 Tax Calc', tab_loan:'🏦 Loan Calc',
+    inv_title:'Invoice Generator', tax_title:'Tax Calculator', loan_title:'Loan Calculator', footer_by:'Product by',
+    inv_sub:'Create professional invoices instantly — no signup required · PDF download · multi-currency',
+    inv_currency_label:'Currency', inv_lang_label:'Invoice Language',
+    inv_from_label:'From (Your Business)', inv_from_name_ph:'Your Company Name', inv_from_addr_ph:'Address, City, Country\nEmail | Phone',
+    inv_to_label:'Bill To (Client)', inv_to_name_ph:'Client Name / Company', inv_to_addr_ph:'Client Address, City\nEmail | Phone',
+    inv_num_label:'Invoice #', inv_date_label:'Issue Date', inv_due_label:'Due Date', inv_po_label:'PO Number', inv_po_ph:'Optional',
+    inv_items_title:'Line Items', inv_col_desc:'Description', inv_col_qty:'Qty', inv_col_price:'Unit Price', inv_col_amount:'Amount',
+    inv_add_item:'+ Add Item', inv_tax_rate_label:'Tax Rate (%)', inv_disc_label:'Discount (%)',
+    inv_subtotal:'Subtotal', inv_discount:'Discount', inv_tax_row:'Tax', inv_total_row:'TOTAL',
+    inv_notes_label:'Notes', inv_notes_ph:'Payment instructions, thank you message...', inv_terms_label:'Terms & Conditions', inv_terms_ph:'e.g. Payment due within 30 days...',
+    inv_btn_print:'🖨 Download / Print PDF', inv_btn_clear:'Clear', inv_toast_pdf_ready:'✅ PDF ready — use browser Print to save',
+    inv_pdf_title:'INVOICE', inv_pdf_from:'From', inv_pdf_to:'Bill To',
+    tax_sub:'VAT · GST · Sales Tax — add/remove tax instantly · supports 150+ countries',
+    tax_preset_label:'Country / Tax Type', tax_rate_label:'Tax Rate (%)', tax_amount_label:'Amount', tax_amount_ph:'0.00', tax_currency_label:'Currency',
+    tax_btn_excl:'Price EXCL. Tax → Add Tax', tax_btn_incl:'Price INCL. Tax → Extract Tax',
+    tax_result_pretax:'Pre-tax Amount', tax_result_tax:'Tax Amount', tax_result_total:'Total (incl. tax)', tax_result_rate:'Effective Rate',
+    tax_quickref_title:'Quick Reference — Global VAT/GST Rates', tax_toast_rate_applied:'✅ {country} rate applied',
+    tax_type_vat:'VAT', tax_type_gst:'GST', tax_type_ct:'Consumption Tax', tax_type_custom:'Custom Rate',
+    loan_sub:'Monthly payment · total interest · amortization schedule — mortgage · auto · personal loan',
+    loan_amount_label:'Loan Amount', loan_amount_ph:'100,000', loan_rate_label:'Annual Interest Rate (%)', loan_term_label:'Loan Term',
+    loan_term_unit_years:'Years', loan_term_unit_months:'Months', loan_type_label:'Loan Type',
+    loan_type_equal:'Equal Payment (Principal + Interest)', loan_type_principal:'Equal Principal', loan_type_bullet:'Bullet / Interest-Only',
+    loan_start_label:'Start Date', loan_result_monthly:'Monthly Payment', loan_result_total_payment:'Total Payment',
+    loan_result_total_interest:'Total Interest', loan_result_principal:'Principal', loan_result_period:'Loan Period', loan_unit_months:'months',
+    loan_legend_interest:'Interest', amort_title:'Amortization Schedule', amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'Payment', amort_col_principal:'Principal', amort_col_interest:'Interest', amort_col_balance:'Balance',
+    cur_USD:'US Dollar', cur_EUR:'Euro', cur_KRW:'Korean Won', cur_JPY:'Japanese Yen', cur_GBP:'British Pound',
+    cur_CNY:'Chinese Yuan', cur_CAD:'Canadian Dollar', cur_AUD:'Australian Dollar', cur_SGD:'Singapore Dollar', cur_INR:'Indian Rupee' },
+  ja:{ page_title:'pomiai ビジネスツール', tab_inv:'🧾 請求書', tab_tax:'🧮 税金計算', tab_loan:'🏦 ローン計算',
+    inv_title:'請求書ジェネレーター', tax_title:'税金計算機', loan_title:'ローン計算機', footer_by:'Product by',
+    inv_sub:'プロ品質の請求書を即座に作成 — 登録不要 · PDFダウンロード · 多通貨対応',
+    inv_currency_label:'通貨', inv_lang_label:'請求書の言語',
+    inv_from_label:'請求元（貴社情報）', inv_from_name_ph:'会社名', inv_from_addr_ph:'住所、市区町村、国\nメール | 電話番号',
+    inv_to_label:'請求先（取引先）', inv_to_name_ph:'取引先名 / 会社名', inv_to_addr_ph:'取引先住所、市区町村\nメール | 電話番号',
+    inv_num_label:'請求書番号', inv_date_label:'発行日', inv_due_label:'支払期限', inv_po_label:'発注番号（PO）', inv_po_ph:'任意',
+    inv_items_title:'明細項目', inv_col_desc:'品目', inv_col_qty:'数量', inv_col_price:'単価', inv_col_amount:'金額',
+    inv_add_item:'+ 項目を追加', inv_tax_rate_label:'税率 (%)', inv_disc_label:'割引率 (%)',
+    inv_subtotal:'小計', inv_discount:'割引', inv_tax_row:'税', inv_total_row:'合計',
+    inv_notes_label:'備考', inv_notes_ph:'お支払い方法、お礼のメッセージなど...', inv_terms_label:'取引条件', inv_terms_ph:'例：発行日より30日以内にお支払いください...',
+    inv_btn_print:'🖨 PDFダウンロード / 印刷', inv_btn_clear:'クリア', inv_toast_pdf_ready:'✅ PDFの準備ができました — ブラウザの印刷機能で保存してください',
+    inv_pdf_title:'請求書', inv_pdf_from:'請求元', inv_pdf_to:'請求先',
+    tax_sub:'VAT・GST・売上税 — 税込/税抜を即座に計算 · 150か国以上に対応',
+    tax_preset_label:'国 / 税区分', tax_rate_label:'税率 (%)', tax_amount_label:'金額', tax_amount_ph:'0.00', tax_currency_label:'通貨',
+    tax_btn_excl:'税抜価格 → 税を加算', tax_btn_incl:'税込価格 → 税を抽出',
+    tax_result_pretax:'税抜金額', tax_result_tax:'税額', tax_result_total:'合計（税込）', tax_result_rate:'実効税率',
+    tax_quickref_title:'クイックリファレンス — 各国のVAT/GST税率', tax_toast_rate_applied:'✅ {country}の税率を適用しました',
+    tax_type_vat:'VAT', tax_type_gst:'GST', tax_type_ct:'消費税', tax_type_custom:'カスタム税率',
+    loan_sub:'月々の返済額・総利息・返済スケジュール — 住宅ローン・自動車ローン・個人ローン',
+    loan_amount_label:'借入金額', loan_amount_ph:'100,000', loan_rate_label:'年利率 (%)', loan_term_label:'返済期間',
+    loan_term_unit_years:'年', loan_term_unit_months:'か月', loan_type_label:'返済方式',
+    loan_type_equal:'元利均等返済', loan_type_principal:'元金均等返済', loan_type_bullet:'満期一括返済（利息のみ）',
+    loan_start_label:'返済開始日', loan_result_monthly:'月々の返済額', loan_result_total_payment:'総返済額',
+    loan_result_total_interest:'総利息', loan_result_principal:'元金', loan_result_period:'返済期間', loan_unit_months:'か月',
+    loan_legend_interest:'利息', amort_title:'返済スケジュール', amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'返済額', amort_col_principal:'元金', amort_col_interest:'利息', amort_col_balance:'残高',
+    cur_USD:'米ドル', cur_EUR:'ユーロ', cur_KRW:'韓国ウォン', cur_JPY:'日本円', cur_GBP:'英ポンド',
+    cur_CNY:'中国元', cur_CAD:'カナダドル', cur_AUD:'豪ドル', cur_SGD:'シンガポールドル', cur_INR:'インドルピー' },
+  zh_CN:{ page_title:'pomiai 商务工具', tab_inv:'🧾 发票', tab_tax:'🧮 税金计算', tab_loan:'🏦 贷款计算',
+    inv_title:'发票生成器', tax_title:'税金计算器', loan_title:'贷款计算器', footer_by:'Product by',
+    inv_sub:'即时生成专业发票 — 无需注册 · 支持PDF下载 · 多币种',
+    inv_currency_label:'货币', inv_lang_label:'发票语言',
+    inv_from_label:'发件方（您的企业）', inv_from_name_ph:'公司名称', inv_from_addr_ph:'地址、城市、国家\n邮箱 | 电话',
+    inv_to_label:'收件方（客户）', inv_to_name_ph:'客户姓名 / 公司名称', inv_to_addr_ph:'客户地址、城市\n邮箱 | 电话',
+    inv_num_label:'发票号', inv_date_label:'开票日期', inv_due_label:'到期日', inv_po_label:'订单号（PO）', inv_po_ph:'可选',
+    inv_items_title:'明细项目', inv_col_desc:'描述', inv_col_qty:'数量', inv_col_price:'单价', inv_col_amount:'金额',
+    inv_add_item:'+ 添加项目', inv_tax_rate_label:'税率 (%)', inv_disc_label:'折扣率 (%)',
+    inv_subtotal:'小计', inv_discount:'折扣', inv_tax_row:'税额', inv_total_row:'合计',
+    inv_notes_label:'备注', inv_notes_ph:'付款说明、感谢语等...', inv_terms_label:'条款与条件', inv_terms_ph:'例如：请于开票后30天内付款...',
+    inv_btn_print:'🖨 下载 / 打印PDF', inv_btn_clear:'清空', inv_toast_pdf_ready:'✅ PDF已准备就绪 — 请使用浏览器打印功能保存',
+    inv_pdf_title:'发票', inv_pdf_from:'发件方', inv_pdf_to:'收件方',
+    tax_sub:'VAT·GST·销售税 — 一键加税/去税 · 支持150多个国家',
+    tax_preset_label:'国家 / 税种', tax_rate_label:'税率 (%)', tax_amount_label:'金额', tax_amount_ph:'0.00', tax_currency_label:'货币',
+    tax_btn_excl:'不含税价格 → 加税', tax_btn_incl:'含税价格 → 去税',
+    tax_result_pretax:'税前金额', tax_result_tax:'税额', tax_result_total:'总计（含税）', tax_result_rate:'实际税率',
+    tax_quickref_title:'快速参考 — 全球VAT/GST税率', tax_toast_rate_applied:'✅ 已应用{country}税率',
+    tax_type_vat:'增值税', tax_type_gst:'GST', tax_type_ct:'消费税', tax_type_custom:'自定义税率',
+    loan_sub:'月供 · 总利息 · 还款计划表 — 房贷 · 车贷 · 个人贷款',
+    loan_amount_label:'贷款金额', loan_amount_ph:'100,000', loan_rate_label:'年利率 (%)', loan_term_label:'贷款期限',
+    loan_term_unit_years:'年', loan_term_unit_months:'个月', loan_type_label:'还款方式',
+    loan_type_equal:'等额本息', loan_type_principal:'等额本金', loan_type_bullet:'到期一次还本付息（仅付息）',
+    loan_start_label:'起始日期', loan_result_monthly:'月供', loan_result_total_payment:'还款总额',
+    loan_result_total_interest:'总利息', loan_result_principal:'本金', loan_result_period:'贷款期限', loan_unit_months:'个月',
+    loan_legend_interest:'利息', amort_title:'还款计划表', amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'还款额', amort_col_principal:'本金', amort_col_interest:'利息', amort_col_balance:'余额',
+    cur_USD:'美元', cur_EUR:'欧元', cur_KRW:'韩元', cur_JPY:'日元', cur_GBP:'英镑',
+    cur_CNY:'人民币', cur_CAD:'加元', cur_AUD:'澳元', cur_SGD:'新加坡元', cur_INR:'印度卢比' },
+  zh_TW:{ page_title:'pomiai 商務工具', tab_inv:'🧾 發票', tab_tax:'🧮 稅金計算', tab_loan:'🏦 貸款計算',
+    inv_title:'發票產生器', tax_title:'稅金計算機', loan_title:'貸款計算機', footer_by:'Product by',
+    inv_sub:'即時產生專業發票 — 免註冊 · 支援PDF下載 · 多幣別',
+    inv_currency_label:'幣別', inv_lang_label:'發票語言',
+    inv_from_label:'發件方（您的企業）', inv_from_name_ph:'公司名稱', inv_from_addr_ph:'地址、城市、國家\n電子郵件 | 電話',
+    inv_to_label:'收件方（客戶）', inv_to_name_ph:'客戶姓名 / 公司名稱', inv_to_addr_ph:'客戶地址、城市\n電子郵件 | 電話',
+    inv_num_label:'發票號碼', inv_date_label:'開立日期', inv_due_label:'到期日', inv_po_label:'訂購單號（PO）', inv_po_ph:'可選填',
+    inv_items_title:'明細項目', inv_col_desc:'描述', inv_col_qty:'數量', inv_col_price:'單價', inv_col_amount:'金額',
+    inv_add_item:'+ 新增項目', inv_tax_rate_label:'稅率 (%)', inv_disc_label:'折扣率 (%)',
+    inv_subtotal:'小計', inv_discount:'折扣', inv_tax_row:'稅額', inv_total_row:'總計',
+    inv_notes_label:'備註', inv_notes_ph:'付款說明、感謝語等...', inv_terms_label:'條款與條件', inv_terms_ph:'例如：請於開立後30天內付款...',
+    inv_btn_print:'🖨 下載 / 列印PDF', inv_btn_clear:'清除', inv_toast_pdf_ready:'✅ PDF已備妥 — 請使用瀏覽器列印功能儲存',
+    inv_pdf_title:'發票', inv_pdf_from:'發件方', inv_pdf_to:'收件方',
+    tax_sub:'VAT·GST·銷售稅 — 立即加稅/去稅 · 支援150多個國家',
+    tax_preset_label:'國家 / 稅種', tax_rate_label:'稅率 (%)', tax_amount_label:'金額', tax_amount_ph:'0.00', tax_currency_label:'幣別',
+    tax_btn_excl:'未稅價格 → 加稅', tax_btn_incl:'含稅價格 → 去稅',
+    tax_result_pretax:'稅前金額', tax_result_tax:'稅額', tax_result_total:'總計（含稅）', tax_result_rate:'實質稅率',
+    tax_quickref_title:'快速參考 — 全球VAT/GST稅率', tax_toast_rate_applied:'✅ 已套用{country}稅率',
+    tax_type_vat:'加值稅', tax_type_gst:'GST', tax_type_ct:'消費稅', tax_type_custom:'自訂稅率',
+    loan_sub:'月付金 · 總利息 · 還款排程表 — 房貸 · 車貸 · 個人貸款',
+    loan_amount_label:'貸款金額', loan_amount_ph:'100,000', loan_rate_label:'年利率 (%)', loan_term_label:'貸款期限',
+    loan_term_unit_years:'年', loan_term_unit_months:'個月', loan_type_label:'還款方式',
+    loan_type_equal:'本息均攤', loan_type_principal:'本金均攤', loan_type_bullet:'到期一次還本付息（僅付息）',
+    loan_start_label:'起始日期', loan_result_monthly:'月付金', loan_result_total_payment:'還款總額',
+    loan_result_total_interest:'總利息', loan_result_principal:'本金', loan_result_period:'貸款期限', loan_unit_months:'個月',
+    loan_legend_interest:'利息', amort_title:'還款排程表', amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'還款額', amort_col_principal:'本金', amort_col_interest:'利息', amort_col_balance:'餘額',
+    cur_USD:'美元', cur_EUR:'歐元', cur_KRW:'韓元', cur_JPY:'日圓', cur_GBP:'英鎊',
+    cur_CNY:'人民幣', cur_CAD:'加幣', cur_AUD:'澳幣', cur_SGD:'新加坡元', cur_INR:'印度盧比' },
+  de_DE:{ page_title:'pomiai Business-Tools', tab_inv:'🧾 Rechnung', tab_tax:'🧮 Steuerrechner', tab_loan:'🏦 Kreditrechner',
+    inv_title:'Rechnungsgenerator', tax_title:'Steuerrechner', loan_title:'Kreditrechner', footer_by:'Product by',
+    inv_sub:'Professionelle Rechnungen sofort erstellen — keine Anmeldung nötig · PDF-Download · mehrere Währungen',
+    inv_currency_label:'Währung', inv_lang_label:'Rechnungssprache',
+    inv_from_label:'Von (Ihr Unternehmen)', inv_from_name_ph:'Firmenname', inv_from_addr_ph:'Adresse, Stadt, Land\nE-Mail | Telefon',
+    inv_to_label:'Rechnung an (Kunde)', inv_to_name_ph:'Name des Kunden / Unternehmens', inv_to_addr_ph:'Kundenadresse, Stadt\nE-Mail | Telefon',
+    inv_num_label:'Rechnungsnr.', inv_date_label:'Rechnungsdatum', inv_due_label:'Fälligkeitsdatum', inv_po_label:'Bestellnummer', inv_po_ph:'Optional',
+    inv_items_title:'Rechnungspositionen', inv_col_desc:'Beschreibung', inv_col_qty:'Menge', inv_col_price:'Einzelpreis', inv_col_amount:'Betrag',
+    inv_add_item:'+ Position hinzufügen', inv_tax_rate_label:'Steuersatz (%)', inv_disc_label:'Rabatt (%)',
+    inv_subtotal:'Zwischensumme', inv_discount:'Rabatt', inv_tax_row:'Steuer', inv_total_row:'GESAMT',
+    inv_notes_label:'Notizen', inv_notes_ph:'Zahlungshinweise, Dankesnachricht...', inv_terms_label:'Geschäftsbedingungen', inv_terms_ph:'z. B. Zahlbar innerhalb von 30 Tagen...',
+    inv_btn_print:'🖨 PDF herunterladen / drucken', inv_btn_clear:'Zurücksetzen', inv_toast_pdf_ready:'✅ PDF bereit — über die Browser-Druckfunktion speichern',
+    inv_pdf_title:'RECHNUNG', inv_pdf_from:'Von', inv_pdf_to:'Rechnung an',
+    tax_sub:'MwSt · GST · Umsatzsteuer — Steuer sofort hinzufügen/entfernen · über 150 Länder',
+    tax_preset_label:'Land / Steuerart', tax_rate_label:'Steuersatz (%)', tax_amount_label:'Betrag', tax_amount_ph:'0,00', tax_currency_label:'Währung',
+    tax_btn_excl:'Preis OHNE Steuer → Steuer hinzufügen', tax_btn_incl:'Preis MIT Steuer → Steuer herausrechnen',
+    tax_result_pretax:'Nettobetrag', tax_result_tax:'Steuerbetrag', tax_result_total:'Gesamt (inkl. Steuer)', tax_result_rate:'Effektiver Steuersatz',
+    tax_quickref_title:'Schnellübersicht — MwSt./GST-Sätze weltweit', tax_toast_rate_applied:'✅ Steuersatz für {country} übernommen',
+    tax_type_vat:'MwSt.', tax_type_gst:'GST', tax_type_ct:'Verbrauchsteuer', tax_type_custom:'Individueller Satz',
+    loan_sub:'Monatsrate · Gesamtzinsen · Tilgungsplan — Baufinanzierung · Auto · Privatkredit',
+    loan_amount_label:'Darlehensbetrag', loan_amount_ph:'100.000', loan_rate_label:'Jährlicher Zinssatz (%)', loan_term_label:'Laufzeit',
+    loan_term_unit_years:'Jahre', loan_term_unit_months:'Monate', loan_type_label:'Tilgungsart',
+    loan_type_equal:'Annuitätentilgung (Zins + Tilgung)', loan_type_principal:'Ratentilgung (gleichbleibende Tilgung)', loan_type_bullet:'Endfällig / nur Zinszahlung',
+    loan_start_label:'Startdatum', loan_result_monthly:'Monatliche Rate', loan_result_total_payment:'Gesamtzahlung',
+    loan_result_total_interest:'Gesamtzinsen', loan_result_principal:'Darlehensbetrag', loan_result_period:'Laufzeit', loan_unit_months:'Monate',
+    loan_legend_interest:'Zinsen', amort_title:'Tilgungsplan', amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'Rate', amort_col_principal:'Tilgung', amort_col_interest:'Zinsen', amort_col_balance:'Restschuld',
+    cur_USD:'US-Dollar', cur_EUR:'Euro', cur_KRW:'Südkoreanischer Won', cur_JPY:'Japanischer Yen', cur_GBP:'Britisches Pfund',
+    cur_CNY:'Chinesischer Yuan', cur_CAD:'Kanadischer Dollar', cur_AUD:'Australischer Dollar', cur_SGD:'Singapur-Dollar', cur_INR:'Indische Rupie' },
+  fr_FR:{ page_title:'pomiai Outils professionnels', tab_inv:'🧾 Facture', tab_tax:'🧮 Calcul de taxe', tab_loan:'🏦 Calcul de prêt',
+    inv_title:'Générateur de factures', tax_title:'Calculateur de taxes', loan_title:'Calculateur de prêt', footer_by:'Product by',
+    inv_sub:'Créez des factures professionnelles instantanément — sans inscription · téléchargement PDF · multi-devises',
+    inv_currency_label:'Devise', inv_lang_label:'Langue de la facture',
+    inv_from_label:'De (votre entreprise)', inv_from_name_ph:'Nom de votre entreprise', inv_from_addr_ph:'Adresse, ville, pays\nE-mail | Téléphone',
+    inv_to_label:'Facturer à (client)', inv_to_name_ph:"Nom du client / de l'entreprise", inv_to_addr_ph:'Adresse du client, ville\nE-mail | Téléphone',
+    inv_num_label:'N° de facture', inv_date_label:"Date d'émission", inv_due_label:"Date d'échéance", inv_po_label:'N° de bon de commande', inv_po_ph:'Facultatif',
+    inv_items_title:'Lignes de facturation', inv_col_desc:'Description', inv_col_qty:'Qté', inv_col_price:'Prix unitaire', inv_col_amount:'Montant',
+    inv_add_item:'+ Ajouter une ligne', inv_tax_rate_label:'Taux de taxe (%)', inv_disc_label:'Remise (%)',
+    inv_subtotal:'Sous-total', inv_discount:'Remise', inv_tax_row:'Taxe', inv_total_row:'TOTAL',
+    inv_notes_label:'Notes', inv_notes_ph:'Instructions de paiement, message de remerciement...', inv_terms_label:'Conditions générales', inv_terms_ph:'ex. : Paiement sous 30 jours...',
+    inv_btn_print:'🖨 Télécharger / Imprimer en PDF', inv_btn_clear:'Effacer', inv_toast_pdf_ready:"✅ PDF prêt — utilisez l'impression du navigateur pour l'enregistrer",
+    inv_pdf_title:'FACTURE', inv_pdf_from:'De', inv_pdf_to:'Facturer à',
+    tax_sub:'TVA · GST · Taxe de vente — ajoutez/retirez la taxe instantanément · plus de 150 pays pris en charge',
+    tax_preset_label:'Pays / Type de taxe', tax_rate_label:'Taux de taxe (%)', tax_amount_label:'Montant', tax_amount_ph:'0,00', tax_currency_label:'Devise',
+    tax_btn_excl:'Prix HT → Ajouter la taxe', tax_btn_incl:'Prix TTC → Extraire la taxe',
+    tax_result_pretax:'Montant hors taxe', tax_result_tax:'Montant de la taxe', tax_result_total:'Total (TTC)', tax_result_rate:'Taux effectif',
+    tax_quickref_title:'Référence rapide — Taux de TVA/GST dans le monde', tax_toast_rate_applied:'✅ Taux appliqué : {country}',
+    tax_type_vat:'TVA', tax_type_gst:'GST', tax_type_ct:'Taxe à la consommation', tax_type_custom:'Taux personnalisé',
+    loan_sub:"Mensualité · intérêts totaux · tableau d'amortissement — immobilier · auto · prêt personnel",
+    loan_amount_label:'Montant du prêt', loan_amount_ph:'100 000', loan_rate_label:"Taux d'intérêt annuel (%)", loan_term_label:'Durée du prêt',
+    loan_term_unit_years:'Années', loan_term_unit_months:'Mois', loan_type_label:'Type de remboursement',
+    loan_type_equal:'Mensualités constantes (capital + intérêts)', loan_type_principal:'Capital constant', loan_type_bullet:'In fine / intérêts seuls',
+    loan_start_label:'Date de début', loan_result_monthly:'Mensualité', loan_result_total_payment:'Paiement total',
+    loan_result_total_interest:'Intérêts totaux', loan_result_principal:'Capital', loan_result_period:'Durée du prêt', loan_unit_months:'mois',
+    loan_legend_interest:'Intérêts', amort_title:"Tableau d'amortissement", amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'Paiement', amort_col_principal:'Capital', amort_col_interest:'Intérêts', amort_col_balance:'Solde',
+    cur_USD:'Dollar américain', cur_EUR:'Euro', cur_KRW:'Won sud-coréen', cur_JPY:'Yen japonais', cur_GBP:'Livre sterling',
+    cur_CNY:'Yuan chinois', cur_CAD:'Dollar canadien', cur_AUD:'Dollar australien', cur_SGD:'Dollar de Singapour', cur_INR:'Roupie indienne' },
+  nl_NL:{ page_title:'pomiai Zakelijke tools', tab_inv:'🧾 Factuur', tab_tax:'🧮 Belastingberekening', tab_loan:'🏦 Leningberekening',
+    inv_title:'Factuurgenerator', tax_title:'Belastingcalculator', loan_title:'Leningcalculator', footer_by:'Product by',
+    inv_sub:'Direct professionele facturen maken — geen registratie nodig · PDF-download · meerdere valuta',
+    inv_currency_label:'Valuta', inv_lang_label:'Factuurtaal',
+    inv_from_label:'Van (uw bedrijf)', inv_from_name_ph:'Bedrijfsnaam', inv_from_addr_ph:'Adres, plaats, land\nE-mail | Telefoon',
+    inv_to_label:'Factuur aan (klant)', inv_to_name_ph:'Naam klant / bedrijf', inv_to_addr_ph:'Adres klant, plaats\nE-mail | Telefoon',
+    inv_num_label:'Factuurnr.', inv_date_label:'Factuurdatum', inv_due_label:'Vervaldatum', inv_po_label:'Inkoopordernummer', inv_po_ph:'Optioneel',
+    inv_items_title:'Factuurregels', inv_col_desc:'Omschrijving', inv_col_qty:'Aantal', inv_col_price:'Prijs per stuk', inv_col_amount:'Bedrag',
+    inv_add_item:'+ Regel toevoegen', inv_tax_rate_label:'Belastingtarief (%)', inv_disc_label:'Korting (%)',
+    inv_subtotal:'Subtotaal', inv_discount:'Korting', inv_tax_row:'Belasting', inv_total_row:'TOTAAL',
+    inv_notes_label:'Opmerkingen', inv_notes_ph:'Betaalinstructies, bedankbericht...', inv_terms_label:'Algemene voorwaarden', inv_terms_ph:'bijv. Betaling binnen 30 dagen...',
+    inv_btn_print:'🖨 PDF downloaden / afdrukken', inv_btn_clear:'Wissen', inv_toast_pdf_ready:'✅ PDF gereed — gebruik de afdrukfunctie van de browser om op te slaan',
+    inv_pdf_title:'FACTUUR', inv_pdf_from:'Van', inv_pdf_to:'Factuur aan',
+    tax_sub:'BTW · GST · omzetbelasting — belasting direct toevoegen/verwijderen · 150+ landen ondersteund',
+    tax_preset_label:'Land / belastingtype', tax_rate_label:'Belastingtarief (%)', tax_amount_label:'Bedrag', tax_amount_ph:'0,00', tax_currency_label:'Valuta',
+    tax_btn_excl:'Prijs EXCL. btw → Belasting toevoegen', tax_btn_incl:'Prijs INCL. btw → Belasting uitlichten',
+    tax_result_pretax:'Bedrag exclusief btw', tax_result_tax:'Belastingbedrag', tax_result_total:'Totaal (incl. btw)', tax_result_rate:'Effectief tarief',
+    tax_quickref_title:'Snelle referentie — BTW/GST-tarieven wereldwijd', tax_toast_rate_applied:'✅ Tarief van {country} toegepast',
+    tax_type_vat:'BTW', tax_type_gst:'GST', tax_type_ct:'Verbruiksbelasting', tax_type_custom:'Aangepast tarief',
+    loan_sub:'Maandbedrag · totale rente · aflossingsschema — hypotheek · auto · persoonlijke lening',
+    loan_amount_label:'Leenbedrag', loan_amount_ph:'100.000', loan_rate_label:'Jaarlijkse rente (%)', loan_term_label:'Looptijd',
+    loan_term_unit_years:'Jaar', loan_term_unit_months:'Maanden', loan_type_label:'Aflossingsvorm',
+    loan_type_equal:'Annuïteit (rente + aflossing)', loan_type_principal:'Lineaire aflossing', loan_type_bullet:'Aflossingsvrij / alleen rente',
+    loan_start_label:'Startdatum', loan_result_monthly:'Maandbedrag', loan_result_total_payment:'Totale betaling',
+    loan_result_total_interest:'Totale rente', loan_result_principal:'Hoofdsom', loan_result_period:'Looptijd', loan_unit_months:'maanden',
+    loan_legend_interest:'Rente', amort_title:'Aflossingsschema', amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'Betaling', amort_col_principal:'Aflossing', amort_col_interest:'Rente', amort_col_balance:'Saldo',
+    cur_USD:'Amerikaanse dollar', cur_EUR:'Euro', cur_KRW:'Zuid-Koreaanse won', cur_JPY:'Japanse yen', cur_GBP:'Britse pond',
+    cur_CNY:'Chinese yuan', cur_CAD:'Canadese dollar', cur_AUD:'Australische dollar', cur_SGD:'Singaporese dollar', cur_INR:'Indiase roepie' },
+  sv_SE:{ page_title:'pomiai Affärsverktyg', tab_inv:'🧾 Faktura', tab_tax:'🧮 Skatteberäkning', tab_loan:'🏦 Lånberäkning',
+    inv_title:'Fakturagenerator', tax_title:'Skattekalkylator', loan_title:'Lånkalkylator', footer_by:'Product by',
+    inv_sub:'Skapa professionella fakturor direkt — inget konto krävs · PDF-nedladdning · flera valutor',
+    inv_currency_label:'Valuta', inv_lang_label:'Fakturaspråk',
+    inv_from_label:'Från (ditt företag)', inv_from_name_ph:'Företagsnamn', inv_from_addr_ph:'Adress, stad, land\nE-post | Telefon',
+    inv_to_label:'Faktureras till (kund)', inv_to_name_ph:'Kundens namn / företag', inv_to_addr_ph:'Kundens adress, stad\nE-post | Telefon',
+    inv_num_label:'Fakturanr', inv_date_label:'Fakturadatum', inv_due_label:'Förfallodatum', inv_po_label:'Ordernummer (PO)', inv_po_ph:'Valfritt',
+    inv_items_title:'Fakturarader', inv_col_desc:'Beskrivning', inv_col_qty:'Antal', inv_col_price:'Á-pris', inv_col_amount:'Belopp',
+    inv_add_item:'+ Lägg till rad', inv_tax_rate_label:'Skattesats (%)', inv_disc_label:'Rabatt (%)',
+    inv_subtotal:'Delsumma', inv_discount:'Rabatt', inv_tax_row:'Moms', inv_total_row:'TOTALT',
+    inv_notes_label:'Anteckningar', inv_notes_ph:'Betalningsinstruktioner, tackmeddelande...', inv_terms_label:'Villkor', inv_terms_ph:'t.ex. Betalning inom 30 dagar...',
+    inv_btn_print:'🖨 Ladda ner / Skriv ut PDF', inv_btn_clear:'Rensa', inv_toast_pdf_ready:'✅ PDF klar — spara via webbläsarens utskriftsfunktion',
+    inv_pdf_title:'FAKTURA', inv_pdf_from:'Från', inv_pdf_to:'Faktureras till',
+    tax_sub:'Moms · GST · försäljningsskatt — lägg till/dra av skatt direkt · stöd för 150+ länder',
+    tax_preset_label:'Land / skattetyp', tax_rate_label:'Skattesats (%)', tax_amount_label:'Belopp', tax_amount_ph:'0,00', tax_currency_label:'Valuta',
+    tax_btn_excl:'Pris EXKL. moms → Lägg till skatt', tax_btn_incl:'Pris INKL. moms → Extrahera skatt',
+    tax_result_pretax:'Belopp före skatt', tax_result_tax:'Skattebelopp', tax_result_total:'Totalt (inkl. moms)', tax_result_rate:'Effektiv skattesats',
+    tax_quickref_title:'Snabbreferens — Moms-/GST-satser globalt', tax_toast_rate_applied:'✅ Skattesats för {country} tillämpad',
+    tax_type_vat:'Moms', tax_type_gst:'GST', tax_type_ct:'Konsumtionsskatt', tax_type_custom:'Anpassad skattesats',
+    loan_sub:'Månadsbetalning · total ränta · amorteringsplan — bolån · billån · privatlån',
+    loan_amount_label:'Lånebelopp', loan_amount_ph:'100 000', loan_rate_label:'Årlig ränta (%)', loan_term_label:'Löptid',
+    loan_term_unit_years:'År', loan_term_unit_months:'Månader', loan_type_label:'Amorteringstyp',
+    loan_type_equal:'Annuitetslån (ränta + amortering)', loan_type_principal:'Rak amortering', loan_type_bullet:'Bullet-lån / endast ränta',
+    loan_start_label:'Startdatum', loan_result_monthly:'Månadsbetalning', loan_result_total_payment:'Total betalning',
+    loan_result_total_interest:'Total ränta', loan_result_principal:'Lånebelopp', loan_result_period:'Löptid', loan_unit_months:'månader',
+    loan_legend_interest:'Ränta', amort_title:'Amorteringsplan', amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'Betalning', amort_col_principal:'Amortering', amort_col_interest:'Ränta', amort_col_balance:'Saldo',
+    cur_USD:'Amerikansk dollar', cur_EUR:'Euro', cur_KRW:'Sydkoreansk won', cur_JPY:'Japansk yen', cur_GBP:'Brittiskt pund',
+    cur_CNY:'Kinesisk yuan', cur_CAD:'Kanadensisk dollar', cur_AUD:'Australisk dollar', cur_SGD:'Singaporiansk dollar', cur_INR:'Indisk rupie' },
+  nn_NO:{ page_title:'pomiai Forretningsverktøy', tab_inv:'🧾 Faktura', tab_tax:'🧮 Skatteberekning', tab_loan:'🏦 Lånberekning',
+    inv_title:'Fakturagenerator', tax_title:'Skattekalkulator', loan_title:'Lånkalkulator', footer_by:'Product by',
+    inv_sub:'Lag profesjonelle fakturaer direkte — ingen registrering nødvendig · PDF-nedlasting · fleire valutaer',
+    inv_currency_label:'Valuta', inv_lang_label:'Fakturaspråk',
+    inv_from_label:'Frå (verksemda di)', inv_from_name_ph:'Firmanamn', inv_from_addr_ph:'Adresse, by, land\nE-post | Telefon',
+    inv_to_label:'Faktureres til (kunde)', inv_to_name_ph:'Namn på kunde / verksemd', inv_to_addr_ph:'Kundeadresse, by\nE-post | Telefon',
+    inv_num_label:'Fakturanr.', inv_date_label:'Fakturadato', inv_due_label:'Forfallsdato', inv_po_label:'Bestillingsnummer (PO)', inv_po_ph:'Valfritt',
+    inv_items_title:'Fakturalinjer', inv_col_desc:'Skildring', inv_col_qty:'Tal', inv_col_price:'Einingspris', inv_col_amount:'Beløp',
+    inv_add_item:'+ Legg til linje', inv_tax_rate_label:'Skattesats (%)', inv_disc_label:'Rabatt (%)',
+    inv_subtotal:'Delsum', inv_discount:'Rabatt', inv_tax_row:'Skatt', inv_total_row:'TOTALT',
+    inv_notes_label:'Notat', inv_notes_ph:'Betalingsinstruksjonar, takkemelding...', inv_terms_label:'Vilkår', inv_terms_ph:'t.d. Betaling innan 30 dagar...',
+    inv_btn_print:'🖨 Last ned / Skriv ut PDF', inv_btn_clear:'Tøm', inv_toast_pdf_ready:'✅ PDF klar — lagre via utskriftsfunksjonen i nettlesaren',
+    inv_pdf_title:'FAKTURA', inv_pdf_from:'Frå', inv_pdf_to:'Faktureres til',
+    tax_sub:'MVA · GST · omsetningsskatt — legg til/trekk frå skatt direkte · støttar 150+ land',
+    tax_preset_label:'Land / skattetype', tax_rate_label:'Skattesats (%)', tax_amount_label:'Beløp', tax_amount_ph:'0,00', tax_currency_label:'Valuta',
+    tax_btn_excl:'Pris EKSKL. MVA → Legg til skatt', tax_btn_incl:'Pris INKL. MVA → Trekk ut skatt',
+    tax_result_pretax:'Beløp før skatt', tax_result_tax:'Skattebeløp', tax_result_total:'Totalt (inkl. MVA)', tax_result_rate:'Effektiv skattesats',
+    tax_quickref_title:'Snøgg referanse — MVA-/GST-satsar globalt', tax_toast_rate_applied:'✅ Skattesats for {country} bruka',
+    tax_type_vat:'MVA', tax_type_gst:'GST', tax_type_ct:'Forbruksskatt', tax_type_custom:'Tilpassa sats',
+    loan_sub:'Månadsbetaling · total rente · nedbetalingsplan — bustadlån · billån · forbrukslån',
+    loan_amount_label:'Lånebeløp', loan_amount_ph:'100 000', loan_rate_label:'Årleg rente (%)', loan_term_label:'Nedbetalingstid',
+    loan_term_unit_years:'År', loan_term_unit_months:'Månader', loan_type_label:'Nedbetalingstype',
+    loan_type_equal:'Annuitetslån (rente + avdrag)', loan_type_principal:'Serielån (like avdrag)', loan_type_bullet:'Avdragsfritt / berre rente',
+    loan_start_label:'Startdato', loan_result_monthly:'Månadsbetaling', loan_result_total_payment:'Total betaling',
+    loan_result_total_interest:'Total rente', loan_result_principal:'Lånebeløp', loan_result_period:'Nedbetalingstid', loan_unit_months:'månader',
+    loan_legend_interest:'Rente', amort_title:'Nedbetalingsplan', amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'Betaling', amort_col_principal:'Avdrag', amort_col_interest:'Rente', amort_col_balance:'Saldo',
+    cur_USD:'Amerikanske dollar', cur_EUR:'Euro', cur_KRW:'Sørkoreanske won', cur_JPY:'Japanske yen', cur_GBP:'Britiske pund',
+    cur_CNY:'Kinesiske yuan', cur_CAD:'Kanadiske dollar', cur_AUD:'Australske dollar', cur_SGD:'Singapore-dollar', cur_INR:'Indiske rupiar' },
+  da_DK:{ page_title:'pomiai Erhvervsværktøjer', tab_inv:'🧾 Faktura', tab_tax:'🧮 Skatteberegning', tab_loan:'🏦 Lånberegning',
+    inv_title:'Fakturagenerator', tax_title:'Skatteberegner', loan_title:'Lånberegner', footer_by:'Product by',
+    inv_sub:'Opret professionelle fakturaer med det samme — ingen tilmelding nødvendig · PDF-download · flere valutaer',
+    inv_currency_label:'Valuta', inv_lang_label:'Fakturasprog',
+    inv_from_label:'Fra (din virksomhed)', inv_from_name_ph:'Virksomhedsnavn', inv_from_addr_ph:'Adresse, by, land\nE-mail | Telefon',
+    inv_to_label:'Faktureres til (kunde)', inv_to_name_ph:'Kundens navn / virksomhed', inv_to_addr_ph:'Kundens adresse, by\nE-mail | Telefon',
+    inv_num_label:'Fakturanr.', inv_date_label:'Fakturadato', inv_due_label:'Forfaldsdato', inv_po_label:'Ordrenummer (PO)', inv_po_ph:'Valgfrit',
+    inv_items_title:'Fakturalinjer', inv_col_desc:'Beskrivelse', inv_col_qty:'Antal', inv_col_price:'Stykpris', inv_col_amount:'Beløb',
+    inv_add_item:'+ Tilføj linje', inv_tax_rate_label:'Afgiftssats (%)', inv_disc_label:'Rabat (%)',
+    inv_subtotal:'Subtotal', inv_discount:'Rabat', inv_tax_row:'Moms', inv_total_row:'TOTAL',
+    inv_notes_label:'Noter', inv_notes_ph:'Betalingsoplysninger, takkebesked...', inv_terms_label:'Vilkår og betingelser', inv_terms_ph:'f.eks. Betaling inden 30 dage...',
+    inv_btn_print:'🖨 Download / Udskriv PDF', inv_btn_clear:'Ryd', inv_toast_pdf_ready:'✅ PDF klar — gem via browserens udskriftsfunktion',
+    inv_pdf_title:'FAKTURA', inv_pdf_from:'Fra', inv_pdf_to:'Faktureres til',
+    tax_sub:'Moms · GST · omsætningsafgift — læg til/træk moms fra med det samme · understøtter 150+ lande',
+    tax_preset_label:'Land / afgiftstype', tax_rate_label:'Afgiftssats (%)', tax_amount_label:'Beløb', tax_amount_ph:'0,00', tax_currency_label:'Valuta',
+    tax_btn_excl:'Pris EKSKL. moms → Læg moms til', tax_btn_incl:'Pris INKL. moms → Træk moms fra',
+    tax_result_pretax:'Beløb før moms', tax_result_tax:'Momsbeløb', tax_result_total:'Total (inkl. moms)', tax_result_rate:'Effektiv afgiftssats',
+    tax_quickref_title:'Hurtig reference — Moms-/GST-satser globalt', tax_toast_rate_applied:'✅ Sats for {country} anvendt',
+    tax_type_vat:'Moms', tax_type_gst:'GST', tax_type_ct:'Forbrugsafgift', tax_type_custom:'Tilpasset sats',
+    loan_sub:'Månedlig ydelse · samlede renter · afdragsplan — realkredit · bil · forbrugslån',
+    loan_amount_label:'Lånebeløb', loan_amount_ph:'100.000', loan_rate_label:'Årlig rente (%)', loan_term_label:'Løbetid',
+    loan_term_unit_years:'År', loan_term_unit_months:'Måneder', loan_type_label:'Afdragstype',
+    loan_type_equal:'Annuitetslån (rente + afdrag)', loan_type_principal:'Serielån (lige store afdrag)', loan_type_bullet:'Afdragsfrit / kun renter',
+    loan_start_label:'Startdato', loan_result_monthly:'Månedlig ydelse', loan_result_total_payment:'Samlet betaling',
+    loan_result_total_interest:'Samlede renter', loan_result_principal:'Lånebeløb', loan_result_period:'Løbetid', loan_unit_months:'måneder',
+    loan_legend_interest:'Renter', amort_title:'Afdragsplan', amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'Ydelse', amort_col_principal:'Afdrag', amort_col_interest:'Renter', amort_col_balance:'Restgæld',
+    cur_USD:'Amerikanske dollar', cur_EUR:'Euro', cur_KRW:'Sydkoreanske won', cur_JPY:'Japanske yen', cur_GBP:'Britiske pund',
+    cur_CNY:'Kinesiske yuan', cur_CAD:'Canadiske dollar', cur_AUD:'Australske dollar', cur_SGD:'Singapore-dollar', cur_INR:'Indiske rupees' },
+  ar:{ page_title:'أدوات pomiai للأعمال', tab_inv:'🧾 الفاتورة', tab_tax:'🧮 حساب الضريبة', tab_loan:'🏦 حساب القرض',
+    inv_title:'منشئ الفواتير', tax_title:'حاسبة الضرائب', loan_title:'حاسبة القروض', footer_by:'Product by',
+    inv_sub:'أنشئ فواتير احترافية فورًا — بدون تسجيل · تنزيل PDF · دعم عملات متعددة',
+    inv_currency_label:'العملة', inv_lang_label:'لغة الفاتورة',
+    inv_from_label:'من (عملك)', inv_from_name_ph:'اسم شركتك', inv_from_addr_ph:'العنوان، المدينة، الدولة\nالبريد الإلكتروني | الهاتف',
+    inv_to_label:'فاتورة إلى (العميل)', inv_to_name_ph:'اسم العميل / الشركة', inv_to_addr_ph:'عنوان العميل، المدينة\nالبريد الإلكتروني | الهاتف',
+    inv_num_label:'رقم الفاتورة', inv_date_label:'تاريخ الإصدار', inv_due_label:'تاريخ الاستحقاق', inv_po_label:'رقم أمر الشراء', inv_po_ph:'اختياري',
+    inv_items_title:'بنود الفاتورة', inv_col_desc:'الوصف', inv_col_qty:'الكمية', inv_col_price:'سعر الوحدة', inv_col_amount:'المبلغ',
+    inv_add_item:'+ إضافة بند', inv_tax_rate_label:'نسبة الضريبة (%)', inv_disc_label:'نسبة الخصم (%)',
+    inv_subtotal:'المجموع الفرعي', inv_discount:'الخصم', inv_tax_row:'الضريبة', inv_total_row:'الإجمالي',
+    inv_notes_label:'ملاحظات', inv_notes_ph:'تعليمات الدفع، رسالة شكر...', inv_terms_label:'الشروط والأحكام', inv_terms_ph:'مثال: الدفع خلال 30 يومًا...',
+    inv_btn_print:'🖨 تنزيل / طباعة PDF', inv_btn_clear:'مسح', inv_toast_pdf_ready:'✅ ملف PDF جاهز — استخدم خاصية الطباعة في المتصفح للحفظ',
+    inv_pdf_title:'فاتورة', inv_pdf_from:'من', inv_pdf_to:'فاتورة إلى',
+    tax_sub:'ضريبة القيمة المضافة · GST · ضريبة المبيعات — أضف/استخرج الضريبة فورًا · يدعم أكثر من 150 دولة',
+    tax_preset_label:'الدولة / نوع الضريبة', tax_rate_label:'نسبة الضريبة (%)', tax_amount_label:'المبلغ', tax_amount_ph:'0.00', tax_currency_label:'العملة',
+    tax_btn_excl:'سعر غير شامل الضريبة ← إضافة الضريبة', tax_btn_incl:'سعر شامل الضريبة ← استخراج الضريبة',
+    tax_result_pretax:'المبلغ قبل الضريبة', tax_result_tax:'قيمة الضريبة', tax_result_total:'الإجمالي (شامل الضريبة)', tax_result_rate:'النسبة الفعلية',
+    tax_quickref_title:'مرجع سريع — معدلات ضريبة القيمة المضافة/GST حول العالم', tax_toast_rate_applied:'✅ تم تطبيق نسبة {country}',
+    tax_type_vat:'ضريبة القيمة المضافة', tax_type_gst:'GST', tax_type_ct:'ضريبة الاستهلاك', tax_type_custom:'نسبة مخصصة',
+    loan_sub:'القسط الشهري · إجمالي الفائدة · جدول السداد — الرهن العقاري · السيارات · القروض الشخصية',
+    loan_amount_label:'مبلغ القرض', loan_amount_ph:'100,000', loan_rate_label:'معدل الفائدة السنوي (%)', loan_term_label:'مدة القرض',
+    loan_term_unit_years:'سنوات', loan_term_unit_months:'أشهر', loan_type_label:'نوع السداد',
+    loan_type_equal:'قسط ثابت (أصل + فائدة)', loan_type_principal:'أصل ثابت', loan_type_bullet:'سداد دفعة واحدة عند الاستحقاق / فائدة فقط',
+    loan_start_label:'تاريخ البدء', loan_result_monthly:'القسط الشهري', loan_result_total_payment:'إجمالي السداد',
+    loan_result_total_interest:'إجمالي الفائدة', loan_result_principal:'أصل القرض', loan_result_period:'مدة القرض', loan_unit_months:'أشهر',
+    loan_legend_interest:'الفائدة', amort_title:'جدول السداد', amort_btn_csv:'⬇ CSV',
+    amort_col_num:'#', amort_col_payment:'الدفعة', amort_col_principal:'الأصل', amort_col_interest:'الفائدة', amort_col_balance:'الرصيد',
+    cur_USD:'دولار أمريكي', cur_EUR:'يورو', cur_KRW:'وون كوري جنوبي', cur_JPY:'ين ياباني', cur_GBP:'جنيه إسترليني',
+    cur_CNY:'يوان صيني', cur_CAD:'دولار كندي', cur_AUD:'دولار أسترالي', cur_SGD:'دولار سنغافوري', cur_INR:'روبية هندية' }
+};
+
+/* 언어 감지: URL ?lang= → 브라우저 언어 → 기본값(ko) */
+function normalizeLang(raw){
+  if(!raw) return '';
+  if(I18N[raw]) return raw;
+  if(/^zh/i.test(raw)) return /tw|hk|mo/i.test(raw) ? 'zh_TW' : 'zh_CN';
+  const two = raw.slice(0,2).toLowerCase();
+  const longMap = { de:'de_DE', fr:'fr_FR', nl:'nl_NL', sv:'sv_SE', da:'da_DK', nb:'nn_NO', nn:'nn_NO', no:'nn_NO' };
+  return longMap[two] || two;
+}
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const urlKey = normalizeLang(urlLang);
+  const browserKey = normalizeLang(navigator.language || 'ko');
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang
+             : (I18N[urlKey] ? urlKey
+             : (I18N[browserKey] ? browserKey : 'ko'));
+  window._LANG = LANG;
+  window._T    = I18N[LANG];
+  document.getElementById('html-root').lang = LANG;
+  document.getElementById('html-root').setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
+})();
+
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.dataset.i18n;
+    if (typeof t[k] === 'string') el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    const k = el.dataset.i18nPlaceholder;
+    if (typeof t[k] === 'string') el.placeholder = t[k];
+  });
+  const pt = document.getElementById('page-title');
+  if (pt) pt.textContent = t.page_title;
+  document.title = t.page_title;
+  const langSel = document.getElementById('lang-switch');
+  if (langSel) langSel.value = window._LANG;
+}
+
+/* 언어 선택 드롭다운(헤더) — 12개 언어, 플래그 + 자국어 표기 */
+const LANG_LIST=[
+  {code:'ko',flag:'🇰🇷',name:'한국어'},
+  {code:'en',flag:'🇺🇸',name:'English'},
+  {code:'ja',flag:'🇯🇵',name:'日本語'},
+  {code:'zh_CN',flag:'🇨🇳',name:'中文(简体)'},
+  {code:'zh_TW',flag:'🇹🇼',name:'中文(繁體)'},
+  {code:'de_DE',flag:'🇩🇪',name:'Deutsch'},
+  {code:'fr_FR',flag:'🇫🇷',name:'Français'},
+  {code:'nl_NL',flag:'🇳🇱',name:'Nederlands'},
+  {code:'sv_SE',flag:'🇸🇪',name:'Svenska'},
+  {code:'nn_NO',flag:'🇳🇴',name:'Norsk'},
+  {code:'da_DK',flag:'🇩🇰',name:'Dansk'},
+  {code:'ar',flag:'🇸🇦',name:'العربية'},
+];
+function buildLangOptions(selectId){
+  const el=$(selectId);
+  if(!el)return;
+  el.innerHTML = LANG_LIST.map(l=>`<option value="${l.code}">${l.flag} ${l.name}</option>`).join('');
+}
+buildLangOptions('lang-switch');
+$('lang-switch').value = window._LANG;
+$('lang-switch').addEventListener('change', ()=>{
+  const lang = $('lang-switch').value;
+  if (!I18N[lang]) return;
+  window._LANG = lang; window._T = I18N[lang];
+  document.getElementById('html-root').lang = lang;
+  document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+  applyI18n();
+  refreshDynamicUI();
+  try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
+});
+
+/* ── 통화명/통화 셀렉트 ── */
+const CUR_FLAG={USD:'🇺🇸',EUR:'🇪🇺',KRW:'🇰🇷',JPY:'🇯🇵',GBP:'🇬🇧',CNY:'🇨🇳',CAD:'🇨🇦',AUD:'🇦🇺',SGD:'🇸🇬',INR:'🇮🇳'};
+function curName(code){ return (window._T && window._T['cur_'+code]) || code; }
+const CUR_LIST_INV=['USD','EUR','KRW','JPY','GBP','CNY','CAD','AUD','SGD','INR'];
+const CUR_LIST_TAX=['USD','EUR','KRW','JPY','GBP','AUD','CAD','SGD','INR'];
+const CUR_LIST_LOAN=['USD','EUR','KRW','JPY','GBP','AUD'];
+function buildCurrencySelect(id, codes, defaultCode){
+  const el=$(id); if(!el)return;
+  const cur = el.value || defaultCode;
+  el.innerHTML = codes.map(c=>`<option value="${c}">${CUR_FLAG[c]||''} ${c} — ${curName(c)}</option>`).join('');
+  if(codes.includes(cur)) el.value=cur;
+}
+
+/* ── 통화 포맷 (숫자) ── */
 const CUR_SYM={USD:'$',EUR:'€',KRW:'₩',JPY:'¥',GBP:'£',CNY:'¥',CAD:'CA$',AUD:'A$',SGD:'S$',INR:'₹'};
 const CUR_DEC={KRW:0,JPY:0};
 function fmtCur(n,cur){
@@ -392,11 +790,14 @@ function fmtCur(n,cur){
    INVOICE
 ════════════════════════════════ */
 let invItems=[];
-// 날짜 기본값
+// 날짜 기본값 + 통화/언어 셀렉트 초기화
 (function(){
   const t=new Date(),d=new Date(t);d.setDate(d.getDate()+30);
   $('inv-date').value=t.toISOString().slice(0,10);
   $('inv-due').value=d.toISOString().slice(0,10);
+  buildCurrencySelect('inv-currency', CUR_LIST_INV, 'USD');
+  buildLangOptions('inv-lang');
+  $('inv-lang').value = window._LANG;
   addInvItem();addInvItem();
 })();
 
@@ -407,10 +808,11 @@ function addInvItem(){
 }
 function renderItems(){
   const container=$('inv-items');container.innerHTML='';
+  const ph=(window._T && window._T.inv_col_desc) || 'Description';
   invItems.forEach((item,i)=>{
     const row=document.createElement('div');row.className='item-row';
     row.innerHTML=`
-      <input class="fi" placeholder="Description" value="${item.desc}" oninput="invItems[${i}].desc=this.value">
+      <input class="fi" placeholder="${ph}" value="${item.desc}" oninput="invItems[${i}].desc=this.value">
       <input class="fi mono qty-wrap" type="number" value="${item.qty}" min="0" step="any" oninput="invItems[${i}].qty=+this.value;calcInv()">
       <input class="fi mono" type="number" value="${item.price}" min="0" step="any" oninput="invItems[${i}].price=+this.value;calcInv()">
       <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--te2);text-align:right;padding:0 4px" id="item-amt-${i}">0.00</span>
@@ -439,22 +841,8 @@ function calcInv(){
 }
 function clearInvoice(){invItems=[];addInvItem();addInvItem();['inv-from-name','inv-from-addr','inv-to-name','inv-to-addr','inv-notes','inv-terms'].forEach(id=>{const el=$(id);if(el)el.value='';});$('inv-tax').value=0;$('inv-disc').value=0;calcInv();}
 
-const INV_LABELS={
-  en:{invoice:'INVOICE',from:'From',to:'Bill To',num:'Invoice #',date:'Date',due:'Due Date',
-    po:'PO#',desc:'Description',qty:'Qty',unit:'Unit Price',amount:'Amount',
-    sub:'Subtotal',disc:'Discount',tax:'Tax',total:'TOTAL',notes:'Notes',terms:'Terms'},
-  ko:{invoice:'청구서',from:'발신',to:'수신',num:'청구서 번호',date:'발행일',due:'납부기한',
-    po:'주문번호',desc:'항목',qty:'수량',unit:'단가',amount:'금액',
-    sub:'소계',disc:'할인',tax:'세금',total:'합계',notes:'메모',terms:'약관'},
-  ja:{invoice:'請求書',from:'請求元',to:'請求先',num:'番号',date:'発行日',due:'支払期限',
-    po:'注文番号',desc:'品目',qty:'数量',unit:'単価',amount:'金額',
-    sub:'小計',disc:'割引',tax:'税',total:'合計',notes:'備考',terms:'条件'},
-  zh:{invoice:'发票',from:'发件方',to:'收件方',num:'发票号',date:'日期',due:'到期日',
-    po:'订单号',desc:'描述',qty:'数量',unit:'单价',amount:'金额',
-    sub:'小计',disc:'折扣',tax:'税',total:'合计',notes:'备注',terms:'条款'},
-};
 function printInvoice(){
-  const lang=$('inv-lang').value;const L=INV_LABELS[lang]||INV_LABELS.en;
+  const lang=$('inv-lang').value;const L=I18N[lang]||window._T;
   const cur=$('inv-currency').value;const dec=CUR_DEC[cur]??2;
   const s=CUR_SYM[cur]||'';const fmt=n=>s+n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
   let sub=0;
@@ -462,7 +850,8 @@ function printInvoice(){
   const disc=sub*(parseFloat($('inv-disc').value)||0)/100;
   const tax=(sub-disc)*(parseFloat($('inv-tax').value)||0)/100;
   const total=sub-disc+tax;
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${L.invoice}</title>
+  const dirAttr = lang==='ar' ? ' dir="rtl"' : '';
+  const html=`<!DOCTYPE html><html${dirAttr}><head><meta charset="UTF-8"><title>${L.inv_pdf_title}</title>
   <style>body{font-family:system-ui,sans-serif;margin:0;padding:32px;color:#111;font-size:14px}
   .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px}
   .title{font-size:28px;font-weight:700;color:#111}
@@ -481,32 +870,32 @@ function printInvoice(){
   .footer-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:4px}
   @media print{body{padding:16px}}</style></head><body>
   <div class="header">
-    <div><div class="title">${L.invoice}</div><div style="font-size:13px;color:#888;margin-top:4px">#${$('inv-num').value||'001'}</div></div>
+    <div><div class="title">${L.inv_pdf_title}</div><div style="font-size:13px;color:#888;margin-top:4px">#${$('inv-num').value||'001'}</div></div>
     <div class="meta">
-      <div>${L.date}: <strong>${$('inv-date').value||'—'}</strong></div>
-      <div>${L.due}: <strong>${$('inv-due').value||'—'}</strong></div>
-      ${$('inv-po').value?`<div>${L.po}: ${$('inv-po').value}</div>`:''}
+      <div>${L.inv_date_label}: <strong>${$('inv-date').value||'—'}</strong></div>
+      <div>${L.inv_due_label}: <strong>${$('inv-due').value||'—'}</strong></div>
+      ${$('inv-po').value?`<div>${L.inv_po_label}: ${$('inv-po').value}</div>`:''}
     </div>
   </div>
   <div class="parties">
-    <div><div class="party-label">${L.from}</div><div class="party-name">${$('inv-from-name').value||'—'}</div><div class="party-info">${$('inv-from-addr').value||''}</div></div>
-    <div><div class="party-label">${L.to}</div><div class="party-name">${$('inv-to-name').value||'—'}</div><div class="party-info">${$('inv-to-addr').value||''}</div></div>
+    <div><div class="party-label">${L.inv_pdf_from}</div><div class="party-name">${$('inv-from-name').value||'—'}</div><div class="party-info">${$('inv-from-addr').value||''}</div></div>
+    <div><div class="party-label">${L.inv_pdf_to}</div><div class="party-name">${$('inv-to-name').value||'—'}</div><div class="party-info">${$('inv-to-addr').value||''}</div></div>
   </div>
-  <table><thead><tr><th>${L.desc}</th><th style="text-align:center">${L.qty}</th><th style="text-align:right">${L.unit}</th><th style="text-align:right">${L.amount}</th></tr></thead>
+  <table><thead><tr><th>${L.inv_col_desc}</th><th style="text-align:center">${L.inv_col_qty}</th><th style="text-align:right">${L.inv_col_price}</th><th style="text-align:right">${L.inv_col_amount}</th></tr></thead>
   <tbody>${itemRows}</tbody></table>
   <div class="totals">
-    <div class="tot-row"><span>${L.sub}</span><span>${fmt(sub)}</span></div>
-    ${disc>0?`<div class="tot-row"><span>${L.disc}</span><span>-${fmt(disc)}</span></div>`:''}
-    ${tax>0?`<div class="tot-row"><span>${L.tax} (${$('inv-tax').value}%)</span><span>+${fmt(tax)}</span></div>`:''}
-    <div class="tot-row tot-grand"><span>${L.total}</span><span>${fmt(total)}</span></div>
+    <div class="tot-row"><span>${L.inv_subtotal}</span><span>${fmt(sub)}</span></div>
+    ${disc>0?`<div class="tot-row"><span>${L.inv_discount}</span><span>-${fmt(disc)}</span></div>`:''}
+    ${tax>0?`<div class="tot-row"><span>${L.inv_tax_row} (${$('inv-tax').value}%)</span><span>+${fmt(tax)}</span></div>`:''}
+    <div class="tot-row tot-grand"><span>${L.inv_total_row}</span><span>${fmt(total)}</span></div>
   </div>
   ${$('inv-notes').value||$('inv-terms').value?`<div class="footer">
-    ${$('inv-notes').value?`<div><div class="footer-label">${L.notes}</div>${$('inv-notes').value}</div>`:''}
-    ${$('inv-terms').value?`<div><div class="footer-label">${L.terms}</div>${$('inv-terms').value}</div>`:''}
+    ${$('inv-notes').value?`<div><div class="footer-label">${L.inv_notes_label}</div>${$('inv-notes').value}</div>`:''}
+    ${$('inv-terms').value?`<div><div class="footer-label">${L.inv_terms_label}</div>${$('inv-terms').value}</div>`:''}
   </div>`:''}
   <script>window.onload=function(){window.print();}<\/script></body></html>`;
   const w=window.open('','_blank');w.document.write(html);w.document.close();
-  toast('✅ PDF ready — use browser Print to save');
+  toast(window._T.inv_toast_pdf_ready);
 }
 
 /* ════════════════════════════════
@@ -514,6 +903,49 @@ function printInvoice(){
 ════════════════════════════════ */
 let taxMode='excl';
 function setTaxMode(m){taxMode=m;calcTax();}
+
+/* 국가/세율 프리셋 — 국가명은 Intl.DisplayNames로 현재 언어에 맞춰 표시 */
+const TAX_PRESETS=[
+  {code:'KR',type:'vat',rate:10},
+  {code:'GB',type:'vat',rate:20},
+  {code:'DE',type:'vat',rate:19},
+  {code:'FR',type:'vat',rate:20},
+  {code:'AU',type:'gst',rate:10},
+  {code:'CA',type:'gst',rate:5},
+  {code:'IN',type:'gst',rate:18},
+  {code:'JP',type:'ct',rate:10},
+  {code:'SG',type:'gst',rate:9},
+  {code:'TH',type:'vat',rate:7},
+  {code:'AE',type:'vat',rate:0,displayRate:5},
+];
+const COUNTRY_FLAG={KR:'🇰🇷',GB:'🇬🇧',DE:'🇩🇪',FR:'🇫🇷',AU:'🇦🇺',CA:'🇨🇦',IN:'🇮🇳',JP:'🇯🇵',SG:'🇸🇬',TH:'🇹🇭',AE:'🇦🇪',US:'🇺🇸',CN:'🇨🇳',BR:'🇧🇷',MX:'🇲🇽',RU:'🇷🇺',ID:'🇮🇩'};
+const INTL_LOCALE_MAP={ko:'ko',en:'en',ja:'ja',zh_CN:'zh-CN',zh_TW:'zh-TW',de_DE:'de',fr_FR:'fr',nl_NL:'nl',sv_SE:'sv',nn_NO:'nn',da_DK:'da',ar:'ar'};
+function regionName(code){
+  try{
+    const tag = INTL_LOCALE_MAP[window._LANG] || 'en';
+    const dn = new Intl.DisplayNames([tag,'en'], {type:'region'});
+    return dn.of(code) || code;
+  }catch(e){ return code; }
+}
+function taxTypeLabel(type){
+  const t=window._T;
+  if(type==='vat')return t.tax_type_vat;
+  if(type==='gst')return t.tax_type_gst;
+  if(type==='ct')return t.tax_type_ct;
+  return t.tax_type_custom;
+}
+function buildTaxPresetOptions(){
+  const t=window._T;
+  const sel=$('tax-preset'); if(!sel)return;
+  const curVal=sel.value;
+  let html=TAX_PRESETS.map(p=>{
+    const rateTxt=(p.displayRate??p.rate);
+    return `<option value="${p.rate}">${COUNTRY_FLAG[p.code]||''} ${regionName(p.code)} — ${taxTypeLabel(p.type)} ${rateTxt}%</option>`;
+  }).join('');
+  html+=`<option value="custom">⚙️ ${t.tax_type_custom}</option>`;
+  sel.innerHTML=html;
+  if(curVal && [...sel.options].some(o=>o.value===curVal)) sel.value=curVal;
+}
 function applyTaxPreset(){
   const v=$('tax-preset').value;
   if(v!=='custom')$('tax-rate').value=v;
@@ -532,28 +964,33 @@ function calcTax(){
   $('tr-rate').textContent=rate+'%';
 }
 // VAT 참조표
-(function(){
-  const refs=[
-    ['🇰🇷','Korea','10%'],['🇺🇸','US (avg)','~8%'],['🇬🇧','UK','20%'],['🇩🇪','Germany','19%'],
-    ['🇫🇷','France','20%'],['🇯🇵','Japan','10%'],['🇨🇳','China','13%'],['🇦🇺','Australia','10%'],
-    ['🇨🇦','Canada','5%'],['🇮🇳','India','18%'],['🇸🇬','Singapore','9%'],['🇦🇪','UAE','5%'],
-    ['🇧🇷','Brazil','17%'],['🇲🇽','Mexico','16%'],['🇷🇺','Russia','20%'],['🇮🇩','Indonesia','11%'],
-  ];
-  const c=$('vat-refs');
-  refs.forEach(([f,n,r])=>{
+const VAT_REF_DATA=[
+  ['KR','10%'],['US','~8%'],['GB','20%'],['DE','19%'],
+  ['FR','20%'],['JP','10%'],['CN','13%'],['AU','10%'],
+  ['CA','5%'],['IN','18%'],['SG','9%'],['AE','5%'],
+  ['BR','17%'],['MX','16%'],['RU','20%'],['ID','11%'],
+];
+function buildVatRefs(){
+  const t=window._T;
+  const c=$('vat-refs'); if(!c)return;
+  c.innerHTML='';
+  VAT_REF_DATA.forEach(([code,r])=>{
+    const n=regionName(code);
     const el=document.createElement('div');
     el.style.cssText='background:var(--s2);border:1px solid var(--bd2);border-radius:9px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer';
-    el.innerHTML=`<span style="font-size:12px;color:var(--tx2)">${f} ${n}</span><span style="font-family:DM Mono,monospace;font-size:13px;color:var(--te2);font-weight:600">${r}</span>`;
-    el.onclick=()=>{$('tax-rate').value=parseFloat(r);calcTax();toast('✅ '+n+' rate applied');};
+    el.innerHTML=`<span style="font-size:12px;color:var(--tx2)">${COUNTRY_FLAG[code]||''} ${n}</span><span style="font-family:DM Mono,monospace;font-size:13px;color:var(--te2);font-weight:600">${r}</span>`;
+    el.onclick=()=>{$('tax-rate').value=parseFloat(r);calcTax();toast('✅ '+t.tax_toast_rate_applied.replace('{country}',n));};
     c.appendChild(el);
   });
-})();
-calcTax();
+}
 
 /* ════════════════════════════════
    LOAN CALCULATOR
 ════════════════════════════════ */
-(function(){$('loan-start').value=new Date().toISOString().slice(0,10);calcLoan();})();
+(function(){
+  $('loan-start').value=new Date().toISOString().slice(0,10);
+  buildCurrencySelect('loan-cur', CUR_LIST_LOAN, 'KRW');
+})();
 
 function calcLoan(){
   const amt=parseFloat($('loan-amt').value)||0;
@@ -566,6 +1003,7 @@ function calcLoan(){
   const cur=$('loan-cur').value;
   const type=$('loan-type').value;
   const fmt=n=>fmtCur(n,cur);
+  const t=window._T;
 
   let monthlyPay,totalPay,totalInt;
   if(type==='bullet'){
@@ -581,17 +1019,17 @@ function calcLoan(){
 
   const res=$('loan-result');res.className='res-box show';
   $('loan-summary').innerHTML=`
-    <div class="res-row"><span class="res-label">Monthly Payment</span><span class="res-val big">${fmt(monthlyPay)}</span></div>
-    <div class="res-row"><span class="res-label">Total Payment</span><span class="res-val">${fmt(totalPay)}</span></div>
-    <div class="res-row"><span class="res-label">Total Interest</span><span class="res-val">${fmt(totalInt)}</span></div>
-    <div class="res-row"><span class="res-label">Principal</span><span class="res-val">${fmt(amt)}</span></div>
-    <div class="res-row"><span class="res-label">Loan Period</span><span class="res-val">${months} months</span></div>`;
+    <div class="res-row"><span class="res-label">${t.loan_result_monthly}</span><span class="res-val big">${fmt(monthlyPay)}</span></div>
+    <div class="res-row"><span class="res-label">${t.loan_result_total_payment}</span><span class="res-val">${fmt(totalPay)}</span></div>
+    <div class="res-row"><span class="res-label">${t.loan_result_total_interest}</span><span class="res-val">${fmt(totalInt)}</span></div>
+    <div class="res-row"><span class="res-label">${t.loan_result_principal}</span><span class="res-val">${fmt(amt)}</span></div>
+    <div class="res-row"><span class="res-label">${t.loan_result_period}</span><span class="res-val">${months} ${t.loan_unit_months}</span></div>`;
 
   // 파이 차트
   drawPie($('loan-pie'),[amt,totalInt],['#28c4a0','#6c5ce8']);
   $('loan-legend').innerHTML=`
-    <div class="pie-legend-item"><span class="pie-dot" style="background:#28c4a0"></span><span>Principal: ${fmt(amt)}</span></div>
-    <div class="pie-legend-item"><span class="pie-dot" style="background:#6c5ce8"></span><span>Interest: ${fmt(totalInt)}</span></div>`;
+    <div class="pie-legend-item"><span class="pie-dot" style="background:#28c4a0"></span><span>${t.loan_result_principal}: ${fmt(amt)}</span></div>
+    <div class="pie-legend-item"><span class="pie-dot" style="background:#6c5ce8"></span><span>${t.loan_legend_interest}: ${fmt(totalInt)}</span></div>`;
 
   // 상환 일정
   buildAmort(amt,r,months,type,monthlyPay,cur);
@@ -617,7 +1055,8 @@ function buildAmort(amt,r,months,type,monthlyPay,cur){
 }
 
 function downloadAmort(){
-  const rows=[['#','Payment','Principal','Interest','Balance']];
+  const t=window._T;
+  const rows=[[t.amort_col_num,t.amort_col_payment,t.amort_col_principal,t.amort_col_interest,t.amort_col_balance]];
   document.querySelectorAll('#amort-body tr').forEach((tr,i)=>{
     rows.push([...tr.querySelectorAll('td')].map(td=>td.textContent));
   });
@@ -640,58 +1079,25 @@ function drawPie(canvas,vals,colors){
   // 도넛 구멍
   ctx.beginPath();ctx.arc(cx,cy,r*.55,0,Math.PI*2);ctx.fillStyle='var(--s1)';ctx.fill();
 }
-const I18N = {
-  en:{ page_title:'pomiai Business Tools', tab_inv:'🧾 Invoice', tab_tax:'🧮 Tax Calc', tab_loan:'🏦 Loan Calc',
-    inv_title:'Invoice Generator', tax_title:'Tax Calculator', loan_title:'Loan Calculator', footer_by:'Product by' },
-  ko:{ page_title:'pomiai 비즈니스 도구', tab_inv:'🧾 인보이스', tab_tax:'🧮 세금계산', tab_loan:'🏦 대출계산',
-    inv_title:'인보이스 생성기', tax_title:'세금 계산기', loan_title:'대출 계산기', footer_by:'Product by' },
-  ja:{ page_title:'pomiai ビジネスツール', tab_inv:'🧾 請求書', tab_tax:'🧮 税金計算', tab_loan:'🏦 ローン計算',
-    inv_title:'請求書ジェネレーター', tax_title:'税金計算機', loan_title:'ローン計算機', footer_by:'Product by' },
-  zh_CN:{ page_title:'pomiai 商务工具', tab_inv:'🧾 发票', tab_tax:'🧮 税金计算', tab_loan:'🏦 贷款计算',
-    inv_title:'发票生成器', tax_title:'税金计算器', loan_title:'贷款计算器', footer_by:'Product by' },
-  zh_TW:{ page_title:'pomiai 商務工具', tab_inv:'🧾 發票', tab_tax:'🧮 稅金計算', tab_loan:'🏦 貸款計算',
-    inv_title:'發票產生器', tax_title:'稅金計算機', loan_title:'貸款計算機', footer_by:'Product by' },
-  de_DE:{ page_title:'pomiai Business-Tools', tab_inv:'🧾 Rechnung', tab_tax:'🧮 Steuerrechner', tab_loan:'🏦 Kreditrechner',
-    inv_title:'Rechnungsgenerator', tax_title:'Steuerrechner', loan_title:'Kreditrechner', footer_by:'Product by' },
-  fr_FR:{ page_title:'pomiai Outils professionnels', tab_inv:'🧾 Facture', tab_tax:'🧮 Calcul de taxe', tab_loan:'🏦 Calcul de prêt',
-    inv_title:'Générateur de factures', tax_title:'Calculateur de taxes', loan_title:'Calculateur de prêt', footer_by:'Product by' },
-  nl_NL:{ page_title:'pomiai Zakelijke tools', tab_inv:'🧾 Factuur', tab_tax:'🧮 Belastingberekening', tab_loan:'🏦 Leningberekening',
-    inv_title:'Factuurgenerator', tax_title:'Belastingcalculator', loan_title:'Leningcalculator', footer_by:'Product by' },
-  sv_SE:{ page_title:'pomiai Affärsverktyg', tab_inv:'🧾 Faktura', tab_tax:'🧮 Skatteberäkning', tab_loan:'🏦 Lånberäkning',
-    inv_title:'Fakturagenerator', tax_title:'Skattekalkylator', loan_title:'Lånkalkylator', footer_by:'Product by' },
-  nn_NO:{ page_title:'pomiai Forretningsverktøy', tab_inv:'🧾 Faktura', tab_tax:'🧮 Skatteberekning', tab_loan:'🏦 Lånberekning',
-    inv_title:'Fakturagenerator', tax_title:'Skattekalkulator', loan_title:'Lånkalkulator', footer_by:'Product by' },
-  da_DK:{ page_title:'pomiai Erhvervsværktøjer', tab_inv:'🧾 Faktura', tab_tax:'🧮 Skatteberegning', tab_loan:'🏦 Lånberegning',
-    inv_title:'Fakturagenerator', tax_title:'Skatteberegner', loan_title:'Lånberegner', footer_by:'Product by' },
-  ar:{ page_title:'أدوات pomiai للأعمال', tab_inv:'🧾 الفاتورة', tab_tax:'🧮 حساب الضريبة', tab_loan:'🏦 حساب القرض',
-    inv_title:'منشئ الفواتير', tax_title:'حاسبة الضرائب', loan_title:'حاسبة القروض', footer_by:'Product by' }
-};
-(function(){
-  const params = new URLSearchParams(location.search);
-  const urlLang = params.get('lang');
-  const browserLang = (navigator.language||'en').slice(0,2);
-  const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'en');
-  window._LANG=LANG; window._T=I18N[LANG];
-  document.getElementById('html-root').lang = LANG;
-  document.getElementById('html-root').setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
-})();
-function applyI18n(){
-  const t = window._T;
-  document.querySelectorAll('[data-i18n]').forEach(el=>{ if(typeof t[el.dataset.i18n]==='string') el.textContent = t[el.dataset.i18n]; });
-  document.getElementById('page-title').textContent = t.page_title;
-  document.title = t.page_title;
+
+/* 언어 전환 시 동적으로 재구성해야 하는 UI 일괄 갱신 */
+function refreshDynamicUI(){
+  buildCurrencySelect('inv-currency', CUR_LIST_INV, 'USD');
+  buildCurrencySelect('tax-cur', CUR_LIST_TAX, 'KRW');
+  buildCurrencySelect('loan-cur', CUR_LIST_LOAN, 'KRW');
+  buildTaxPresetOptions();
+  buildVatRefs();
+  renderItems();
+  calcTax();
+  calcLoan();
 }
+
+/* ── 초기화 ── */
+buildTaxPresetOptions();
+buildCurrencySelect('tax-cur', CUR_LIST_TAX, 'KRW');
+buildVatRefs();
+calcTax();
 applyI18n();
-document.querySelectorAll('#lang-switch button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const lang = btn.dataset.lang;
-    window._LANG = lang; window._T = I18N[lang];
-    document.getElementById('html-root').lang = lang;
-    document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-    applyI18n();
-    try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
-  });
-});
 </script>
 </body>
 </html>

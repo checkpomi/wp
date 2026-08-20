@@ -65,6 +65,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 .htab{padding:8px 12px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-radius:8px;transition:.15s;white-space:nowrap;flex-shrink:0}
 .htab:hover{color:var(--tx2);background:var(--s3)}
 .htab.on{color:var(--ac2);background:var(--ac3)}
+#lang-switch{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:10px;font-weight:700;padding:5px 6px;border-radius:7px;cursor:pointer;flex-shrink:0;margin-left:auto;max-width:120px}
 #app{max-width:900px;margin:0 auto;padding:24px 16px 80px}
 .sec{display:none}.sec.on{display:block;animation:fi .2s ease}
 @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -131,6 +132,20 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
     <div class="htab"     onclick="goTab('tz')"    data-i18n-html="tab_tz"></div>
     <div class="htab"     onclick="goTab('lorem')" data-i18n-html="tab_lorem"></div>
   </div>
+  <select id="lang-switch">
+    <option value="ko">🇰🇷 한국어</option>
+    <option value="en">🇺🇸 English</option>
+    <option value="ja">🇯🇵 日本語</option>
+    <option value="zh_CN">🇨🇳 中文(简体)</option>
+    <option value="zh_TW">🇹🇼 中文(繁體)</option>
+    <option value="de_DE">🇩🇪 Deutsch</option>
+    <option value="fr_FR">🇫🇷 Français</option>
+    <option value="nl_NL">🇳🇱 Nederlands</option>
+    <option value="sv_SE">🇸🇪 Svenska</option>
+    <option value="nn_NO">🇳🇴 Norsk</option>
+    <option value="da_DK">🇩🇰 Dansk</option>
+    <option value="ar">🇸🇦 العربية</option>
+  </select>
 </div>
 <div id="app">
 
@@ -753,6 +768,20 @@ function applyI18n(){
   document.title = t.page_title;
 }
 applyI18n();
+(function(){
+  const sel = document.getElementById('lang-switch');
+  if (sel) {
+    sel.value = window._LANG;
+    sel.addEventListener('change', ()=>{
+      const lang = sel.value;
+      window._LANG = lang; window._T = I18N[lang];
+      document.getElementById('html-root').lang = lang;
+      document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      applyI18n();
+      try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
+    });
+  }
+})();
 
 let toastTid;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTid);toastTid=setTimeout(()=>t.classList.remove('show'),2400);}

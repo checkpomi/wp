@@ -98,6 +98,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
   #app{padding:16px 12px 60px}
 }
 .langbtn{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer}
+#lang-switch{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 6px;border-radius:7px;cursor:pointer;max-width:120px}
 .pomiai-brand-footer{max-width:640px;margin:16px auto 4px;padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .pomiai-brand-footer a{font-size:11px;font-weight:700;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bd2);margin-left:6px}
 </style>
@@ -111,11 +112,20 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
     <div class="htab"     onclick="goTab('cal')" data-i18n="tab_cal">🔥 Calories</div>
     <div class="htab"     onclick="goTab('age')" data-i18n="tab_age">🎂 Age</div>
   </div>
-  <div id="lang-switch" style="margin-left:auto;display:flex;gap:4px">
-    <button data-lang="ko" class="langbtn">한</button>
-    <button data-lang="en" class="langbtn">EN</button>
-    <button data-lang="ja" class="langbtn">日</button>
-  </div>
+  <select id="lang-switch" style="margin-left:auto">
+    <option value="ko">🇰🇷 한국어</option>
+    <option value="en">🇺🇸 English</option>
+    <option value="ja">🇯🇵 日本語</option>
+    <option value="zh_CN">🇨🇳 中文(简体)</option>
+    <option value="zh_TW">🇹🇼 中文(繁體)</option>
+    <option value="de_DE">🇩🇪 Deutsch</option>
+    <option value="fr_FR">🇫🇷 Français</option>
+    <option value="nl_NL">🇳🇱 Nederlands</option>
+    <option value="sv_SE">🇸🇪 Svenska</option>
+    <option value="nn_NO">🇳🇴 Norsk</option>
+    <option value="da_DK">🇩🇰 Dansk</option>
+    <option value="ar">🇸🇦 العربية</option>
+  </select>
 </div>
 <div id="app">
 
@@ -210,7 +220,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 <!-- ══ AGE ══ -->
 <div class="sec" id="tab-age">
   <div class="sec-title" data-i18n="age_title">Age Calculator</div>
-  <div class="sec-sub">Exact age · Korean age (만/세는 나이) · next birthday · zodiac · birthstone</div>
+  <div class="sec-sub" data-i18n="age_sub">Exact age · Korean age · next birthday · zodiac · birthstone</div>
   <div class="card">
     <div class="g2" style="margin-bottom:14px">
       <div><span class="fl">Date of Birth</span><input class="fi" id="age-dob" type="date" onchange="calcAge()"></div>
@@ -272,13 +282,14 @@ function calcBmi(){
   const hm=h/100;const bmi=w/(hm*hm);
   const age=parseInt($('bmi-age').value)||30;
   const bmiRound=Math.round(bmi*10)/10;
+  const t=window._T;
   let status,color;
-  if(bmi<18.5){status='Underweight';color='var(--te2)';}
-  else if(bmi<25){status='Normal weight';color='var(--ac2)';}
-  else if(bmi<30){status='Overweight';color='var(--go2)';}
-  else if(bmi<35){status='Obese Class I';color='var(--or)';}
-  else if(bmi<40){status='Obese Class II';color='var(--re2)';}
-  else{status='Obese Class III';color='#ff6060';}
+  if(bmi<18.5){status=t.bmi_status_underweight;color='var(--te2)';}
+  else if(bmi<25){status=t.bmi_status_normal;color='var(--ac2)';}
+  else if(bmi<30){status=t.bmi_status_overweight;color='var(--go2)';}
+  else if(bmi<35){status=t.bmi_status_obese1;color='var(--or)';}
+  else if(bmi<40){status=t.bmi_status_obese2;color='var(--re2)';}
+  else{status=t.bmi_status_obese3;color='#ff6060';}
   $('bmi-val').textContent=bmiRound;$('bmi-val').style.color=color;
   $('bmi-status').textContent=status;$('bmi-status').style.color=color;
   // 게이지 포인터 (BMI 10~45 범위)
@@ -289,10 +300,10 @@ function calcBmi(){
   const bfp=bmiSex==='M'?(1.2*bmi+0.23*age-16.2):(1.2*bmi+0.23*age-5.4);
   $('bmi-result').className='res-box show';
   $('bmi-details').innerHTML=`
-    <div class="res-row"><span class="res-label">Ideal weight range</span><span class="res-val">${ideal_low.toFixed(1)} – ${ideal_high.toFixed(1)} kg</span></div>
-    <div class="res-row"><span class="res-label">Body Fat % (est.)</span><span class="res-val">${Math.max(0,bfp).toFixed(1)}%</span></div>
-    <div class="res-row"><span class="res-label">Weight to lose for Normal</span><span class="res-val">${bmi>25?(w-ideal_high).toFixed(1)+' kg':'✓ Already normal'}</span></div>
-    <div class="res-row"><span class="res-label">BMI Category</span><span class="res-val" style="color:${color}">${status}</span></div>`;
+    <div class="res-row"><span class="res-label">${t.bmi_result_ideal_range}</span><span class="res-val">${ideal_low.toFixed(1)} – ${ideal_high.toFixed(1)} kg</span></div>
+    <div class="res-row"><span class="res-label">${t.bmi_result_body_fat}</span><span class="res-val">${Math.max(0,bfp).toFixed(1)}%</span></div>
+    <div class="res-row"><span class="res-label">${t.bmi_result_weight_to_lose}</span><span class="res-val">${bmi>25?(w-ideal_high).toFixed(1)+' kg':t.bmi_result_already_normal}</span></div>
+    <div class="res-row"><span class="res-label">${t.bmi_result_category}</span><span class="res-val" style="color:${color}">${status}</span></div>`;
 }
 setUnit('metric');setSex('M');
 
@@ -318,16 +329,17 @@ function calcCal(){
   const protein=Math.round(target*0.30/4);
   const carbs=Math.round(target*0.40/4);
   const fat=Math.round(target*0.30/9);
+  const t=window._T;
   $('cal-result').className='res-box show';
   $('cal-summary').innerHTML=`
-    <div class="res-row"><span class="res-label">BMR (Basal Metabolic Rate)</span><span class="res-val">${Math.round(bmr)} kcal</span></div>
-    <div class="res-row"><span class="res-label">TDEE (Total Daily Energy)</span><span class="res-val">${tdee} kcal</span></div>
-    <div class="res-row"><span class="res-label">Daily Target</span><span class="res-val" style="color:var(--go2);font-size:20px">${target} kcal</span></div>`;
+    <div class="res-row"><span class="res-label">${t.cal_result_bmr}</span><span class="res-val">${Math.round(bmr)} kcal</span></div>
+    <div class="res-row"><span class="res-label">${t.cal_result_tdee}</span><span class="res-val">${tdee} kcal</span></div>
+    <div class="res-row"><span class="res-label">${t.cal_result_daily_target}</span><span class="res-val" style="color:var(--go2);font-size:20px">${target} kcal</span></div>`;
   $('macro-bars').innerHTML=`
-    <div style="font-size:11px;color:var(--tx3);margin-bottom:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase">Recommended Macros</div>
-    ${macroBar('Protein','#4eddb8',protein,'g',protein*4,target)}
-    ${macroBar('Carbohydrates','#9b8ff5',carbs,'g',carbs*4,target)}
-    ${macroBar('Fat','#e8b84b',fat,'g',fat*9,target)}`;
+    <div style="font-size:11px;color:var(--tx3);margin-bottom:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase">${t.cal_result_macros_title}</div>
+    ${macroBar(t.cal_macro_protein,'#4eddb8',protein,'g',protein*4,target)}
+    ${macroBar(t.cal_macro_carbs,'#9b8ff5',carbs,'g',carbs*4,target)}
+    ${macroBar(t.cal_macro_fat,'#e8b84b',fat,'g',fat*9,target)}`;
 }
 function macroBar(name,color,g,unit,kcal,total){
   const pct=total?Math.round(kcal/total*100):0;
@@ -343,6 +355,7 @@ const ZODIAC_W_DATES=[20,19,20,20,21,21,22,23,23,23,22,22];
 const ZODIAC_CH=['Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Pig'];
 const BIRTHSTONE=['Garnet','Amethyst','Aquamarine','Diamond','Emerald','Pearl','Ruby','Peridot','Sapphire','Opal','Topaz','Turquoise'];
 const BIRTHSTONE_KR=['가넷','자수정','아쿠아마린','다이아몬드','에메랄드','진주','루비','페리도트','사파이어','오팔','토파즈','터키석'];
+const LOCALE_MAP={ko:'ko-KR',en:'en-US',ja:'ja-JP',zh_CN:'zh-CN',zh_TW:'zh-TW',de_DE:'de-DE',fr_FR:'fr-FR',nl_NL:'nl-NL',sv_SE:'sv-SE',nn_NO:'nn-NO',da_DK:'da-DK',ar:'ar'};
 (function(){
   const t=new Date();
   $('age-asof').value=t.toISOString().slice(0,10);
@@ -372,21 +385,24 @@ function calcAge(){
   // 중국 띠
   const zodiacCh=ZODIAC_CH[((dob.getFullYear()-4)%12+12)%12];
   const bs=BIRTHSTONE[dob.getMonth()];
+  const t=window._T;
+  const locale=LOCALE_MAP[window._LANG]||'en-US';
+  const chSuffix=t.age_result_zodiac_chinese_suffix||'';
   $('age-main').textContent=years;
-  $('age-unit-txt').textContent='years, '+months+' months, '+days+' days old';
+  $('age-unit-txt').textContent=t.age_unit_pattern.replace('{y}',years).replace('{m}',months).replace('{d}',days);
   $('age-grid').innerHTML=`
-    <div class="age-item"><div class="age-item-val">${koreanAge}</div><div class="age-item-lbl">Korean Age (세는)</div></div>
-    <div class="age-item"><div class="age-item-val">${yearAge}</div><div class="age-item-lbl">Year Age (연 나이)</div></div>
-    <div class="age-item"><div class="age-item-val">${daysToB}</div><div class="age-item-lbl">Days to Birthday</div></div>
-    <div class="age-item"><div class="age-item-val">${totalDays.toLocaleString()}</div><div class="age-item-lbl">Total Days Lived</div></div>
-    <div class="age-item"><div class="age-item-val">${(totalDays*24).toLocaleString()}</div><div class="age-item-lbl">Hours Lived</div></div>
-    <div class="age-item"><div class="age-item-val">${Math.floor(totalDays/7).toLocaleString()}</div><div class="age-item-lbl">Weeks Lived</div></div>`;
+    <div class="age-item"><div class="age-item-val">${koreanAge}</div><div class="age-item-lbl">${t.age_result_korean}</div></div>
+    <div class="age-item"><div class="age-item-val">${yearAge}</div><div class="age-item-lbl">${t.age_result_year_age}</div></div>
+    <div class="age-item"><div class="age-item-val">${daysToB}</div><div class="age-item-lbl">${t.age_result_days_to_bday}</div></div>
+    <div class="age-item"><div class="age-item-val">${totalDays.toLocaleString(locale)}</div><div class="age-item-lbl">${t.age_result_total_days}</div></div>
+    <div class="age-item"><div class="age-item-val">${(totalDays*24).toLocaleString(locale)}</div><div class="age-item-lbl">${t.age_result_hours}</div></div>
+    <div class="age-item"><div class="age-item-val">${Math.floor(totalDays/7).toLocaleString(locale)}</div><div class="age-item-lbl">${t.age_result_weeks}</div></div>`;
   $('age-extras').innerHTML=`
-    <div class="res-row"><span class="res-label">♈ Western Zodiac</span><span class="res-val">${zodiacW}</span></div>
-    <div class="res-row"><span class="res-label">🐉 Chinese Zodiac</span><span class="res-val">${zodiacCh}띠</span></div>
-    <div class="res-row"><span class="res-label">💎 Birthstone</span><span class="res-val">${bs} (${BIRTHSTONE_KR[dob.getMonth()]})</span></div>
-    <div class="res-row"><span class="res-label">🎂 Next Birthday</span><span class="res-val">${nextBday.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</span></div>
-    <div class="res-row"><span class="res-label">📅 Day of Week Born</span><span class="res-val">${dob.toLocaleDateString('en-US',{weekday:'long'})}</span></div>`;
+    <div class="res-row"><span class="res-label">${t.age_result_zodiac_western}</span><span class="res-val">${zodiacW}</span></div>
+    <div class="res-row"><span class="res-label">${t.age_result_zodiac_chinese}</span><span class="res-val">${zodiacCh}${chSuffix}</span></div>
+    <div class="res-row"><span class="res-label">${t.age_result_birthstone}</span><span class="res-val">${bs} (${BIRTHSTONE_KR[dob.getMonth()]})</span></div>
+    <div class="res-row"><span class="res-label">${t.age_result_next_birthday}</span><span class="res-val">${nextBday.toLocaleDateString(locale,{month:'long',day:'numeric',year:'numeric'})}</span></div>
+    <div class="res-row"><span class="res-label">${t.age_result_day_of_week}</span><span class="res-val">${dob.toLocaleDateString(locale,{weekday:'long'})}</span></div>`;
   $('age-result-wrap').style.display='block';
 }
 </script>
@@ -395,51 +411,195 @@ const I18N = {
   en:{ page_title:'pomiai Health Tools', tab_bmi:'💪 BMI', tab_cal:'🔥 Calories', tab_age:'🎂 Age',
     bmi_title:'BMI Calculator', bmi_sub:'Body Mass Index · Ideal weight range · Weight status — supports metric & imperial',
     cal_title:'Calorie & Nutrition Calculator', cal_sub:'BMR · TDEE · daily calorie target · macro breakdown — Mifflin–St Jeor formula',
-    age_title:'Age Calculator', footer_by:'Product by' },
+    age_title:'Age Calculator', footer_by:'Product by',
+    bmi_status_underweight:'Underweight', bmi_status_normal:'Normal weight', bmi_status_overweight:'Overweight',
+    bmi_status_obese1:'Obese Class I', bmi_status_obese2:'Obese Class II', bmi_status_obese3:'Obese Class III',
+    bmi_result_ideal_range:'Ideal weight range', bmi_result_body_fat:'Body Fat % (est.)', bmi_result_weight_to_lose:'Weight to lose for Normal',
+    bmi_result_already_normal:'✓ Already normal', bmi_result_category:'BMI Category',
+    cal_result_bmr:'BMR (Basal Metabolic Rate)', cal_result_tdee:'TDEE (Total Daily Energy)', cal_result_daily_target:'Daily Target',
+    cal_result_macros_title:'Recommended Macros', cal_macro_protein:'Protein', cal_macro_carbs:'Carbohydrates', cal_macro_fat:'Fat',
+    age_sub:'Exact age · Korean age · next birthday · zodiac · birthstone',
+    age_result_korean:'Korean Age', age_result_year_age:'Korean Year Age', age_result_days_to_bday:'Days to Birthday',
+    age_result_total_days:'Total Days Lived', age_result_hours:'Hours Lived', age_result_weeks:'Weeks Lived',
+    age_result_zodiac_western:'♈ Western Zodiac', age_result_zodiac_chinese:'🐉 Chinese Zodiac', age_result_zodiac_chinese_suffix:'',
+    age_result_birthstone:'💎 Birthstone', age_result_next_birthday:'🎂 Next Birthday', age_result_day_of_week:'📅 Day of Week Born',
+    age_unit_pattern:'{y} years, {m} months, {d} days old' },
   ko:{ page_title:'pomiai 건강 도구', tab_bmi:'💪 BMI', tab_cal:'🔥 칼로리', tab_age:'🎂 나이',
     bmi_title:'BMI 계산기', bmi_sub:'체질량지수 · 표준 체중 범위 · 체중 상태 — 미터법/야드파운드법 지원',
     cal_title:'칼로리 & 영양 계산기', cal_sub:'기초대사량(BMR) · 활동대사량(TDEE) · 일일 목표 칼로리 · 영양소 비율 — Mifflin–St Jeor 공식',
-    age_title:'나이 계산기', footer_by:'Product by' },
+    age_title:'나이 계산기', footer_by:'Product by',
+    bmi_status_underweight:'저체중', bmi_status_normal:'정상 체중', bmi_status_overweight:'과체중',
+    bmi_status_obese1:'비만 1단계', bmi_status_obese2:'비만 2단계', bmi_status_obese3:'고도비만',
+    bmi_result_ideal_range:'표준 체중 범위', bmi_result_body_fat:'체지방률 (추정)', bmi_result_weight_to_lose:'정상 체중까지 감량 필요량',
+    bmi_result_already_normal:'✓ 이미 정상 범위', bmi_result_category:'BMI 분류',
+    cal_result_bmr:'기초대사량 (BMR)', cal_result_tdee:'활동대사량 (TDEE)', cal_result_daily_target:'일일 목표 칼로리',
+    cal_result_macros_title:'권장 영양소 비율', cal_macro_protein:'단백질', cal_macro_carbs:'탄수화물', cal_macro_fat:'지방',
+    age_sub:'만 나이 · 세는/연 나이 · 다음 생일 · 별자리 · 탄생석',
+    age_result_korean:'세는 나이', age_result_year_age:'연 나이', age_result_days_to_bday:'생일까지 남은 일수',
+    age_result_total_days:'살아온 총 일수', age_result_hours:'살아온 시간', age_result_weeks:'살아온 주수',
+    age_result_zodiac_western:'♈ 서양 별자리', age_result_zodiac_chinese:'🐉 띠', age_result_zodiac_chinese_suffix:'띠',
+    age_result_birthstone:'💎 탄생석', age_result_next_birthday:'🎂 다음 생일', age_result_day_of_week:'📅 태어난 요일',
+    age_unit_pattern:'{y}년 {m}개월 {d}일' },
   ja:{ page_title:'pomiai 健康ツール', tab_bmi:'💪 BMI', tab_cal:'🔥 カロリー', tab_age:'🎂 年齢',
     bmi_title:'BMI計算機', bmi_sub:'体格指数・標準体重範囲・体重ステータス — メートル法/ヤードポンド法対応',
     cal_title:'カロリー・栄養計算機', cal_sub:'基礎代謝量(BMR)・総消費カロリー(TDEE)・1日の目標カロリー・栄養素バランス — Mifflin–St Jeor式',
-    age_title:'年齢計算機', footer_by:'Product by' },
+    age_title:'年齢計算機', footer_by:'Product by',
+    bmi_status_underweight:'低体重', bmi_status_normal:'普通体重', bmi_status_overweight:'肥満(前段階)',
+    bmi_status_obese1:'肥満(1度)', bmi_status_obese2:'肥満(2度)', bmi_status_obese3:'肥満(3度)',
+    bmi_result_ideal_range:'標準体重の範囲', bmi_result_body_fat:'体脂肪率(推定)', bmi_result_weight_to_lose:'標準体重までの減量目安',
+    bmi_result_already_normal:'✓ すでに標準範囲', bmi_result_category:'BMI分類',
+    cal_result_bmr:'基礎代謝量(BMR)', cal_result_tdee:'総消費カロリー(TDEE)', cal_result_daily_target:'1日の目標カロリー',
+    cal_result_macros_title:'推奨栄養素バランス', cal_macro_protein:'タンパク質', cal_macro_carbs:'炭水化物', cal_macro_fat:'脂質',
+    age_sub:'満年齢・韓国式数え年・次の誕生日・星座・誕生石',
+    age_result_korean:'韓国式数え年', age_result_year_age:'韓国式年齢(暦年齢)', age_result_days_to_bday:'誕生日までの日数',
+    age_result_total_days:'生きた総日数', age_result_hours:'生きた時間数', age_result_weeks:'生きた週数',
+    age_result_zodiac_western:'♈ 星座', age_result_zodiac_chinese:'🐉 干支', age_result_zodiac_chinese_suffix:'',
+    age_result_birthstone:'💎 誕生石', age_result_next_birthday:'🎂 次の誕生日', age_result_day_of_week:'📅 生まれた曜日',
+    age_unit_pattern:'{y}歳{m}ヶ月{d}日' },
   zh_CN:{ page_title:'pomiai 健康工具', tab_bmi:'💪 BMI', tab_cal:'🔥 卡路里', tab_age:'🎂 年龄',
     bmi_title:'BMI 计算器', bmi_sub:'体质指数 · 理想体重范围 · 体重状态 — 支持公制与英制',
     cal_title:'卡路里与营养计算器', cal_sub:'基础代谢率(BMR) · 每日总消耗(TDEE) · 每日目标热量 · 营养素比例 — Mifflin–St Jeor 公式',
-    age_title:'年龄计算器', footer_by:'Product by' },
+    age_title:'年龄计算器', footer_by:'Product by',
+    bmi_status_underweight:'偏瘦', bmi_status_normal:'正常体重', bmi_status_overweight:'超重',
+    bmi_status_obese1:'肥胖 I 级', bmi_status_obese2:'肥胖 II 级', bmi_status_obese3:'肥胖 III 级',
+    bmi_result_ideal_range:'理想体重范围', bmi_result_body_fat:'体脂率(估算)', bmi_result_weight_to_lose:'恢复正常需减重',
+    bmi_result_already_normal:'✓ 已在正常范围', bmi_result_category:'BMI 分类',
+    cal_result_bmr:'基础代谢率(BMR)', cal_result_tdee:'每日总消耗(TDEE)', cal_result_daily_target:'每日目标热量',
+    cal_result_macros_title:'推荐营养素比例', cal_macro_protein:'蛋白质', cal_macro_carbs:'碳水化合物', cal_macro_fat:'脂肪',
+    age_sub:'实岁 · 韩国虚岁 · 下次生日 · 星座 · 诞生石',
+    age_result_korean:'韩国虚岁', age_result_year_age:'韩国年龄(按历年计算)', age_result_days_to_bday:'距生日天数',
+    age_result_total_days:'已活总天数', age_result_hours:'已活总小时数', age_result_weeks:'已活总周数',
+    age_result_zodiac_western:'♈ 星座', age_result_zodiac_chinese:'🐉 生肖', age_result_zodiac_chinese_suffix:'',
+    age_result_birthstone:'💎 诞生石', age_result_next_birthday:'🎂 下次生日', age_result_day_of_week:'📅 出生星期',
+    age_unit_pattern:'{y}岁{m}个月{d}天' },
   zh_TW:{ page_title:'pomiai 健康工具', tab_bmi:'💪 BMI', tab_cal:'🔥 卡路里', tab_age:'🎂 年齡',
     bmi_title:'BMI 計算機', bmi_sub:'身體質量指數 · 理想體重範圍 · 體重狀態 — 支援公制與英制',
     cal_title:'卡路里與營養計算機', cal_sub:'基礎代謝率(BMR) · 每日總消耗量(TDEE) · 每日目標熱量 · 營養素比例 — Mifflin–St Jeor 公式',
-    age_title:'年齡計算機', footer_by:'Product by' },
+    age_title:'年齡計算機', footer_by:'Product by',
+    bmi_status_underweight:'過輕', bmi_status_normal:'正常體重', bmi_status_overweight:'過重',
+    bmi_status_obese1:'肥胖 I 級', bmi_status_obese2:'肥胖 II 級', bmi_status_obese3:'肥胖 III 級',
+    bmi_result_ideal_range:'理想體重範圍', bmi_result_body_fat:'體脂率(估算)', bmi_result_weight_to_lose:'恢復正常需減重',
+    bmi_result_already_normal:'✓ 已在正常範圍', bmi_result_category:'BMI 分類',
+    cal_result_bmr:'基礎代謝率(BMR)', cal_result_tdee:'每日總消耗量(TDEE)', cal_result_daily_target:'每日目標熱量',
+    cal_result_macros_title:'建議營養素比例', cal_macro_protein:'蛋白質', cal_macro_carbs:'碳水化合物', cal_macro_fat:'脂肪',
+    age_sub:'實歲 · 韓國虛歲 · 下次生日 · 星座 · 誕生石',
+    age_result_korean:'韓國虛歲', age_result_year_age:'韓國年齡(按曆年計算)', age_result_days_to_bday:'距生日天數',
+    age_result_total_days:'已活總天數', age_result_hours:'已活總小時數', age_result_weeks:'已活總週數',
+    age_result_zodiac_western:'♈ 星座', age_result_zodiac_chinese:'🐉 生肖', age_result_zodiac_chinese_suffix:'',
+    age_result_birthstone:'💎 誕生石', age_result_next_birthday:'🎂 下次生日', age_result_day_of_week:'📅 出生星期',
+    age_unit_pattern:'{y}歲{m}個月{d}天' },
   de_DE:{ page_title:'pomiai Gesundheitstools', tab_bmi:'💪 BMI', tab_cal:'🔥 Kalorien', tab_age:'🎂 Alter',
     bmi_title:'BMI-Rechner', bmi_sub:'Body-Mass-Index · idealer Gewichtsbereich · Gewichtsstatus — unterstützt metrisches und imperiales System',
     cal_title:'Kalorien- & Nährstoffrechner', cal_sub:'Grundumsatz (BMR) · Gesamtumsatz (TDEE) · tägliches Kalorienziel · Makronährstoffverteilung — Mifflin-St-Jeor-Formel',
-    age_title:'Altersrechner', footer_by:'Product by' },
+    age_title:'Altersrechner', footer_by:'Product by',
+    bmi_status_underweight:'Untergewicht', bmi_status_normal:'Normalgewicht', bmi_status_overweight:'Übergewicht',
+    bmi_status_obese1:'Adipositas Grad I', bmi_status_obese2:'Adipositas Grad II', bmi_status_obese3:'Adipositas Grad III',
+    bmi_result_ideal_range:'Idealer Gewichtsbereich', bmi_result_body_fat:'Körperfettanteil (geschätzt)', bmi_result_weight_to_lose:'Abzunehmen bis Normalgewicht',
+    bmi_result_already_normal:'✓ Bereits im Normalbereich', bmi_result_category:'BMI-Kategorie',
+    cal_result_bmr:'Grundumsatz (BMR)', cal_result_tdee:'Gesamtumsatz (TDEE)', cal_result_daily_target:'Tägliches Kalorienziel',
+    cal_result_macros_title:'Empfohlene Makronährstoffe', cal_macro_protein:'Eiweiß', cal_macro_carbs:'Kohlenhydrate', cal_macro_fat:'Fett',
+    age_sub:'Genaues Alter · koreanisches Alter · nächster Geburtstag · Sternzeichen · Geburtsstein',
+    age_result_korean:'Koreanisches Alter (traditionelle Zählweise)', age_result_year_age:'Koreanisches Kalenderjahr-Alter', age_result_days_to_bday:'Tage bis zum Geburtstag',
+    age_result_total_days:'Gelebte Tage insgesamt', age_result_hours:'Gelebte Stunden', age_result_weeks:'Gelebte Wochen',
+    age_result_zodiac_western:'♈ Sternzeichen', age_result_zodiac_chinese:'🐉 Chinesisches Tierkreiszeichen', age_result_zodiac_chinese_suffix:'',
+    age_result_birthstone:'💎 Geburtsstein', age_result_next_birthday:'🎂 Nächster Geburtstag', age_result_day_of_week:'📅 Geburtstag (Wochentag)',
+    age_unit_pattern:'{y} Jahre, {m} Monate, {d} Tage' },
   fr_FR:{ page_title:'pomiai Outils Santé', tab_bmi:'💪 BMI', tab_cal:'🔥 Calories', tab_age:'🎂 Âge',
     bmi_title:'Calculateur BMI', bmi_sub:'Indice de masse corporelle · fourchette de poids idéal · statut pondéral — compatible métrique et impérial',
     cal_title:'Calculateur de calories & nutrition', cal_sub:'Métabolisme de base (BMR) · dépense énergétique totale (TDEE) · objectif calorique quotidien · répartition des macronutriments — formule de Mifflin–St Jeor',
-    age_title:'Calculateur d\'âge', footer_by:'Product by' },
+    age_title:'Calculateur d\'âge', footer_by:'Product by',
+    bmi_status_underweight:'Insuffisance pondérale', bmi_status_normal:'Poids normal', bmi_status_overweight:'Surpoids',
+    bmi_status_obese1:'Obésité classe I', bmi_status_obese2:'Obésité classe II', bmi_status_obese3:'Obésité classe III',
+    bmi_result_ideal_range:'Fourchette de poids idéal', bmi_result_body_fat:'Taux de masse grasse (estimé)', bmi_result_weight_to_lose:'Poids à perdre pour un poids normal',
+    bmi_result_already_normal:'✓ Déjà dans la norme', bmi_result_category:'Catégorie IMC',
+    cal_result_bmr:'MB (Métabolisme de Base)', cal_result_tdee:'DTEE (Dépense Totale d\'Énergie)', cal_result_daily_target:'Objectif calorique quotidien',
+    cal_result_macros_title:'Macronutriments recommandés', cal_macro_protein:'Protéines', cal_macro_carbs:'Glucides', cal_macro_fat:'Lipides',
+    age_sub:'Âge exact · âge coréen · prochain anniversaire · signe astrologique · pierre de naissance',
+    age_result_korean:'Âge coréen (système traditionnel)', age_result_year_age:'Âge calendaire coréen', age_result_days_to_bday:'Jours avant l\'anniversaire',
+    age_result_total_days:'Total de jours vécus', age_result_hours:'Heures vécues', age_result_weeks:'Semaines vécues',
+    age_result_zodiac_western:'♈ Signe astrologique', age_result_zodiac_chinese:'🐉 Signe du zodiaque chinois', age_result_zodiac_chinese_suffix:'',
+    age_result_birthstone:'💎 Pierre de naissance', age_result_next_birthday:'🎂 Prochain anniversaire', age_result_day_of_week:'📅 Jour de naissance',
+    age_unit_pattern:'{y} ans, {m} mois, {d} jours' },
   nl_NL:{ page_title:'pomiai Gezondheidstools', tab_bmi:'💪 BMI', tab_cal:'🔥 Calorieën', tab_age:'🎂 Leeftijd',
     bmi_title:'BMI-calculator', bmi_sub:'Body mass index · ideaal gewichtsbereik · gewichtsstatus — ondersteunt metrisch en imperiaal',
     cal_title:'Calorie- & voedingscalculator', cal_sub:'Basaalmetabolisme (BMR) · totaal dagelijks energieverbruik (TDEE) · dagelijks caloriedoel · macronutriëntenverdeling — Mifflin-St Jeor-formule',
-    age_title:'Leeftijdscalculator', footer_by:'Product by' },
+    age_title:'Leeftijdscalculator', footer_by:'Product by',
+    bmi_status_underweight:'Ondergewicht', bmi_status_normal:'Normaal gewicht', bmi_status_overweight:'Overgewicht',
+    bmi_status_obese1:'Obesitas klasse I', bmi_status_obese2:'Obesitas klasse II', bmi_status_obese3:'Obesitas klasse III',
+    bmi_result_ideal_range:'Ideaal gewichtsbereik', bmi_result_body_fat:'Lichaamsvetpercentage (geschat)', bmi_result_weight_to_lose:'Af te vallen tot normaal gewicht',
+    bmi_result_already_normal:'✓ Al binnen normaal bereik', bmi_result_category:'BMI-categorie',
+    cal_result_bmr:'Basaalmetabolisme (BMR)', cal_result_tdee:'Totaal dagelijks energieverbruik (TDEE)', cal_result_daily_target:'Dagelijks caloriedoel',
+    cal_result_macros_title:'Aanbevolen macronutriënten', cal_macro_protein:'Eiwitten', cal_macro_carbs:'Koolhydraten', cal_macro_fat:'Vetten',
+    age_sub:'Exacte leeftijd · Koreaanse leeftijd · volgende verjaardag · sterrenbeeld · geboortesteen',
+    age_result_korean:'Koreaanse leeftijd (traditioneel telsysteem)', age_result_year_age:'Koreaanse kalenderleeftijd', age_result_days_to_bday:'Dagen tot verjaardag',
+    age_result_total_days:'Totaal geleefde dagen', age_result_hours:'Geleefde uren', age_result_weeks:'Geleefde weken',
+    age_result_zodiac_western:'♈ Sterrenbeeld', age_result_zodiac_chinese:'🐉 Chinees dierenriemteken', age_result_zodiac_chinese_suffix:'',
+    age_result_birthstone:'💎 Geboortesteen', age_result_next_birthday:'🎂 Volgende verjaardag', age_result_day_of_week:'📅 Geboortedag (weekdag)',
+    age_unit_pattern:'{y} jaar, {m} maanden, {d} dagen' },
   sv_SE:{ page_title:'pomiai Hälsoverktyg', tab_bmi:'💪 BMI', tab_cal:'🔥 Kalorier', tab_age:'🎂 Ålder',
     bmi_title:'BMI-kalkylator', bmi_sub:'Body mass index · idealt viktintervall · viktstatus — stöder metriskt och imperialt system',
     cal_title:'Kalori- & näringskalkylator', cal_sub:'Basalmetabolism (BMR) · totalt dagligt energibehov (TDEE) · dagligt kalorimål · makronäringsfördelning — Mifflin–St Jeor-formeln',
-    age_title:'Ålderskalkylator', footer_by:'Product by' },
+    age_title:'Ålderskalkylator', footer_by:'Product by',
+    bmi_status_underweight:'Undervikt', bmi_status_normal:'Normalvikt', bmi_status_overweight:'Övervikt',
+    bmi_status_obese1:'Fetma klass I', bmi_status_obese2:'Fetma klass II', bmi_status_obese3:'Fetma klass III',
+    bmi_result_ideal_range:'Idealt viktintervall', bmi_result_body_fat:'Kroppsfettandel (uppskattad)', bmi_result_weight_to_lose:'Att gå ner för normalvikt',
+    bmi_result_already_normal:'✓ Redan inom normalintervallet', bmi_result_category:'BMI-kategori',
+    cal_result_bmr:'Basalmetabolism (BMR)', cal_result_tdee:'Totalt dagligt energibehov (TDEE)', cal_result_daily_target:'Dagligt kalorimål',
+    cal_result_macros_title:'Rekommenderade makronäringsämnen', cal_macro_protein:'Protein', cal_macro_carbs:'Kolhydrater', cal_macro_fat:'Fett',
+    age_sub:'Exakt ålder · koreansk ålder · nästa födelsedag · stjärntecken · födelsesten',
+    age_result_korean:'Koreansk ålder (traditionellt räknesätt)', age_result_year_age:'Koreansk kalenderålder', age_result_days_to_bday:'Dagar till födelsedagen',
+    age_result_total_days:'Totalt levda dagar', age_result_hours:'Levda timmar', age_result_weeks:'Levda veckor',
+    age_result_zodiac_western:'♈ Stjärntecken', age_result_zodiac_chinese:'🐉 Kinesiskt stjärntecken', age_result_zodiac_chinese_suffix:'',
+    age_result_birthstone:'💎 Födelsesten', age_result_next_birthday:'🎂 Nästa födelsedag', age_result_day_of_week:'📅 Veckodag född',
+    age_unit_pattern:'{y} år, {m} månader, {d} dagar' },
   nn_NO:{ page_title:'pomiai Helseverktøy', tab_bmi:'💪 BMI', tab_cal:'🔥 Kaloriar', tab_age:'🎂 Alder',
     bmi_title:'BMI-kalkulator', bmi_sub:'Kroppsmasseindeks · ideelt vektintervall · vektstatus — støttar metrisk og imperialt system',
     cal_title:'Kalori- og næringskalkulator', cal_sub:'Basalstoffskifte (BMR) · totalt dagleg energibehov (TDEE) · dagleg kaloriemål · fordeling av næringsstoff — Mifflin–St Jeor-formelen',
-    age_title:'Alderskalkulator', footer_by:'Product by' },
+    age_title:'Alderskalkulator', footer_by:'Product by',
+    bmi_status_underweight:'Undervekt', bmi_status_normal:'Normalvekt', bmi_status_overweight:'Overvekt',
+    bmi_status_obese1:'Fedme klasse I', bmi_status_obese2:'Fedme klasse II', bmi_status_obese3:'Fedme klasse III',
+    bmi_result_ideal_range:'Ideelt vektintervall', bmi_result_body_fat:'Kroppsfettprosent (estimert)', bmi_result_weight_to_lose:'Å gå ned for normalvekt',
+    bmi_result_already_normal:'✓ Allereie innanfor normalen', bmi_result_category:'BMI-kategori',
+    cal_result_bmr:'Basalstoffskifte (BMR)', cal_result_tdee:'Totalt dagleg energibehov (TDEE)', cal_result_daily_target:'Dagleg kaloriemål',
+    cal_result_macros_title:'Anbefalte næringsstoff', cal_macro_protein:'Protein', cal_macro_carbs:'Karbohydrat', cal_macro_fat:'Feitt',
+    age_sub:'Nøyaktig alder · koreansk alder · neste bursdag · stjerneteikn · fødselsstein',
+    age_result_korean:'Koreansk alder (tradisjonell teljemåte)', age_result_year_age:'Koreansk kalenderalder', age_result_days_to_bday:'Dagar til bursdagen',
+    age_result_total_days:'Totalt levde dagar', age_result_hours:'Levde timar', age_result_weeks:'Levde veker',
+    age_result_zodiac_western:'♈ Stjerneteikn', age_result_zodiac_chinese:'🐉 Kinesisk dyrekrins', age_result_zodiac_chinese_suffix:'',
+    age_result_birthstone:'💎 Fødselsstein', age_result_next_birthday:'🎂 Neste bursdag', age_result_day_of_week:'📅 Vekedag fødd',
+    age_unit_pattern:'{y} år, {m} månader, {d} dagar' },
   da_DK:{ page_title:'pomiai Sundhedsværktøjer', tab_bmi:'💪 BMI', tab_cal:'🔥 Kalorier', tab_age:'🎂 Alder',
     bmi_title:'BMI-beregner', bmi_sub:'Body Mass Index · ideelt vægtinterval · vægtstatus — understøtter metrisk og imperial',
     cal_title:'Kalorie- & ernæringsberegner', cal_sub:'Basalstofskifte (BMR) · samlet dagligt energiforbrug (TDEE) · dagligt kaloriemål · makronæringsfordeling — Mifflin-St Jeor-formlen',
-    age_title:'Alderberegner', footer_by:'Product by' },
+    age_title:'Alderberegner', footer_by:'Product by',
+    bmi_status_underweight:'Undervægt', bmi_status_normal:'Normalvægt', bmi_status_overweight:'Overvægt',
+    bmi_status_obese1:'Fedme klasse I', bmi_status_obese2:'Fedme klasse II', bmi_status_obese3:'Fedme klasse III',
+    bmi_result_ideal_range:'Ideelt vægtinterval', bmi_result_body_fat:'Kropsfedt % (estimeret)', bmi_result_weight_to_lose:'At tabe for normalvægt',
+    bmi_result_already_normal:'✓ Allerede inden for normalen', bmi_result_category:'BMI-kategori',
+    cal_result_bmr:'Basalstofskifte (BMR)', cal_result_tdee:'Samlet dagligt energiforbrug (TDEE)', cal_result_daily_target:'Dagligt kaloriemål',
+    cal_result_macros_title:'Anbefalede makronæringsstoffer', cal_macro_protein:'Protein', cal_macro_carbs:'Kulhydrater', cal_macro_fat:'Fedt',
+    age_sub:'Præcis alder · koreansk alder · næste fødselsdag · stjernetegn · fødselssten',
+    age_result_korean:'Koreansk alder (traditionel optælling)', age_result_year_age:'Koreansk kalenderalder', age_result_days_to_bday:'Dage til fødselsdagen',
+    age_result_total_days:'Samlede levede dage', age_result_hours:'Levede timer', age_result_weeks:'Levede uger',
+    age_result_zodiac_western:'♈ Stjernetegn', age_result_zodiac_chinese:'🐉 Kinesisk stjernetegn', age_result_zodiac_chinese_suffix:'',
+    age_result_birthstone:'💎 Fødselssten', age_result_next_birthday:'🎂 Næste fødselsdag', age_result_day_of_week:'📅 Ugedag født',
+    age_unit_pattern:'{y} år, {m} måneder, {d} dage' },
   ar:{ page_title:'أدوات pomiai الصحية', tab_bmi:'💪 BMI', tab_cal:'🔥 السعرات الحرارية', tab_age:'🎂 العمر',
     bmi_title:'حاسبة مؤشر كتلة الجسم (BMI)', bmi_sub:'مؤشر كتلة الجسم · النطاق المثالي للوزن · حالة الوزن — يدعم النظام المتري والإمبراطوري',
     cal_title:'حاسبة السعرات الحرارية والتغذية', cal_sub:'معدل الأيض الأساسي (BMR) · إجمالي الطاقة اليومية (TDEE) · هدف السعرات اليومي · توزيع المغذيات الكبرى — معادلة Mifflin–St Jeor',
-    age_title:'حاسبة العمر', footer_by:'Product by' }
+    age_title:'حاسبة العمر', footer_by:'Product by',
+    bmi_status_underweight:'نقص الوزن', bmi_status_normal:'وزن طبيعي', bmi_status_overweight:'زيادة الوزن',
+    bmi_status_obese1:'سمنة الدرجة الأولى', bmi_status_obese2:'سمنة الدرجة الثانية', bmi_status_obese3:'سمنة الدرجة الثالثة',
+    bmi_result_ideal_range:'نطاق الوزن المثالي', bmi_result_body_fat:'نسبة الدهون (تقديري)', bmi_result_weight_to_lose:'الوزن المطلوب خسارته للوصول للطبيعي',
+    bmi_result_already_normal:'✓ ضمن النطاق الطبيعي بالفعل', bmi_result_category:'فئة مؤشر كتلة الجسم',
+    cal_result_bmr:'معدل الأيض الأساسي (BMR)', cal_result_tdee:'إجمالي الطاقة اليومية (TDEE)', cal_result_daily_target:'الهدف اليومي من السعرات',
+    cal_result_macros_title:'المغذيات الكبرى الموصى بها', cal_macro_protein:'بروتين', cal_macro_carbs:'كربوهيدرات', cal_macro_fat:'دهون',
+    age_sub:'العمر الدقيق · العمر الكوري · عيد الميلاد القادم · برج الحظ · حجر الميلاد',
+    age_result_korean:'العمر الكوري (النظام التقليدي)', age_result_year_age:'العمر الكوري بالسنة التقويمية', age_result_days_to_bday:'الأيام المتبقية لعيد الميلاد',
+    age_result_total_days:'إجمالي الأيام المُعاشة', age_result_hours:'الساعات المُعاشة', age_result_weeks:'الأسابيع المُعاشة',
+    age_result_zodiac_western:'♈ البرج الغربي', age_result_zodiac_chinese:'🐉 البرج الصيني', age_result_zodiac_chinese_suffix:'',
+    age_result_birthstone:'💎 حجر الميلاد', age_result_next_birthday:'🎂 عيد الميلاد القادم', age_result_day_of_week:'📅 يوم الأسبوع للميلاد',
+    age_unit_pattern:'{y} سنة، {m} شهر، {d} يوم' }
 };
 (function(){
   const params = new URLSearchParams(location.search);
@@ -455,17 +615,19 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ if(typeof t[el.dataset.i18n]==='string') el.textContent = t[el.dataset.i18n]; });
   document.getElementById('page-title').textContent = t.page_title;
   document.title = t.page_title;
+  const langSel0 = document.getElementById('lang-switch');
+  if (langSel0) langSel0.value = window._LANG;
 }
 applyI18n();
-document.querySelectorAll('#lang-switch button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const lang = btn.dataset.lang;
-    window._LANG = lang; window._T = I18N[lang];
-    document.getElementById('html-root').lang = lang;
-    document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-    applyI18n();
-    try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
-  });
+document.getElementById('lang-switch').addEventListener('change', (e)=>{
+  const lang = e.target.value;
+  if (!I18N[lang]) return;
+  window._LANG = lang; window._T = I18N[lang];
+  document.getElementById('html-root').lang = lang;
+  document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+  applyI18n();
+  calcBmi();calcCal();calcAge();
+  try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
 });
 </script>
 </body>

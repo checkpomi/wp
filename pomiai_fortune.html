@@ -292,7 +292,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;
 .langbtn:hover{border-color:var(--violet2);color:var(--violet2)}
 .langbtn.active{background:linear-gradient(135deg,var(--violet3),var(--gold4));
   color:var(--gold2);border-color:var(--gold)}
-#lang-switch{position:absolute;top:14px;right:14px;display:flex;gap:5px;z-index:2}
+#lang-switch{position:absolute;top:14px;right:14px;z-index:2;background:var(--surface3);border:1px solid var(--border3);color:var(--text2);font-size:10px;font-weight:700;padding:5px 7px;border-radius:8px;cursor:pointer;max-width:130px}
 </style>
 </head>
 <body>
@@ -301,11 +301,20 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;
 
   <!-- 헤더 -->
   <div id="header">
-    <div id="lang-switch">
-      <button data-lang="ko" class="langbtn">한</button>
-      <button data-lang="en" class="langbtn">EN</button>
-      <button data-lang="ja" class="langbtn">日</button>
-    </div>
+    <select id="lang-switch">
+      <option value="ko">🇰🇷 한국어</option>
+      <option value="en">🇺🇸 English</option>
+      <option value="ja">🇯🇵 日本語</option>
+      <option value="zh_CN">🇨🇳 中文(简体)</option>
+      <option value="zh_TW">🇹🇼 中文(繁體)</option>
+      <option value="de_DE">🇩🇪 Deutsch</option>
+      <option value="fr_FR">🇫🇷 Français</option>
+      <option value="nl_NL">🇳🇱 Nederlands</option>
+      <option value="sv_SE">🇸🇪 Svenska</option>
+      <option value="nn_NO">🇳🇴 Norsk</option>
+      <option value="da_DK">🇩🇰 Dansk</option>
+      <option value="ar">🇸🇦 العربية</option>
+    </select>
     <div class="header-orb"></div>
     <span id="logo-main">pomiai · fortune</span>
     <h1 id="title-main" data-i18n-html="title_main">신비로운 빛이 당신의<br>행복을 응원해요</h1>
@@ -583,31 +592,124 @@ const OHAENG_COLOR={목:'#4ade80',화:'#f87171',토:'#f59e0b',금:'#e2e8f0',수:
 const WORD_I18N={
   animal:{ko:['쥐','소','호랑이','토끼','용','뱀','말','양','원숭이','닭','개','돼지'],
     en:['Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Pig'],
-    ja:['子(ねずみ)','丑(うし)','寅(とら)','卯(うさぎ)','辰(たつ)','巳(へび)','午(うま)','未(ひつじ)','申(さる)','酉(とり)','戌(いぬ)','亥(いのしし)']},
+    ja:['子(ねずみ)','丑(うし)','寅(とら)','卯(うさぎ)','辰(たつ)','巳(へび)','午(うま)','未(ひつじ)','申(さる)','酉(とり)','戌(いぬ)','亥(いのしし)'],
+    zh_CN:['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'],
+    zh_TW:['鼠','牛','虎','兔','龍','蛇','馬','羊','猴','雞','狗','豬'],
+    de_DE:['Ratte','Büffel','Tiger','Hase','Drache','Schlange','Pferd','Ziege','Affe','Hahn','Hund','Schwein'],
+    fr_FR:['Rat','Buffle','Tigre','Lapin','Dragon','Serpent','Cheval','Chèvre','Singe','Coq','Chien','Cochon'],
+    nl_NL:['Rat','Buffel','Tijger','Konijn','Draak','Slang','Paard','Geit','Aap','Haan','Hond','Varken'],
+    sv_SE:['Råtta','Oxe','Tiger','Kanin','Drake','Orm','Häst','Get','Apa','Tupp','Hund','Gris'],
+    nn_NO:['Rotte','Okse','Tiger','Kanin','Drake','Slange','Hest','Geit','Ape','Hane','Hund','Gris'],
+    da_DK:['Rotte','Okse','Tiger','Kanin','Drage','Slange','Hest','Ged','Abe','Hane','Hund','Gris'],
+    ar:['الجرذ','الثور','النمر','الأرنب','التنين','الأفعى','الحصان','الماعز','القرد','الديك','الكلب','الخنزير']},
   ohaeng:{ko:{목:'목',화:'화',토:'토',금:'금',수:'수'},
     en:{목:'Wood',화:'Fire',토:'Earth',금:'Metal',수:'Water'},
-    ja:{목:'木',화:'火',토:'土',금:'金',수:'水'}},
-  pillar:{ko:['년주','월주','일주','시주'],en:['Year Pillar','Month Pillar','Day Pillar','Hour Pillar'],ja:['年柱','月柱','日柱','時柱']},
-  wd:{ko:['일','월','화','수','목','금','토'],en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],ja:['日','月','火','水','木','金','土']},
+    ja:{목:'木',화:'火',토:'土',금:'金',수:'水'},
+    zh_CN:{목:'木',화:'火',토:'土',금:'金',수:'水'},
+    zh_TW:{목:'木',화:'火',토:'土',금:'金',수:'水'},
+    de_DE:{목:'Holz',화:'Feuer',토:'Erde',금:'Metall',수:'Wasser'},
+    fr_FR:{목:'Bois',화:'Feu',토:'Terre',금:'Métal',수:'Eau'},
+    nl_NL:{목:'Hout',화:'Vuur',토:'Aarde',금:'Metaal',수:'Water'},
+    sv_SE:{목:'Trä',화:'Eld',토:'Jord',금:'Metall',수:'Vatten'},
+    nn_NO:{목:'Tre',화:'Eld',토:'Jord',금:'Metall',수:'Vatn'},
+    da_DK:{목:'Træ',화:'Ild',토:'Jord',금:'Metal',수:'Vand'},
+    ar:{목:'الخشب',화:'النار',토:'التراب',금:'المعدن',수:'الماء'}},
+  pillar:{ko:['년주','월주','일주','시주'],en:['Year Pillar','Month Pillar','Day Pillar','Hour Pillar'],ja:['年柱','月柱','日柱','時柱'],
+    zh_CN:['年柱','月柱','日柱','时柱'],
+    zh_TW:['年柱','月柱','日柱','時柱'],
+    de_DE:['Jahressäule','Monatssäule','Tagessäule','Stundensäule'],
+    fr_FR:["Pilier de l'Année",'Pilier du Mois','Pilier du Jour',"Pilier de l'Heure"],
+    nl_NL:['Jaarpijler','Maandpijler','Dagpijler','Uurpijler'],
+    sv_SE:['Årspelare','Månadspelare','Dagspelare','Timpelare'],
+    nn_NO:['Årssøyle','Månadssøyle','Dagssøyle','Timesøyle'],
+    da_DK:['Årssøjle','Månedssøjle','Dagssøjle','Timesøjle'],
+    ar:['ركيزة السنة','ركيزة الشهر','ركيزة اليوم','ركيزة الساعة']},
+  wd:{ko:['일','월','화','수','목','금','토'],en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],ja:['日','月','火','水','木','金','土'],
+    zh_CN:['周日','周一','周二','周三','周四','周五','周六'],
+    zh_TW:['週日','週一','週二','週三','週四','週五','週六'],
+    de_DE:['So','Mo','Di','Mi','Do','Fr','Sa'],
+    fr_FR:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],
+    nl_NL:['Zo','Ma','Di','Wo','Do','Vr','Za'],
+    sv_SE:['Sön','Mån','Tis','Ons','Tor','Fre','Lör'],
+    nn_NO:['Søn','Mån','Tys','Ons','Tor','Fre','Lau'],
+    da_DK:['Søn','Man','Tir','Ons','Tor','Fre','Lør'],
+    ar:['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت']},
   period:{ko:{'오늘':'오늘','이번 주':'이번 주','이번 달':'이번 달'},
     en:{'오늘':'today','이번 주':'this week','이번 달':'this month'},
-    ja:{'오늘':'今日','이번 주':'今週','이번 달':'今月'}},
+    ja:{'오늘':'今日','이번 주':'今週','이번 달':'今月'},
+    zh_CN:{'오늘':'今天','이번 주':'本周','이번 달':'本月'},
+    zh_TW:{'오늘':'今天','이번 주':'本週','이번 달':'本月'},
+    de_DE:{'오늘':'heute','이번 주':'diese Woche','이번 달':'diesen Monat'},
+    fr_FR:{'오늘':"aujourd'hui",'이번 주':'cette semaine','이번 달':'ce mois-ci'},
+    nl_NL:{'오늘':'vandaag','이번 주':'deze week','이번 달':'deze maand'},
+    sv_SE:{'오늘':'idag','이번 주':'denna vecka','이번 달':'denna månad'},
+    nn_NO:{'오늘':'i dag','이번 주':'denne veka','이번 달':'denne månaden'},
+    da_DK:{'오늘':'i dag','이번 주':'denne uge','이번 달':'denne måned'},
+    ar:{'오늘':'اليوم','이번 주':'هذا الأسبوع','이번 달':'هذا الشهر'}},
   zodiac:{ko:['양자리','황소자리','쌍둥이자리','게자리','사자자리','처녀자리','천칭자리','전갈자리','사수자리','염소자리','물병자리','물고기자리'],
     en:['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'],
-    ja:['牡羊座','牡牛座','双子座','蟹座','獅子座','乙女座','天秤座','蠍座','射手座','山羊座','水瓶座','魚座']},
-  gender:{ko:{남:'남성',여:'여성'},en:{남:'Male',여:'Female'},ja:{남:'男性',여:'女性'}},
-  ofyear:{ko:'의 해',en:' Year',ja:'年'},
-  lunar:{ko:'음력',en:'Lunar',ja:'旧暦'},
-  reversed:{ko:'↓역방향',en:'↓Reversed',ja:'↓逆位置'},
+    ja:['牡羊座','牡牛座','双子座','蟹座','獅子座','乙女座','天秤座','蠍座','射手座','山羊座','水瓶座','魚座'],
+    zh_CN:['白羊座','金牛座','双子座','巨蟹座','狮子座','处女座','天秤座','天蝎座','射手座','摩羯座','水瓶座','双鱼座'],
+    zh_TW:['牡羊座','金牛座','雙子座','巨蟹座','獅子座','處女座','天秤座','天蠍座','射手座','摩羯座','水瓶座','雙魚座'],
+    de_DE:['Widder','Stier','Zwillinge','Krebs','Löwe','Jungfrau','Waage','Skorpion','Schütze','Steinbock','Wassermann','Fische'],
+    fr_FR:['Bélier','Taureau','Gémeaux','Cancer','Lion','Vierge','Balance','Scorpion','Sagittaire','Capricorne','Verseau','Poissons'],
+    nl_NL:['Ram','Stier','Tweelingen','Kreeft','Leeuw','Maagd','Weegschaal','Schorpioen','Boogschutter','Steenbok','Waterman','Vissen'],
+    sv_SE:['Väduren','Oxen','Tvillingarna','Kräftan','Lejonet','Jungfrun','Vågen','Skorpionen','Skytten','Stenbocken','Vattumannen','Fiskarna'],
+    nn_NO:['Væren','Tyren','Tvillingane','Krepsen','Løva','Jomfrua','Vekta','Skorpionen','Skyttaren','Steinbukken','Vassmannen','Fiskane'],
+    da_DK:['Vædderen','Tyren','Tvillingerne','Krebsen','Løven','Jomfruen','Vægten','Skorpionen','Skytten','Stenbukken','Vandmanden','Fiskene'],
+    ar:['الحمل','الثور','الجوزاء','السرطان','الأسد','العذراء','الميزان','العقرب','القوس','الجدي','الدلو','الحوت']},
+  gender:{ko:{남:'남성',여:'여성'},en:{남:'Male',여:'Female'},ja:{남:'男性',여:'女性'},
+    zh_CN:{남:'男性',여:'女性'},
+    zh_TW:{남:'男性',여:'女性'},
+    de_DE:{남:'Männlich',여:'Weiblich'},
+    fr_FR:{남:'Homme',여:'Femme'},
+    nl_NL:{남:'Man',여:'Vrouw'},
+    sv_SE:{남:'Man',여:'Kvinna'},
+    nn_NO:{남:'Mann',여:'Kvinne'},
+    da_DK:{남:'Mand',여:'Kvinde'},
+    ar:{남:'ذكر',여:'أنثى'}},
+  ofyear:{ko:'의 해',en:' Year',ja:'年',
+    zh_CN:'年',zh_TW:'年',de_DE:'-Jahr',fr_FR:' (Année)',nl_NL:'-jaar',sv_SE:'-år',nn_NO:'-år',da_DK:'-år',ar:' (سنة)'},
+  lunar:{ko:'음력',en:'Lunar',ja:'旧暦',
+    zh_CN:'农历',zh_TW:'農曆',de_DE:'Mondkalender',fr_FR:'Lunaire',nl_NL:'Maankalender',sv_SE:'Månkalender',nn_NO:'Månekalender',da_DK:'Månekalender',ar:'التقويم القمري'},
+  reversed:{ko:'↓역방향',en:'↓Reversed',ja:'↓逆位置',
+    zh_CN:'↓逆位',zh_TW:'↓逆位',de_DE:'↓Umgekehrt',fr_FR:'↓Inversée',nl_NL:'↓Omgekeerd',sv_SE:'↓Omvänd',nn_NO:'↓Omvend',da_DK:'↓Omvendt',ar:'↓معكوسة'},
   tarotpos:{ko:['현재'],en:['Present'],ja:['現在'],
     ko3:['과거','현재','미래'],en3:['Past','Present','Future'],ja3:['過去','現在','未来'],
-    ko5:['현재','도전','과거','미래','결과'],en5:['Present','Challenge','Past','Future','Outcome'],ja5:['現在','課題','過去','未来','結果']},
+    ko5:['현재','도전','과거','미래','결과'],en5:['Present','Challenge','Past','Future','Outcome'],ja5:['現在','課題','過去','未来','結果'],
+    zh_CN:['现在'],zh_CN3:['过去','现在','未来'],zh_CN5:['现在','挑战','过去','未来','结果'],
+    zh_TW:['現在'],zh_TW3:['過去','現在','未來'],zh_TW5:['現在','挑戰','過去','未來','結果'],
+    de_DE:['Gegenwart'],de_DE3:['Vergangenheit','Gegenwart','Zukunft'],de_DE5:['Gegenwart','Herausforderung','Vergangenheit','Zukunft','Ergebnis'],
+    fr_FR:['Présent'],fr_FR3:['Passé','Présent','Futur'],fr_FR5:['Présent','Défi','Passé','Futur','Résultat'],
+    nl_NL:['Heden'],nl_NL3:['Verleden','Heden','Toekomst'],nl_NL5:['Heden','Uitdaging','Verleden','Toekomst','Resultaat'],
+    sv_SE:['Nutid'],sv_SE3:['Dåtid','Nutid','Framtid'],sv_SE5:['Nutid','Utmaning','Dåtid','Framtid','Resultat'],
+    nn_NO:['Notid'],nn_NO3:['Fortid','Notid','Framtid'],nn_NO5:['Notid','Utfordring','Fortid','Framtid','Resultat'],
+    da_DK:['Nutid'],da_DK3:['Fortid','Nutid','Fremtid'],da_DK5:['Nutid','Udfordring','Fortid','Fremtid','Resultat'],
+    ar:['الحاضر'],ar3:['الماضي','الحاضر','المستقبل'],ar5:['الحاضر','التحدي','الماضي','المستقبل','النتيجة']},
   tarot:{ko:['광대','마법사','여사제','황후','황제','교황','연인','전차','힘','은둔자','운명의 수레바퀴','정의','매달린 사람','죽음','절제','악마','탑','별','달','태양','심판','세계'],
     en:['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World'],
-    ja:['愚者','魔術師','女教皇','女帝','皇帝','教皇','恋人','戦車','力','隠者','運命の輪','正義','吊るされた男','死神','節制','悪魔','塔','星','月','太陽','審判','世界']},
+    ja:['愚者','魔術師','女教皇','女帝','皇帝','教皇','恋人','戦車','力','隠者','運命の輪','正義','吊るされた男','死神','節制','悪魔','塔','星','月','太陽','審判','世界'],
+    zh_CN:['愚者','魔术师','女祭司','皇后','皇帝','教皇','恋人','战车','力量','隐士','命运之轮','正义','倒吊人','死神','节制','恶魔','高塔','星星','月亮','太阳','审判','世界'],
+    zh_TW:['愚者','魔術師','女祭司','皇后','皇帝','教皇','戀人','戰車','力量','隱士','命運之輪','正義','倒吊人','死神','節制','惡魔','高塔','星星','月亮','太陽','審判','世界'],
+    de_DE:['Der Narr','Der Magier','Die Hohepriesterin','Die Herrscherin','Der Herrscher','Der Hierophant','Die Liebenden','Der Wagen','Kraft','Der Einsiedler','Rad des Schicksals','Die Gerechtigkeit','Der Gehängte','Der Tod','Mäßigkeit','Der Teufel','Der Turm','Der Stern','Der Mond','Die Sonne','Das Gericht','Die Welt'],
+    fr_FR:['Le Mat','Le Bateleur','La Papesse',"L'Impératrice","L'Empereur",'Le Pape',"L'Amoureux",'Le Chariot','La Force',"L'Hermite",'La Roue de Fortune','La Justice','Le Pendu','La Mort','Tempérance','Le Diable','La Maison-Dieu',"L'Étoile",'La Lune','Le Soleil','Le Jugement','Le Monde'],
+    nl_NL:['De Dwaas','De Magiër','De Hogepriesteres','De Keizerin','De Keizer','De Hiërofant','De Geliefden','De Zegewagen','Kracht','De Kluizenaar','Rad van Fortuin','Gerechtigheid','De Gehangene','De Dood','Gematigdheid','De Duivel','De Toren','De Ster','De Maan','De Zon','Het Oordeel','De Wereld'],
+    sv_SE:['Dåren','Magikern','Översteprästinnan','Kejsarinnan','Kejsaren','Hierofanten','De Älskande','Vagnen','Styrka','Eremiten','Lyckohjulet','Rättvisan','Den Hängde','Döden','Måttlighet','Djävulen','Tornet','Stjärnan','Månen','Solen','Domen','Världen'],
+    nn_NO:['Narren','Magikaren','Overstepresta','Keisarinna','Keisaren','Hierofanten','Dei Elskande','Vogna','Styrke','Eremitten','Lykkehjulet','Rettferda','Den Hengde','Døden','Måtehald','Djevelen','Tårnet','Stjerna','Månen','Sola','Dommen','Verda'],
+    da_DK:['Narren','Magikeren','Ypperstepræstinden','Kejserinden','Kejseren','Ypperstepræsten','De Elskende','Vognen','Styrken','Eneboeren','Lykkehjulet','Retfærdigheden','Den Hængte','Døden','Mådehold','Djævelen','Tårnet','Stjernen','Månen','Solen','Dommen','Verden'],
+    ar:['الأحمق','الساحر','الكاهنة العظمى','الإمبراطورة','الإمبراطور','الحبر الأعظم','العشاق','العربة','القوة','الناسك','عجلة الحظ','العدالة','المشنوق','الموت','الاعتدال','الشيطان','البرج','النجمة','القمر','الشمس','الحكم','العالم']},
   dreamtag:{ko:['용','뱀','물','불','하늘을 날다','이빨','돌아가신 분','집','돈','결혼','시험','쫓기다','물고기','꽃','아기'],
     en:['Dragon','Snake','Water','Fire','Flying','Teeth','A deceased person','House','Money','Wedding','Exam','Being chased','Fish','Flower','Baby'],
-    ja:['龍','蛇','水','火','空を飛ぶ','歯','故人','家','お金','結婚','試験','追われる','魚','花','赤ちゃん']}
+    ja:['龍','蛇','水','火','空を飛ぶ','歯','故人','家','お金','結婚','試験','追われる','魚','花','赤ちゃん'],
+    zh_CN:['龙','蛇','水','火','飞翔','牙齿','已故的人','房子','钱','结婚','考试','被追赶','鱼','花','婴儿'],
+    zh_TW:['龍','蛇','水','火','飛翔','牙齒','已故的人','房子','錢','結婚','考試','被追趕','魚','花','嬰兒'],
+    de_DE:['Drache','Schlange','Wasser','Feuer','Fliegen','Zähne','Ein Verstorbener','Haus','Geld','Hochzeit','Prüfung','Verfolgtwerden','Fisch','Blume','Baby'],
+    fr_FR:['Dragon','Serpent','Eau','Feu','Voler','Dents','Une personne décédée','Maison','Argent','Mariage','Examen','Être poursuivi','Poisson','Fleur','Bébé'],
+    nl_NL:['Draak','Slang','Water','Vuur','Vliegen','Tanden','Een overledene','Huis','Geld','Bruiloft','Examen','Achtervolgd worden','Vis','Bloem','Baby'],
+    sv_SE:['Drake','Orm','Vatten','Eld','Att flyga','Tänder','En avliden person','Hus','Pengar','Bröllop','Prov','Att bli jagad','Fisk','Blomma','Bebis'],
+    nn_NO:['Drake','Slange','Vatn','Eld','Å fly','Tenner','Ein avliden person','Hus','Pengar','Bryllaup','Eksamen','Å bli jaga','Fisk','Blome','Baby'],
+    da_DK:['Drage','Slange','Vand','Ild','At flyve','Tænder','En afdød person','Hus','Penge','Bryllup','Eksamen','At blive jagtet','Fisk','Blomst','Baby'],
+    ar:['تنين','أفعى','ماء','نار','الطيران','الأسنان','شخص متوفى','منزل','مال','زفاف','امتحان','أن تُطارَد','سمكة','زهرة','رضيع']}
 };
 function LANG(){return window._LANG||'ko';}
 function W(cat,key){const d=WORD_I18N[cat][LANG()]||WORD_I18N[cat].ko;return key!==undefined?d[key]:d;}
@@ -644,31 +746,31 @@ const WD=['일','월','화','수','목','금','토'];
 function renderDateBar(){
   const wd=W('wd',NOW.getDay());
   const l=LANG();
-  const solarTxt=l==='en'?`${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][NOW.getMonth()]} ${NOW.getDate()}, ${YEAR} (${wd})`
+  const solarTxt=l==='ko'?`${YEAR}년 ${NOW.getMonth()+1}월 ${NOW.getDate()}일 (${wd})`
     :l==='ja'?`${YEAR}年${NOW.getMonth()+1}月${NOW.getDate()}日 (${wd})`
-    :`${YEAR}년 ${NOW.getMonth()+1}월 ${NOW.getDate()}일 (${wd})`;
+    :`${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][NOW.getMonth()]} ${NOW.getDate()}, ${YEAR} (${wd})`;
   document.getElementById('today-solar').textContent=solarTxt;
   const gj=getGanJi(YEAR);
   const animalName=W('animal',gj.animalIdx);
   const ofyear=W('ofyear');
-  const ganTxt=l==='en'?`${gj.gan}${gj.ji} · ${gj.emoji} Year of the ${animalName}`
+  const ganTxt=l==='ko'?`${gj.gan}${gj.ji}년 ${gj.emoji}${animalName}${ofyear}`
     :l==='ja'?`${gj.gan}${gj.ji}年 ${gj.emoji}${animalName}${ofyear}`
-    :`${gj.gan}${gj.ji}년 ${gj.emoji}${animalName}${ofyear}`;
+    :`${gj.gan}${gj.ji} · ${gj.emoji} Year of the ${animalName}`;
   document.getElementById('today-gan').textContent=ganTxt;
   const lunarOffset=NOW.getMonth()*29.5+NOW.getDate()-15;
   const lm=Math.max(1,Math.floor((lunarOffset%354)/29.5)+1);
   const ld=Math.max(1,Math.floor(lunarOffset%29.5)+1);
   const lunarLabel=W('lunar');
-  const lunarTxt=l==='en'?`${lunarLabel} ${lm}/${ld}`:l==='ja'?`${lunarLabel} ${lm}月${ld}日`:`${lunarLabel} ${lm}월 ${ld}일`;
+  const lunarTxt=l==='ko'?`${lunarLabel} ${lm}월 ${ld}일`:l==='ja'?`${lunarLabel} ${lm}月${ld}日`:`${lunarLabel} ${lm}/${ld}`;
   document.getElementById('today-lunar').textContent=lunarTxt;
   // 신년운세 부제목 동적 설정
   const nyGj=getGanJi(NEXTYEAR);
   const nyAnimal=W('animal',nyGj.animalIdx);
   const nySubEl=document.getElementById('ny-year-sub');
   if(nySubEl){
-    nySubEl.textContent=l==='en'?`${NEXTYEAR} · ${nyGj.gan}${nyGj.ji} (Year of the ${nyAnimal})`
+    nySubEl.textContent=l==='ko'?`${NEXTYEAR}년 ${nyGj.gan}${nyGj.ji}년 (${nyAnimal}${W('ofyear')})`
       :l==='ja'?`${NEXTYEAR}年 ${nyGj.gan}${nyGj.ji}年 (${nyAnimal}${W('ofyear')})`
-      :`${NEXTYEAR}년 ${nyGj.gan}${nyGj.ji}년 (${nyAnimal}${W('ofyear')})`;
+      :`${NEXTYEAR} · ${nyGj.gan}${nyGj.ji} (Year of the ${nyAnimal})`;
   }
 }
 renderDateBar();
@@ -1528,7 +1630,8 @@ function applyI18n(){
   });
   document.getElementById('page-title').textContent=t.page_title;
   document.title=t.page_title;
-  document.querySelectorAll('#lang-switch .langbtn').forEach(b=>b.classList.toggle('active',b.dataset.lang===LANG()));
+  const langSwitchEl0=document.getElementById('lang-switch');
+  if(langSwitchEl0) langSwitchEl0.value=LANG();
   // 동적 렌더링 요소 재적용
   renderDateBar();
   renderZodiacGrid();
@@ -1545,15 +1648,14 @@ function applyI18n(){
   document.getElementById('html-root').setAttribute('dir', LANGV==='ar'?'rtl':'ltr');
 })();
 applyI18n();
-document.querySelectorAll('#lang-switch .langbtn').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    const lang=btn.dataset.lang;
-    window._LANG=lang;
-    document.getElementById('html-root').lang=lang;
-    document.getElementById('html-root').setAttribute('dir', lang==='ar'?'rtl':'ltr');
-    applyI18n();
-    try{ const url=new URL(location.href); url.searchParams.set('lang',lang); history.replaceState(null,'',url); }catch(e){}
-  });
+document.getElementById('lang-switch').addEventListener('change',(e)=>{
+  const lang=e.target.value;
+  if(!I18N[lang]) return;
+  window._LANG=lang;
+  document.getElementById('html-root').lang=lang;
+  document.getElementById('html-root').setAttribute('dir', lang==='ar'?'rtl':'ltr');
+  applyI18n();
+  try{ const url=new URL(location.href); url.searchParams.set('lang',lang); history.replaceState(null,'',url); }catch(e){}
 });
 </script>
 </body>
