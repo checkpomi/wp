@@ -612,7 +612,70 @@ const I18N = {
     tab_matches:'📋 マッチ一覧', tab_replace:'🔄 置換', tab_explain:'💡 解説', tab_presets:'📚 プリセット', tab_cheat:'📖 チートシート',
     rp_matches:'マッチ結果', rp_replace:'置換', rp_explain:'正規表現の解析', rp_presets:'よく使う正規表現', rp_cheat:'正規表現チートシート',
     msg_empty:'正規表現を入力するとマッチ結果が表示されます', msg_explain_empty:'正規表現を入力すると各トークンの意味を解析します',
-    btn_copy:'コピー', btn_apply:'適用', footer_by:'Product by' }
+    btn_copy:'コピー', btn_apply:'適用', footer_by:'Product by' },
+  zh_CN:{ page_title:'pomiai 正则表达式测试工具',
+    ph_regex:'请输入正则表达式...', ph_test:'请输入要测试的文本...', ph_replace:'替换文本(使用 $1、$2 引用分组)',
+    flag_g:'全局匹配', flag_i:'忽略大小写', flag_m:'多行模式', flag_s:'. 匹配换行符', flag_u:'Unicode',
+    tab_matches:'📋 匹配列表', tab_replace:'🔄 替换', tab_explain:'💡 说明', tab_presets:'📚 预设', tab_cheat:'📖 速查表',
+    rp_matches:'匹配结果', rp_replace:'替换', rp_explain:'正则表达式解析', rp_presets:'常用正则表达式', rp_cheat:'正则表达式速查表',
+    msg_empty:'输入正则表达式后将显示匹配结果', msg_explain_empty:'输入正则表达式后将解析每个标记的含义',
+    btn_copy:'复制', btn_apply:'应用', footer_by:'Product by' },
+  zh_TW:{ page_title:'pomiai 正規表達式測試工具',
+    ph_regex:'請輸入正規表達式...', ph_test:'請輸入要測試的文字...', ph_replace:'替換文字(使用 $1、$2 參照群組)',
+    flag_g:'全域比對', flag_i:'忽略大小寫', flag_m:'多行模式', flag_s:'. 比對換行符', flag_u:'Unicode',
+    tab_matches:'📋 比對清單', tab_replace:'🔄 替換', tab_explain:'💡 說明', tab_presets:'📚 預設', tab_cheat:'📖 速查表',
+    rp_matches:'比對結果', rp_replace:'替換', rp_explain:'正規表達式解析', rp_presets:'常用正規表達式', rp_cheat:'正規表達式速查表',
+    msg_empty:'輸入正規表達式後將顯示比對結果', msg_explain_empty:'輸入正規表達式後將解析每個標記的意義',
+    btn_copy:'複製', btn_apply:'套用', footer_by:'Product by' },
+  de_DE:{ page_title:'pomiai Regex-Tester',
+    ph_regex:'Regulären Ausdruck eingeben...', ph_test:'Zu testenden Text eingeben...', ph_replace:'Ersatztext ($1, $2 für Gruppen verwenden)',
+    flag_g:'Alle Treffer', flag_i:'Groß-/Kleinschreibung ignorieren', flag_m:'Mehrzeilig', flag_s:'. erfasst Zeilenumbrüche', flag_u:'Unicode',
+    tab_matches:'📋 Treffer', tab_replace:'🔄 Ersetzen', tab_explain:'💡 Erklärung', tab_presets:'📚 Vorlagen', tab_cheat:'📖 Spickzettel',
+    rp_matches:'Treffer', rp_replace:'Ersetzen', rp_explain:'Regex-Analyse', rp_presets:'Häufig verwendete Muster', rp_cheat:'Regex-Spickzettel',
+    msg_empty:'Gib einen regulären Ausdruck ein, um die Treffer zu sehen', msg_explain_empty:'Gib einen regulären Ausdruck ein, um die Bedeutung jedes Tokens zu analysieren',
+    btn_copy:'Kopieren', btn_apply:'Übernehmen', footer_by:'Product by' },
+  fr_FR:{ page_title:'pomiai Testeur Regex',
+    ph_regex:'Saisissez une expression régulière...', ph_test:'Saisissez le texte à tester...', ph_replace:'Texte de remplacement (utilisez $1, $2 pour les groupes)',
+    flag_g:'Correspondance globale', flag_i:'Ignorer la casse', flag_m:'Multiligne', flag_s:'. inclut les retours à la ligne', flag_u:'Unicode',
+    tab_matches:'📋 Résultats', tab_replace:'🔄 Remplacer', tab_explain:'💡 Explication', tab_presets:'📚 Modèles', tab_cheat:'📖 Aide-mémoire',
+    rp_matches:'Résultats de correspondance', rp_replace:'Remplacer', rp_explain:"Analyse de l'expression régulière", rp_presets:'Expressions courantes', rp_cheat:'Aide-mémoire regex',
+    msg_empty:'Saisissez une expression régulière pour voir les résultats', msg_explain_empty:'Saisissez une expression régulière pour analyser la signification de chaque jeton',
+    btn_copy:'Copier', btn_apply:'Appliquer', footer_by:'Product by' },
+  nl_NL:{ page_title:'pomiai Regex-tester',
+    ph_regex:'Voer een reguliere expressie in...', ph_test:'Voer de te testen tekst in...', ph_replace:'Vervangende tekst (gebruik $1, $2 voor groepen)',
+    flag_g:'Alle overeenkomsten', flag_i:'Hoofdlettergevoeligheid negeren', flag_m:'Meerdere regels', flag_s:'. komt ook overeen met regeleinde', flag_u:'Unicode',
+    tab_matches:'📋 Overeenkomsten', tab_replace:'🔄 Vervangen', tab_explain:'💡 Uitleg', tab_presets:'📚 Voorinstellingen', tab_cheat:'📖 Spiekbriefje',
+    rp_matches:'Zoekresultaten', rp_replace:'Vervangen', rp_explain:'Regex-analyse', rp_presets:'Veelgebruikte patronen', rp_cheat:'Regex-spiekbriefje',
+    msg_empty:'Voer een reguliere expressie in om de resultaten te zien', msg_explain_empty:'Voer een reguliere expressie in om de betekenis van elk token te analyseren',
+    btn_copy:'Kopiëren', btn_apply:'Toepassen', footer_by:'Product by' },
+  sv_SE:{ page_title:'pomiai Regex-testare',
+    ph_regex:'Ange ett reguljärt uttryck...', ph_test:'Ange text att testa...', ph_replace:'Ersättningstext (använd $1, $2 för grupper)',
+    flag_g:'Matcha alla', flag_i:'Ignorera skiftläge', flag_m:'Flera rader', flag_s:'. matchar radbrytning', flag_u:'Unicode',
+    tab_matches:'📋 Träffar', tab_replace:'🔄 Ersätt', tab_explain:'💡 Förklaring', tab_presets:'📚 Mallar', tab_cheat:'📖 Fusklapp',
+    rp_matches:'Matchningsresultat', rp_replace:'Ersätt', rp_explain:'Regex-analys', rp_presets:'Vanliga mönster', rp_cheat:'Regex-fusklapp',
+    msg_empty:'Ange ett reguljärt uttryck för att se matchningsresultat', msg_explain_empty:'Ange ett reguljärt uttryck för att analysera varje tokens betydelse',
+    btn_copy:'Kopiera', btn_apply:'Tillämpa', footer_by:'Product by' },
+  nn_NO:{ page_title:'pomiai Regex-testar',
+    ph_regex:'Skriv inn eit regulært uttrykk...', ph_test:'Skriv inn teksten som skal testast...', ph_replace:'Erstatningstekst (bruk $1, $2 for grupper)',
+    flag_g:'Match alle', flag_i:'Ignorer store/små bokstavar', flag_m:'Fleire linjer', flag_s:'. inkluderer linjeskift', flag_u:'Unicode',
+    tab_matches:'📋 Treff', tab_replace:'🔄 Erstatt', tab_explain:'💡 Forklaring', tab_presets:'📚 Malar', tab_cheat:'📖 Jukselapp',
+    rp_matches:'Treffresultat', rp_replace:'Erstatt', rp_explain:'Regex-analyse', rp_presets:'Vanlege mønster', rp_cheat:'Regex-jukselapp',
+    msg_empty:'Skriv inn eit regulært uttrykk for å sjå treffresultat', msg_explain_empty:'Skriv inn eit regulært uttrykk for å analysere kva kvart teikn tyder',
+    btn_copy:'Kopier', btn_apply:'Bruk', footer_by:'Product by' },
+  da_DK:{ page_title:'pomiai Regex-tester',
+    ph_regex:'Indtast et regulært udtryk...', ph_test:'Indtast tekst, der skal testes...', ph_replace:'Erstatningstekst (brug $1, $2 til grupper)',
+    flag_g:'Match alle', flag_i:'Ignorer store/små bogstaver', flag_m:'Flere linjer', flag_s:'. matcher linjeskift', flag_u:'Unicode',
+    tab_matches:'📋 Match', tab_replace:'🔄 Erstat', tab_explain:'💡 Forklaring', tab_presets:'📚 Skabeloner', tab_cheat:'📖 Snydeark',
+    rp_matches:'Matchresultater', rp_replace:'Erstat', rp_explain:'Regex-analyse', rp_presets:'Almindelige mønstre', rp_cheat:'Regex-snydeark',
+    msg_empty:'Indtast et regulært udtryk for at se matchresultater', msg_explain_empty:'Indtast et regulært udtryk for at analysere betydningen af hvert token',
+    btn_copy:'Kopiér', btn_apply:'Anvend', footer_by:'Product by' },
+  ar:{ page_title:'أداة اختبار Regex من pomiai',
+    ph_regex:'أدخل تعبيرًا نمطيًا (Regex)...', ph_test:'أدخل النص المراد اختباره...', ph_replace:'نص الاستبدال (استخدم $1، $2 للإشارة إلى المجموعات)',
+    flag_g:'مطابقة شاملة', flag_i:'تجاهل حالة الأحرف', flag_m:'متعدد الأسطر', flag_s:'. تطابق سطر جديد أيضًا', flag_u:'يونيكود',
+    tab_matches:'📋 قائمة التطابقات', tab_replace:'🔄 استبدال', tab_explain:'💡 شرح', tab_presets:'📚 أنماط جاهزة', tab_cheat:'📖 ورقة مرجعية',
+    rp_matches:'نتائج التطابق', rp_replace:'استبدال', rp_explain:'تحليل التعبير النمطي', rp_presets:'أنماط شائعة الاستخدام', rp_cheat:'ورقة مرجعية لـ Regex',
+    msg_empty:'أدخل تعبيرًا نمطيًا لعرض نتائج التطابق', msg_explain_empty:'أدخل تعبيرًا نمطيًا لتحليل معنى كل رمز',
+    btn_copy:'نسخ', btn_apply:'تطبيق', footer_by:'Product by' }
 };
 function applyI18n(){
   const t=I18N[LANG()]||I18N.ko;
@@ -634,6 +697,7 @@ function applyI18n(){
   const detected = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
   window._LANG=detected; window._T=I18N[detected];
   document.getElementById('html-root').lang = detected;
+  document.getElementById('html-root').setAttribute('dir', detected === 'ar' ? 'rtl' : 'ltr');
 })();
 applyI18n();
 document.querySelectorAll('#lang-switch button').forEach(btn=>{
@@ -641,6 +705,7 @@ document.querySelectorAll('#lang-switch button').forEach(btn=>{
     const lang = btn.dataset.lang;
     window._LANG = lang; window._T = I18N[lang];
     document.getElementById('html-root').lang = lang;
+    document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
     applyI18n();
     try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
   });

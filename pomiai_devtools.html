@@ -4,6 +4,16 @@
 <!--
   VERSION LOG (pomiai_devtools.html)
   ===================================================
+  2026.08.20 — v1.4.0 (12개 언어 UI 확장 + RTL 지원, §5 표준 언어코드 정합)
+    · 언어 코드를 pomiai 프로젝트 표준(§3)에 맞춰 정합 — de→de_DE, fr→fr_FR,
+      nl→nl_NL, sv→sv_SE, no→nn_NO, da→da_DK로 키 이름 변경 (번역 내용은 유지)
+    · I18N 객체에 ar(아랍어) 블록 신규 추가 (ko와 동일한 39개 키 전체 번역)
+    · RTL 지원 추가 — 언어 결정 직후 html-root에 dir="rtl"(ar) / dir="ltr"
+      (그 외) 속성을 설정하도록 normalizeLang 직후 로직 보완
+    · normalizeLang()이 de/fr/nl/sv/nb·nn·no/da/ar 접두사를 각각 de_DE, fr_FR,
+      nl_NL, sv_SE, nn_NO, da_DK, ar로 정규화하도록 수정
+    · ?lang=ar 등 신규 코드 포함 총 12개(ko 포함) 언어 코드로 직접 진입 가능
+  ---------------------------------------------------
   2026.08.17 — v1.3.0 (8개 언어 UI 확장)
     · I18N 객체에 zh_CN, zh_TW, de, fr, nl, sv, no, da 8개 언어 블록 추가
       (ko/en/ja와 동일한 39개 키 전체 번역)
@@ -606,7 +616,7 @@ const I18N = {
     btn_exportcss: 'CSS變數', btn_exporthex: 'HEX清單', btn_exporthsl: 'HSL清單',
     lbl_export: '匯出', btn_copy: '📋 複製', lbl_colorinfo: '所選顏色資訊',
   },
-  de: {
+  de_DE: {
     page_title: 'pomiai Entwicklertools',
     tab_qr: '📱 QR-Code', tab_pw: '🔐 Passwort', tab_color: '🎨 Farbpalette',
     qr_title: 'QR-Code-Generator',
@@ -628,7 +638,7 @@ const I18N = {
     btn_exportcss: 'CSS-Variablen', btn_exporthex: 'HEX-Liste', btn_exporthsl: 'HSL-Liste',
     lbl_export: 'Exportieren', btn_copy: '📋 Kopieren', lbl_colorinfo: 'Ausgewählte Farbinfo',
   },
-  fr: {
+  fr_FR: {
     page_title: 'pomiai Outils Dev',
     tab_qr: '📱 QR Code', tab_pw: '🔐 Mot de passe', tab_color: '🎨 Palette de couleurs',
     qr_title: 'Générateur de QR Code',
@@ -650,7 +660,7 @@ const I18N = {
     btn_exportcss: 'Variables CSS', btn_exporthex: 'Liste HEX', btn_exporthsl: 'Liste HSL',
     lbl_export: 'Exporter', btn_copy: '📋 Copier', lbl_colorinfo: 'Infos couleur sélectionnée',
   },
-  nl: {
+  nl_NL: {
     page_title: 'pomiai Ontwikkelaarstools',
     tab_qr: '📱 QR-code', tab_pw: '🔐 Wachtwoord', tab_color: '🎨 Kleurenpalet',
     qr_title: 'QR-codegenerator',
@@ -672,7 +682,7 @@ const I18N = {
     btn_exportcss: 'CSS-variabelen', btn_exporthex: 'HEX-lijst', btn_exporthsl: 'HSL-lijst',
     lbl_export: 'Exporteren', btn_copy: '📋 Kopiëren', lbl_colorinfo: 'Info geselecteerde kleur',
   },
-  sv: {
+  sv_SE: {
     page_title: 'pomiai Utvecklarverktyg',
     tab_qr: '📱 QR-kod', tab_pw: '🔐 Lösenord', tab_color: '🎨 Färgpalett',
     qr_title: 'QR-kodgenerator',
@@ -694,7 +704,7 @@ const I18N = {
     btn_exportcss: 'CSS-variabler', btn_exporthex: 'HEX-lista', btn_exporthsl: 'HSL-lista',
     lbl_export: 'Exportera', btn_copy: '📋 Kopiera', lbl_colorinfo: 'Vald färginfo',
   },
-  no: {
+  nn_NO: {
     page_title: 'pomiai Utviklerverktøy',
     tab_qr: '📱 QR-kode', tab_pw: '🔐 Passord', tab_color: '🎨 Fargepalett',
     qr_title: 'QR-kodegenerator',
@@ -716,7 +726,7 @@ const I18N = {
     btn_exportcss: 'CSS-variabler', btn_exporthex: 'HEX-liste', btn_exporthsl: 'HSL-liste',
     lbl_export: 'Eksporter', btn_copy: '📋 Kopier', lbl_colorinfo: 'Info om valgt farge',
   },
-  da: {
+  da_DK: {
     page_title: 'pomiai Udviklerværktøjer',
     tab_qr: '📱 QR-kode', tab_pw: '🔐 Adgangskode', tab_color: '🎨 Farvepalet',
     qr_title: 'QR-kodegenerator',
@@ -738,18 +748,45 @@ const I18N = {
     btn_exportcss: 'CSS-variabler', btn_exporthex: 'HEX-liste', btn_exporthsl: 'HSL-liste',
     lbl_export: 'Eksporter', btn_copy: '📋 Kopiér', lbl_colorinfo: 'Valgt farveinfo',
   },
+  ar: {
+    page_title: 'أدوات مطوّري pomiai',
+    tab_qr: '📱 رمز QR', tab_pw: '🔐 كلمة المرور', tab_color: '🎨 لوحة الألوان',
+    qr_title: 'مولّد رمز QR',
+    pw_title: 'مولّد كلمات المرور',
+    pw_sub: 'أنشئ كلمات مرور قوية وآمنة فورًا — تتم كل المعالجة محليًا داخل المتصفح فقط',
+    lbl_password: 'كلمة المرور', lbl_settings: 'الإعدادات', lbl_length: 'الطول',
+    opt_upper: 'أحرف كبيرة (A–Z)', opt_lower: 'أحرف صغيرة (a–z)', opt_num: 'أرقام (0–9)',
+    opt_sym: 'رموز خاصة (!@#$%^&*)', opt_noamb: 'استبعاد الأحرف المتشابهة (0 O l 1 I)',
+    lbl_exclude: 'استبعاد أحرف (اختياري)', ph_exclude: 'مثال: @#$',
+    lbl_count: 'العدد', btn_batch: 'إنشاء دفعة',
+    lbl_history: 'السجل', btn_clear: 'مسح',
+    msg_pwhist_empty: 'ستظهر كلمات المرور التي تنشئها هنا',
+    color_title: 'مولّد لوحة الألوان',
+    color_sub: 'إنشاء تلقائي للوحات الألوان المتممة والمتناظرة والثلاثية والأحادية من لون أساسي — تصدير بصيغة CSS أو HEX أو HSL',
+    lbl_basecolor: 'اللون الأساسي', btn_random: '🎲 عشوائي',
+    lbl_palettemode: 'نمط اللوحة',
+    pm_complementary: 'متمم', pm_analogous: 'متناظر', pm_triadic: 'ثلاثي',
+    pm_tetradic: 'رباعي', pm_mono: 'أحادي اللون', pm_split: 'متمم منقسم',
+    btn_exportcss: 'متغيرات CSS', btn_exporthex: 'قائمة HEX', btn_exporthsl: 'قائمة HSL',
+    lbl_export: 'تصدير', btn_copy: '📋 نسخ', lbl_colorinfo: 'معلومات اللون المحدد',
+  },
 };
 
 (function(){
   const params = new URLSearchParams(location.search);
   const urlLang = params.get('lang');
-  /* 중국어 간체/번체 및 노르웨이어(nb/no) 구분을 위한 정규화 함수 */
+  /* 중국어 간체/번체 및 지역 표기 언어(de/fr/nl/sv/no/da/ar) 구분을 위한 정규화 함수 */
   function normalizeLang(raw){
     if(!raw) return '';
     if(/^zh/i.test(raw)) return /tw|hk|mo/i.test(raw) ? 'zh_TW' : 'zh_CN';
-    const two = raw.slice(0,2).toLowerCase();
-    if(two === 'nb') return 'no';
-    return two;
+    if(/^de/i.test(raw)) return 'de_DE';
+    if(/^fr/i.test(raw)) return 'fr_FR';
+    if(/^nl/i.test(raw)) return 'nl_NL';
+    if(/^sv/i.test(raw)) return 'sv_SE';
+    if(/^(nb|nn|no)/i.test(raw)) return 'nn_NO';
+    if(/^da/i.test(raw)) return 'da_DK';
+    if(/^ar/i.test(raw)) return 'ar';
+    return raw.slice(0,2).toLowerCase();
   }
   const urlKey = normalizeLang(urlLang);
   const browserKey = normalizeLang(navigator.language || 'ko');
@@ -759,6 +796,7 @@ const I18N = {
   window._LANG = LANG;
   window._T    = I18N[LANG];
   document.getElementById('html-root').lang = LANG;
+  document.getElementById('html-root').setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
 })();
 
 function applyI18n(){

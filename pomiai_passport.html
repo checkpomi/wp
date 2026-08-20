@@ -489,7 +489,25 @@ const I18N = {
   en:{ page_title:'pomiai Passport Photo Maker', sec_title:'Passport Photo Maker',
     sec_sub:'Auto specs for Korea·US·EU·Japan·UK & more · background swap · face guide · A4 print sheet', footer_by:'Product by' },
   ja:{ page_title:'pomiai 証明写真メーカー', sec_title:'証明写真メーカー',
-    sec_sub:'韓国・米国・EU・日本・英国など主要国規格自動適用・背景変更・顔ガイド・A4印刷シート', footer_by:'Product by' }
+    sec_sub:'韓国・米国・EU・日本・英国など主要国規格自動適用・背景変更・顔ガイド・A4印刷シート', footer_by:'Product by' },
+  zh_CN:{ page_title:'pomiai 证件照制作器', sec_title:'证件照制作器',
+    sec_sub:'自动适配韩国·美国·欧盟·日本·英国等主要国家规格 · 背景更换 · 人脸参考线 · A4 打印版', footer_by:'出品方' },
+  zh_TW:{ page_title:'pomiai 證件照製作器', sec_title:'證件照製作器',
+    sec_sub:'自動套用韓國·美國·歐盟·日本·英國等主要國家規格 · 背景更換 · 臉部參考線 · A4 列印版', footer_by:'出品方' },
+  de_DE:{ page_title:'pomiai Passfoto-Ersteller', sec_title:'Passfoto-Ersteller',
+    sec_sub:'Automatische Vorgaben für Korea·USA·EU·Japan·UK & mehr · Hintergrundwechsel · Gesichtsführung · A4-Druckbogen', footer_by:'Ein Produkt von' },
+  fr_FR:{ page_title:"pomiai Créateur de photo d'identité", sec_title:"Créateur de photo d'identité",
+    sec_sub:"Formats automatiques pour la Corée·les États-Unis·l'UE·le Japon·le Royaume-Uni et plus · changement d'arrière-plan · repère du visage · planche d'impression A4", footer_by:'Un produit de' },
+  nl_NL:{ page_title:'pomiai Pasfoto Maker', sec_title:'Pasfoto Maker',
+    sec_sub:'Automatische specificaties voor Korea·VS·EU·Japan·VK en meer · achtergrond wisselen · gezichtsgids · A4-afdrukvel', footer_by:'Een product van' },
+  sv_SE:{ page_title:'pomiai Passfotoskapare', sec_title:'Passfotoskapare',
+    sec_sub:'Automatiska specifikationer för Korea·USA·EU·Japan·Storbritannien med flera · bakgrundsbyte · ansiktsguide · A4-utskriftsark', footer_by:'En produkt från' },
+  nn_NO:{ page_title:'pomiai Passfotoskapar', sec_title:'Passfotoskapar',
+    sec_sub:'Automatiske spesifikasjonar for Korea·USA·EU·Japan·Storbritannia med fleire · bakgrunnsbyte · ansiktsguide · A4-utskriftsark', footer_by:'Eit produkt frå' },
+  da_DK:{ page_title:'pomiai Pasfoto-generator', sec_title:'Pasfoto-generator',
+    sec_sub:'Automatiske specifikationer for Korea·USA·EU·Japan·Storbritannien med flere · baggrundsskift · ansigtsguide · A4-udskriftsark', footer_by:'Et produkt fra' },
+  ar:{ page_title:'صانع صور جواز السفر من pomiai', sec_title:'صانع صور جواز السفر',
+    sec_sub:'مواصفات تلقائية لكوريا والولايات المتحدة والاتحاد الأوروبي واليابان والمملكة المتحدة وغيرها · تغيير الخلفية · دليل الوجه · ورقة طباعة A4', footer_by:'منتج من' }
 };
 (function(){
   const params = new URLSearchParams(location.search);
@@ -498,6 +516,7 @@ const I18N = {
   const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
   window._LANG=LANG; window._T=I18N[LANG];
   document.getElementById('html-root').lang = LANG;
+  document.getElementById('html-root').setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
 })();
 function applyI18n(){
   const t = window._T;
@@ -511,6 +530,7 @@ document.querySelectorAll('#lang-switch button').forEach(btn=>{
     const lang = btn.dataset.lang;
     window._LANG = lang; window._T = I18N[lang];
     document.getElementById('html-root').lang = lang;
+    document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
     applyI18n();
     try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
   });

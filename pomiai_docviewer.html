@@ -341,6 +341,69 @@ const I18N = {
     dz_title: 'ドキュメントを開いてください', dz_sub: 'ファイルをここにドラッグするか<br>下のボタンをクリックして選択してください',
     dz_maxsize: '最大50MB', btn_selectfile: 'ファイルを選択',
   },
+  zh_CN: {
+    page_title: 'pomiai 文档查看器',
+    btn_toc: '目录', btn_open: '打开', ph_search: '🔍 搜索...', btn_copy: '复制', btn_print: '打印',
+    msg_nofile: '请打开一个文件', lbl_toc: '目录',
+    dz_title: '请打开文档', dz_sub: '将文件拖放到此处，<br>或点击下方按钮选择文件',
+    dz_maxsize: '最大 50MB', btn_selectfile: '选择文件',
+  },
+  zh_TW: {
+    page_title: 'pomiai 文件檢視器',
+    btn_toc: '目錄', btn_open: '開啟', ph_search: '🔍 搜尋...', btn_copy: '複製', btn_print: '列印',
+    msg_nofile: '請開啟檔案', lbl_toc: '目錄',
+    dz_title: '請開啟文件', dz_sub: '將檔案拖曳至此處，<br>或點擊下方按鈕選擇檔案',
+    dz_maxsize: '最大 50MB', btn_selectfile: '選擇檔案',
+  },
+  de_DE: {
+    page_title: 'pomiai Dokumentenbetrachter',
+    btn_toc: 'Inhalt', btn_open: 'Öffnen', ph_search: '🔍 Suchen...', btn_copy: 'Kopieren', btn_print: 'Drucken',
+    msg_nofile: 'Öffnen Sie eine Datei, um zu beginnen', lbl_toc: 'Inhalt',
+    dz_title: 'Dokument öffnen', dz_sub: 'Datei hierher ziehen oder<br>unten klicken, um eine Datei auszuwählen',
+    dz_maxsize: 'Bis zu 50MB', btn_selectfile: 'Datei auswählen',
+  },
+  fr_FR: {
+    page_title: 'pomiai Visionneuse de documents',
+    btn_toc: 'Sommaire', btn_open: 'Ouvrir', ph_search: '🔍 Rechercher...', btn_copy: 'Copier', btn_print: 'Imprimer',
+    msg_nofile: 'Ouvrez un fichier pour commencer', lbl_toc: 'Sommaire',
+    dz_title: 'Ouvrir un document', dz_sub: 'Glissez un fichier ici, ou<br>cliquez sur le bouton ci-dessous pour en sélectionner un',
+    dz_maxsize: 'Jusqu\'à 50 Mo', btn_selectfile: 'Sélectionner un fichier',
+  },
+  nl_NL: {
+    page_title: 'pomiai Documentviewer',
+    btn_toc: 'Inhoud', btn_open: 'Openen', ph_search: '🔍 Zoeken...', btn_copy: 'Kopiëren', btn_print: 'Afdrukken',
+    msg_nofile: 'Open een bestand om te beginnen', lbl_toc: 'Inhoud',
+    dz_title: 'Open een document', dz_sub: 'Sleep een bestand hierheen, of<br>klik op de knop hieronder om er een te selecteren',
+    dz_maxsize: 'Tot 50MB', btn_selectfile: 'Bestand selecteren',
+  },
+  sv_SE: {
+    page_title: 'pomiai Dokumentvisare',
+    btn_toc: 'Innehåll', btn_open: 'Öppna', ph_search: '🔍 Sök...', btn_copy: 'Kopiera', btn_print: 'Skriv ut',
+    msg_nofile: 'Öppna en fil för att komma igång', lbl_toc: 'Innehåll',
+    dz_title: 'Öppna ett dokument', dz_sub: 'Dra en fil hit, eller<br>klicka på knappen nedan för att välja en',
+    dz_maxsize: 'Upp till 50MB', btn_selectfile: 'Välj fil',
+  },
+  nn_NO: {
+    page_title: 'pomiai Dokumentvisar',
+    btn_toc: 'Innhald', btn_open: 'Opne', ph_search: '🔍 Søk...', btn_copy: 'Kopier', btn_print: 'Skriv ut',
+    msg_nofile: 'Opne ei fil for å byrje', lbl_toc: 'Innhald',
+    dz_title: 'Opne eit dokument', dz_sub: 'Dra ei fil hit, eller<br>klikk på knappen nedanfor for å velje ei',
+    dz_maxsize: 'Opptil 50MB', btn_selectfile: 'Vel fil',
+  },
+  da_DK: {
+    page_title: 'pomiai Dokumentfremviser',
+    btn_toc: 'Indhold', btn_open: 'Åbn', ph_search: '🔍 Søg...', btn_copy: 'Kopiér', btn_print: 'Udskriv',
+    msg_nofile: 'Åbn en fil for at komme i gang', lbl_toc: 'Indhold',
+    dz_title: 'Åbn et dokument', dz_sub: 'Træk en fil hertil, eller<br>klik på knappen nedenfor for at vælge en',
+    dz_maxsize: 'Op til 50MB', btn_selectfile: 'Vælg fil',
+  },
+  ar: {
+    page_title: 'عارض مستندات pomiai',
+    btn_toc: 'المحتويات', btn_open: 'فتح', ph_search: '🔍 بحث...', btn_copy: 'نسخ', btn_print: 'طباعة',
+    msg_nofile: 'افتح ملفًا للبدء', lbl_toc: 'المحتويات',
+    dz_title: 'افتح مستندًا', dz_sub: 'اسحب ملفًا هنا، أو<br>انقر على الزر أدناه لاختيار ملف',
+    dz_maxsize: 'حتى 50 ميغابايت', btn_selectfile: 'اختر ملفًا',
+  },
 };
 
 (function(){
@@ -352,6 +415,7 @@ const I18N = {
   window._LANG = LANG;
   window._T    = I18N[LANG];
   document.getElementById('html-root').lang = LANG;
+  document.getElementById('html-root').setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
 })();
 
 function applyI18n(){

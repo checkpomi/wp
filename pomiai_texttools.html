@@ -827,7 +827,16 @@ document.addEventListener('keydown',e=>{
 const I18N = {
   ko:{ page_title:'pomiai 텍스트 도구', btn_open:'열기', btn_save:'저장', btn_copy:'복사', lbl_char:'글자', lbl_noSpace:'공백제외' },
   en:{ page_title:'pomiai Text Tools', btn_open:'Open', btn_save:'Save', btn_copy:'Copy', lbl_char:'chars', lbl_noSpace:'no spaces' },
-  ja:{ page_title:'pomiai テキストツール', btn_open:'開く', btn_save:'保存', btn_copy:'コピー', lbl_char:'文字', lbl_noSpace:'空白除く' }
+  ja:{ page_title:'pomiai テキストツール', btn_open:'開く', btn_save:'保存', btn_copy:'コピー', lbl_char:'文字', lbl_noSpace:'空白除く' },
+  zh_CN:{ page_title:'pomiai 文本工具', btn_open:'打开', btn_save:'保存', btn_copy:'复制', lbl_char:'字符', lbl_noSpace:'不含空格' },
+  zh_TW:{ page_title:'pomiai 文字工具', btn_open:'開啟', btn_save:'儲存', btn_copy:'複製', lbl_char:'字元', lbl_noSpace:'不含空格' },
+  de_DE:{ page_title:'pomiai Textwerkzeuge', btn_open:'Öffnen', btn_save:'Speichern', btn_copy:'Kopieren', lbl_char:'Zeichen', lbl_noSpace:'ohne Leerzeichen' },
+  fr_FR:{ page_title:'pomiai Outils de texte', btn_open:'Ouvrir', btn_save:'Enregistrer', btn_copy:'Copier', lbl_char:'caractères', lbl_noSpace:'sans espaces' },
+  nl_NL:{ page_title:'pomiai Tekstprogramma\'s', btn_open:'Openen', btn_save:'Opslaan', btn_copy:'Kopiëren', lbl_char:'tekens', lbl_noSpace:'zonder spaties' },
+  sv_SE:{ page_title:'pomiai Textverktyg', btn_open:'Öppna', btn_save:'Spara', btn_copy:'Kopiera', lbl_char:'tecken', lbl_noSpace:'utan mellanslag' },
+  nn_NO:{ page_title:'pomiai Tekstverktøy', btn_open:'Opna', btn_save:'Lagre', btn_copy:'Kopier', lbl_char:'teikn', lbl_noSpace:'utan mellomrom' },
+  da_DK:{ page_title:'pomiai Tekstværktøjer', btn_open:'Åbn', btn_save:'Gem', btn_copy:'Kopiér', lbl_char:'tegn', lbl_noSpace:'uden mellemrum' },
+  ar:{ page_title:'أدوات النصوص من pomiai', btn_open:'فتح', btn_save:'حفظ', btn_copy:'نسخ', lbl_char:'حرف', lbl_noSpace:'بدون مسافات' }
 };
 (function(){
   const params = new URLSearchParams(location.search);
@@ -836,6 +845,7 @@ const I18N = {
   const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
   window._LANG=LANG; window._T=I18N[LANG];
   document.getElementById('html-root').lang = LANG;
+  document.getElementById('html-root').setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
 })();
 function applyI18n(){
   const t = window._T;
@@ -849,6 +859,7 @@ document.querySelectorAll('#lang-switch button').forEach(btn=>{
     const lang = btn.dataset.lang;
     window._LANG = lang; window._T = I18N[lang];
     document.getElementById('html-root').lang = lang;
+    document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
     applyI18n();
     try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
   });

@@ -4,6 +4,15 @@
 <!--
   VERSION LOG (pomiai_devtools2.html)
   ===================================================
+  2026.08.20 — v1.4.0 (언어 코드 표준화 + 아랍어 추가, §5 준수)
+    · I18N 키를 프로젝트 표준 장문 코드로 정정: de→de_DE, fr→fr_FR,
+      nl→nl_NL, sv→sv_SE, no→nn_NO(노르니노르스크로 어휘도 함께 조정),
+      da→da_DK (번역 내용은 유지, 키만 정정 — nn_NO는 예외적으로 보크몰
+      어휘를 뉘노르스크 어휘로 교체)
+    · ar(아랍어) 블록 신규 추가 — ko 기준 58개 키 전체 번역
+    · normalizeLang()이 장문 코드(de_DE 등)를 올바르게 인식하도록 개선
+    · html-root에 dir="rtl"/"ltr" 자동 적용 (ar일 때 rtl)
+  ---------------------------------------------------
   2026.08.17 — v1.3.0 (8개 언어 UI 확장)
     · I18N 객체에 zh_CN, zh_TW, de, fr, nl, sv, no, da 8개 언어 블록 추가
       (ko/en/ja와 동일한 58개 키 전체 번역, UI 셸만 — 기술 용어는
@@ -471,7 +480,7 @@ const I18N = {
     lbl_count: '數量', opt_paragraphs: '段落', opt_sentences: '句子', opt_words: '單字', opt_html: 'HTML',
     btn_generate: '⚡ 產生', btn_refresh: '🔄 重新整理',
   },
-  de: {
+  de_DE: {
     page_title: 'pomiai Dev Tools 2',
     tab_conv: '⇄ Datenkonvertierung', tab_grad: '🎨 CSS-Verlauf', tab_cron: '⏰ Cron',
     tab_tz: '🌍 Zeitzone', tab_lorem: '📝 Lorem Ipsum',
@@ -503,7 +512,7 @@ const I18N = {
     lbl_count: 'Anzahl', opt_paragraphs: 'Absätze', opt_sentences: 'Sätze', opt_words: 'Wörter', opt_html: 'HTML',
     btn_generate: '⚡ Erstellen', btn_refresh: '🔄 Aktualisieren',
   },
-  fr: {
+  fr_FR: {
     page_title: 'pomiai Dev Tools 2',
     tab_conv: '⇄ Conversion de données', tab_grad: '🎨 Dégradé CSS', tab_cron: '⏰ Cron',
     tab_tz: '🌍 Fuseau horaire', tab_lorem: '📝 Lorem Ipsum',
@@ -535,7 +544,7 @@ const I18N = {
     lbl_count: 'Nombre', opt_paragraphs: 'Paragraphes', opt_sentences: 'Phrases', opt_words: 'Mots', opt_html: 'HTML',
     btn_generate: '⚡ Générer', btn_refresh: '🔄 Actualiser',
   },
-  nl: {
+  nl_NL: {
     page_title: 'pomiai Dev Tools 2',
     tab_conv: '⇄ Data converteren', tab_grad: '🎨 CSS-verloop', tab_cron: '⏰ Cron',
     tab_tz: '🌍 Tijdzone', tab_lorem: '📝 Lorem Ipsum',
@@ -567,7 +576,7 @@ const I18N = {
     lbl_count: 'Aantal', opt_paragraphs: 'Alinea\'s', opt_sentences: 'Zinnen', opt_words: 'Woorden', opt_html: 'HTML',
     btn_generate: '⚡ Genereren', btn_refresh: '🔄 Vernieuwen',
   },
-  sv: {
+  sv_SE: {
     page_title: 'pomiai Dev Tools 2',
     tab_conv: '⇄ Datakonvertering', tab_grad: '🎨 CSS-gradient', tab_cron: '⏰ Cron',
     tab_tz: '🌍 Tidszon', tab_lorem: '📝 Lorem Ipsum',
@@ -599,39 +608,39 @@ const I18N = {
     lbl_count: 'Antal', opt_paragraphs: 'Stycken', opt_sentences: 'Meningar', opt_words: 'Ord', opt_html: 'HTML',
     btn_generate: '⚡ Generera', btn_refresh: '🔄 Uppdatera',
   },
-  no: {
+  nn_NO: {
     page_title: 'pomiai Dev Tools 2',
     tab_conv: '⇄ Datakonvertering', tab_grad: '🎨 CSS-gradient', tab_cron: '⏰ Cron',
     tab_tz: '🌍 Tidssone', tab_lorem: '📝 Lorem Ipsum',
-    conv_title: 'Dataformatkonverterer',
-    conv_sub: 'JSON ↔ CSV ↔ XML ↔ YAML — umiddelbar konvertering · lokal behandling · ingen opplasting',
-    ph_paste: 'Lim inn dataene dine her...',
+    conv_title: 'Dataformatkonverterar',
+    conv_sub: 'JSON ↔ CSV ↔ XML ↔ YAML — augeblikkeleg konvertering · lokal handsaming · ingen opplasting',
+    ph_paste: 'Lim inn dataa dine her...',
     lbl_input: 'Inndata', lbl_output: 'Utdata',
-    btn_convert: '⚡ Konverter', btn_sample: 'Last inn eksempel', btn_clear: 'Tøm',
+    btn_convert: '⚡ Konverter', btn_sample: 'Last inn døme', btn_clear: 'Tøm',
     btn_copy: '📋 Kopier', btn_download: '⬇ Last ned', btn_useinput: '↑ Bruk som inndata',
     grad_title: 'CSS-gradientgenerator',
-    grad_sub: 'Lineær · Radial · Konisk — direktevisning · kopier CSS · rediger fargestopp',
-    lbl_type: 'Type', lbl_angle: 'Vinkel', lbl_preset: 'Forhåndsinnstilling', opt_custom: 'Tilpasset',
+    grad_sub: 'Lineær · Radial · Konisk — direktevising · kopier CSS · rediger fargestopp',
+    lbl_type: 'Type', lbl_angle: 'Vinkel', lbl_preset: 'Førehandsinnstilling', opt_custom: 'Tilpassa',
     lbl_colorstops: 'Fargestopp', btn_addstop: '+ Legg til stopp',
     lbl_cssoutput: 'CSS-utdata', btn_copycss: '📋 Kopier CSS', btn_copybg: '📋 Kopier background',
     cron_title: 'Cron-uttrykksgenerator',
-    cron_sub: 'Bygg cron-uttrykk med klikk — støtter standard 5-felt og utvidet 6-felts format',
+    cron_sub: 'Bygg cron-uttrykk med klikk — støttar standard 5-felt og utvida 6-felts format',
     lbl_builder: 'Byggeverktøy → Uttrykk',
-    lbl_min: 'Minutt (0–59)', lbl_hr: 'Time (0–23)', lbl_dom: 'Dag i måneden (1–31)',
-    lbl_mon: 'Måned (1–12)', lbl_dow: 'Ukedag (0–7)', lbl_sec: 'Sekund (valgfritt)',
-    ph_leaveblank: 'la stå tomt', btn_parse: '⚡ Analyser',
-    lbl_presets: 'Hurtigvalg', lbl_exprdesc: 'Uttrykk → Beskrivelse',
-    ph_cronexample: 'f.eks. */5 * * * *', lbl_meaning: 'Betydning',
-    tz_title: 'Tidssoneomregner',
-    tz_sub: 'Regn om tid mellom globale tidssoner — møteplanlegger · verdensklokke',
-    lbl_datetime: 'Dato & tid', lbl_fromtz: 'Fra tidssone', lbl_convertto: 'Konverter til',
-    lbl_worldclock: 'Verdensklokke',
+    lbl_min: 'Minutt (0–59)', lbl_hr: 'Time (0–23)', lbl_dom: 'Dag i månaden (1–31)',
+    lbl_mon: 'Månad (1–12)', lbl_dow: 'Vekedag (0–7)', lbl_sec: 'Sekund (valfritt)',
+    ph_leaveblank: 'lat det stå tomt', btn_parse: '⚡ Analyser',
+    lbl_presets: 'Snarval', lbl_exprdesc: 'Uttrykk → Skildring',
+    ph_cronexample: 't.d. */5 * * * *', lbl_meaning: 'Tyding',
+    tz_title: 'Tidssoneomreknar',
+    tz_sub: 'Rekn om tid mellom globale tidssoner — møteplanleggjar · verdsklokke',
+    lbl_datetime: 'Dato & tid', lbl_fromtz: 'Frå tidssone', lbl_convertto: 'Konverter til',
+    lbl_worldclock: 'Verdsklokke',
     lorem_title: 'Lorem Ipsum-generator',
-    lorem_sub: 'Engelsk · Koreansk · Japansk · Kinesisk · Emoji — avsnitt, setninger, ord',
-    lbl_count: 'Antall', opt_paragraphs: 'Avsnitt', opt_sentences: 'Setninger', opt_words: 'Ord', opt_html: 'HTML',
+    lorem_sub: 'Engelsk · Koreansk · Japansk · Kinesisk · Emoji — avsnitt, setningar, ord',
+    lbl_count: 'Tal', opt_paragraphs: 'Avsnitt', opt_sentences: 'Setningar', opt_words: 'Ord', opt_html: 'HTML',
     btn_generate: '⚡ Generer', btn_refresh: '🔄 Oppdater',
   },
-  da: {
+  da_DK: {
     page_title: 'pomiai Dev Tools 2',
     tab_conv: '⇄ Datakonvertering', tab_grad: '🎨 CSS-gradient', tab_cron: '⏰ Cron',
     tab_tz: '🌍 Tidszone', tab_lorem: '📝 Lorem Ipsum',
@@ -663,19 +672,56 @@ const I18N = {
     lbl_count: 'Antal', opt_paragraphs: 'Afsnit', opt_sentences: 'Sætninger', opt_words: 'Ord', opt_html: 'HTML',
     btn_generate: '⚡ Generer', btn_refresh: '🔄 Opdater',
   },
+  ar: {
+    page_title: 'أدوات pomiai للمطورين 2',
+    tab_conv: '⇄ تحويل البيانات', tab_grad: '🎨 تدرج CSS', tab_cron: '⏰ Cron',
+    tab_tz: '🌍 المنطقة الزمنية', tab_lorem: '📝 Lorem Ipsum',
+    conv_title: 'محوّل تنسيقات البيانات',
+    conv_sub: 'JSON ↔ CSV ↔ XML ↔ YAML — تحويل فوري · معالجة محلية · بدون رفع ملفات',
+    ph_paste: 'الصق بياناتك هنا...',
+    lbl_input: 'الإدخال', lbl_output: 'الإخراج',
+    btn_convert: '⚡ تحويل', btn_sample: 'تحميل مثال', btn_clear: 'مسح',
+    btn_copy: '📋 نسخ', btn_download: '⬇ تنزيل', btn_useinput: '↑ استخدام كإدخال',
+    grad_title: 'مولّد تدرج CSS',
+    grad_sub: 'Linear · Radial · Conic — معاينة مباشرة · نسخ CSS · تحرير نقاط اللون',
+    lbl_type: 'النوع', lbl_angle: 'الزاوية', lbl_preset: 'إعداد مسبق', opt_custom: 'مخصص',
+    lbl_colorstops: 'نقاط اللون', btn_addstop: '+ إضافة نقطة',
+    lbl_cssoutput: 'إخراج CSS', btn_copycss: '📋 نسخ CSS', btn_copybg: '📋 نسخ background',
+    cron_title: 'مولّد تعبير Cron',
+    cron_sub: 'أنشئ تعبيرات cron بنقرات فقط — يدعم الصيغة القياسية 5 حقول والموسّعة 6 حقول',
+    lbl_builder: 'المُنشئ → التعبير',
+    lbl_min: 'الدقيقة (0–59)', lbl_hr: 'الساعة (0–23)', lbl_dom: 'يوم الشهر (1–31)',
+    lbl_mon: 'الشهر (1–12)', lbl_dow: 'يوم الأسبوع (0–7)', lbl_sec: 'الثانية (اختياري)',
+    ph_leaveblank: 'اتركه فارغًا لعدم الاستخدام', btn_parse: '⚡ تحليل',
+    lbl_presets: 'إعدادات سريعة', lbl_exprdesc: 'التعبير → الوصف',
+    ph_cronexample: 'مثال: */5 * * * *', lbl_meaning: 'المعنى',
+    tz_title: 'محوّل المناطق الزمنية',
+    tz_sub: 'حوّل فروق التوقيت العالمية دفعة واحدة — تخطيط الاجتماعات · ساعة عالمية',
+    lbl_datetime: 'التاريخ والوقت', lbl_fromtz: 'المنطقة الزمنية الأساسية', lbl_convertto: 'التحويل إلى',
+    lbl_worldclock: 'الساعة العالمية',
+    lorem_title: 'مولّد نص Lorem Ipsum',
+    lorem_sub: 'الإنجليزية · الكورية · اليابانية · الصينية · الرموز التعبيرية — بالفقرات والجمل والكلمات',
+    lbl_count: 'العدد', opt_paragraphs: 'فقرات', opt_sentences: 'جمل', opt_words: 'كلمات', opt_html: 'HTML',
+    btn_generate: '⚡ إنشاء', btn_refresh: '🔄 تحديث',
+  },
 };
 
 /* 언어 감지 우선순위: URL ?lang= → 브라우저 언어 → 기본값(ko) — 프로젝트 §5 표준 */
 (function(){
   const params = new URLSearchParams(location.search);
   const urlLang = params.get('lang');
-  /* 중국어 간체/번체 및 노르웨이어(nb/no) 구분을 위한 정규화 함수 */
+  /* 중국어 간체/번체 및 유럽어 장문 코드(xx_XX)·노르웨이어(nb/nn/no) 구분을 위한 정규화 함수 */
   function normalizeLang(raw){
     if(!raw) return '';
     if(/^zh/i.test(raw)) return /tw|hk|mo/i.test(raw) ? 'zh_TW' : 'zh_CN';
-    const two = raw.slice(0,2).toLowerCase();
-    if(two === 'nb') return 'no';
-    return two;
+    if(/^de/i.test(raw)) return 'de_DE';
+    if(/^fr/i.test(raw)) return 'fr_FR';
+    if(/^nl/i.test(raw)) return 'nl_NL';
+    if(/^sv/i.test(raw)) return 'sv_SE';
+    if(/^(nb|nn|no)/i.test(raw)) return 'nn_NO';
+    if(/^da/i.test(raw)) return 'da_DK';
+    if(/^ar/i.test(raw)) return 'ar';
+    return raw.slice(0,2).toLowerCase();
   }
   const urlKey = normalizeLang(urlLang);
   const browserKey = normalizeLang(navigator.language || 'ko');
@@ -685,6 +731,7 @@ const I18N = {
   window._LANG = LANG;
   window._T    = I18N[LANG];
   document.getElementById('html-root').lang = LANG;
+  document.getElementById('html-root').setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
 })();
 
 function applyI18n(){

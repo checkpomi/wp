@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" id="html-root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>pomiai visualizer (embed)</title>
+<title id="page-title">pomiai visualizer (embed)</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden}
@@ -124,19 +124,19 @@ body{height:100%;overflow:hidden;touch-action:manipulation;background:#000;color
 <div id="sidebar">
   <div id="sb-header">
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <span id="sb-title">재생목록</span><span id="pl-count">0곡</span>
+      <span id="sb-title" data-i18n="label_playlist">재생목록</span><span id="pl-count">0곡</span>
     </div>
-    <button id="add-btn">＋ 파일 추가</button>
+    <button id="add-btn" data-i18n="btn_add_file">＋ 파일 추가</button>
     <input type="file" id="file-input" accept="audio/*" multiple>
   </div>
-  <div id="playlist"><div id="pl-empty">음악 파일을 추가하세요<br>MP3 · WAV · FLAC · OGG<br><br>드래그 앤 드롭도 됩니다</div></div>
+  <div id="playlist"><div id="pl-empty" data-i18n-html="pl_empty_html">음악 파일을 추가하세요<br>MP3 · WAV · FLAC · OGG<br><br>드래그 앤 드롭도 됩니다</div></div>
 </div>
-<div id="sb-toggle" onclick="toggleSidebar()" title="재생목록 숨기기/보이기">◀</div>
+<div id="sb-toggle" onclick="toggleSidebar()" title="재생목록 숨기기/보이기" data-i18n-title="tooltip_toggle_sidebar">◀</div>
 <div id="main">
   <div id="viz">
     <canvas id="cBg"></canvas><canvas id="cMid"></canvas><canvas id="cFx"></canvas><canvas id="cTop"></canvas>
     <div id="toast"></div>
-    <div id="drop-overlay">🎵 여기에 놓으세요</div>
+    <div id="drop-overlay" data-i18n="hint_drop_here">🎵 여기에 놓으세요</div>
   </div>
   <div id="panel">
     <div id="track-row">
@@ -154,60 +154,530 @@ body{height:100%;overflow:hidden;touch-action:manipulation;background:#000;color
     <div id="vs-row">
       <div class="vs-group">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-        <span class="vs-label">음량</span>
+        <span class="vs-label" data-i18n="label_volume">음량</span>
         <input type="range" class="vs-slider" id="vol-s" min="0" max="150" value="80" step="1">
         <span class="vs-val" id="vol-v">80%</span>
       </div>
       <div class="vs-group">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EF9F27" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span class="vs-label">속도</span>
+        <span class="vs-label" data-i18n="label_speed">속도</span>
         <input type="range" class="vs-slider" id="spd-s" min="25" max="200" value="100" step="5">
         <span class="vs-val" id="spd-v">1.0×</span>
       </div>
-      <button class="vs-reset" id="vs-reset">초기화</button>
+      <button class="vs-reset" id="vs-reset" data-i18n="btn_reset">초기화</button>
     </div>
     <div id="mode-row">
-      <button class="pmb on" id="pm-seq" title="차례대로">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="3" x2="19" y2="21"/></svg>차례대로
+      <button class="pmb on" id="pm-seq" title="차례대로" data-i18n-title="mode_seq">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="3" x2="19" y2="21"/></svg><span data-i18n="mode_seq">차례대로</span>
       </button>
-      <button class="pmb" id="pm-loop" title="전체반복">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>전체반복
+      <button class="pmb" id="pm-loop" title="전체반복" data-i18n-title="mode_loop">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span data-i18n="mode_loop">전체반복</span>
       </button>
-      <button class="pmb" id="pm-one" title="1곡반복">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>1곡반복
+      <button class="pmb" id="pm-one" title="1곡반복" data-i18n-title="mode_one">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span data-i18n="mode_one">1곡반복</span>
       </button>
-      <button class="pmb" id="pm-shuffle" title="랜덤">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>랜덤
+      <button class="pmb" id="pm-shuffle" title="랜덤" data-i18n-title="mode_shuffle">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg><span data-i18n="mode_shuffle">랜덤</span>
       </button>
       <span id="mode-label"></span>
     </div>
     <div id="modes">
-      <button class="mb on" data-m="superbars">슈퍼바</button>
-      <button class="mb" data-m="crystal">크리스탈</button>
-      <button class="mb" data-m="aurora">오로라</button>
-      <button class="mb" data-m="dna">DNA</button>
-      <button class="mb" data-m="galaxy">갤럭시</button>
-      <button class="mb" data-m="lissajous">리사주</button>
-      <button class="mb" data-m="woofer">우퍼</button>
-      <button class="mb" data-m="woofer2">우퍼+리사주</button>
-      <button class="mb" id="auto-mode-btn" data-m="auto">🎲 오토</button>
+      <button class="mb on" data-m="superbars" data-i18n="style_superbar">슈퍼바</button>
+      <button class="mb" data-m="crystal" data-i18n="style_crystal">크리스탈</button>
+      <button class="mb" data-m="aurora" data-i18n="style_aurora">오로라</button>
+      <button class="mb" data-m="dna" data-i18n="style_dna">DNA</button>
+      <button class="mb" data-m="galaxy" data-i18n="style_galaxy">갤럭시</button>
+      <button class="mb" data-m="lissajous" data-i18n="style_lissajous">리사주</button>
+      <button class="mb" data-m="woofer" data-i18n="style_woofer">우퍼</button>
+      <button class="mb" data-m="woofer2" data-i18n="style_woofer_lissajous">우퍼+리사주</button>
+      <button class="mb" id="auto-mode-btn" data-m="auto" data-i18n="style_auto">🎲 오토</button>
     </div>
     <div id="themes">
-      <button class="tb on" data-t="cosmic">코스믹</button>
-      <button class="tb" data-t="ember">앰버</button>
-      <button class="tb" data-t="ocean">오션</button>
-      <button class="tb" data-t="sakura">사쿠라</button>
-      <button class="tb" data-t="neon">네온</button>
+      <button class="tb on" data-t="cosmic" data-i18n="theme_cosmic">코스믹</button>
+      <button class="tb" data-t="ember" data-i18n="theme_ember">앰버</button>
+      <button class="tb" data-t="ocean" data-i18n="theme_ocean">오션</button>
+      <button class="tb" data-t="sakura" data-i18n="theme_sakura">사쿠라</button>
+      <button class="tb" data-t="neon" data-i18n="theme_neon">네온</button>
     </div>
     <div id="rec-row">
-      <button id="rbtn">● 녹화</button>
-      <button id="audio-opt" class="on">🎵 음악포함</button>
-      <span id="rstat">재생 시 자동 녹화</span>
+      <button id="rbtn" data-i18n="btn_record">● 녹화</button>
+      <button id="audio-opt" class="on" data-i18n="label_audio_on">🎵 음악포함</button>
+      <span id="rstat" data-i18n="status_idle">재생 시 자동 녹화</span>
       <span id="rtimer">00:00</span>
     </div>
   </div>
 </div>
 <script>
+/* ── i18n ── */
+const I18N = {
+  ko: {
+    page_title: "pomiai 비주얼라이저",
+    label_playlist: "재생목록",
+    btn_add_file: "＋ 파일 추가",
+    count_tracks: "{n}곡",
+    pl_empty_html: "음악 파일을 추가하세요<br>MP3 · WAV · FLAC · OGG<br><br>드래그 앤 드롭도 됩니다",
+    hint_drop_here: "🎵 여기에 놓으세요",
+    tooltip_toggle_sidebar: "재생목록 숨기기/보이기",
+    label_volume: "음량",
+    label_speed: "속도",
+    btn_reset: "초기화",
+    mode_seq: "차례대로",
+    mode_loop: "전체반복",
+    mode_one: "1곡반복",
+    mode_shuffle: "랜덤",
+    style_superbar: "슈퍼바",
+    style_crystal: "크리스탈",
+    style_aurora: "오로라",
+    style_dna: "DNA",
+    style_galaxy: "갤럭시",
+    style_lissajous: "리사주",
+    style_woofer: "우퍼",
+    style_woofer_lissajous: "우퍼+리사주",
+    style_auto: "🎲 오토",
+    theme_cosmic: "코스믹",
+    theme_ember: "앰버",
+    theme_ocean: "오션",
+    theme_sakura: "사쿠라",
+    theme_neon: "네온",
+    btn_record: "● 녹화",
+    btn_record_stop: "■ 중지",
+    label_audio_on: "🎵 음악포함",
+    label_audio_off: "🔇 영상만",
+    status_idle: "재생 시 자동 녹화",
+    status_recording_audio: "● 녹화 중",
+    status_recording_video: "● 영상 녹화"
+  },
+  en: {
+    page_title: "pomiai Visualizer",
+    label_playlist: "Playlist",
+    btn_add_file: "+ Add File",
+    count_tracks: "{n} tracks",
+    pl_empty_html: "Add music files<br>MP3 · WAV · FLAC · OGG<br><br>Drag & drop also works",
+    hint_drop_here: "🎵 Drop here",
+    tooltip_toggle_sidebar: "Show/hide playlist",
+    label_volume: "Volume",
+    label_speed: "Speed",
+    btn_reset: "Reset",
+    mode_seq: "In Order",
+    mode_loop: "Repeat All",
+    mode_one: "Repeat One",
+    mode_shuffle: "Shuffle",
+    style_superbar: "Superbar",
+    style_crystal: "Crystal",
+    style_aurora: "Aurora",
+    style_dna: "DNA",
+    style_galaxy: "Galaxy",
+    style_lissajous: "Lissajous",
+    style_woofer: "Woofer",
+    style_woofer_lissajous: "Woofer + Lissajous",
+    style_auto: "🎲 Auto",
+    theme_cosmic: "Cosmic",
+    theme_ember: "Amber",
+    theme_ocean: "Ocean",
+    theme_sakura: "Sakura",
+    theme_neon: "Neon",
+    btn_record: "● Record",
+    btn_record_stop: "■ Stop",
+    label_audio_on: "🎵 With Audio",
+    label_audio_off: "🔇 Video Only",
+    status_idle: "Auto-records on playback",
+    status_recording_audio: "● Recording",
+    status_recording_video: "● Recording Video"
+  },
+  ja: {
+    page_title: "pomiai ビジュアライザー",
+    label_playlist: "プレイリスト",
+    btn_add_file: "＋ ファイルを追加",
+    count_tracks: "{n}曲",
+    pl_empty_html: "音楽ファイルを追加してください<br>MP3 · WAV · FLAC · OGG<br><br>ドラッグ＆ドロップにも対応",
+    hint_drop_here: "🎵 ここにドロップ",
+    tooltip_toggle_sidebar: "プレイリストの表示/非表示",
+    label_volume: "音量",
+    label_speed: "速度",
+    btn_reset: "リセット",
+    mode_seq: "順番に",
+    mode_loop: "全曲リピート",
+    mode_one: "1曲リピート",
+    mode_shuffle: "シャッフル",
+    style_superbar: "スーパーバー",
+    style_crystal: "クリスタル",
+    style_aurora: "オーロラ",
+    style_dna: "DNA",
+    style_galaxy: "ギャラクシー",
+    style_lissajous: "リサージュ",
+    style_woofer: "ウーファー",
+    style_woofer_lissajous: "ウーファー+リサージュ",
+    style_auto: "🎲 オート",
+    theme_cosmic: "コズミック",
+    theme_ember: "アンバー",
+    theme_ocean: "オーシャン",
+    theme_sakura: "サクラ",
+    theme_neon: "ネオン",
+    btn_record: "● 録画",
+    btn_record_stop: "■ 停止",
+    label_audio_on: "🎵 音声あり",
+    label_audio_off: "🔇 映像のみ",
+    status_idle: "再生時に自動録画",
+    status_recording_audio: "● 録画中",
+    status_recording_video: "● 映像を録画中"
+  },
+  zh_CN: {
+    page_title: "pomiai 可视化播放器",
+    label_playlist: "播放列表",
+    btn_add_file: "＋ 添加文件",
+    count_tracks: "{n}首",
+    pl_empty_html: "请添加音乐文件<br>MP3 · WAV · FLAC · OGG<br><br>也支持拖放上传",
+    hint_drop_here: "🎵 拖放到这里",
+    tooltip_toggle_sidebar: "显示/隐藏播放列表",
+    label_volume: "音量",
+    label_speed: "速度",
+    btn_reset: "重置",
+    mode_seq: "顺序播放",
+    mode_loop: "全部循环",
+    mode_one: "单曲循环",
+    mode_shuffle: "随机播放",
+    style_superbar: "超级频谱",
+    style_crystal: "水晶",
+    style_aurora: "极光",
+    style_dna: "DNA",
+    style_galaxy: "银河",
+    style_lissajous: "李萨如",
+    style_woofer: "低音炮",
+    style_woofer_lissajous: "低音炮+李萨如",
+    style_auto: "🎲 自动",
+    theme_cosmic: "宇宙",
+    theme_ember: "琥珀",
+    theme_ocean: "海洋",
+    theme_sakura: "樱花",
+    theme_neon: "霓虹",
+    btn_record: "● 录制",
+    btn_record_stop: "■ 停止",
+    label_audio_on: "🎵 含音频",
+    label_audio_off: "🔇 仅视频",
+    status_idle: "播放时自动录制",
+    status_recording_audio: "● 录制中",
+    status_recording_video: "● 录制视频中"
+  },
+  zh_TW: {
+    page_title: "pomiai 視覺化播放器",
+    label_playlist: "播放清單",
+    btn_add_file: "＋ 新增檔案",
+    count_tracks: "{n}首",
+    pl_empty_html: "請新增音樂檔案<br>MP3 · WAV · FLAC · OGG<br><br>也支援拖放上傳",
+    hint_drop_here: "🎵 拖放到這裡",
+    tooltip_toggle_sidebar: "顯示/隱藏播放清單",
+    label_volume: "音量",
+    label_speed: "速度",
+    btn_reset: "重置",
+    mode_seq: "順序播放",
+    mode_loop: "全部循環",
+    mode_one: "單曲循環",
+    mode_shuffle: "隨機播放",
+    style_superbar: "超級頻譜",
+    style_crystal: "水晶",
+    style_aurora: "極光",
+    style_dna: "DNA",
+    style_galaxy: "銀河",
+    style_lissajous: "李薩如",
+    style_woofer: "重低音",
+    style_woofer_lissajous: "重低音+李薩如",
+    style_auto: "🎲 自動",
+    theme_cosmic: "宇宙",
+    theme_ember: "琥珀",
+    theme_ocean: "海洋",
+    theme_sakura: "櫻花",
+    theme_neon: "霓虹",
+    btn_record: "● 錄製",
+    btn_record_stop: "■ 停止",
+    label_audio_on: "🎵 含音訊",
+    label_audio_off: "🔇 僅視訊",
+    status_idle: "播放時自動錄製",
+    status_recording_audio: "● 錄製中",
+    status_recording_video: "● 錄製視訊中"
+  },
+  de_DE: {
+    page_title: "pomiai Visualizer",
+    label_playlist: "Playlist",
+    btn_add_file: "+ Datei hinzufügen",
+    count_tracks: "{n} Titel",
+    pl_empty_html: "Musikdateien hinzufügen<br>MP3 · WAV · FLAC · OGG<br><br>Auch per Drag & Drop möglich",
+    hint_drop_here: "🎵 Hier ablegen",
+    tooltip_toggle_sidebar: "Playlist ein-/ausblenden",
+    label_volume: "Lautstärke",
+    label_speed: "Tempo",
+    btn_reset: "Zurücksetzen",
+    mode_seq: "Der Reihe nach",
+    mode_loop: "Alle wiederholen",
+    mode_one: "Einen wiederholen",
+    mode_shuffle: "Zufall",
+    style_superbar: "Superbar",
+    style_crystal: "Kristall",
+    style_aurora: "Aurora",
+    style_dna: "DNA",
+    style_galaxy: "Galaxie",
+    style_lissajous: "Lissajous",
+    style_woofer: "Woofer",
+    style_woofer_lissajous: "Woofer + Lissajous",
+    style_auto: "🎲 Auto",
+    theme_cosmic: "Kosmisch",
+    theme_ember: "Bernstein",
+    theme_ocean: "Ozean",
+    theme_sakura: "Sakura",
+    theme_neon: "Neon",
+    btn_record: "● Aufnahme",
+    btn_record_stop: "■ Stopp",
+    label_audio_on: "🎵 Mit Audio",
+    label_audio_off: "🔇 Nur Video",
+    status_idle: "Automatische Aufnahme bei Wiedergabe",
+    status_recording_audio: "● Aufnahme läuft",
+    status_recording_video: "● Video wird aufgenommen"
+  },
+  fr_FR: {
+    page_title: "pomiai Visualiseur",
+    label_playlist: "Liste de lecture",
+    btn_add_file: "+ Ajouter un fichier",
+    count_tracks: "{n} titres",
+    pl_empty_html: "Ajoutez des fichiers audio<br>MP3 · WAV · FLAC · OGG<br><br>Le glisser-déposer fonctionne aussi",
+    hint_drop_here: "🎵 Déposez ici",
+    tooltip_toggle_sidebar: "Afficher/masquer la liste de lecture",
+    label_volume: "Volume",
+    label_speed: "Vitesse",
+    btn_reset: "Réinitialiser",
+    mode_seq: "Dans l'ordre",
+    mode_loop: "Tout répéter",
+    mode_one: "Répéter un titre",
+    mode_shuffle: "Aléatoire",
+    style_superbar: "Superbar",
+    style_crystal: "Cristal",
+    style_aurora: "Aurore",
+    style_dna: "ADN",
+    style_galaxy: "Galaxie",
+    style_lissajous: "Lissajous",
+    style_woofer: "Woofer",
+    style_woofer_lissajous: "Woofer + Lissajous",
+    style_auto: "🎲 Auto",
+    theme_cosmic: "Cosmique",
+    theme_ember: "Ambre",
+    theme_ocean: "Océan",
+    theme_sakura: "Sakura",
+    theme_neon: "Néon",
+    btn_record: "● Enregistrer",
+    btn_record_stop: "■ Arrêter",
+    label_audio_on: "🎵 Avec audio",
+    label_audio_off: "🔇 Vidéo uniquement",
+    status_idle: "Enregistrement automatique à la lecture",
+    status_recording_audio: "● Enregistrement en cours",
+    status_recording_video: "● Enregistrement vidéo"
+  },
+  nl_NL: {
+    page_title: "pomiai Visualizer",
+    label_playlist: "Afspeellijst",
+    btn_add_file: "+ Bestand toevoegen",
+    count_tracks: "{n} nummers",
+    pl_empty_html: "Voeg muziekbestanden toe<br>MP3 · WAV · FLAC · OGG<br><br>Slepen en neerzetten werkt ook",
+    hint_drop_here: "🎵 Zet hier neer",
+    tooltip_toggle_sidebar: "Afspeellijst tonen/verbergen",
+    label_volume: "Volume",
+    label_speed: "Snelheid",
+    btn_reset: "Reset",
+    mode_seq: "Op volgorde",
+    mode_loop: "Alles herhalen",
+    mode_one: "Eén herhalen",
+    mode_shuffle: "Shuffle",
+    style_superbar: "Superbar",
+    style_crystal: "Kristal",
+    style_aurora: "Aurora",
+    style_dna: "DNA",
+    style_galaxy: "Melkweg",
+    style_lissajous: "Lissajous",
+    style_woofer: "Woofer",
+    style_woofer_lissajous: "Woofer + Lissajous",
+    style_auto: "🎲 Auto",
+    theme_cosmic: "Kosmisch",
+    theme_ember: "Amber",
+    theme_ocean: "Oceaan",
+    theme_sakura: "Sakura",
+    theme_neon: "Neon",
+    btn_record: "● Opnemen",
+    btn_record_stop: "■ Stoppen",
+    label_audio_on: "🎵 Met audio",
+    label_audio_off: "🔇 Alleen video",
+    status_idle: "Neemt automatisch op bij afspelen",
+    status_recording_audio: "● Bezig met opnemen",
+    status_recording_video: "● Video wordt opgenomen"
+  },
+  sv_SE: {
+    page_title: "pomiai Visualiserare",
+    label_playlist: "Spellista",
+    btn_add_file: "+ Lägg till fil",
+    count_tracks: "{n} låtar",
+    pl_empty_html: "Lägg till musikfiler<br>MP3 · WAV · FLAC · OGG<br><br>Dra och släpp fungerar också",
+    hint_drop_here: "🎵 Släpp här",
+    tooltip_toggle_sidebar: "Visa/dölj spellista",
+    label_volume: "Volym",
+    label_speed: "Hastighet",
+    btn_reset: "Återställ",
+    mode_seq: "I ordning",
+    mode_loop: "Upprepa alla",
+    mode_one: "Upprepa en",
+    mode_shuffle: "Blanda",
+    style_superbar: "Superbar",
+    style_crystal: "Kristall",
+    style_aurora: "Aurora",
+    style_dna: "DNA",
+    style_galaxy: "Galax",
+    style_lissajous: "Lissajous",
+    style_woofer: "Woofer",
+    style_woofer_lissajous: "Woofer + Lissajous",
+    style_auto: "🎲 Auto",
+    theme_cosmic: "Kosmisk",
+    theme_ember: "Bärnsten",
+    theme_ocean: "Ocean",
+    theme_sakura: "Sakura",
+    theme_neon: "Neon",
+    btn_record: "● Spela in",
+    btn_record_stop: "■ Stoppa",
+    label_audio_on: "🎵 Med ljud",
+    label_audio_off: "🔇 Endast video",
+    status_idle: "Spelar in automatiskt vid uppspelning",
+    status_recording_audio: "● Spelar in",
+    status_recording_video: "● Spelar in video"
+  },
+  nn_NO: {
+    page_title: "pomiai Visualisering",
+    label_playlist: "Spilleliste",
+    btn_add_file: "+ Legg til fil",
+    count_tracks: "{n} sanger",
+    pl_empty_html: "Legg til musikkfiler<br>MP3 · WAV · FLAC · OGG<br><br>Dra og slipp fungerer også",
+    hint_drop_here: "🎵 Slipp her",
+    tooltip_toggle_sidebar: "Vis/skjul spilleliste",
+    label_volume: "Volum",
+    label_speed: "Hastighet",
+    btn_reset: "Tilbakestill",
+    mode_seq: "I rekkefølge",
+    mode_loop: "Gjenta alle",
+    mode_one: "Gjenta én",
+    mode_shuffle: "Tilfeldig",
+    style_superbar: "Superbar",
+    style_crystal: "Krystall",
+    style_aurora: "Nordlys",
+    style_dna: "DNA",
+    style_galaxy: "Galakse",
+    style_lissajous: "Lissajous",
+    style_woofer: "Woofer",
+    style_woofer_lissajous: "Woofer + Lissajous",
+    style_auto: "🎲 Auto",
+    theme_cosmic: "Kosmisk",
+    theme_ember: "Rav",
+    theme_ocean: "Hav",
+    theme_sakura: "Sakura",
+    theme_neon: "Neon",
+    btn_record: "● Ta opp",
+    btn_record_stop: "■ Stopp",
+    label_audio_on: "🎵 Med lyd",
+    label_audio_off: "🔇 Kun video",
+    status_idle: "Tar opp automatisk ved avspilling",
+    status_recording_audio: "● Tar opp",
+    status_recording_video: "● Tar opp video"
+  },
+  da_DK: {
+    page_title: "pomiai Visualisering",
+    label_playlist: "Playliste",
+    btn_add_file: "+ Tilføj fil",
+    count_tracks: "{n} sange",
+    pl_empty_html: "Tilføj musikfiler<br>MP3 · WAV · FLAC · OGG<br><br>Træk og slip virker også",
+    hint_drop_here: "🎵 Slip her",
+    tooltip_toggle_sidebar: "Vis/skjul playliste",
+    label_volume: "Lydstyrke",
+    label_speed: "Hastighed",
+    btn_reset: "Nulstil",
+    mode_seq: "I rækkefølge",
+    mode_loop: "Gentag alle",
+    mode_one: "Gentag én",
+    mode_shuffle: "Tilfældig",
+    style_superbar: "Superbar",
+    style_crystal: "Krystal",
+    style_aurora: "Nordlys",
+    style_dna: "DNA",
+    style_galaxy: "Galakse",
+    style_lissajous: "Lissajous",
+    style_woofer: "Woofer",
+    style_woofer_lissajous: "Woofer + Lissajous",
+    style_auto: "🎲 Auto",
+    theme_cosmic: "Kosmisk",
+    theme_ember: "Rav",
+    theme_ocean: "Hav",
+    theme_sakura: "Sakura",
+    theme_neon: "Neon",
+    btn_record: "● Optag",
+    btn_record_stop: "■ Stop",
+    label_audio_on: "🎵 Med lyd",
+    label_audio_off: "🔇 Kun video",
+    status_idle: "Optager automatisk ved afspilning",
+    status_recording_audio: "● Optager",
+    status_recording_video: "● Optager video"
+  },
+  ar: {
+    page_title: "pomiai للمؤثرات البصرية",
+    label_playlist: "قائمة التشغيل",
+    btn_add_file: "＋ إضافة ملف",
+    count_tracks: "{n} مقطع",
+    pl_empty_html: "أضف ملفات موسيقى<br>MP3 · WAV · FLAC · OGG<br><br>يمكنك أيضاً السحب والإفلات",
+    hint_drop_here: "🎵 أفلت هنا",
+    tooltip_toggle_sidebar: "إظهار/إخفاء قائمة التشغيل",
+    label_volume: "الصوت",
+    label_speed: "السرعة",
+    btn_reset: "إعادة ضبط",
+    mode_seq: "بالترتيب",
+    mode_loop: "تكرار الكل",
+    mode_one: "تكرار المقطع",
+    mode_shuffle: "عشوائي",
+    style_superbar: "الأعمدة الفائقة",
+    style_crystal: "الكريستال",
+    style_aurora: "الشفق القطبي",
+    style_dna: "DNA",
+    style_galaxy: "المجرة",
+    style_lissajous: "ليساجو",
+    style_woofer: "الووفر",
+    style_woofer_lissajous: "الووفر + ليساجو",
+    style_auto: "🎲 تلقائي",
+    theme_cosmic: "الكوني",
+    theme_ember: "العنبري",
+    theme_ocean: "المحيط",
+    theme_sakura: "ساكورا",
+    theme_neon: "النيون",
+    btn_record: "● تسجيل",
+    btn_record_stop: "■ إيقاف",
+    label_audio_on: "🎵 مع الصوت",
+    label_audio_off: "🔇 فيديو فقط",
+    status_idle: "تسجيل تلقائي أثناء التشغيل",
+    status_recording_audio: "● جارٍ التسجيل",
+    status_recording_video: "● تسجيل الفيديو"
+  }
+};
+(function(){
+  const params = new URLSearchParams(location.search);
+  const urlLang = params.get('lang');
+  const browserLang = (navigator.language || 'ko').slice(0,2);
+  const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
+  window._LANG = LANG; window._T = I18N[LANG];
+  const root = document.getElementById('html-root');
+  root.lang = LANG;
+  root.setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
+})();
+function applyI18n(){
+  const t = window._T;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ const k=el.dataset.i18n; if(typeof t[k]==='string') el.textContent=t[k]; });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ const k=el.dataset.i18nHtml; if(typeof t[k]==='string') el.innerHTML=t[k]; });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ const k=el.dataset.i18nPlaceholder; if(typeof t[k]==='string') el.placeholder=t[k]; });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{ const k=el.dataset.i18nTitle; if(typeof t[k]==='string') el.title=t[k]; });
+  const plCount=document.getElementById('pl-count'); if(plCount) plCount.textContent=(t.count_tracks||'{n}').replace('{n}','0');
+  const modeLabel=document.getElementById('mode-label'); if(modeLabel) modeLabel.textContent='● '+t.mode_seq;
+  const pageTitleEl=document.getElementById('page-title'); if(pageTitleEl) pageTitleEl.textContent=t.page_title;
+  document.title=t.page_title;
+}
+applyI18n();
+
 const $=id=>document.getElementById(id);
 const cBg=$('cBg'),ctxBg=cBg.getContext('2d');
 const cMid=$('cMid'),ctxMid=cMid.getContext('2d');
@@ -225,6 +695,7 @@ resize();window.addEventListener('resize',resize);
 /* PLAYLIST */
 let playlist=[],curIdx=-1,playMode='seq',shuffleQueue=[],shufflePos=0;
 function fmtDur(s){return`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
+function trackCountText(n){return (window._T.count_tracks||'{n}').replace('{n}',n);}
 function rebuildShuffle(){shuffleQueue=[...Array(playlist.length).keys()].sort(()=>Math.random()-.5);shufflePos=Math.max(0,shuffleQueue.indexOf(curIdx));}
 function nextIdx(){
   if(!playlist.length)return -1;
@@ -238,13 +709,13 @@ function prevIdx(){
   if(playMode==='shuffle'){if(!shuffleQueue.length)rebuildShuffle();shufflePos=(shufflePos-1+shuffleQueue.length)%shuffleQueue.length;return shuffleQueue[shufflePos];}
   return Math.max(0,curIdx-1);
 }
-const PM_LABELS={seq:'차례대로',loop:'전체반복',one:'1곡반복',shuffle:'랜덤'};
-function setPlayMode(m){playMode=m;['seq','loop','one','shuffle'].forEach(x=>$('pm-'+x).classList.toggle('on',x===m));$('mode-label').textContent='● '+PM_LABELS[m];if(m==='shuffle')rebuildShuffle();}
+function pmLabel(m){const t=window._T;return {seq:t.mode_seq,loop:t.mode_loop,one:t.mode_one,shuffle:t.mode_shuffle}[m];}
+function setPlayMode(m){playMode=m;['seq','loop','one','shuffle'].forEach(x=>$('pm-'+x).classList.toggle('on',x===m));$('mode-label').textContent='● '+pmLabel(m);if(m==='shuffle')rebuildShuffle();}
 ['seq','loop','one','shuffle'].forEach(m=>$('pm-'+m).addEventListener('click',()=>setPlayMode(m)));
 function renderPlaylist(){
   const pl=$('playlist'),empty=$('pl-empty');
-  if(!playlist.length){pl.innerHTML='';pl.appendChild(empty);$('pl-count').textContent='0곡';return;}
-  pl.innerHTML='';$('pl-count').textContent=playlist.length+'곡';
+  if(!playlist.length){pl.innerHTML='';pl.appendChild(empty);$('pl-count').textContent=trackCountText(0);return;}
+  pl.innerHTML='';$('pl-count').textContent=trackCountText(playlist.length);
   playlist.forEach((t,i)=>{
     const d=document.createElement('div');d.className='pitem'+(i===curIdx?' active':'');
     d.innerHTML=`<span class="pnum">${i+1}</span>${i===curIdx&&playing?'<span class="playing-icon">▶</span>':''}<div class="pinfo"><span class="pname">${t.name}</span><span class="pdur">${t.duration?fmtDur(t.duration):''}</span></div><span class="pdel" data-i="${i}">✕</span>`;
@@ -347,7 +818,7 @@ function avgArr(a,s,e){let sum=0;for(let i=s;i<e;i++)sum+=a[i];return sum/(e-s)/
 /* RECORD */
 let recMR=null,recChunks=[],recST=0,recIv=null,recAnimId=null,includeAudio=true,toastTimer=null;
 function showToast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800);}
-$('audio-opt').addEventListener('click',()=>{includeAudio=!includeAudio;$('audio-opt').textContent=includeAudio?'🎵 음악포함':'🔇 영상만';$('audio-opt').classList.toggle('on',includeAudio);});
+$('audio-opt').addEventListener('click',()=>{includeAudio=!includeAudio;$('audio-opt').textContent=includeAudio?window._T.label_audio_on:window._T.label_audio_off;$('audio-opt').classList.toggle('on',includeAudio);});
 function startRecord(){
   if(recMR&&recMR.state==='recording')return;
   const comp=document.createElement('canvas');comp.width=cBg.width;comp.height=cBg.height;
@@ -360,14 +831,14 @@ function startRecord(){
   recMR.ondataavailable=e=>{if(e.data.size>0)recChunks.push(e.data)};
   recMR.onstop=()=>{
     clearInterval(recIv);if(recAnimId)cancelAnimationFrame(recAnimId);
-    $('rbtn').classList.remove('rec');$('rbtn').textContent='● 녹화';$('rtimer').style.display='none';
+    $('rbtn').classList.remove('rec');$('rbtn').textContent=window._T.btn_record;$('rtimer').style.display='none';
     const name=(playlist[curIdx]?.name||'pomiai')+'_viz.webm';
     const blob=new Blob(recChunks,{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-    showToast('✅ '+name);$('rstat').textContent='재생 시 자동 녹화';recMR=null;
+    showToast('✅ '+name);$('rstat').textContent=window._T.status_idle;recMR=null;
   };
-  recMR.start(200);recST=Date.now();$('rbtn').classList.add('rec');$('rbtn').textContent='■ 중지';$('rtimer').style.display='inline';
-  $('rstat').textContent=includeAudio?'● 녹화 중':'● 영상 녹화';
+  recMR.start(200);recST=Date.now();$('rbtn').classList.add('rec');$('rbtn').textContent=window._T.btn_record_stop;$('rtimer').style.display='inline';
+  $('rstat').textContent=includeAudio?window._T.status_recording_audio:window._T.status_recording_video;
   recIv=setInterval(()=>{const s=Math.floor((Date.now()-recST)/1000);$('rtimer').textContent=`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;},1000);
 }
 function stopRecordSilent(){if(recMR&&recMR.state==='recording')recMR.stop();}

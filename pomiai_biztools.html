@@ -646,7 +646,25 @@ const I18N = {
   ko:{ page_title:'pomiai 비즈니스 도구', tab_inv:'🧾 인보이스', tab_tax:'🧮 세금계산', tab_loan:'🏦 대출계산',
     inv_title:'인보이스 생성기', tax_title:'세금 계산기', loan_title:'대출 계산기', footer_by:'Product by' },
   ja:{ page_title:'pomiai ビジネスツール', tab_inv:'🧾 請求書', tab_tax:'🧮 税金計算', tab_loan:'🏦 ローン計算',
-    inv_title:'請求書ジェネレーター', tax_title:'税金計算機', loan_title:'ローン計算機', footer_by:'Product by' }
+    inv_title:'請求書ジェネレーター', tax_title:'税金計算機', loan_title:'ローン計算機', footer_by:'Product by' },
+  zh_CN:{ page_title:'pomiai 商务工具', tab_inv:'🧾 发票', tab_tax:'🧮 税金计算', tab_loan:'🏦 贷款计算',
+    inv_title:'发票生成器', tax_title:'税金计算器', loan_title:'贷款计算器', footer_by:'Product by' },
+  zh_TW:{ page_title:'pomiai 商務工具', tab_inv:'🧾 發票', tab_tax:'🧮 稅金計算', tab_loan:'🏦 貸款計算',
+    inv_title:'發票產生器', tax_title:'稅金計算機', loan_title:'貸款計算機', footer_by:'Product by' },
+  de_DE:{ page_title:'pomiai Business-Tools', tab_inv:'🧾 Rechnung', tab_tax:'🧮 Steuerrechner', tab_loan:'🏦 Kreditrechner',
+    inv_title:'Rechnungsgenerator', tax_title:'Steuerrechner', loan_title:'Kreditrechner', footer_by:'Product by' },
+  fr_FR:{ page_title:'pomiai Outils professionnels', tab_inv:'🧾 Facture', tab_tax:'🧮 Calcul de taxe', tab_loan:'🏦 Calcul de prêt',
+    inv_title:'Générateur de factures', tax_title:'Calculateur de taxes', loan_title:'Calculateur de prêt', footer_by:'Product by' },
+  nl_NL:{ page_title:'pomiai Zakelijke tools', tab_inv:'🧾 Factuur', tab_tax:'🧮 Belastingberekening', tab_loan:'🏦 Leningberekening',
+    inv_title:'Factuurgenerator', tax_title:'Belastingcalculator', loan_title:'Leningcalculator', footer_by:'Product by' },
+  sv_SE:{ page_title:'pomiai Affärsverktyg', tab_inv:'🧾 Faktura', tab_tax:'🧮 Skatteberäkning', tab_loan:'🏦 Lånberäkning',
+    inv_title:'Fakturagenerator', tax_title:'Skattekalkylator', loan_title:'Lånkalkylator', footer_by:'Product by' },
+  nn_NO:{ page_title:'pomiai Forretningsverktøy', tab_inv:'🧾 Faktura', tab_tax:'🧮 Skatteberekning', tab_loan:'🏦 Lånberekning',
+    inv_title:'Fakturagenerator', tax_title:'Skattekalkulator', loan_title:'Lånkalkulator', footer_by:'Product by' },
+  da_DK:{ page_title:'pomiai Erhvervsværktøjer', tab_inv:'🧾 Faktura', tab_tax:'🧮 Skatteberegning', tab_loan:'🏦 Lånberegning',
+    inv_title:'Fakturagenerator', tax_title:'Skatteberegner', loan_title:'Lånberegner', footer_by:'Product by' },
+  ar:{ page_title:'أدوات pomiai للأعمال', tab_inv:'🧾 الفاتورة', tab_tax:'🧮 حساب الضريبة', tab_loan:'🏦 حساب القرض',
+    inv_title:'منشئ الفواتير', tax_title:'حاسبة الضرائب', loan_title:'حاسبة القروض', footer_by:'Product by' }
 };
 (function(){
   const params = new URLSearchParams(location.search);
@@ -655,6 +673,7 @@ const I18N = {
   const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'en');
   window._LANG=LANG; window._T=I18N[LANG];
   document.getElementById('html-root').lang = LANG;
+  document.getElementById('html-root').setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
 })();
 function applyI18n(){
   const t = window._T;
@@ -668,6 +687,7 @@ document.querySelectorAll('#lang-switch button').forEach(btn=>{
     const lang = btn.dataset.lang;
     window._LANG = lang; window._T = I18N[lang];
     document.getElementById('html-root').lang = lang;
+    document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
     applyI18n();
     try{ const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url); }catch(e){}
   });
