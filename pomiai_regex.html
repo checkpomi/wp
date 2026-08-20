@@ -294,7 +294,7 @@ const MSG_TXT={
   en:{matches:'matches',noMatch:'No matches',error:'Error',emptyMatches:'Enter a regex to see match results',emptyExplain:'Enter a regex to see what each token means'},
   ja:{matches:'マッチ',noMatch:'マッチなし',error:'エラー',emptyMatches:'正規表現を入力するとマッチ結果が表示されます',emptyExplain:'正規表現を入力すると各トークンの意味を解析します'},
   zh_CN:{matches:'匹配项',noMatch:'无匹配项',error:'错误',emptyMatches:'输入正则表达式即可查看匹配结果',emptyExplain:'输入正则表达式即可解析各个标记的含义'},
-  zh_TW:{matches:'符合項目',noMatch:'無符合項目',error:'錯誤',emptyMatches:'輸入正規表示式即可查看符合結果',emptyExplain:'輸入正規表示式即可解析各個標記的意義'},
+  zh_TW:{matches:'比對項目',noMatch:'無比對項目',error:'錯誤',emptyMatches:'輸入正規表示式即可查看比對結果',emptyExplain:'輸入正規表示式即可解析各個標記的意義'},
   de_DE:{matches:'Treffer',noMatch:'Keine Treffer',error:'Fehler',emptyMatches:'Geben Sie einen regulären Ausdruck ein, um Treffer anzuzeigen',emptyExplain:'Geben Sie einen regulären Ausdruck ein, um die Bedeutung jedes Tokens zu analysieren'},
   fr_FR:{matches:'correspondances',noMatch:'Aucune correspondance',error:'Erreur',emptyMatches:'Saisissez une expression régulière pour voir les résultats',emptyExplain:'Saisissez une expression régulière pour analyser la signification de chaque token'},
   nl_NL:{matches:'overeenkomsten',noMatch:'Geen overeenkomsten',error:'Fout',emptyMatches:'Voer een reguliere expressie in om overeenkomsten te zien',emptyExplain:'Voer een reguliere expressie in om de betekenis van elk token te analyseren'},
@@ -464,7 +464,7 @@ const TOKEN_DESC={
   zh_TW:{t0:'任意字元(不含換行符)',t1:'字串開頭',t2:'字串結尾',t3:'前面的元素出現0次或多次',t4:'前面的元素出現1次或多次',
     t5:'前面的元素出現0次或1次',t6:'或(OR)',t7:'分組開始',t8:'分組結束',t9:'字元集開始',t10:'字元集結束',
     t11:'量詞 {n,m}',t12:'數字 [0-9]',t13:'非數字',t14:'單詞字元 [a-zA-Z0-9_]',t15:'非單詞字元',
-    t16:'空白字元',t17:'非空白字元',t18:'單詞邊界',t19:'非單詞邊界',t20:'換行符',t21:'定位符',
+    t16:'空白字元',t17:'非空白字元',t18:'單詞邊界',t19:'非單詞邊界',t20:'換行符',t21:'製表符',
     t22:'非捕獲組 (?:...)',t23:'正向先行斷言 (?=...)',t24:'負向先行斷言 (?!...)',
     t25:'正向後行斷言 (?<=...)',t26:'負向後行斷言 (?<!...)',t27:'命名捕獲組', literal:'字面字元'},
   de_DE:{t0:'Beliebiges Zeichen (außer Zeilenumbruch)',t1:'Anfang der Zeichenkette',t2:'Ende der Zeichenkette',t3:'0 oder mehr des vorangehenden Elements',t4:'1 oder mehr des vorangehenden Elements',
@@ -484,7 +484,7 @@ const TOKEN_DESC={
     t11:'Kwantificator {n,m}',t12:'Cijfer [0-9]',t13:'Geen cijfer',t14:'Woordteken [a-zA-Z0-9_]',t15:'Geen woordteken',
     t16:'Witruimte',t17:'Geen witruimte',t18:'Woordgrens',t19:'Geen woordgrens',t20:'Nieuwe regel',t21:'Tab',
     t22:'Niet-vastleggende groep (?:...)',t23:'Positieve lookahead (?=...)',t24:'Negatieve lookahead (?!...)',
-    t25:'Positieve lookbehind (?<=...)',t26:'Negatieve lookbehind (?<!...)',t27:'Benoemde vastlegggroep', literal:'Letterlijk teken'},
+    t25:'Positieve lookbehind (?<=...)',t26:'Negatieve lookbehind (?<!...)',t27:'Benoemde vastleggroep', literal:'Letterlijk teken'},
   sv_SE:{t0:'Valfritt tecken (utom radbrytning)',t1:'Början av strängen',t2:'Slutet av strängen',t3:'0 eller fler av föregående element',t4:'1 eller fler av föregående element',
     t5:'0 eller 1 av föregående element',t6:'ELLER',t7:'Gruppstart',t8:'Gruppslut',t9:'Start på teckenklass',t10:'Slut på teckenklass',
     t11:'Kvantifierare {n,m}',t12:'Siffra [0-9]',t13:'Icke-siffra',t14:'Ordtecken [a-zA-Z0-9_]',t15:'Icke-ordtecken',
@@ -494,7 +494,7 @@ const TOKEN_DESC={
   nn_NO:{t0:'Eit vilkårleg teikn (unntatt linjeskift)',t1:'Start av strengen',t2:'Slutten av strengen',t3:'0 eller fleire av føregåande element',t4:'1 eller fleire av føregåande element',
     t5:'0 eller 1 av føregåande element',t6:'ELLER',t7:'Gruppestart',t8:'Gruppeslutt',t9:'Start på teiknklasse',t10:'Slutt på teiknklasse',
     t11:'Kvantifikator {n,m}',t12:'Siffer [0-9]',t13:'Ikkje siffer',t14:'Ordteikn [a-zA-Z0-9_]',t15:'Ikkje ordteikn',
-    t16:'Kvitrom',t17:'Ikkje kvitrom',t18:'Ordgrense',t19:'Ikkje ordgrense',t20:'Linjeskift',t21:'Tabulator',
+    t16:'Blankteikn',t17:'Ikkje blankteikn',t18:'Ordgrense',t19:'Ikkje ordgrense',t20:'Linjeskift',t21:'Tabulator',
     t22:'Ikkje-fangande gruppe (?:...)',t23:'Positiv lookahead (?=...)',t24:'Negativ lookahead (?!...)',
     t25:'Positiv lookbehind (?<=...)',t26:'Negativ lookbehind (?<!...)',t27:'Namngjeven fangstgruppe', literal:'Bokstaveleg teikn'},
   da_DK:{t0:'Vilkårligt tegn (undtagen linjeskift)',t1:'Start af strengen',t2:'Slutning af strengen',t3:'0 eller flere af det foregående element',t4:'1 eller flere af det foregående element',
@@ -626,7 +626,7 @@ const PRESET_I18N={
   nn_NO:{email:['E-post','Valider e-postadresse'],url:['URL','HTTP/HTTPS-URL'],kr_phone:['Koreansk telefonnummer','Fast/mobilnummer'],
     ip:['IP-adresse','IPv4-adresse'],date_iso:['Dato (ÅÅÅÅ-MM-DD)','ISO-datoformat'],date_kr:['Koreansk dato','Koreansk datoformat'],
     time:['Klokkeslett (TT:MM)','24-timarsformat'],hexcolor:['Heksadesimal farge','CSS-fargekode'],zipcode:['Postnummer (Korea)','5-sifra postnummer'],
-    htmltag:['HTML-tagg','Vilken som helst HTML-tagg'],leading_ws:['Innleiande mellomrom','Mellomrom i starten av kvar linje'],multi_ws:['Gjentekne mellomrom','2 eller fleire samanhengande mellomrom'],
+    htmltag:['HTML-tagg','Kva som helst HTML-tagg'],leading_ws:['Innleiande mellomrom','Mellomrom i starten av kvar linje'],multi_ws:['Gjentekne mellomrom','2 eller fleire samanhengande mellomrom'],
     blank_line:['Tom linje','Linje med berre mellomrom'],hangul:['Hangul','Koreanske teikn'],alpha:['Berre bokstavar','Alfabetiske teikn'],digits:['Berre siffer','Sekvens av siffer'],
     special:['Spesialteikn','Spesialteikn'],pw_strength:['Passordstyrke','Stor+liten bokstav+siffer+spesialteikn, 8+ teikn'],
     credit_card:['Kredittkort','Visa/MC/Amex'],md_bold:['Markdown feit skrift','**tekst**-format']},
@@ -695,7 +695,7 @@ const CHEAT_DESC={
   zh_TW:{c0:'任意字元',c1:'開頭',c2:'結尾',c3:'0次或多次',c4:'1次或多次',c5:'0次或1次',c6:'恰好n次',c7:'n次以上',c8:'n到m次',
     c9:'a或b或c',c10:'排除a,b,c',c11:'a到z',c12:'捕獲組',c13:'非捕獲組',c14:'a或b',
     c15:'數字',c16:'非數字',c17:'單詞字元',c18:'非單詞字元',c19:'空白',c20:'非空白',c21:'單詞邊界',c22:'換行符',
-    c23:'先行斷言',c24:'負向先行斷言',c25:'後行斷言',c26:'第一個分組',c27:'整個符合項目',c28:'符合後的文字'},
+    c23:'先行斷言',c24:'負向先行斷言',c25:'後行斷言',c26:'第一個分組',c27:'整個比對',c28:'比對後的文字'},
   de_DE:{c0:'Beliebiges Zeichen',c1:'Anfang',c2:'Ende',c3:'0 oder mehr',c4:'1 oder mehr',c5:'0 oder 1',c6:'Genau n',c7:'n oder mehr',c8:'n bis m',
     c9:'a oder b oder c',c10:'Nicht a,b,c',c11:'a bis z',c12:'Erfassungsgruppe',c13:'Nicht-erfassende Gruppe',c14:'a oder b',
     c15:'Ziffer',c16:'Keine Ziffer',c17:'Wortzeichen',c18:'Kein Wortzeichen',c19:'Leerzeichen',c20:'Kein Leerzeichen',c21:'Wortgrenze',c22:'Zeilenumbruch',
@@ -723,7 +723,7 @@ const CHEAT_DESC={
   ar:{c0:'أي حرف',c1:'البداية',c2:'النهاية',c3:'0 أو أكثر',c4:'1 أو أكثر',c5:'0 أو 1',c6:'بالضبط n',c7:'n أو أكثر',c8:'من n إلى m',
     c9:'a أو b أو c',c10:'ليس a,b,c',c11:'من a إلى z',c12:'مجموعة التقاط',c13:'مجموعة غير ملتقطة',c14:'a أو b',
     c15:'رقم',c16:'ليس رقمًا',c17:'حرف كلمة',c18:'ليس حرف كلمة',c19:'مسافة بيضاء',c20:'ليست مسافة بيضاء',c21:'حد كلمة',c22:'سطر جديد',
-    c23:'استباق (lookahead)',c24:'استباق سالب',c25:'استرجاع (lookbehind)',c26:'المجموعة الأولى',c27:'التطابق بالكامل',c28:'النص بعد التطابق'}
+    c23:'استباق موجب',c24:'استباق سالب',c25:'استرجاع موجب',c26:'المجموعة الأولى',c27:'التطابق بالكامل',c28:'النص بعد التطابق'}
 };
 function initCheat(){
   const grid=$('cs-grid');
