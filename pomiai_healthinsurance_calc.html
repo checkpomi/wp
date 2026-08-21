@@ -2,11 +2,17 @@
 <!--
 ====================================================================
 pomiai 건강보험료 계산기 (pomiai_healthinsurance_calc.html)
-현재 버전: v2026.08.16
-최종 수정일: 2026-08-16
+현재 버전: v2026.08.21
+최종 수정일: 2026-08-21
+변경 내용: §5 표준 12개 언어 전체 지원으로 확장 — zh_CN/zh_TW/de_DE/fr_FR/
+           nl_NL/sv_SE/nn_NO/da_DK/ar 9개 언어 추가(기존 ko/en/ja 3개 →
+           12개), 언어 선택 UI를 버튼 3개 → 드롭다운 셀렉터로 교체,
+           브라우저 언어 자동 감지 정규화 로직 추가, ar 선택 시 RTL 대응
+캐시 버스팅: iframe/script 태그에 ?v=2026.08.21 파라미터 사용 권장
+--------------------------------------------------------------------
+이전 버전: v2026.08.16
 변경 내용: ?tab=local/job URL 파라미터 딥링크 지원 추가 — SEO 포스트에서
            embed 시 지역가입자/직장가입자 탭으로 바로 진입 가능
-캐시 버스팅: iframe/script 태그에 ?v=2026.08.16 파라미터 사용 권장
 --------------------------------------------------------------------
 이전 버전: v2026.07.27
 변경 내용: 최초 제작 — 2026년 건강보험료율(7.19%) 및 장기요양보험료율(0.9448%) 반영,
@@ -41,9 +47,15 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 .htab{padding:8px 14px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;border-radius:8px;transition:.15s;white-space:nowrap;flex-shrink:0}
 .htab:hover{color:var(--tx2);background:var(--s3)}
 .htab.on{color:var(--ac2);background:var(--ac3)}
-#langsel{display:flex;gap:2px;margin-left:auto}
-.lbtn{padding:6px 10px;font-size:11px;font-weight:600;color:var(--tx3);cursor:pointer;border-radius:7px;border:1px solid var(--bd2);background:var(--s2)}
-.lbtn.on{color:var(--ac2);border-color:var(--ac);background:var(--ac3)}
+#lang-switch{margin-left:auto;background:var(--s2);border:1px solid var(--bd2);color:var(--tx2);font-size:11px;font-weight:600;padding:6px 8px;border-radius:7px;cursor:pointer;font-family:'DM Sans',sans-serif;max-width:120px;flex-shrink:0}
+#lang-switch:focus{border-color:var(--ac);color:var(--ac2)}
+
+/* ===== RTL (ar) ===== */
+[dir="rtl"] #header{flex-direction:row-reverse}
+[dir="rtl"] #htabs{flex-direction:row-reverse}
+[dir="rtl"] #lang-switch{margin-left:0;margin-right:auto}
+[dir="rtl"] .g2{direction:rtl}
+[dir="rtl"] .brand-footer{direction:rtl}
 #app{max-width:760px;margin:0 auto;padding:22px 16px 70px}
 .sec{display:none}.sec.on{display:block;animation:fi .2s ease}
 @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -88,11 +100,20 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
     <div class="htab on" id="tab-btn-local" onclick="goTab('local')" data-i18n="tab_local">지역가입자</div>
     <div class="htab" id="tab-btn-job" onclick="goTab('job')" data-i18n="tab_job">직장가입자</div>
   </div>
-  <div id="langsel">
-    <div class="lbtn on" id="lang-ko" onclick="setLang('ko')">KO</div>
-    <div class="lbtn" id="lang-en" onclick="setLang('en')">EN</div>
-    <div class="lbtn" id="lang-ja" onclick="setLang('ja')">JA</div>
-  </div>
+  <select id="lang-switch" aria-label="language">
+    <option value="ko">🇰🇷 한국어</option>
+    <option value="en">🇺🇸 English</option>
+    <option value="ja">🇯🇵 日本語</option>
+    <option value="zh_CN">🇨🇳 简体中文</option>
+    <option value="zh_TW">🇹🇼 繁體中文</option>
+    <option value="de_DE">🇩🇪 Deutsch</option>
+    <option value="fr_FR">🇫🇷 Français</option>
+    <option value="nl_NL">🇳🇱 Nederlands</option>
+    <option value="sv_SE">🇸🇪 Svenska</option>
+    <option value="nn_NO">🇳🇴 Norsk</option>
+    <option value="da_DK">🇩🇰 Dansk</option>
+    <option value="ar">🇸🇦 العربية</option>
+  </select>
 </div>
 
 <div id="app">
@@ -279,18 +300,354 @@ const I18N = {
     res_my_ltc:'本人負担の長期療養保険料', res_my_total:'本人の月間総控除額',
     disc_job_body:'2026年の職場加入者健康保険料率は7.19%(本人3.595%+会社3.595%)、長期療養保険料率は0.9448%です。上限額(全体月9,183,480ウォン、本人負担最大4,591,740ウォン)と下限額(20,160ウォン)が適用され、賞与や非課税所得などにより実際の請求額とは差が生じる場合があります。',
     unit_won:'ウォン'
-  }
+  },
+  zh_CN: {
+    page_title: "pomiai 韩国健康保险费计算器",
+    brand_sub: "健康保险费",
+    tab_local: "地区参保者",
+    tab_job: "职场参保者",
+    local_title: "2026年 韩国地区参保者健康保险费计算器",
+    local_sub: "输入收入和财产，即可估算按2026年标准（费率7.19%）计算的健康保险费。财产保险费为等级表的近似估算值。",
+    income_title: "收入信息（年）",
+    income_biz_lbl: "营业·利息·股息·其他所得合计（年，按100%计入）",
+    income_labor_lbl: "劳务·养老金所得合计（年，按50%计入）",
+    income_hint: "劳务所得仅适用于未加入职场健康保险的情况（如日结工、短时工作等）。",
+    property_title: "财产信息",
+    property_base_lbl: "住宅·建筑物·土地等财产税计税标准合计（韩元）",
+    deposit_lbl: "全租/月租押金（韩元）",
+    monthly_rent_lbl: "月租金（韩元/月）",
+    debt_lbl: "住房抵押贷款扣除额（韩元，最高5000万）",
+    property_hint: "自2024年2月起，汽车已被排除在保险费计算之外，且自动适用1亿韩元的财产基本扣除。",
+    calc_btn: "计算",
+    res_income_premium: "收入保险费",
+    res_property_premium: "财产保险费（估算）",
+    res_health_sub: "健康保险费小计",
+    res_ltc: "长期疗养保险费",
+    res_total_monthly: "月预计缴纳额",
+    disc_title: "⚠️ 提示",
+    disc_local_body: "本计算器基于2026年公开的费率（健康保险费率7.19%、长期疗养保险费率0.9448%、财产保险费每点211.5韩元）提供参考性估算。尤其财产保险费是以60级点数表的近似公式估算得出，可能与实际账单存在差异。准确金额请以国民健康保险公团官网的官方模拟计算为准。",
+    job_title: "2026年 韩国职场参保者健康保险费计算器",
+    job_sub: "输入月报酬（税前工资），即可计算劳动者本人应负担的健康保险费和长期疗养保险费（由公司与本人各承担一半）。",
+    job_input_title: "薪资信息",
+    job_wage_lbl: "月报酬月额（税前，韩元）",
+    res_health_total: "健康保险费（合计）",
+    res_my_health: "本人负担健康保险费",
+    res_my_ltc: "本人负担长期疗养保险费",
+    res_my_total: "本人月总扣除额",
+    disc_job_body: "2026年职场参保者健康保险费率为7.19%（本人3.595%+公司3.595%），长期疗养保险费率为0.9448%。实际适用上限额（合计月9,183,480韩元，本人负担最高4,591,740韩元）和下限额（20,160韩元），并可能因奖金、免税所得等细项而与实际账单存在差异。",
+    unit_won: "韩元",
+  },
+  zh_TW: {
+    page_title: "pomiai 韓國健保費計算機",
+    brand_sub: "健保費",
+    tab_local: "地區投保人",
+    tab_job: "職場投保人",
+    local_title: "2026年 韓國地區投保人健保費計算機",
+    local_sub: "輸入所得與財產，即可估算按2026年標準（費率7.19%）計算的健保費。財產保費為等級表的近似估算值。",
+    income_title: "所得資訊（年）",
+    income_biz_lbl: "營業·利息·股利·其他所得合計（年，按100%計入）",
+    income_labor_lbl: "勞務·年金所得合計（年，按50%計入）",
+    income_hint: "勞務所得僅適用於未加入職場健保的情況（例如日薪工、短時工作等）。",
+    property_title: "財產資訊",
+    property_base_lbl: "住宅·建物·土地等財產稅課稅標準合計（韓元）",
+    deposit_lbl: "全租/月租保證金（韓元）",
+    monthly_rent_lbl: "月租金（韓元/月）",
+    debt_lbl: "房貸扣除額（韓元，最高5千萬）",
+    property_hint: "自2024年2月起，汽車已排除於保費計算之外，並自動適用1億韓元的財產基本扣除額。",
+    calc_btn: "計算",
+    res_income_premium: "所得保費",
+    res_property_premium: "財產保費（估算）",
+    res_health_sub: "健保費小計",
+    res_ltc: "長期療養保費",
+    res_total_monthly: "月預估繳納額",
+    disc_title: "⚠️ 提示",
+    disc_local_body: "本計算機依據2026年公開的費率（健保費率7.19%、長期療養保費率0.9448%、財產保費每點211.5韓元）提供參考性估算。財產保費尤其是以60級點數表的近似公式估算，可能與實際帳單有差異。準確金額請以國民健康保險公團官網的官方模擬計算為準。",
+    job_title: "2026年 韓國職場投保人健保費計算機",
+    job_sub: "輸入月報酬（稅前薪資），即可計算勞工本人負擔的健保費與長期療養保費（由公司與本人各負擔一半）。",
+    job_input_title: "薪資資訊",
+    job_wage_lbl: "月報酬月額（稅前，韓元）",
+    res_health_total: "健保費（合計）",
+    res_my_health: "本人負擔健保費",
+    res_my_ltc: "本人負擔長期療養保費",
+    res_my_total: "本人月總扣除額",
+    disc_job_body: "2026年職場投保人健保費率為7.19%（本人3.595%+公司3.595%），長期療養保費率為0.9448%。實際適用上限額（合計月9,183,480韓元，本人負擔最高4,591,740韓元）與下限額（20,160韓元），並可能因獎金、免稅所得等細項而與實際帳單有差異。",
+    unit_won: "韓元",
+  },
+  de_DE: {
+    page_title: "pomiai Krankenversicherungsrechner (Korea)",
+    brand_sub: "Krankenversicherung",
+    tab_local: "Selbstständige/Regional",
+    tab_job: "Angestellte",
+    local_title: "2026 Rechner für die regionale Krankenversicherung (Korea)",
+    local_sub: "Geben Sie Einkommen und Vermögen ein, um Ihren geschätzten Beitrag zur koreanischen Krankenversicherung 2026 (Satz 7,19 %) zu berechnen. Der vermögensbasierte Beitrag ist eine Näherung anhand der offiziellen Punktetabelle.",
+    income_title: "Einkommen (jährlich)",
+    income_biz_lbl: "Gewerbe-/Zins-/Dividenden-/Sonstiges Einkommen (jährlich, 100 % angerechnet)",
+    income_labor_lbl: "Lohn-/Renteneinkommen (jährlich, 50 % angerechnet)",
+    income_hint: "Lohneinkommen gilt nur, wenn Sie nicht bereits über eine Arbeitgeber-Krankenversicherung versichert sind (z. B. Tages- oder Kurzzeitarbeit).",
+    property_title: "Vermögen",
+    property_base_lbl: "Grundsteuerbemessungsgrundlage von Haus/Gebäude/Grundstück usw. (KRW)",
+    deposit_lbl: "Jeonse-/Mietkaution (KRW)",
+    monthly_rent_lbl: "Monatsmiete (KRW/Monat)",
+    debt_lbl: "Hypothekenabzug (KRW, bis 50 Mio.)",
+    property_hint: "Fahrzeuge sind seit Februar 2024 von der Berechnung ausgenommen, und ein Grund-Vermögensfreibetrag von 100 Mio. KRW wird automatisch angewendet.",
+    calc_btn: "Berechnen",
+    res_income_premium: "Einkommensbasierter Beitrag",
+    res_property_premium: "Vermögensbasierter Beitrag (gesch.)",
+    res_health_sub: "Zwischensumme Krankenversicherung",
+    res_ltc: "Pflegeversicherung",
+    res_total_monthly: "Geschätzter Monatsbetrag",
+    disc_title: "⚠️ Hinweis",
+    disc_local_body: "Dieser Rechner verwendet die für 2026 veröffentlichten Sätze (Krankenversicherung 7,19 %, Pflegeversicherung 0,9448 %, Punktwert Vermögen 211,5 KRW) nur zu Referenzzwecken. Der Vermögensbeitrag ist aus der 60-stufigen Punktetabelle angenähert und kann von Ihrer tatsächlichen Rechnung abweichen. Für einen genauen Betrag nutzen Sie den offiziellen Simulator der National Health Insurance Service (NHIS).",
+    job_title: "2026 Rechner für die Krankenversicherung von Angestellten (Korea)",
+    job_sub: "Geben Sie Ihr monatliches Bruttogehalt ein, um den von Ihnen selbst zu zahlenden Kranken- und Pflegeversicherungsbeitrag zu berechnen — je zur Hälfte mit Ihrem Arbeitgeber geteilt.",
+    job_input_title: "Gehalt",
+    job_wage_lbl: "Monatliches Bruttogehalt (KRW)",
+    res_health_total: "Krankenversicherung (gesamt)",
+    res_my_health: "Ihr Anteil Krankenversicherung",
+    res_my_ltc: "Ihr Anteil Pflegeversicherung",
+    res_my_total: "Ihr monatlicher Gesamtabzug",
+    disc_job_body: "Der Krankenversicherungssatz für Angestellte beträgt 2026 7,19 % (Arbeitnehmer 3,595 % + Arbeitgeber 3,595 %), der Pflegeversicherungssatz 0,9448 %. Es gelten gesetzliche Höchst- (ca. 9.183.480 KRW gesamt / 4.591.740 KRW Eigenanteil) und Mindestbeträge (20.160 KRW). Der tatsächliche Abzug kann je nach Bonuszahlungen und steuerfreiem Einkommen abweichen.",
+    unit_won: "KRW",
+  },
+  fr_FR: {
+    page_title: "pomiai Calculateur d'assurance santé (Corée)",
+    brand_sub: "Assurance santé",
+    tab_local: "Indépendant / régional",
+    tab_job: "Salarié",
+    local_title: "2026 Calculateur d'assurance santé régionale (Corée)",
+    local_sub: "Saisissez vos revenus et votre patrimoine pour estimer votre cotisation d'assurance maladie coréenne 2026 (taux 7,19 %). La cotisation liée au patrimoine est une approximation du barème officiel par points.",
+    income_title: "Revenus (annuels)",
+    income_biz_lbl: "Revenus d'activité / intérêts / dividendes / autres (annuel, compté à 100 %)",
+    income_labor_lbl: "Revenus salariaux / pension (annuel, compté à 50 %)",
+    income_hint: "Les revenus salariaux ne s'appliquent que si vous n'êtes pas déjà couvert par l'assurance santé de votre employeur (ex. travail journalier ou à temps partiel).",
+    property_title: "Patrimoine",
+    property_base_lbl: "Base d'imposition foncière du logement / bâtiment / terrain, etc. (KRW)",
+    deposit_lbl: "Dépôt jeonse / caution de loyer mensuel (KRW)",
+    monthly_rent_lbl: "Loyer mensuel (KRW/mois)",
+    debt_lbl: "Déduction de prêt hypothécaire (KRW, jusqu'à 50 millions)",
+    property_hint: "Les véhicules sont exclus du calcul depuis février 2024, et un abattement de base de 100 millions de KRW est appliqué automatiquement.",
+    calc_btn: "Calculer",
+    res_income_premium: "Cotisation liée au revenu",
+    res_property_premium: "Cotisation liée au patrimoine (est.)",
+    res_health_sub: "Sous-total assurance santé",
+    res_ltc: "Assurance dépendance",
+    res_total_monthly: "Total mensuel estimé",
+    disc_title: "⚠️ Avis",
+    disc_local_body: "Ce calculateur utilise les taux publiés pour 2026 (assurance santé 7,19 %, dépendance 0,9448 %, valeur du point patrimoine 211,5 KRW) à titre indicatif uniquement. La cotisation liée au patrimoine est approximée à partir du barème à 60 paliers et peut différer de votre facture réelle. Pour un montant exact, utilisez le simulateur officiel du site du National Health Insurance Service (NHIS).",
+    job_title: "2026 Calculateur d'assurance santé des salariés (Corée)",
+    job_sub: "Saisissez votre salaire mensuel brut pour calculer votre part personnelle d'assurance santé et de dépendance — partagée à parts égales avec votre employeur.",
+    job_input_title: "Salaire",
+    job_wage_lbl: "Salaire mensuel brut (KRW)",
+    res_health_total: "Assurance santé (total)",
+    res_my_health: "Votre part d'assurance santé",
+    res_my_ltc: "Votre part d'assurance dépendance",
+    res_my_total: "Votre total mensuel prélevé",
+    disc_job_body: "En 2026, le taux d'assurance santé des salariés est de 7,19 % (salarié 3,595 % + employeur 3,595 %), et le taux de dépendance de 0,9448 %. Des plafonds (environ 9 183 480 KRW au total / 4 591 740 KRW pour la part personnelle) et un plancher (20 160 KRW) s'appliquent. Le montant réel peut varier selon les primes et les revenus non imposables.",
+    unit_won: "KRW",
+  },
+  nl_NL: {
+    page_title: "pomiai Zorgverzekeringscalculator (Korea)",
+    brand_sub: "Zorgverzekering",
+    tab_local: "Zelfstandige/regionaal",
+    tab_job: "Werknemer",
+    local_title: "2026 Calculator regionale zorgverzekering (Korea)",
+    local_sub: "Voer inkomen en vermogen in om uw geschatte Koreaanse zorgverzekeringspremie voor 2026 (tarief 7,19%) te berekenen. De vermogensgerelateerde premie is een benadering van de officiële puntentabel.",
+    income_title: "Inkomen (jaarlijks)",
+    income_biz_lbl: "Bedrijfs-/rente-/dividend-/overig inkomen (jaarlijks, 100% meegeteld)",
+    income_labor_lbl: "Loon-/pensioeninkomen (jaarlijks, 50% meegeteld)",
+    income_hint: "Looninkomen geldt alleen als u nog niet verzekerd bent via een werkgeversverzekering (bijv. dagloon of kortdurend werk).",
+    property_title: "Vermogen",
+    property_base_lbl: "WOZ-achtige heffingsgrondslag van woning/gebouw/grond, enz. (KRW)",
+    deposit_lbl: "Jeonse-/maandhuurborg (KRW)",
+    monthly_rent_lbl: "Maandhuur (KRW/maand)",
+    debt_lbl: "Hypotheekaftrek (KRW, tot 50 miljoen)",
+    property_hint: "Voertuigen zijn sinds februari 2024 uitgesloten van de berekening, en een basisvrijstelling van 100 miljoen KRW wordt automatisch toegepast.",
+    calc_btn: "Berekenen",
+    res_income_premium: "Inkomensgerelateerde premie",
+    res_property_premium: "Vermogensgerelateerde premie (gesch.)",
+    res_health_sub: "Subtotaal zorgverzekering",
+    res_ltc: "Langdurige-zorgverzekering",
+    res_total_monthly: "Geschat maandtotaal",
+    disc_title: "⚠️ Let op",
+    disc_local_body: "Deze calculator gebruikt de voor 2026 gepubliceerde tarieven (zorgverzekering 7,19%, langdurige zorg 0,9448%, puntwaarde vermogen 211,5 KRW) uitsluitend ter referentie. De vermogenspremie is benaderd op basis van de tabel met 60 schalen en kan afwijken van uw werkelijke aanslag. Gebruik voor een exact bedrag de officiële simulator op de website van de National Health Insurance Service (NHIS).",
+    job_title: "2026 Calculator zorgverzekering voor werknemers (Korea)",
+    job_sub: "Voer uw maandelijkse brutoloon in om uw eigen aandeel in de zorg- en langdurige-zorgverzekering te berekenen — gelijk verdeeld met uw werkgever.",
+    job_input_title: "Loon",
+    job_wage_lbl: "Maandelijks brutoloon (KRW)",
+    res_health_total: "Zorgverzekering (totaal)",
+    res_my_health: "Uw aandeel zorgverzekering",
+    res_my_ltc: "Uw aandeel langdurige zorg",
+    res_my_total: "Uw totale maandelijkse inhouding",
+    disc_job_body: "Het zorgverzekeringstarief voor werknemers is in 2026 7,19% (werknemer 3,595% + werkgever 3,595%), het tarief voor langdurige zorg 0,9448%. Wettelijke maxima (ca. 9.183.480 KRW totaal / 4.591.740 KRW eigen aandeel) en een minimum (20.160 KRW) zijn van toepassing. Het werkelijke bedrag kan afwijken door bonussen en belastingvrij inkomen.",
+    unit_won: "KRW",
+  },
+  sv_SE: {
+    page_title: "pomiai Sjukförsäkringskalkylator (Korea)",
+    brand_sub: "Sjukförsäkring",
+    tab_local: "Egenföretagare/regional",
+    tab_job: "Anställd",
+    local_title: "2026 Kalkylator för regional sjukförsäkring (Korea)",
+    local_sub: "Ange inkomst och tillgångar för att uppskatta din koreanska sjukförsäkringsavgift för 2026 (avgift 7,19 %). Den tillgångsbaserade avgiften är en approximation av den officiella poängtabellen.",
+    income_title: "Inkomst (årlig)",
+    income_biz_lbl: "Närings-/ränte-/utdelnings-/övrig inkomst (årlig, 100 % medräknad)",
+    income_labor_lbl: "Löne-/pensionsinkomst (årlig, 50 % medräknad)",
+    income_hint: "Löneinkomst gäller endast om du inte redan omfattas av en arbetsgivares sjukförsäkring (t.ex. dagsverke eller korttidsarbete).",
+    property_title: "Tillgångar",
+    property_base_lbl: "Fastighetsskatteunderlag för bostad/byggnad/mark osv. (KRW)",
+    deposit_lbl: "Jeonse-/hyresdeposition (KRW)",
+    monthly_rent_lbl: "Månadshyra (KRW/månad)",
+    debt_lbl: "Bolåneavdrag (KRW, upp till 50 miljoner)",
+    property_hint: "Fordon har uteslutits från beräkningen sedan februari 2024, och ett grundavdrag på 100 miljoner KRW tillämpas automatiskt.",
+    calc_btn: "Beräkna",
+    res_income_premium: "Inkomstbaserad avgift",
+    res_property_premium: "Tillgångsbaserad avgift (uppsk.)",
+    res_health_sub: "Delsumma sjukförsäkring",
+    res_ltc: "Långtidsvårdsförsäkring",
+    res_total_monthly: "Uppskattad månadssumma",
+    disc_title: "⚠️ Observera",
+    disc_local_body: "Denna kalkylator använder de för 2026 offentliggjorda satserna (sjukförsäkring 7,19 %, långtidsvård 0,9448 %, poängvärde tillgångar 211,5 KRW) enbart som referens. Tillgångsavgiften är approximerad från 60-gradersskalan och kan skilja sig från din faktiska faktura. För ett exakt belopp, använd den officiella simulatorn på National Health Insurance Service (NHIS) webbplats.",
+    job_title: "2026 Kalkylator för anställdas sjukförsäkring (Korea)",
+    job_sub: "Ange din månatliga bruttolön för att beräkna din egen andel av sjuk- och långtidsvårdsförsäkringen — delad lika med din arbetsgivare.",
+    job_input_title: "Lön",
+    job_wage_lbl: "Månatlig bruttolön (KRW)",
+    res_health_total: "Sjukförsäkring (totalt)",
+    res_my_health: "Din andel sjukförsäkring",
+    res_my_ltc: "Din andel långtidsvård",
+    res_my_total: "Ditt totala månadsavdrag",
+    disc_job_body: "2026 är sjukförsäkringssatsen för anställda 7,19 % (anställd 3,595 % + arbetsgivare 3,595 %), och satsen för långtidsvård 0,9448 %. Lagstadgade tak (ca 9 183 480 KRW totalt / 4 591 740 KRW egen andel) och golv (20 160 KRW) tillämpas. Det faktiska avdraget kan variera beroende på bonusar och skattefri inkomst.",
+    unit_won: "KRW",
+  },
+  nn_NO: {
+    page_title: "pomiai Helseforsikringskalkulator (Korea)",
+    brand_sub: "Helseforsikring",
+    tab_local: "Sjølvstendig/regional",
+    tab_job: "Tilsett",
+    local_title: "2026 Kalkulator for regional helseforsikring (Korea)",
+    local_sub: "Skriv inn inntekt og eigedom for å rekne ut den koreanske helseforsikringspremien din for 2026 (sats 7,19 %). Eigedomspremien er ei tilnærming av den offisielle poengtabellen.",
+    income_title: "Inntekt (årleg)",
+    income_biz_lbl: "Nærings-/rente-/utbytte-/anna inntekt (årleg, 100 % medrekna)",
+    income_labor_lbl: "Lønns-/pensjonsinntekt (årleg, 50 % medrekna)",
+    income_hint: "Lønnsinntekt gjeld berre dersom du ikkje allereie er dekt av ei arbeidsgjevarforsikring (t.d. dagarbeid eller korttidsarbeid).",
+    property_title: "Eigedom",
+    property_base_lbl: "Eigedomsskattegrunnlag for bustad/bygning/tomt osv. (KRW)",
+    deposit_lbl: "Jeonse-/leigedepositum (KRW)",
+    monthly_rent_lbl: "Månadsleige (KRW/månad)",
+    debt_lbl: "Frådrag for bustadlån (KRW, opptil 50 millionar)",
+    property_hint: "Køyretøy har vore utelatne frå berekninga sidan februar 2024, og eit grunnfrådrag på 100 millionar KRW blir automatisk brukt.",
+    calc_btn: "Rekn ut",
+    res_income_premium: "Inntektsbasert premie",
+    res_property_premium: "Eigedomsbasert premie (est.)",
+    res_health_sub: "Delsum helseforsikring",
+    res_ltc: "Langtidspleieforsikring",
+    res_total_monthly: "Estimert månadssum",
+    disc_title: "⚠️ Merk",
+    disc_local_body: "Denne kalkulatoren nyttar dei offentleggjorde satsane for 2026 (helseforsikring 7,19 %, langtidspleie 0,9448 %, poengverdi eigedom 211,5 KRW) berre til referanse. Eigedomspremien er tilnærma frå 60-trinnsskalaen og kan avvike frå den faktiske rekninga. For eit nøyaktig beløp, bruk den offisielle simulatoren på nettsida til National Health Insurance Service (NHIS).",
+    job_title: "2026 Kalkulator for tilsette si helseforsikring (Korea)",
+    job_sub: "Skriv inn den månadlege bruttolønna di for å rekne ut din eigen del av helse- og langtidspleieforsikringa — delt likt med arbeidsgjevaren.",
+    job_input_title: "Løn",
+    job_wage_lbl: "Månadleg bruttolønn (KRW)",
+    res_health_total: "Helseforsikring (totalt)",
+    res_my_health: "Din del helseforsikring",
+    res_my_ltc: "Din del langtidspleie",
+    res_my_total: "Ditt totale månadlege trekk",
+    disc_job_body: "I 2026 er helseforsikringssatsen for tilsette 7,19 % (tilsett 3,595 % + arbeidsgjevar 3,595 %), og satsen for langtidspleie 0,9448 %. Lovfesta tak (ca. 9 183 480 KRW totalt / 4 591 740 KRW eigen del) og golv (20 160 KRW) gjeld. Det faktiske trekket kan variere ut frå bonusar og skattefri inntekt.",
+    unit_won: "KRW",
+  },
+  da_DK: {
+    page_title: "pomiai Sygesikringsberegner (Korea)",
+    brand_sub: "Sygesikring",
+    tab_local: "Selvstændig/regional",
+    tab_job: "Lønmodtager",
+    local_title: "2026 Beregner for regional sygesikring (Korea)",
+    local_sub: "Indtast indkomst og formue for at estimere din koreanske sygesikringspræmie for 2026 (sats 7,19 %). Formuepræmien er en tilnærmelse af den officielle pointtabel.",
+    income_title: "Indkomst (årlig)",
+    income_biz_lbl: "Erhvervs-/rente-/udbytte-/anden indkomst (årlig, 100 % medregnet)",
+    income_labor_lbl: "Løn-/pensionsindkomst (årlig, 50 % medregnet)",
+    income_hint: "Lønindkomst gælder kun, hvis du ikke allerede er dækket af en arbejdsgiver-sygesikring (f.eks. dagarbejde eller kortidsarbejde).",
+    property_title: "Formue",
+    property_base_lbl: "Ejendomsskattegrundlag for bolig/bygning/grund osv. (KRW)",
+    deposit_lbl: "Jeonse-/lejedepositum (KRW)",
+    monthly_rent_lbl: "Månedlig husleje (KRW/måned)",
+    debt_lbl: "Boliglånsfradrag (KRW, op til 50 millioner)",
+    property_hint: "Køretøjer har været udelukket fra beregningen siden februar 2024, og et grundfradrag på 100 millioner KRW anvendes automatisk.",
+    calc_btn: "Beregn",
+    res_income_premium: "Indkomstbaseret præmie",
+    res_property_premium: "Formuebaseret præmie (est.)",
+    res_health_sub: "Subtotal sygesikring",
+    res_ltc: "Langtidsplejeforsikring",
+    res_total_monthly: "Estimeret månedligt beløb",
+    disc_title: "⚠️ Bemærk",
+    disc_local_body: "Denne beregner bruger de for 2026 offentliggjorte satser (sygesikring 7,19 %, langtidspleje 0,9448 %, pointværdi formue 211,5 KRW) udelukkende til reference. Formuepræmien er tilnærmet ud fra 60-trins pointtabellen og kan afvige fra din faktiske regning. For et præcist beløb, brug den officielle simulator på hjemmesiden for National Health Insurance Service (NHIS).",
+    job_title: "2026 Beregner for lønmodtageres sygesikring (Korea)",
+    job_sub: "Indtast din månedlige bruttoløn for at beregne din egen andel af syge- og langtidsplejeforsikringen — delt ligeligt med din arbejdsgiver.",
+    job_input_title: "Løn",
+    job_wage_lbl: "Månedlig bruttoløn (KRW)",
+    res_health_total: "Sygesikring (i alt)",
+    res_my_health: "Din andel af sygesikring",
+    res_my_ltc: "Din andel af langtidspleje",
+    res_my_total: "Dit samlede månedlige fradrag",
+    disc_job_body: "I 2026 er sygesikringssatsen for lønmodtagere 7,19 % (lønmodtager 3,595 % + arbejdsgiver 3,595 %), og satsen for langtidspleje 0,9448 %. Lovbestemte lofter (ca. 9.183.480 KRW i alt / 4.591.740 KRW egen andel) og gulv (20.160 KRW) gælder. Det faktiske fradrag kan variere afhængigt af bonusser og skattefri indkomst.",
+    unit_won: "KRW",
+  },
+  ar: {
+    page_title: "حاسبة التأمين الصحي الكوري من pomiai",
+    brand_sub: "التأمين الصحي",
+    tab_local: "مؤمَّن ذاتيًا (إقليمي)",
+    tab_job: "موظف",
+    local_title: "حاسبة 2026 للتأمين الصحي الإقليمي (كوريا)",
+    local_sub: "أدخل الدخل والممتلكات لتقدير قسط التأمين الصحي الوطني الكوري لعام 2026 (بمعدل 7.19٪). قسط الممتلكات هو تقريب لجدول النقاط الرسمي.",
+    income_title: "الدخل (سنويًا)",
+    income_biz_lbl: "دخل الأعمال/الفوائد/الأرباح الموزعة/دخل آخر (سنويًا، يُحتسب بنسبة 100٪)",
+    income_labor_lbl: "دخل الأجور/المعاش التقاعدي (سنويًا، يُحتسب بنسبة 50٪)",
+    income_hint: "ينطبق دخل الأجور فقط إذا لم تكن مشمولًا بالفعل بتأمين صحي عبر صاحب عمل (مثل العمل اليومي أو قصير المدة).",
+    property_title: "الممتلكات",
+    property_base_lbl: "أساس ضريبة الممتلكات للمنزل/المبنى/الأرض وغيرها (وون كوري)",
+    deposit_lbl: "وديعة الإيجار (جيونسي/شهري) (وون كوري)",
+    monthly_rent_lbl: "الإيجار الشهري (وون كوري/شهر)",
+    debt_lbl: "خصم قرض الرهن العقاري (وون كوري، حتى 50 مليون)",
+    property_hint: "تم استبعاد المركبات من الحساب منذ فبراير 2024، ويُطبَّق تلقائيًا إعفاء أساسي للممتلكات قدره 100 مليون وون كوري.",
+    calc_btn: "احسب",
+    res_income_premium: "القسط القائم على الدخل",
+    res_property_premium: "القسط القائم على الممتلكات (تقديري)",
+    res_health_sub: "إجمالي فرعي للتأمين الصحي",
+    res_ltc: "تأمين الرعاية طويلة الأمد",
+    res_total_monthly: "الإجمالي الشهري التقديري",
+    disc_title: "⚠️ تنبيه",
+    disc_local_body: "تستخدم هذه الحاسبة المعدلات المعلنة رسميًا لعام 2026 (التأمين الصحي 7.19٪، الرعاية طويلة الأمد 0.9448٪، قيمة نقطة الممتلكات 211.5 وون) لأغراض مرجعية فقط. قسط الممتلكات مقدَّر من جدول النقاط ذي الستين درجة وقد يختلف عن فاتورتك الفعلية. للحصول على مبلغ دقيق، استخدم المحاكي الرسمي على موقع هيئة التأمين الصحي الوطنية الكورية (NHIS).",
+    job_title: "حاسبة 2026 للتأمين الصحي للموظفين (كوريا)",
+    job_sub: "أدخل راتبك الشهري الإجمالي لحساب حصتك الشخصية من التأمين الصحي وتأمين الرعاية طويلة الأمد — مقسومة مناصفةً مع صاحب العمل.",
+    job_input_title: "الراتب",
+    job_wage_lbl: "الراتب الشهري الإجمالي (وون كوري)",
+    res_health_total: "التأمين الصحي (الإجمالي)",
+    res_my_health: "حصتك من التأمين الصحي",
+    res_my_ltc: "حصتك من تأمين الرعاية طويلة الأمد",
+    res_my_total: "إجمالي خصمك الشهري",
+    disc_job_body: "في عام 2026، يبلغ معدل التأمين الصحي للموظفين 7.19٪ (الموظف 3.595٪ + صاحب العمل 3.595٪)، ومعدل الرعاية طويلة الأمد 0.9448٪. تُطبَّق الحدود القانونية القصوى (نحو 9,183,480 وون إجمالاً / 4,591,740 وون كحد أقصى للحصة الشخصية) والحد الأدنى (20,160 وون). قد يختلف الخصم الفعلي حسب المكافآت والدخل المعفى من الضريبة.",
+    unit_won: "وون",
+  },
 };
 
 (function(){
   const params = new URLSearchParams(location.search);
   const urlLang = params.get('lang');
-  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  /* 중국어 간체/번체 및 장문 코드(de_DE 등) 매핑을 위한 정규화 함수 */
+  function normalizeLang(raw){
+    if(!raw) return '';
+    if(I18N[raw]) return raw;
+    if(/^zh/i.test(raw)) return /tw|hk|mo/i.test(raw) ? 'zh_TW' : 'zh_CN';
+    const two = raw.slice(0,2).toLowerCase();
+    const longMap = { de:'de_DE', fr:'fr_FR', nl:'nl_NL', sv:'sv_SE', da:'da_DK', nb:'nn_NO', nn:'nn_NO', no:'nn_NO' };
+    return longMap[two] || two;
+  }
+  const urlKey = normalizeLang(urlLang);
+  const browserKey = normalizeLang(navigator.language || 'ko');
   const LANG = (urlLang && I18N[urlLang]) ? urlLang
-             : (I18N[browserLang]         ? browserLang : 'ko');
+             : (I18N[urlKey] ? urlKey
+             : (I18N[browserKey] ? browserKey : 'ko'));
   window._LANG = LANG;
   window._T    = I18N[LANG];
   document.getElementById('html-root').lang = LANG;
+  document.getElementById('html-root').setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
 })();
 
 function applyI18n() {
@@ -305,17 +662,22 @@ function applyI18n() {
   });
   document.getElementById('page-title').textContent = t.page_title;
   document.title = t.page_title;
-  document.querySelectorAll('.lbtn').forEach(el=>el.classList.remove('on'));
-  const btn = document.getElementById('lang-'+window._LANG);
-  if(btn) btn.classList.add('on');
+  const sel = document.getElementById('lang-switch');
+  if (sel) sel.value = window._LANG;
 }
 function setLang(l){
   if(!I18N[l]) return;
   window._LANG = l; window._T = I18N[l];
   document.getElementById('html-root').lang = l;
+  document.getElementById('html-root').setAttribute('dir', l === 'ar' ? 'rtl' : 'ltr');
   applyI18n();
+  try{ const url = new URL(location.href); url.searchParams.set('lang', l); history.replaceState(null,'',url); }catch(e){}
 }
 applyI18n();
+(function(){
+  const sel = document.getElementById('lang-switch');
+  if (sel) sel.addEventListener('change', ()=> setLang(sel.value));
+})();
 
 /* ════ 탭 전환 ════ */
 function goTab(id){
