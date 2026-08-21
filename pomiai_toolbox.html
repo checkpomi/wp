@@ -7,9 +7,16 @@
 ===================================================
 pomiai_toolbox.html — 버전 로그
 ===================================================
-현재 버전: 2026.07.27
-최종 수정: 2026.07.27
+현재 버전: 2026.08.21
+최종 수정: 2026.08.21
 변경 내역 (최신순):
+  - 2026.08.21  §5 표준 12개 언어 전체 지원으로 확장
+      · zh_CN/zh_TW/de_DE/fr_FR/nl_NL/sv_SE/nn_NO/da_DK/ar 9개 언어 추가
+        (기존 ko/en/ja 3개 → 12개 언어), 브라우저 언어 자동 감지 정규화
+        로직 추가(중국어 간체/번체, 장문 코드 매핑), ar 선택 시 RTL 레이아웃
+      · 언어 선택 UI를 버튼 3개 → 드롭다운 셀렉터로 교체(12개 언어 대응)
+      · 도구 3개 추가: pomiai 플레이어(음악·영상), 건강보험료 계산기, 문서
+        뷰어 — 총 10개 → 13개 도구
   - 2026.07.27  최초 제작
       · 모바일 활용도가 높다고 판단된 10개 도구(계산기/건강도구/증명사진/운세/
         텍스트도구/정규식/자소에디터/비즈도구/지하철/QR코드)를 pomiai_arcade와
@@ -20,7 +27,7 @@ pomiai_toolbox.html — 버전 로그
         PC 활용도가 높다고 판단해 이번 모바일 세트에서는 제외 — 별도 PC용
         도구 모음 페이지로 추후 구성 예정
       · ko/en/ja 다국어(§5 표준), 세로모드 고정, 브랜드 푸터 적용
-캐시 무효화: ?v=2026.07.27
+캐시 무효화: ?v=2026.08.21
 ===================================================
 
 -->
@@ -113,9 +120,15 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 }
 
 #shell{max-width:460px}
-#lang-switch{display:flex;gap:4px}
-#lang-switch button{background:var(--s3);border:1px solid var(--bd2);color:var(--tx3);font-size:11px;font-weight:700;padding:5px 9px;border-radius:8px;cursor:pointer}
-#lang-switch button.on{background:var(--ac3);border-color:var(--ac);color:var(--ac2)}
+#lang-switch{background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);font-size:11px;font-weight:700;padding:7px 9px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;max-width:120px}
+#lang-switch:focus{border-color:var(--ac);color:var(--ac2)}
+
+/* ===== RTL (ar) ===== */
+html[dir="rtl"] #header{flex-direction:row-reverse}
+html[dir="rtl"] .brand-footer{flex-direction:row-reverse}
+html[dir="rtl"] .brand-links{flex-direction:row-reverse}
+html[dir="rtl"] #install-banner{flex-direction:row-reverse}
+html[dir="rtl"] .go-card{direction:rtl}
 
 #hero{padding:18px 16px 6px;text-align:center}
 #hero .big-title{font-size:22px;font-weight:800;letter-spacing:.5px}
@@ -149,11 +162,20 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
       <div id="logo">pomiai <span>· TOOLBOX</span></div>
       <div class="tagline" data-i18n="tagline">포켓 속 실용 도구함</div>
     </div>
-    <div id="lang-switch">
-      <button data-lang="ko">한국어</button>
-      <button data-lang="en">EN</button>
-      <button data-lang="ja">日本語</button>
-    </div>
+    <select id="lang-switch" aria-label="language">
+      <option value="ko">🇰🇷 한국어</option>
+      <option value="en">🇺🇸 English</option>
+      <option value="ja">🇯🇵 日本語</option>
+      <option value="zh_CN">🇨🇳 简体中文</option>
+      <option value="zh_TW">🇹🇼 繁體中文</option>
+      <option value="de_DE">🇩🇪 Deutsch</option>
+      <option value="fr_FR">🇫🇷 Français</option>
+      <option value="nl_NL">🇳🇱 Nederlands</option>
+      <option value="sv_SE">🇸🇪 Svenska</option>
+      <option value="nn_NO">🇳🇴 Norsk</option>
+      <option value="da_DK">🇩🇰 Dansk</option>
+      <option value="ar">🇸🇦 العربية</option>
+    </select>
   </div>
 
   <div id="hero">
@@ -181,48 +203,189 @@ html,body{min-height:100%;background:var(--bg);color:var(--tx);font-family:'DM S
 
 <script>
 const I18N = {
-  ko:{ page_title:'pomiai 도구함', tagline:'포켓 속 실용 도구함',
-    hero_title:'10개 도구,', hero_title_span:'모바일로 바로',
-    hero_sub:'설치 없이 바로 사용 · 홈 화면에 추가하면 앱처럼 실행돼요',
-    install_txt:'홈 화면에 추가하고 앱처럼 써보세요', install_btn:'추가',
-    ad_placeholder:'광고 영역 (도구 카드와 분리된 위치)', footer_by:'Product by',
-    orientation_msg:'화면을 세로로 돌려주세요' },
-  en:{ page_title:'pomiai Toolbox', tagline:'Handy tools in your pocket',
-    hero_title:'10 tools,', hero_title_span:'ready on mobile',
-    hero_sub:'No install needed · Add to Home Screen for an app-like feel',
-    install_txt:'Add to Home Screen for the full app feel', install_btn:'Add',
-    ad_placeholder:'Ad space (separate from tool cards)', footer_by:'Product by',
-    orientation_msg:'Please rotate to portrait' },
-  ja:{ page_title:'pomiai ツールボックス', tagline:'ポケットの中の実用ツール集',
-    hero_title:'10個のツール、', hero_title_span:'モバイルですぐ使える',
-    hero_sub:'インストール不要 · ホーム画面に追加でアプリのように使えます',
-    install_txt:'ホーム画面に追加してアプリのように使おう', install_btn:'追加',
-    ad_placeholder:'広告スペース（ツールカードとは別の位置）', footer_by:'Product by',
-    orientation_msg:'画面を縦向きにしてください' }
+  ko: {
+    page_title: "pomiai 도구함",
+    tagline: "포켓 속 실용 도구함",
+    hero_title: "13개 도구,",
+    hero_title_span: "모바일로 바로",
+    hero_sub: "설치 없이 바로 사용 · 홈 화면에 추가하면 앱처럼 실행돼요",
+    install_txt: "홈 화면에 추가하고 앱처럼 써보세요",
+    install_btn: "추가",
+    ad_placeholder: "광고 영역 (도구 카드와 분리된 위치)",
+    footer_by: "Product by",
+    orientation_msg: "화면을 세로로 돌려주세요",
+  },
+  en: {
+    page_title: "pomiai Toolbox",
+    tagline: "Handy tools in your pocket",
+    hero_title: "13 tools,",
+    hero_title_span: "ready on mobile",
+    hero_sub: "No install needed · Add to Home Screen for an app-like feel",
+    install_txt: "Add to Home Screen for the full app feel",
+    install_btn: "Add",
+    ad_placeholder: "Ad space (separate from tool cards)",
+    footer_by: "Product by",
+    orientation_msg: "Please rotate to portrait",
+  },
+  ja: {
+    page_title: "pomiai ツールボックス",
+    tagline: "ポケットの中の実用ツール集",
+    hero_title: "13個のツール、",
+    hero_title_span: "モバイルですぐ使える",
+    hero_sub: "インストール不要 · ホーム画面に追加でアプリのように使えます",
+    install_txt: "ホーム画面に追加してアプリのように使おう",
+    install_btn: "追加",
+    ad_placeholder: "広告スペース（ツールカードとは別の位置）",
+    footer_by: "Product by",
+    orientation_msg: "画面を縦向きにしてください",
+  },
+  zh_CN: {
+    page_title: "pomiai 工具箱",
+    tagline: "装进口袋的实用工具集",
+    hero_title: "13 款工具，",
+    hero_title_span: "手机随时用",
+    hero_sub: "无需安装 · 添加到主屏幕即可像应用一样使用",
+    install_txt: "添加到主屏幕，像应用一样使用",
+    install_btn: "添加",
+    ad_placeholder: "广告位（与工具卡片分开）",
+    footer_by: "出品方",
+    orientation_msg: "请将屏幕转为竖屏",
+  },
+  zh_TW: {
+    page_title: "pomiai 工具箱",
+    tagline: "裝進口袋的實用工具集",
+    hero_title: "13 款工具，",
+    hero_title_span: "手機隨時用",
+    hero_sub: "無需安裝 · 加到主畫面即可像應用程式一樣使用",
+    install_txt: "加到主畫面，像應用程式一樣使用",
+    install_btn: "加入",
+    ad_placeholder: "廣告欄位（與工具卡片分開）",
+    footer_by: "出品方",
+    orientation_msg: "請將螢幕轉為直向",
+  },
+  de_DE: {
+    page_title: "pomiai Toolbox",
+    tagline: "Praktische Tools für unterwegs",
+    hero_title: "13 Tools,",
+    hero_title_span: "sofort mobil einsatzbereit",
+    hero_sub: "Keine Installation nötig · Zum Home-Bildschirm hinzufügen für App-Gefühl",
+    install_txt: "Zum Home-Bildschirm hinzufügen für das volle App-Gefühl",
+    install_btn: "Hinzufügen",
+    ad_placeholder: "Werbefläche (getrennt von den Tool-Karten)",
+    footer_by: "Bereitgestellt von",
+    orientation_msg: "Bitte ins Hochformat drehen",
+  },
+  fr_FR: {
+    page_title: "pomiai Boîte à outils",
+    tagline: "Des outils pratiques dans votre poche",
+    hero_title: "13 outils,",
+    hero_title_span: "prêts sur mobile",
+    hero_sub: "Aucune installation nécessaire · Ajoutez à l'écran d'accueil pour une expérience app",
+    install_txt: "Ajoutez à l'écran d'accueil pour l'expérience complète",
+    install_btn: "Ajouter",
+    ad_placeholder: "Espace publicitaire (séparé des cartes d'outils)",
+    footer_by: "Proposé par",
+    orientation_msg: "Veuillez pivoter en mode portrait",
+  },
+  nl_NL: {
+    page_title: "pomiai Toolbox",
+    tagline: "Handige tools in je zak",
+    hero_title: "13 tools,",
+    hero_title_span: "direct klaar op mobiel",
+    hero_sub: "Geen installatie nodig · Voeg toe aan beginscherm voor een app-gevoel",
+    install_txt: "Voeg toe aan beginscherm voor het volledige app-gevoel",
+    install_btn: "Toevoegen",
+    ad_placeholder: "Advertentieruimte (los van de toolkaarten)",
+    footer_by: "Aangeboden door",
+    orientation_msg: "Draai het scherm naar staand",
+  },
+  sv_SE: {
+    page_title: "pomiai Verktygslåda",
+    tagline: "Praktiska verktyg i fickan",
+    hero_title: "13 verktyg,",
+    hero_title_span: "redo direkt på mobilen",
+    hero_sub: "Ingen installation behövs · Lägg till på hemskärmen för en app-känsla",
+    install_txt: "Lägg till på hemskärmen för hela app-känslan",
+    install_btn: "Lägg till",
+    ad_placeholder: "Annonsyta (skild från verktygskorten)",
+    footer_by: "Erbjuds av",
+    orientation_msg: "Vrid skärmen till stående läge",
+  },
+  nn_NO: {
+    page_title: "pomiai Verktøykasse",
+    tagline: "Praktiske verktøy i lomma",
+    hero_title: "13 verktøy,",
+    hero_title_span: "klare på mobilen med en gang",
+    hero_sub: "Ingen installasjon nødvendig · Legg til på startskjermen for en app-følelse",
+    install_txt: "Legg til på startskjermen for full app-følelse",
+    install_btn: "Legg til",
+    ad_placeholder: "Annonseplass (atskilt fra verktøykortene)",
+    footer_by: "Levert av",
+    orientation_msg: "Vennligst roter til stående retning",
+  },
+  da_DK: {
+    page_title: "pomiai Værktøjskasse",
+    tagline: "Praktiske værktøjer i lommen",
+    hero_title: "13 værktøjer,",
+    hero_title_span: "klar med det samme på mobilen",
+    hero_sub: "Ingen installation nødvendig · Føj til hjemmeskærmen for en app-fornemmelse",
+    install_txt: "Føj til hjemmeskærmen for den fulde app-fornemmelse",
+    install_btn: "Tilføj",
+    ad_placeholder: "Annonceplads (adskilt fra værktøjskortene)",
+    footer_by: "Leveret af",
+    orientation_msg: "Vend skærmen til stående retning",
+  },
+  ar: {
+    page_title: "صندوق أدوات pomiai",
+    tagline: "أدوات عملية في جيبك",
+    hero_title: "13 أداة،",
+    hero_title_span: "جاهزة فورًا على الجوال",
+    hero_sub: "لا حاجة للتثبيت · أضفها إلى الشاشة الرئيسية لتجربة أشبه بالتطبيق",
+    install_txt: "أضف إلى الشاشة الرئيسية للحصول على تجربة تطبيق كاملة",
+    install_btn: "إضافة",
+    ad_placeholder: "مساحة إعلانية (منفصلة عن بطاقات الأدوات)",
+    footer_by: "مقدَّم من",
+    orientation_msg: "يرجى تدوير الشاشة إلى الوضع الرأسي",
+  },
 };
 
 const GAMES = [
-  { id:'calculator',  file:'pomiai_calculator.html',   icon:'🧮', name:{ko:'계산기',en:'Calculator',ja:'電卓'}, desc:{ko:'기본·공학·단위·환율',en:'Basic, scientific, unit, currency',ja:'基本・関数・単位・為替'} },
-  { id:'healthtools',  file:'pomiai_healthtools.html',  icon:'💪', name:{ko:'건강 도구',en:'Health Tools',ja:'健康ツール'}, desc:{ko:'BMI·칼로리·나이 계산',en:'BMI, calories, age',ja:'BMI・カロリー・年齢'} },
-  { id:'passport',     file:'pomiai_passport.html',     icon:'📷', name:{ko:'증명사진',en:'Passport Photo',ja:'証明写真'}, desc:{ko:'국가별 규격 자동 보정',en:'Auto-format by country',ja:'国別規格を自動補正'} },
-  { id:'fortune',      file:'pomiai_fortune.html',      icon:'🔮', name:{ko:'운세',en:'Fortune',ja:'占い'}, desc:{ko:'사주·타로·궁합·이름풀이',en:'Saju, tarot, compatibility',ja:'四柱推命・タロット・相性'} },
-  { id:'texttools',    file:'pomiai_texttools.html',    icon:'📝', name:{ko:'텍스트 도구',en:'Text Tools',ja:'テキストツール'}, desc:{ko:'변환·통계·파일 편집',en:'Transform, stats, file edit',ja:'変換・統計・ファイル編集'} },
-  { id:'regex',        file:'pomiai_regex.html',        icon:'🔎', name:{ko:'정규식 테스터',en:'Regex Tester',ja:'正規表現テスター'}, desc:{ko:'프리셋·치트시트 포함',en:'Presets & cheat sheet',ja:'プリセット・チートシート'} },
-  { id:'jaso',         file:'pomiai-jaso-editor.html',  icon:'✍️', name:{ko:'자소 에디터',en:'Jaso Editor',ja:'字素エディター'}, desc:{ko:'손글씨 폰트 제작',en:'Handwriting font maker',ja:'手書きフォント制作'} },
-  { id:'biztools',     file:'pomiai_biztools.html',     icon:'🧾', name:{ko:'비즈 도구',en:'Business Tools',ja:'ビジネスツール'}, desc:{ko:'인보이스·세금·대출',en:'Invoice, tax, loan',ja:'請求書・税金・ローン'} },
-  { id:'subway',       file:'pomiai_subway.html',       icon:'🚇', name:{ko:'지하철 노선도',en:'Subway Finder',ja:'地下鉄路線図'}, desc:{ko:'역 검색·최적 경로',en:'Station search & routes',ja:'駅検索・最適経路'} },
-  { id:'qr',           file:'pomiai_qr.html',           icon:'🔗', name:{ko:'QR 코드 생성기',en:'QR Generator',ja:'QRコード生成'}, desc:{ko:'URL·WiFi·명함·로고',en:'URL, WiFi, vCard, logo',ja:'URL・WiFi・名刺・ロゴ'} }
+  { id:"calculator", file:"pomiai_calculator.html", icon:"🧮", name:{ko:"계산기",en:"Calculator",ja:"電卓",zh_CN:"计算器",zh_TW:"計算機",de_DE:"Rechner",fr_FR:"Calculatrice",nl_NL:"Rekenmachine",sv_SE:"Kalkylator",nn_NO:"Kalkulator",da_DK:"Lommeregner",ar:"آلة حاسبة"}, desc:{ko:"기본·공학·단위·환율",en:"Basic, scientific, unit, currency",ja:"基本・関数・単位・為替",zh_CN:"基础·科学·单位·汇率",zh_TW:"基礎·科學·單位·匯率",de_DE:"Standard, wissenschaftlich, Einheiten, Wechselkurs",fr_FR:"Standard, scientifique, unités, devises",nl_NL:"Basis, wetenschappelijk, eenheden, valuta",sv_SE:"Standard, vetenskaplig, enheter, valuta",nn_NO:"Standard, vitskapleg, einingar, valuta",da_DK:"Standard, videnskabelig, enheder, valuta",ar:"أساسية · علمية · وحدات · عملات"} },
+  { id:"healthtools", file:"pomiai_healthtools.html", icon:"💪", name:{ko:"건강 도구",en:"Health Tools",ja:"健康ツール",zh_CN:"健康工具",zh_TW:"健康工具",de_DE:"Gesundheitstools",fr_FR:"Outils santé",nl_NL:"Gezondheidstools",sv_SE:"Hälsoverktyg",nn_NO:"Helseverktøy",da_DK:"Sundhedsværktøjer",ar:"أدوات صحية"}, desc:{ko:"BMI·칼로리·나이 계산",en:"BMI, calories, age",ja:"BMI・カロリー・年齢",zh_CN:"BMI·卡路里·年龄",zh_TW:"BMI·卡路里·年齡",de_DE:"BMI, Kalorien, Alter",fr_FR:"IMC, calories, âge",nl_NL:"BMI, calorieën, leeftijd",sv_SE:"BMI, kalorier, ålder",nn_NO:"BMI, kalorier, alder",da_DK:"BMI, kalorier, alder",ar:"مؤشر كتلة الجسم · السعرات · العمر"} },
+  { id:"passport", file:"pomiai_passport.html", icon:"📷", name:{ko:"증명사진",en:"Passport Photo",ja:"証明写真",zh_CN:"证件照",zh_TW:"證件照",de_DE:"Passfoto",fr_FR:"Photo d'identité",nl_NL:"Pasfoto",sv_SE:"Passfoto",nn_NO:"Passfoto",da_DK:"Pasfoto",ar:"صورة جواز سفر"}, desc:{ko:"국가별 규격 자동 보정",en:"Auto-format by country",ja:"国別規格を自動補正",zh_CN:"按国家规格自动调整",zh_TW:"依國家規格自動調整",de_DE:"Automatische Anpassung nach Land",fr_FR:"Ajustement automatique par pays",nl_NL:"Automatisch aangepast per land",sv_SE:"Automatisk anpassning per land",nn_NO:"Automatisk tilpassing per land",da_DK:"Automatisk tilpasning pr. land",ar:"ضبط تلقائي حسب مقاييس كل دولة"} },
+  { id:"fortune", file:"pomiai_fortune.html", icon:"🔮", name:{ko:"운세",en:"Fortune",ja:"占い",zh_CN:"运势",zh_TW:"運勢",de_DE:"Wahrsagerei",fr_FR:"Voyance",nl_NL:"Waarzeggerij",sv_SE:"Spådom",nn_NO:"Spådom",da_DK:"Spådom",ar:"الحظ"}, desc:{ko:"사주·타로·궁합·이름풀이",en:"Saju, tarot, compatibility",ja:"四柱推命・タロット・相性",zh_CN:"八字·塔罗·合盘",zh_TW:"八字·塔羅·合盤",de_DE:"Saju, Tarot, Kompatibilität",fr_FR:"Saju, tarot, compatibilité",nl_NL:"Saju, tarot, compatibiliteit",sv_SE:"Saju, tarot, kompatibilitet",nn_NO:"Saju, tarot, kompatibilitet",da_DK:"Saju, tarot, kompatibilitet",ar:"سايجو · تاروت · التوافق"} },
+  { id:"texttools", file:"pomiai_texttools.html", icon:"📝", name:{ko:"텍스트 도구",en:"Text Tools",ja:"テキストツール",zh_CN:"文本工具",zh_TW:"文字工具",de_DE:"Text-Tools",fr_FR:"Outils texte",nl_NL:"Teksttools",sv_SE:"Textverktyg",nn_NO:"Tekstverktøy",da_DK:"Tekstværktøjer",ar:"أدوات النصوص"}, desc:{ko:"변환·통계·파일 편집",en:"Transform, stats, file edit",ja:"変換・統計・ファイル編集",zh_CN:"转换·统计·文件编辑",zh_TW:"轉換·統計·檔案編輯",de_DE:"Umwandlung, Statistik, Dateibearbeitung",fr_FR:"Transformation, statistiques, édition",nl_NL:"Omzetten, statistieken, bestand bewerken",sv_SE:"Omvandling, statistik, filredigering",nn_NO:"Omforming, statistikk, filredigering",da_DK:"Konvertering, statistik, filredigering",ar:"تحويل · إحصاءات · تحرير الملفات"} },
+  { id:"regex", file:"pomiai_regex.html", icon:"🔎", name:{ko:"정규식 테스터",en:"Regex Tester",ja:"正規表現テスター",zh_CN:"正则测试器",zh_TW:"正規表達式測試器",de_DE:"RegEx-Tester",fr_FR:"Testeur RegEx",nl_NL:"RegEx-tester",sv_SE:"RegEx-testare",nn_NO:"RegEx-testar",da_DK:"RegEx-tester",ar:"مختبر التعبيرات النمطية"}, desc:{ko:"프리셋·치트시트 포함",en:"Presets & cheat sheet",ja:"プリセット・チートシート",zh_CN:"预设与速查表",zh_TW:"預設與速查表",de_DE:"Presets & Spickzettel",fr_FR:"Préréglages et aide-mémoire",nl_NL:"Presets & spiekbriefje",sv_SE:"Mallar & fusklapp",nn_NO:"Malar & jukselapp",da_DK:"Skabeloner & snydeark",ar:"إعدادات مسبقة وورقة مرجعية"} },
+  { id:"jaso", file:"pomiai-jaso-editor.html", icon:"✍️", name:{ko:"자소 에디터",en:"Jaso Editor",ja:"字素エディター",zh_CN:"字素编辑器",zh_TW:"字素編輯器",de_DE:"Jaso-Editor",fr_FR:"Éditeur Jaso",nl_NL:"Jaso-editor",sv_SE:"Jaso-redigerare",nn_NO:"Jaso-redigerar",da_DK:"Jaso-editor",ar:"محرر جاسو"}, desc:{ko:"손글씨 폰트 제작",en:"Handwriting font maker",ja:"手書きフォント制作",zh_CN:"手写字体制作",zh_TW:"手寫字型製作",de_DE:"Handschrift-Font erstellen",fr_FR:"Créateur de police manuscrite",nl_NL:"Handschriftlettertype maken",sv_SE:"Skapa handstilsteckensnitt",nn_NO:"Lag handskriftfont",da_DK:"Lav håndskriftskrifttype",ar:"إنشاء خط بخط اليد"} },
+  { id:"biztools", file:"pomiai_biztools.html", icon:"🧾", name:{ko:"비즈 도구",en:"Business Tools",ja:"ビジネスツール",zh_CN:"商务工具",zh_TW:"商務工具",de_DE:"Business-Tools",fr_FR:"Outils pro",nl_NL:"Zakelijke tools",sv_SE:"Affärsverktyg",nn_NO:"Forretningsverktøy",da_DK:"Forretningsværktøjer",ar:"أدوات أعمال"}, desc:{ko:"인보이스·세금·대출",en:"Invoice, tax, loan",ja:"請求書・税金・ローン",zh_CN:"发票·税务·贷款",zh_TW:"發票·稅務·貸款",de_DE:"Rechnung, Steuer, Kredit",fr_FR:"Facture, impôts, prêt",nl_NL:"Factuur, belasting, lening",sv_SE:"Faktura, skatt, lån",nn_NO:"Faktura, skatt, lån",da_DK:"Faktura, skat, lån",ar:"فاتورة · ضريبة · قرض"} },
+  { id:"subway", file:"pomiai_subway.html", icon:"🚇", name:{ko:"지하철 노선도",en:"Subway Finder",ja:"地下鉄路線図",zh_CN:"地铁路线图",zh_TW:"地鐵路線圖",de_DE:"U-Bahn-Finder",fr_FR:"Recherche métro",nl_NL:"Metrozoeker",sv_SE:"Tunnelbanesökare",nn_NO:"T-banesøkjar",da_DK:"Metrosøger",ar:"باحث المترو"}, desc:{ko:"역 검색·최적 경로",en:"Station search & routes",ja:"駅検索・最適経路",zh_CN:"车站搜索·最佳路线",zh_TW:"車站搜尋·最佳路線",de_DE:"Stationssuche & Routen",fr_FR:"Recherche de stations et itinéraires",nl_NL:"Stationzoeker & routes",sv_SE:"Stationssökning & rutter",nn_NO:"Stasjonssøk & ruter",da_DK:"Stationssøgning & ruter",ar:"البحث عن المحطات والمسارات"} },
+  { id:"qr", file:"pomiai_qr.html", icon:"🔗", name:{ko:"QR 코드 생성기",en:"QR Generator",ja:"QRコード生成",zh_CN:"二维码生成器",zh_TW:"QR碼產生器",de_DE:"QR-Generator",fr_FR:"Générateur QR",nl_NL:"QR-generator",sv_SE:"QR-generator",nn_NO:"QR-generator",da_DK:"QR-generator",ar:"مولّد رمز QR"}, desc:{ko:"URL·WiFi·명함·로고",en:"URL, WiFi, vCard, logo",ja:"URL・WiFi・名刺・ロゴ",zh_CN:"URL·WiFi·名片·标志",zh_TW:"URL·WiFi·名片·標誌",de_DE:"URL, WLAN, vCard, Logo",fr_FR:"URL, WiFi, vCard, logo",nl_NL:"URL, WiFi, vCard, logo",sv_SE:"URL, WiFi, vCard, logotyp",nn_NO:"URL, WiFi, vCard, logo",da_DK:"URL, WiFi, vCard, logo",ar:"رابط · واي فاي · بطاقة تعريف · شعار"} },
+  { id:"player", file:"pomiai_player.html", icon:"🎧", name:{ko:"pomiai 플레이어",en:"pomiai Player",ja:"pomiai プレイヤー",zh_CN:"pomiai 播放器",zh_TW:"pomiai 播放器",de_DE:"pomiai Player",fr_FR:"Lecteur pomiai",nl_NL:"pomiai Speler",sv_SE:"pomiai Spelare",nn_NO:"pomiai Spelar",da_DK:"pomiai Afspiller",ar:"مشغّل pomiai"}, desc:{ko:"음악·영상 재생목록 관리",en:"Music & video playlist manager",ja:"音楽・動画プレイリスト管理",zh_CN:"音乐·视频播放列表管理",zh_TW:"音樂·影片播放清單管理",de_DE:"Musik- & Video-Playlist-Manager",fr_FR:"Gestionnaire de playlists musique et vidéo",nl_NL:"Muziek- & videoplaylistbeheer",sv_SE:"Hantera musik- & videospellistor",nn_NO:"Handsam musikk- & videospelelister",da_DK:"Administration af musik- & videospillelister",ar:"إدارة قوائم تشغيل الموسيقى والفيديو"} },
+  { id:"healthinsurance", file:"pomiai_healthinsurance_calc.html", icon:"🏥", name:{ko:"건강보험료 계산기",en:"Health Insurance Calculator",ja:"健康保険料計算機",zh_CN:"健康保险费计算器",zh_TW:"健保費計算機",de_DE:"Krankenversicherungsrechner",fr_FR:"Calculateur d'assurance santé",nl_NL:"Zorgverzekeringscalculator",sv_SE:"Sjukförsäkringskalkylator",nn_NO:"Helseforsikringskalkulator",da_DK:"Sygesikringsberegner",ar:"حاسبة التأمين الصحي"}, desc:{ko:"한국 건강보험료 자동 계산",en:"Auto-calculate Korean health insurance",ja:"韓国の健康保険料を自動計算",zh_CN:"自动计算韩国健康保险费",zh_TW:"自動計算韓國健保費",de_DE:"Automatische Berechnung der koreanischen Krankenversicherung",fr_FR:"Calcul automatique de l'assurance santé coréenne",nl_NL:"Automatische berekening Koreaanse zorgverzekering",sv_SE:"Automatisk beräkning av koreansk sjukförsäkring",nn_NO:"Automatisk berekning av koreansk helseforsikring",da_DK:"Automatisk beregning af koreansk sygesikring",ar:"حساب تلقائي للتأمين الصحي الكوري"} },
+  { id:"docviewer", file:"pomiai_docviewer.html", icon:"📄", name:{ko:"문서 뷰어",en:"Document Viewer",ja:"ドキュメントビューア",zh_CN:"文档查看器",zh_TW:"文件檢視器",de_DE:"Dokumentbetrachter",fr_FR:"Visionneuse de documents",nl_NL:"Documentviewer",sv_SE:"Dokumentvisare",nn_NO:"Dokumentvisar",da_DK:"Dokumentfremviser",ar:"عارض المستندات"}, desc:{ko:"PDF·오피스 파일 바로보기",en:"View PDF & Office files instantly",ja:"PDF・Officeファイルをすぐ表示",zh_CN:"即时查看PDF·办公文件",zh_TW:"即時檢視PDF·辦公室檔案",de_DE:"PDF- & Office-Dateien sofort ansehen",fr_FR:"Aperçu instantané des fichiers PDF et Office",nl_NL:"PDF- en Office-bestanden direct bekijken",sv_SE:"Visa PDF- och Office-filer direkt",nn_NO:"Vis PDF- og Office-filer direkte",da_DK:"Se PDF- og Office-filer direkte",ar:"عرض ملفات PDF ومستندات Office فورًا"} },
 ];
 
 (function(){
   const params = new URLSearchParams(location.search);
   const urlLang = params.get('lang');
-  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  /* 중국어 간체/번체 및 장문 코드(de_DE 등) 매핑을 위한 정규화 함수 */
+  function normalizeLang(raw){
+    if(!raw) return '';
+    if(I18N[raw]) return raw;
+    if(/^zh/i.test(raw)) return /tw|hk|mo/i.test(raw) ? 'zh_TW' : 'zh_CN';
+    const two = raw.slice(0,2).toLowerCase();
+    const longMap = { de:'de_DE', fr:'fr_FR', nl:'nl_NL', sv:'sv_SE', da:'da_DK', nb:'nn_NO', nn:'nn_NO', no:'nn_NO' };
+    return longMap[two] || two;
+  }
+  const urlKey = normalizeLang(urlLang);
+  const browserKey = normalizeLang(navigator.language || 'ko');
   const LANG = (urlLang && I18N[urlLang]) ? urlLang
-             : (I18N[browserLang]         ? browserLang : 'ko');
+             : (I18N[urlKey] ? urlKey
+             : (I18N[browserKey] ? browserKey : 'ko'));
   window._LANG = LANG;
   window._T    = I18N[LANG];
   document.getElementById('html-root').lang = LANG;
+  document.getElementById('html-root').setAttribute('dir', LANG === 'ar' ? 'rtl' : 'ltr');
 })();
 function applyI18n() {
   const t = window._T;
@@ -232,6 +395,8 @@ function applyI18n() {
   });
   document.getElementById('page-title').textContent = t.page_title;
   document.title = t.page_title;
+  const langSel = document.getElementById('lang-switch');
+  if (langSel) langSel.value = window._LANG;
 }
 applyI18n();
 function bindHold(el, fn, repeatMs){
@@ -263,24 +428,25 @@ function renderGrid(){
 }
 renderGrid();
 
-function setLangButtons(){
-  document.querySelectorAll('#lang-switch button').forEach(btn=>{
-    btn.classList.toggle('on', btn.dataset.lang === window._LANG);
-    btn.onclick = ()=>{
-      const lang = btn.dataset.lang;
-      const url = new URL(location.href);
-      url.searchParams.set('lang', lang);
-      history.replaceState(null,'',url);
-      window._LANG = lang;
-      window._T = I18N[lang];
-      document.getElementById('html-root').lang = lang;
-      applyI18n();
-      renderGrid();
-      setLangButtons();
-    };
+function setLangSwitch(){
+  const sel = document.getElementById('lang-switch');
+  if (!sel) return;
+  sel.value = window._LANG;
+  sel.addEventListener('change', ()=>{
+    const lang = sel.value;
+    if (!I18N[lang]) return;
+    const url = new URL(location.href);
+    url.searchParams.set('lang', lang);
+    history.replaceState(null,'',url);
+    window._LANG = lang;
+    window._T = I18N[lang];
+    document.getElementById('html-root').lang = lang;
+    document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    applyI18n();
+    renderGrid();
   });
 }
-setLangButtons();
+setLangSwitch();
 
 // --- PWA: install prompt ---
 let deferredPrompt;
