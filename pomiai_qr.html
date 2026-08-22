@@ -7,9 +7,17 @@
 ===================================================
 pomiai_qr.html — 버전 로그
 ===================================================
-현재 버전: 2026.07.27
-최종 수정: 2026.07.27
+현재 버전: 2026.08.21
+최종 수정: 2026.08.21
 변경 내역 (최신순):
+  - 2026.08.21  §5 다국어 표준 구조 전면 적용
+      · 기존 ko/en/ja 3개 언어(헤더·탭 라벨 13개 키만)에서 12개 언어(en/ja/zh_CN/
+        zh_TW/de_DE/fr_FR/nl_NL/sv_SE/nn_NO/da_DK/ar) x 53개 키로 확장
+      · 폼 필드 라벨(SSID/비밀번호/이름/회사/직함/이메일 등), select 옵션(보안 방식,
+        오류 수정 레벨), 버튼(생성/다운로드/복사), 로고 상태 텍스트, toast 안내
+        메시지, QR 미리보기 플레이스홀더까지 전체 i18n 처리
+      · 3버튼 langbtn UI -> 12개 옵션 select 교체, normalizeLang() 브라우저 언어
+        매핑, RTL(아랍어) 레이아웃 CSS 추가
   - 2026.07.27  최초 분리 제작 (원본: pomiai_devtools.html의 QR 탭)
       · devtools.html은 QR코드/비밀번호생성/컬러팔레트 3개 도구가 한 파일에
         묶여 있었는데, QR코드는 모바일 활용도가 높다고 판단해 독립 도구로 분리
@@ -17,7 +25,7 @@ pomiai_qr.html — 버전 로그
       · URL·텍스트·WiFi·명함·이메일·전화번호 QR 생성, 로고 삽입, PNG/SVG
         다운로드 기능은 원본 그대로 유지 (qrcodejs CDN 동적 로드)
       · ko/en/ja 다국어(§5 표준 UI 텍스트 기준), 브랜드 푸터, 버전 로그 적용
-캐시 무효화: ?v=2026.07.27
+캐시 무효화: ?v=2026.08.21
 ===================================================
 -->
 <title id="page-title">pomiai QR 코드 생성기</title>
@@ -206,6 +214,11 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
   .g2,.g3{grid-template-columns:1fr}
   .palette-list{grid-template-columns:repeat(2,1fr)}
 }
+html[dir="rtl"] #header{direction:rtl;}
+html[dir="rtl"] #lang-switch{margin-left:0;margin-right:auto;}
+html[dir="rtl"] .qr-type-row, html[dir="rtl"] .g2, html[dir="rtl"] .g3,
+html[dir="rtl"] .qr-color-row, html[dir="rtl"] .qr-dl-row, html[dir="rtl"] .res-actions,
+html[dir="rtl"] .export-row, html[dir="rtl"] .color-pick-wrap{direction:rtl;}
 </style>
 </head>
 <body>
@@ -213,11 +226,20 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 <!-- 헤더 -->
 <div id="header">
   <span id="logo">pomiai <span>QR</span></span>
-  <div id="lang-switch" style="margin-left:auto;display:flex;gap:4px">
-    <button data-lang="ko" style="background:var(--s3);border:1px solid var(--bd2,#262640);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer">한</button>
-    <button data-lang="en" style="background:var(--s3);border:1px solid var(--bd2,#262640);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer">EN</button>
-    <button data-lang="ja" style="background:var(--s3);border:1px solid var(--bd2,#262640);color:var(--tx3);font-size:10px;font-weight:700;padding:4px 8px;border-radius:7px;cursor:pointer">日</button>
-  </div>
+  <select id="lang-switch" style="margin-left:auto;background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);font-size:11px;font-weight:600;padding:5px 8px;border-radius:8px;cursor:pointer;max-width:140px">
+    <option value="ko">🇰🇷 한국어</option>
+    <option value="en">🇺🇸 English</option>
+    <option value="ja">🇯🇵 日本語</option>
+    <option value="zh_CN">🇨🇳 中文(简体)</option>
+    <option value="zh_TW">🇹🇼 中文(繁體)</option>
+    <option value="de_DE">🇩🇪 Deutsch</option>
+    <option value="fr_FR">🇫🇷 Français</option>
+    <option value="nl_NL">🇳🇱 Nederlands</option>
+    <option value="sv_SE">🇸🇪 Svenska</option>
+    <option value="nn_NO">🇳🇴 Norsk</option>
+    <option value="da_DK">🇩🇰 Dansk</option>
+    <option value="ar">🇸🇦 العربية</option>
+  </select>
 </div>
 
 <div id="app">
@@ -246,47 +268,47 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     </div>
     <!-- 텍스트 -->
     <div class="qr-input-group" id="qi-text">
-      <span class="fl">텍스트</span>
-      <textarea class="fm" id="qr-text" rows="3" placeholder="QR코드에 담을 텍스트를 입력하세요" oninput="autoGenQr()"></textarea>
+      <span class="fl" data-i18n="fl_text">텍스트</span>
+      <textarea class="fm" id="qr-text" rows="3" data-i18n-placeholder="ph_text" placeholder="QR코드에 담을 텍스트를 입력하세요" oninput="autoGenQr()"></textarea>
     </div>
     <!-- WiFi -->
     <div class="qr-input-group" id="qi-wifi">
       <div class="g2" style="margin-bottom:10px">
-        <div><span class="fl">네트워크 이름 (SSID)</span>
+        <div><span class="fl" data-i18n="fl_ssid">네트워크 이름 (SSID)</span>
           <input class="fi" id="qr-ssid" placeholder="MyWiFi" oninput="autoGenQr()"></div>
-        <div><span class="fl">비밀번호</span>
-          <input class="fi" id="qr-wifipw" type="password" placeholder="password" oninput="autoGenQr()"></div>
+        <div><span class="fl" data-i18n="fl_password">비밀번호</span>
+          <input class="fi" id="qr-wifipw" type="password" data-i18n-placeholder="fl_password" placeholder="password" oninput="autoGenQr()"></div>
       </div>
-      <span class="fl">보안 방식</span>
+      <span class="fl" data-i18n="fl_security">보안 방식</span>
       <select class="fs" id="qr-wsec" onchange="autoGenQr()">
         <option value="WPA">WPA/WPA2</option>
         <option value="WEP">WEP</option>
-        <option value="nopass">없음</option>
+        <option value="nopass" data-i18n="opt_nopass">없음</option>
       </select>
     </div>
     <!-- 명함 -->
     <div class="qr-input-group" id="qi-vcard">
       <div class="g2" style="margin-bottom:10px">
-        <div><span class="fl">이름</span><input class="fi" id="vc-name" placeholder="홍길동" oninput="autoGenQr()"></div>
-        <div><span class="fl">회사</span><input class="fi" id="vc-org" placeholder="회사명" oninput="autoGenQr()"></div>
-        <div><span class="fl">직함</span><input class="fi" id="vc-title" placeholder="직책" oninput="autoGenQr()"></div>
-        <div><span class="fl">전화</span><input class="fi" id="vc-tel" placeholder="+82-10-1234-5678" oninput="autoGenQr()"></div>
-        <div><span class="fl">이메일</span><input class="fi" id="vc-email" placeholder="email@example.com" oninput="autoGenQr()"></div>
-        <div><span class="fl">웹사이트</span><input class="fi" id="vc-url" placeholder="https://" oninput="autoGenQr()"></div>
+        <div><span class="fl" data-i18n="fl_name">이름</span><input class="fi" id="vc-name" data-i18n-placeholder="ph_name" placeholder="홍길동" oninput="autoGenQr()"></div>
+        <div><span class="fl" data-i18n="fl_company">회사</span><input class="fi" id="vc-org" data-i18n-placeholder="ph_company" placeholder="회사명" oninput="autoGenQr()"></div>
+        <div><span class="fl" data-i18n="fl_jobtitle">직함</span><input class="fi" id="vc-title" data-i18n-placeholder="ph_jobtitle" placeholder="직책" oninput="autoGenQr()"></div>
+        <div><span class="fl" data-i18n="fl_phone">전화</span><input class="fi" id="vc-tel" placeholder="+82-10-1234-5678" oninput="autoGenQr()"></div>
+        <div><span class="fl" data-i18n="fl_email">이메일</span><input class="fi" id="vc-email" placeholder="email@example.com" oninput="autoGenQr()"></div>
+        <div><span class="fl" data-i18n="fl_website">웹사이트</span><input class="fi" id="vc-url" placeholder="https://" oninput="autoGenQr()"></div>
       </div>
     </div>
     <!-- 이메일 -->
     <div class="qr-input-group" id="qi-email">
       <div class="g2" style="margin-bottom:10px">
-        <div><span class="fl">받는 사람</span><input class="fi" id="qr-eto" placeholder="to@email.com" oninput="autoGenQr()"></div>
-        <div><span class="fl">제목</span><input class="fi" id="qr-esub" placeholder="제목" oninput="autoGenQr()"></div>
+        <div><span class="fl" data-i18n="fl_to">받는 사람</span><input class="fi" id="qr-eto" placeholder="to@email.com" oninput="autoGenQr()"></div>
+        <div><span class="fl" data-i18n="fl_subject">제목</span><input class="fi" id="qr-esub" data-i18n-placeholder="fl_subject" placeholder="제목" oninput="autoGenQr()"></div>
       </div>
-      <span class="fl">본문</span>
-      <textarea class="fm" id="qr-ebody" rows="2" placeholder="이메일 본문" oninput="autoGenQr()"></textarea>
+      <span class="fl" data-i18n="fl_body">본문</span>
+      <textarea class="fm" id="qr-ebody" rows="2" data-i18n-placeholder="ph_ebody" placeholder="이메일 본문" oninput="autoGenQr()"></textarea>
     </div>
     <!-- 전화 -->
     <div class="qr-input-group" id="qi-tel">
-      <span class="fl">전화번호</span>
+      <span class="fl" data-i18n="fl_telnum">전화번호</span>
       <input class="fi" id="qr-tel" type="tel" placeholder="+82-10-1234-5678" oninput="autoGenQr()">
     </div>
   </div>
@@ -296,14 +318,14 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     <div class="card-title" data-i18n="ct_design">디자인 설정</div>
     <div class="g2">
       <div>
-        <span class="fl">크기 (px)</span>
+        <span class="fl" data-i18n="fl_size">크기 (px)</span>
         <div class="qr-size-row">
           <input type="range" id="qr-size" min="100" max="600" value="300" oninput="$('qr-sz-v').textContent=this.value;autoGenQr()">
           <span class="sr-val" id="qr-sz-v">300</span>
         </div>
       </div>
       <div>
-        <span class="fl">여백</span>
+        <span class="fl" data-i18n="fl_margin">여백</span>
         <div class="qr-size-row">
           <input type="range" id="qr-margin" min="0" max="10" value="2" oninput="$('qr-mg-v').textContent=this.value;autoGenQr()">
           <span class="sr-val" id="qr-mg-v">2</span>
@@ -313,29 +335,29 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     <div class="qr-color-row">
       <div class="color-pick-wrap">
         <input type="color" id="qr-fg" value="#000000" oninput="autoGenQr()">
-        <label>전경색</label>
+        <label data-i18n="fl_fg">전경색</label>
       </div>
       <div class="color-pick-wrap">
         <input type="color" id="qr-bg" value="#ffffff" oninput="autoGenQr()">
-        <label>배경색</label>
+        <label data-i18n="fl_bg">배경색</label>
       </div>
       <div style="flex:1">
-        <span class="fl">오류 수정 레벨</span>
+        <span class="fl" data-i18n="fl_ec">오류 수정 레벨</span>
         <select class="fs" id="qr-ec" onchange="autoGenQr()">
-          <option value="L">L — 낮음 (7%)</option>
-          <option value="M" selected>M — 보통 (15%)</option>
-          <option value="Q">Q — 높음 (25%)</option>
-          <option value="H">H — 최고 (30%)</option>
+          <option value="L" data-i18n="ec_l">L — 낮음 (7%)</option>
+          <option value="M" selected data-i18n="ec_m">M — 보통 (15%)</option>
+          <option value="Q" data-i18n="ec_q">Q — 높음 (25%)</option>
+          <option value="H" data-i18n="ec_h">H — 최고 (30%)</option>
         </select>
       </div>
     </div>
     <!-- 로고 업로드 -->
     <div style="margin-top:12px">
-      <span class="fl">로고 삽입 (선택)</span>
+      <span class="fl" data-i18n="fl_logo">로고 삽입 (선택)</span>
       <div style="display:flex;gap:8px;align-items:center">
         <input type="file" id="qr-logo-fi" accept="image/*" style="display:none" onchange="loadLogo(this)">
-        <button class="btn outline sm" onclick="$('qr-logo-fi').click()">📁 로고 파일 선택</button>
-        <span id="qr-logo-name" style="font-size:12px;color:var(--tx3)">선택 안 함</span>
+        <button class="btn outline sm" onclick="$('qr-logo-fi').click()" data-i18n="btn_logo_choose">📁 로고 파일 선택</button>
+        <span id="qr-logo-name" style="font-size:12px;color:var(--tx3)" data-i18n="logo_none">선택 안 함</span>
         <button class="btn outline sm" onclick="clearLogo()" id="qr-logo-clear" style="display:none">✕</button>
       </div>
     </div>
@@ -345,16 +367,16 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
   <div class="card">
     <div class="card-title" data-i18n="ct_preview">미리보기</div>
     <div id="qr-preview">
-      <div id="qr-placeholder">QR코드가 여기에 표시돼요</div>
+      <div id="qr-placeholder" data-i18n="qr_placeholder_text">QR코드가 여기에 표시돼요</div>
       <canvas id="qr-canvas"></canvas>
     </div>
     <div class="qr-dl-row">
-      <button class="btn full go" onclick="genQr()">⚡ 생성하기</button>
+      <button class="btn full go" onclick="genQr()" data-i18n="btn_generate">⚡ 생성하기</button>
     </div>
     <div class="qr-dl-row">
-      <button class="btn outline sm" onclick="dlQr('png')">⬇ PNG 다운로드</button>
-      <button class="btn outline sm" onclick="dlQr('svg')">⬇ SVG 다운로드</button>
-      <button class="copy-btn" onclick="copyQrDataUrl()">📋 이미지 복사</button>
+      <button class="btn outline sm" onclick="dlQr('png')" data-i18n="btn_dl_png">⬇ PNG 다운로드</button>
+      <button class="btn outline sm" onclick="dlQr('svg')" data-i18n="btn_dl_svg">⬇ SVG 다운로드</button>
+      <button class="copy-btn" onclick="copyQrDataUrl()" data-i18n="btn_copy_img">📋 이미지 복사</button>
     </div>
   </div>
 </div>
@@ -373,30 +395,43 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 <div id="toast"></div>
 
 <script>
+function normalizeLang(raw){
+  if(!raw) return '';
+  if(I18N[raw]) return raw;
+  if(/^zh/i.test(raw)) return /tw|hk|mo/i.test(raw) ? 'zh_TW' : 'zh_CN';
+  const two = raw.slice(0,2).toLowerCase();
+  const longMap = { de:'de_DE', fr:'fr_FR', nl:'nl_NL', sv:'sv_SE', da:'da_DK', nb:'nn_NO', nn:'nn_NO', no:'nn_NO' };
+  return longMap[two] || two;
+}
+function tr(tmpl, vars){
+  if(!tmpl) return '';
+  let out = tmpl;
+  if(vars) Object.keys(vars).forEach(k=>{ out = out.split('{'+k+'}').join(vars[k]); });
+  return out;
+}
 const I18N = {
-  ko:{ page_title:'pomiai QR 코드 생성기', sec_title:'QR 코드 생성기',
-    sec_sub:'URL · 텍스트 · WiFi · 명함 · 이메일 · 전화번호 — 로고 삽입, 색상 커스터마이징, PNG/SVG 다운로드',
-    ct_type:'콘텐츠 타입', ct_design:'디자인 설정', ct_preview:'미리보기',
-    qt_url:'🔗 URL', qt_text:'📝 텍스트', qt_wifi:'📶 WiFi', qt_vcard:'👤 명함', qt_email:'✉️ 이메일', qt_tel:'📞 전화',
-    footer_by:'Product by' },
-  en:{ page_title:'pomiai QR Code Generator', sec_title:'QR Code Generator',
-    sec_sub:'URL · Text · WiFi · vCard · Email · Phone — logo insert, color customization, PNG/SVG download',
-    ct_type:'Content Type', ct_design:'Design Settings', ct_preview:'Preview',
-    qt_url:'🔗 URL', qt_text:'📝 Text', qt_wifi:'📶 WiFi', qt_vcard:'👤 vCard', qt_email:'✉️ Email', qt_tel:'📞 Phone',
-    footer_by:'Product by' },
-  ja:{ page_title:'pomiai QRコード生成', sec_title:'QRコード生成',
-    sec_sub:'URL・テキスト・WiFi・名刺・メール・電話番号 — ロゴ挿入、色カスタマイズ、PNG/SVGダウンロード',
-    ct_type:'コンテンツタイプ', ct_design:'デザイン設定', ct_preview:'プレビュー',
-    qt_url:'🔗 URL', qt_text:'📝 テキスト', qt_wifi:'📶 WiFi', qt_vcard:'👤 名刺', qt_email:'✉️ メール', qt_tel:'📞 電話',
-    footer_by:'Product by' }
+  ko: {"page_title": "pomiai QR 코드 생성기", "sec_title": "QR 코드 생성기", "sec_sub": "URL · 텍스트 · WiFi · 명함 · 이메일 · 전화번호 — 로고 삽입, 색상 커스터마이징, PNG/SVG 다운로드", "ct_type": "콘텐츠 타입", "ct_design": "디자인 설정", "ct_preview": "미리보기", "qt_url": "🔗 URL", "qt_text": "📝 텍스트", "qt_wifi": "📶 WiFi", "qt_vcard": "👤 명함", "qt_email": "✉️ 이메일", "qt_tel": "📞 전화", "footer_by": "Product by", "fl_text": "텍스트", "fl_ssid": "네트워크 이름 (SSID)", "fl_password": "비밀번호", "fl_security": "보안 방식", "opt_nopass": "없음", "fl_name": "이름", "fl_company": "회사", "fl_jobtitle": "직함", "fl_phone": "전화", "fl_email": "이메일", "fl_website": "웹사이트", "fl_to": "받는 사람", "fl_subject": "제목", "fl_body": "본문", "fl_telnum": "전화번호", "fl_size": "크기 (px)", "fl_margin": "여백", "fl_fg": "전경색", "fl_bg": "배경색", "fl_ec": "오류 수정 레벨", "ec_l": "L — 낮음 (7%)", "ec_m": "M — 보통 (15%)", "ec_q": "Q — 높음 (25%)", "ec_h": "H — 최고 (30%)", "fl_logo": "로고 삽입 (선택)", "btn_logo_choose": "📁 로고 파일 선택", "logo_none": "선택 안 함", "btn_generate": "⚡ 생성하기", "btn_dl_png": "⬇ PNG 다운로드", "btn_dl_svg": "⬇ SVG 다운로드", "btn_copy_img": "📋 이미지 복사", "qr_placeholder_text": "QR코드가 여기에 표시돼요", "toast_copied": "✅ 복사됨", "toast_qr_error": "❌ QR 생성 오류: {msg}", "toast_need_internet": "⚠️ 인터넷 연결이 필요해요 (QR 라이브러리 로딩)", "canvas_fallback_text": "QR 생성에 인터넷이 필요해요", "toast_dl_complete": "✅ 다운로드 완료", "toast_need_generate_first": "⚠️ QR코드를 먼저 생성하세요", "toast_img_copied": "✅ 이미지 복사됨", "toast_dataurl_copied": "✅ DataURL 복사됨", "ph_name": "홍길동", "ph_company": "회사명", "ph_jobtitle": "직책", "ph_text": "QR코드에 담을 텍스트를 입력하세요", "ph_ebody": "이메일 본문"},
+  en: {"page_title": "pomiai QR Code Generator", "sec_title": "QR Code Generator", "sec_sub": "URL · Text · WiFi · vCard · Email · Phone — logo insert, color customization, PNG/SVG download", "ct_type": "Content Type", "ct_design": "Design Settings", "ct_preview": "Preview", "qt_url": "🔗 URL", "qt_text": "📝 Text", "qt_wifi": "📶 WiFi", "qt_vcard": "👤 vCard", "qt_email": "✉️ Email", "qt_tel": "📞 Phone", "footer_by": "Product by", "fl_text": "Text", "fl_ssid": "Network Name (SSID)", "fl_password": "Password", "fl_security": "Security Type", "opt_nopass": "None", "fl_name": "Name", "fl_company": "Company", "fl_jobtitle": "Job Title", "fl_phone": "Phone", "fl_email": "Email", "fl_website": "Website", "fl_to": "To", "fl_subject": "Subject", "fl_body": "Message", "fl_telnum": "Phone Number", "fl_size": "Size (px)", "fl_margin": "Margin", "fl_fg": "Foreground Color", "fl_bg": "Background Color", "fl_ec": "Error Correction Level", "ec_l": "L — Low (7%)", "ec_m": "M — Medium (15%)", "ec_q": "Q — High (25%)", "ec_h": "H — Highest (30%)", "fl_logo": "Insert Logo (optional)", "btn_logo_choose": "📁 Choose Logo File", "logo_none": "None selected", "btn_generate": "⚡ Generate", "btn_dl_png": "⬇ Download PNG", "btn_dl_svg": "⬇ Download SVG", "btn_copy_img": "📋 Copy Image", "qr_placeholder_text": "Your QR code will appear here", "toast_copied": "✅ Copied", "toast_qr_error": "❌ QR generation error: {msg}", "toast_need_internet": "⚠️ Internet connection needed (loading QR library)", "canvas_fallback_text": "Internet needed to generate QR", "toast_dl_complete": "✅ Download complete", "toast_need_generate_first": "⚠️ Please generate a QR code first", "toast_img_copied": "✅ Image copied", "toast_dataurl_copied": "✅ Data URL copied", "ph_name": "John Smith", "ph_company": "Company name", "ph_jobtitle": "Job title", "ph_text": "Enter the text to encode in the QR code", "ph_ebody": "Email body"},
+  ja: {"page_title": "pomiai QRコード生成", "sec_title": "QRコード生成", "sec_sub": "URL・テキスト・WiFi・名刺・メール・電話番号 — ロゴ挿入、色カスタマイズ、PNG/SVGダウンロード", "ct_type": "コンテンツタイプ", "ct_design": "デザイン設定", "ct_preview": "プレビュー", "qt_url": "🔗 URL", "qt_text": "📝 テキスト", "qt_wifi": "📶 WiFi", "qt_vcard": "👤 名刺", "qt_email": "✉️ メール", "qt_tel": "📞 電話", "footer_by": "Product by", "fl_text": "テキスト", "fl_ssid": "ネットワーク名（SSID）", "fl_password": "パスワード", "fl_security": "セキュリティ方式", "opt_nopass": "なし", "fl_name": "氏名", "fl_company": "会社", "fl_jobtitle": "役職", "fl_phone": "電話", "fl_email": "メール", "fl_website": "ウェブサイト", "fl_to": "宛先", "fl_subject": "件名", "fl_body": "本文", "fl_telnum": "電話番号", "fl_size": "サイズ（px）", "fl_margin": "余白", "fl_fg": "前景色", "fl_bg": "背景色", "fl_ec": "エラー訂正レベル", "ec_l": "L — 低（7%）", "ec_m": "M — 中（15%）", "ec_q": "Q — 高（25%）", "ec_h": "H — 最高（30%）", "fl_logo": "ロゴ挿入（任意）", "btn_logo_choose": "📁 ロゴファイルを選択", "logo_none": "未選択", "btn_generate": "⚡ 生成", "btn_dl_png": "⬇ PNGダウンロード", "btn_dl_svg": "⬇ SVGダウンロード", "btn_copy_img": "📋 画像をコピー", "qr_placeholder_text": "QRコードがここに表示されます", "toast_copied": "✅ コピーしました", "toast_qr_error": "❌ QR生成エラー: {msg}", "toast_need_internet": "⚠️ インターネット接続が必要です（QRライブラリ読み込み中）", "canvas_fallback_text": "QR生成にはインターネットが必要です", "toast_dl_complete": "✅ ダウンロード完了", "toast_need_generate_first": "⚠️ まずQRコードを生成してください", "toast_img_copied": "✅ 画像をコピーしました", "toast_dataurl_copied": "✅ データURLをコピーしました", "ph_name": "山田太郎", "ph_company": "会社名", "ph_jobtitle": "役職名", "ph_text": "QRコードに含めるテキストを入力してください", "ph_ebody": "メール本文"},
+  zh_CN: {"page_title": "pomiai 二维码生成器", "sec_title": "二维码生成器", "sec_sub": "URL・文本・WiFi・名片・邮箱・电话号码 — 插入Logo、自定义颜色、PNG/SVG下载", "ct_type": "内容类型", "ct_design": "设计设置", "ct_preview": "预览", "qt_url": "🔗 URL", "qt_text": "📝 文本", "qt_wifi": "📶 WiFi", "qt_vcard": "👤 名片", "qt_email": "✉️ 邮箱", "qt_tel": "📞 电话", "footer_by": "Product by", "fl_text": "文本", "fl_ssid": "网络名称（SSID）", "fl_password": "密码", "fl_security": "安全方式", "opt_nopass": "无", "fl_name": "姓名", "fl_company": "公司", "fl_jobtitle": "职位", "fl_phone": "电话", "fl_email": "邮箱", "fl_website": "网站", "fl_to": "收件人", "fl_subject": "主题", "fl_body": "正文", "fl_telnum": "电话号码", "fl_size": "尺寸（px）", "fl_margin": "边距", "fl_fg": "前景色", "fl_bg": "背景色", "fl_ec": "容错等级", "ec_l": "L — 低（7%）", "ec_m": "M — 中（15%）", "ec_q": "Q — 高（25%）", "ec_h": "H — 最高（30%）", "fl_logo": "插入Logo（可选）", "btn_logo_choose": "📁 选择Logo文件", "logo_none": "未选择", "btn_generate": "⚡ 生成", "btn_dl_png": "⬇ 下载PNG", "btn_dl_svg": "⬇ 下载SVG", "btn_copy_img": "📋 复制图片", "qr_placeholder_text": "二维码将显示在这里", "toast_copied": "✅ 已复制", "toast_qr_error": "❌ 二维码生成错误：{msg}", "toast_need_internet": "⚠️ 需要网络连接（正在加载二维码库）", "canvas_fallback_text": "生成二维码需要网络", "toast_dl_complete": "✅ 下载完成", "toast_need_generate_first": "⚠️ 请先生成二维码", "toast_img_copied": "✅ 图片已复制", "toast_dataurl_copied": "✅ DataURL已复制", "ph_name": "王小明", "ph_company": "公司名称", "ph_jobtitle": "职位名称", "ph_text": "请输入要生成二维码的文本", "ph_ebody": "邮件正文"},
+  zh_TW: {"page_title": "pomiai 二維碼產生器", "sec_title": "二維碼產生器", "sec_sub": "URL・文字・WiFi・名片・電子郵件・電話號碼 — 插入Logo、自訂顏色、PNG/SVG下載", "ct_type": "內容類型", "ct_design": "設計設定", "ct_preview": "預覽", "qt_url": "🔗 URL", "qt_text": "📝 文字", "qt_wifi": "📶 WiFi", "qt_vcard": "👤 名片", "qt_email": "✉️ 電子郵件", "qt_tel": "📞 電話", "footer_by": "Product by", "fl_text": "文字", "fl_ssid": "網路名稱（SSID）", "fl_password": "密碼", "fl_security": "安全方式", "opt_nopass": "無", "fl_name": "姓名", "fl_company": "公司", "fl_jobtitle": "職稱", "fl_phone": "電話", "fl_email": "電子郵件", "fl_website": "網站", "fl_to": "收件人", "fl_subject": "主旨", "fl_body": "內文", "fl_telnum": "電話號碼", "fl_size": "尺寸（px）", "fl_margin": "邊距", "fl_fg": "前景色", "fl_bg": "背景色", "fl_ec": "容錯等級", "ec_l": "L — 低（7%）", "ec_m": "M — 中（15%）", "ec_q": "Q — 高（25%）", "ec_h": "H — 最高（30%）", "fl_logo": "插入Logo（選填）", "btn_logo_choose": "📁 選擇Logo檔案", "logo_none": "未選擇", "btn_generate": "⚡ 產生", "btn_dl_png": "⬇ 下載PNG", "btn_dl_svg": "⬇ 下載SVG", "btn_copy_img": "📋 複製圖片", "qr_placeholder_text": "二維碼將顯示在這裡", "toast_copied": "✅ 已複製", "toast_qr_error": "❌ 二維碼產生錯誤：{msg}", "toast_need_internet": "⚠️ 需要網路連線（正在載入二維碼庫）", "canvas_fallback_text": "產生二維碼需要網路", "toast_dl_complete": "✅ 下載完成", "toast_need_generate_first": "⚠️ 請先產生二維碼", "toast_img_copied": "✅ 圖片已複製", "toast_dataurl_copied": "✅ DataURL已複製", "ph_name": "王小明", "ph_company": "公司名稱", "ph_jobtitle": "職稱", "ph_text": "請輸入要產生二維碼的文字", "ph_ebody": "郵件內文"},
+  de_DE: {"page_title": "pomiai QR-Code-Generator", "sec_title": "QR-Code-Generator", "sec_sub": "URL · Text · WLAN · Visitenkarte · E-Mail · Telefon — Logo einfügen, Farbanpassung, PNG/SVG-Download", "ct_type": "Inhaltstyp", "ct_design": "Design-Einstellungen", "ct_preview": "Vorschau", "qt_url": "🔗 URL", "qt_text": "📝 Text", "qt_wifi": "📶 WLAN", "qt_vcard": "👤 Visitenkarte", "qt_email": "✉️ E-Mail", "qt_tel": "📞 Telefon", "footer_by": "Product by", "fl_text": "Text", "fl_ssid": "Netzwerkname (SSID)", "fl_password": "Passwort", "fl_security": "Sicherheitstyp", "opt_nopass": "Keine", "fl_name": "Name", "fl_company": "Firma", "fl_jobtitle": "Position", "fl_phone": "Telefon", "fl_email": "E-Mail", "fl_website": "Website", "fl_to": "An", "fl_subject": "Betreff", "fl_body": "Nachricht", "fl_telnum": "Telefonnummer", "fl_size": "Größe (px)", "fl_margin": "Rand", "fl_fg": "Vordergrundfarbe", "fl_bg": "Hintergrundfarbe", "fl_ec": "Fehlerkorrekturstufe", "ec_l": "L — Niedrig (7 %)", "ec_m": "M — Mittel (15 %)", "ec_q": "Q — Hoch (25 %)", "ec_h": "H — Höchste (30 %)", "fl_logo": "Logo einfügen (optional)", "btn_logo_choose": "📁 Logodatei wählen", "logo_none": "Keine ausgewählt", "btn_generate": "⚡ Generieren", "btn_dl_png": "⬇ PNG herunterladen", "btn_dl_svg": "⬇ SVG herunterladen", "btn_copy_img": "📋 Bild kopieren", "qr_placeholder_text": "Ihr QR-Code wird hier angezeigt", "toast_copied": "✅ Kopiert", "toast_qr_error": "❌ QR-Generierungsfehler: {msg}", "toast_need_internet": "⚠️ Internetverbindung erforderlich (QR-Bibliothek wird geladen)", "canvas_fallback_text": "Für die QR-Erstellung ist Internet erforderlich", "toast_dl_complete": "✅ Download abgeschlossen", "toast_need_generate_first": "⚠️ Bitte zuerst einen QR-Code erstellen", "toast_img_copied": "✅ Bild kopiert", "toast_dataurl_copied": "✅ Data-URL kopiert", "ph_name": "Max Mustermann", "ph_company": "Firmenname", "ph_jobtitle": "Berufsbezeichnung", "ph_text": "Geben Sie den Text für den QR-Code ein", "ph_ebody": "E-Mail-Text"},
+  fr_FR: {"page_title": "pomiai Générateur de QR Code", "sec_title": "Générateur de QR Code", "sec_sub": "URL · Texte · WiFi · Carte de visite · E-mail · Téléphone — insertion de logo, personnalisation des couleurs, téléchargement PNG/SVG", "ct_type": "Type de contenu", "ct_design": "Paramètres de design", "ct_preview": "Aperçu", "qt_url": "🔗 URL", "qt_text": "📝 Texte", "qt_wifi": "📶 WiFi", "qt_vcard": "👤 Carte de visite", "qt_email": "✉️ E-mail", "qt_tel": "📞 Téléphone", "footer_by": "Product by", "fl_text": "Texte", "fl_ssid": "Nom du réseau (SSID)", "fl_password": "Mot de passe", "fl_security": "Type de sécurité", "opt_nopass": "Aucun", "fl_name": "Nom", "fl_company": "Entreprise", "fl_jobtitle": "Poste", "fl_phone": "Téléphone", "fl_email": "E-mail", "fl_website": "Site web", "fl_to": "Destinataire", "fl_subject": "Objet", "fl_body": "Message", "fl_telnum": "Numéro de téléphone", "fl_size": "Taille (px)", "fl_margin": "Marge", "fl_fg": "Couleur de premier plan", "fl_bg": "Couleur de fond", "fl_ec": "Niveau de correction d’erreur", "ec_l": "L — Faible (7 %)", "ec_m": "M — Moyen (15 %)", "ec_q": "Q — Élevé (25 %)", "ec_h": "H — Maximal (30 %)", "fl_logo": "Insérer un logo (facultatif)", "btn_logo_choose": "📁 Choisir un fichier logo", "logo_none": "Aucun sélectionné", "btn_generate": "⚡ Générer", "btn_dl_png": "⬇ Télécharger le PNG", "btn_dl_svg": "⬇ Télécharger le SVG", "btn_copy_img": "📋 Copier l’image", "qr_placeholder_text": "Votre code QR apparaîtra ici", "toast_copied": "✅ Copié", "toast_qr_error": "❌ Erreur de génération du QR : {msg}", "toast_need_internet": "⚠️ Connexion Internet requise (chargement de la bibliothèque QR)", "canvas_fallback_text": "Internet requis pour générer le QR", "toast_dl_complete": "✅ Téléchargement terminé", "toast_need_generate_first": "⚠️ Veuillez d’abord générer un QR code", "toast_img_copied": "✅ Image copiée", "toast_dataurl_copied": "✅ URL de données copiée", "ph_name": "Jean Dupont", "ph_company": "Nom de l'entreprise", "ph_jobtitle": "Intitulé du poste", "ph_text": "Saisissez le texte à encoder dans le QR code", "ph_ebody": "Corps du message"},
+  nl_NL: {"page_title": "pomiai QR-code generator", "sec_title": "QR-code generator", "sec_sub": "URL · Tekst · WiFi · Visitekaartje · E-mail · Telefoon — logo invoegen, kleuren aanpassen, PNG/SVG-download", "ct_type": "Inhoudstype", "ct_design": "Ontwerpinstellingen", "ct_preview": "Voorbeeld", "qt_url": "🔗 URL", "qt_text": "📝 Tekst", "qt_wifi": "📶 WiFi", "qt_vcard": "👤 Visitekaartje", "qt_email": "✉️ E-mail", "qt_tel": "📞 Telefoon", "footer_by": "Product by", "fl_text": "Tekst", "fl_ssid": "Netwerknaam (SSID)", "fl_password": "Wachtwoord", "fl_security": "Beveiligingstype", "opt_nopass": "Geen", "fl_name": "Naam", "fl_company": "Bedrijf", "fl_jobtitle": "Functie", "fl_phone": "Telefoon", "fl_email": "E-mail", "fl_website": "Website", "fl_to": "Aan", "fl_subject": "Onderwerp", "fl_body": "Bericht", "fl_telnum": "Telefoonnummer", "fl_size": "Grootte (px)", "fl_margin": "Marge", "fl_fg": "Voorgrondkleur", "fl_bg": "Achtergrondkleur", "fl_ec": "Foutcorrectieniveau", "ec_l": "L — Laag (7%)", "ec_m": "M — Gemiddeld (15%)", "ec_q": "Q — Hoog (25%)", "ec_h": "H — Hoogst (30%)", "fl_logo": "Logo invoegen (optioneel)", "btn_logo_choose": "📁 Logobestand kiezen", "logo_none": "Geen geselecteerd", "btn_generate": "⚡ Genereren", "btn_dl_png": "⬇ PNG downloaden", "btn_dl_svg": "⬇ SVG downloaden", "btn_copy_img": "📋 Afbeelding kopiëren", "qr_placeholder_text": "Uw QR-code verschijnt hier", "toast_copied": "✅ Gekopieerd", "toast_qr_error": "❌ QR-genereerfout: {msg}", "toast_need_internet": "⚠️ Internetverbinding vereist (QR-bibliotheek wordt geladen)", "canvas_fallback_text": "Internet nodig om QR te genereren", "toast_dl_complete": "✅ Download voltooid", "toast_need_generate_first": "⚠️ Genereer eerst een QR-code", "toast_img_copied": "✅ Afbeelding gekopieerd", "toast_dataurl_copied": "✅ Data-URL gekopieerd", "ph_name": "Jan Jansen", "ph_company": "Bedrijfsnaam", "ph_jobtitle": "Functietitel", "ph_text": "Voer de tekst in voor de QR-code", "ph_ebody": "E-mailtekst"},
+  sv_SE: {"page_title": "pomiai QR-kodgenerator", "sec_title": "QR-kodgenerator", "sec_sub": "URL · Text · WiFi · Visitkort · E-post · Telefon — infoga logotyp, färganpassning, PNG/SVG-nedladdning", "ct_type": "Innehållstyp", "ct_design": "Designinställningar", "ct_preview": "Förhandsgranskning", "qt_url": "🔗 URL", "qt_text": "📝 Text", "qt_wifi": "📶 WiFi", "qt_vcard": "👤 Visitkort", "qt_email": "✉️ E-post", "qt_tel": "📞 Telefon", "footer_by": "Product by", "fl_text": "Text", "fl_ssid": "Nätverksnamn (SSID)", "fl_password": "Lösenord", "fl_security": "Säkerhetstyp", "opt_nopass": "Ingen", "fl_name": "Namn", "fl_company": "Företag", "fl_jobtitle": "Titel", "fl_phone": "Telefon", "fl_email": "E-post", "fl_website": "Webbplats", "fl_to": "Till", "fl_subject": "Ämne", "fl_body": "Meddelande", "fl_telnum": "Telefonnummer", "fl_size": "Storlek (px)", "fl_margin": "Marginal", "fl_fg": "Förgrundsfärg", "fl_bg": "Bakgrundsfärg", "fl_ec": "Felkorrigeringsnivå", "ec_l": "L — Låg (7 %)", "ec_m": "M — Medel (15 %)", "ec_q": "Q — Hög (25 %)", "ec_h": "H — Högst (30 %)", "fl_logo": "Infoga logotyp (valfritt)", "btn_logo_choose": "📁 Välj logotypfil", "logo_none": "Ingen vald", "btn_generate": "⚡ Generera", "btn_dl_png": "⬇ Ladda ner PNG", "btn_dl_svg": "⬇ Ladda ner SVG", "btn_copy_img": "📋 Kopiera bild", "qr_placeholder_text": "Din QR-kod visas här", "toast_copied": "✅ Kopierat", "toast_qr_error": "❌ QR-genereringsfel: {msg}", "toast_need_internet": "⚠️ Internetanslutning krävs (laddar QR-bibliotek)", "canvas_fallback_text": "Internet krävs för att generera QR", "toast_dl_complete": "✅ Nedladdning klar", "toast_need_generate_first": "⚠️ Generera en QR-kod först", "toast_img_copied": "✅ Bild kopierad", "toast_dataurl_copied": "✅ Data-URL kopierad", "ph_name": "Anna Andersson", "ph_company": "Företagsnamn", "ph_jobtitle": "Jobbtitel", "ph_text": "Ange texten som ska kodas i QR-koden", "ph_ebody": "E-postmeddelande"},
+  nn_NO: {"page_title": "pomiai QR-kodegenerator", "sec_title": "QR-kodegenerator", "sec_sub": "URL · Tekst · WiFi · Visittkort · E-post · Telefon — sett inn logo, fargetilpasning, PNG/SVG-nedlasting", "ct_type": "Innholdstype", "ct_design": "Designinnstillinger", "ct_preview": "Forhåndsvisning", "qt_url": "🔗 URL", "qt_text": "📝 Tekst", "qt_wifi": "📶 WiFi", "qt_vcard": "👤 Visittkort", "qt_email": "✉️ E-post", "qt_tel": "📞 Telefon", "footer_by": "Product by", "fl_text": "Tekst", "fl_ssid": "Nettverksnavn (SSID)", "fl_password": "Passord", "fl_security": "Sikkerhetstype", "opt_nopass": "Ingen", "fl_name": "Navn", "fl_company": "Firma", "fl_jobtitle": "Stilling", "fl_phone": "Telefon", "fl_email": "E-post", "fl_website": "Nettside", "fl_to": "Til", "fl_subject": "Emne", "fl_body": "Melding", "fl_telnum": "Telefonnummer", "fl_size": "Størrelse (px)", "fl_margin": "Margin", "fl_fg": "Forgrunnsfarge", "fl_bg": "Bakgrunnsfarge", "fl_ec": "Feilrettingsnivå", "ec_l": "L — Lav (7 %)", "ec_m": "M — Middels (15 %)", "ec_q": "Q — Høy (25 %)", "ec_h": "H — Høyest (30 %)", "fl_logo": "Sett inn logo (valgfritt)", "btn_logo_choose": "📁 Velg logofil", "logo_none": "Ingen valgt", "btn_generate": "⚡ Generer", "btn_dl_png": "⬇ Last ned PNG", "btn_dl_svg": "⬇ Last ned SVG", "btn_copy_img": "📋 Kopier bilde", "qr_placeholder_text": "QR-koden din vises her", "toast_copied": "✅ Kopiert", "toast_qr_error": "❌ Feil ved QR-generering: {msg}", "toast_need_internet": "⚠️ Internettforbindelse kreves (laster QR-bibliotek)", "canvas_fallback_text": "Internett kreves for å generere QR", "toast_dl_complete": "✅ Nedlasting fullført", "toast_need_generate_first": "⚠️ Generer en QR-kode først", "toast_img_copied": "✅ Bilde kopiert", "toast_dataurl_copied": "✅ Data-URL kopiert", "ph_name": "Ola Nordmann", "ph_company": "Firmanavn", "ph_jobtitle": "Stillingstittel", "ph_text": "Skriv inn teksten som skal kodes i QR-koden", "ph_ebody": "E-postmelding"},
+  da_DK: {"page_title": "pomiai QR-kodegenerator", "sec_title": "QR-kodegenerator", "sec_sub": "URL · Tekst · WiFi · Visitkort · E-mail · Telefon — indsæt logo, farvetilpasning, PNG/SVG-download", "ct_type": "Indholdstype", "ct_design": "Designindstillinger", "ct_preview": "Forhåndsvisning", "qt_url": "🔗 URL", "qt_text": "📝 Tekst", "qt_wifi": "📶 WiFi", "qt_vcard": "👤 Visitkort", "qt_email": "✉️ E-mail", "qt_tel": "📞 Telefon", "footer_by": "Product by", "fl_text": "Tekst", "fl_ssid": "Netværksnavn (SSID)", "fl_password": "Adgangskode", "fl_security": "Sikkerhedstype", "opt_nopass": "Ingen", "fl_name": "Navn", "fl_company": "Firma", "fl_jobtitle": "Stilling", "fl_phone": "Telefon", "fl_email": "E-mail", "fl_website": "Websted", "fl_to": "Til", "fl_subject": "Emne", "fl_body": "Besked", "fl_telnum": "Telefonnummer", "fl_size": "Størrelse (px)", "fl_margin": "Margen", "fl_fg": "Forgrundsfarve", "fl_bg": "Baggrundsfarve", "fl_ec": "Fejlrettelsesniveau", "ec_l": "L — Lav (7 %)", "ec_m": "M — Middel (15 %)", "ec_q": "Q — Høj (25 %)", "ec_h": "H — Højest (30 %)", "fl_logo": "Indsæt logo (valgfrit)", "btn_logo_choose": "📁 Vælg logofil", "logo_none": "Ingen valgt", "btn_generate": "⚡ Generer", "btn_dl_png": "⬇ Download PNG", "btn_dl_svg": "⬇ Download SVG", "btn_copy_img": "📋 Kopiér billede", "qr_placeholder_text": "Din QR-kode vises her", "toast_copied": "✅ Kopieret", "toast_qr_error": "❌ QR-genereringsfejl: {msg}", "toast_need_internet": "⚠️ Internetforbindelse påkrævet (indlæser QR-bibliotek)", "canvas_fallback_text": "Internet kræves for at generere QR", "toast_dl_complete": "✅ Download fuldført", "toast_need_generate_first": "⚠️ Generer venligst en QR-kode først", "toast_img_copied": "✅ Billede kopieret", "toast_dataurl_copied": "✅ Data-URL kopieret", "ph_name": "Anders Andersen", "ph_company": "Firmanavn", "ph_jobtitle": "Jobtitel", "ph_text": "Indtast teksten, der skal kodes i QR-koden", "ph_ebody": "E-mailbesked"},
+  ar: {"page_title": "pomiai مولّد رمز QR", "sec_title": "مولّد رمز QR", "sec_sub": "رابط · نص · واي فاي · بطاقة تعريف · بريد إلكتروني · هاتف — إدراج شعار، تخصيص الألوان، تنزيل PNG/SVG", "ct_type": "نوع المحتوى", "ct_design": "إعدادات التصميم", "ct_preview": "معاينة", "qt_url": "🔗 رابط", "qt_text": "📝 نص", "qt_wifi": "📶 واي فاي", "qt_vcard": "👤 بطاقة تعريف", "qt_email": "✉️ بريد إلكتروني", "qt_tel": "📞 هاتف", "footer_by": "Product by", "fl_text": "نص", "fl_ssid": "اسم الشبكة (SSID)", "fl_password": "كلمة المرور", "fl_security": "نوع الأمان", "opt_nopass": "بدون", "fl_name": "الاسم", "fl_company": "الشركة", "fl_jobtitle": "المسمى الوظيفي", "fl_phone": "الهاتف", "fl_email": "البريد الإلكتروني", "fl_website": "الموقع الإلكتروني", "fl_to": "إلى", "fl_subject": "الموضوع", "fl_body": "الرسالة", "fl_telnum": "رقم الهاتف", "fl_size": "الحجم (بكسل)", "fl_margin": "الهامش", "fl_fg": "لون المقدمة", "fl_bg": "لون الخلفية", "fl_ec": "مستوى تصحيح الخطأ", "ec_l": "L — منخفض (7%)", "ec_m": "M — متوسط (15%)", "ec_q": "Q — عالٍ (25%)", "ec_h": "H — الأعلى (30%)", "fl_logo": "إدراج شعار (اختياري)", "btn_logo_choose": "📁 اختر ملف الشعار", "logo_none": "لم يتم التحديد", "btn_generate": "⚡ إنشاء", "btn_dl_png": "⬇ تنزيل PNG", "btn_dl_svg": "⬇ تنزيل SVG", "btn_copy_img": "📋 نسخ الصورة", "qr_placeholder_text": "سيظهر رمز QR هنا", "toast_copied": "✅ تم النسخ", "toast_qr_error": "❌ خطأ في إنشاء رمز QR: {msg}", "toast_need_internet": "⚠️ يلزم اتصال بالإنترنت (تحميل مكتبة QR)", "canvas_fallback_text": "يلزم الإنترنت لإنشاء رمز QR", "toast_dl_complete": "✅ اكتمل التنزيل", "toast_need_generate_first": "⚠️ يرجى إنشاء رمز QR أولاً", "toast_img_copied": "✅ تم نسخ الصورة", "toast_dataurl_copied": "✅ تم نسخ رابط البيانات", "ph_name": "محمد أحمد", "ph_company": "اسم الشركة", "ph_jobtitle": "المسمى الوظيفي", "ph_text": "أدخل النص المراد تضمينه في رمز QR", "ph_ebody": "نص البريد الإلكتروني"}
 };
 (function(){
   const params = new URLSearchParams(location.search);
-  const urlLang = params.get('lang');
-  const browserLang = (navigator.language || 'ko').slice(0, 2);
+  const urlLang = normalizeLang(params.get('lang'));
+  const browserLang = normalizeLang(navigator.language || 'ko');
   const LANG = (urlLang && I18N[urlLang]) ? urlLang : (I18N[browserLang] ? browserLang : 'ko');
   window._LANG = LANG; window._T = I18N[LANG];
-  document.getElementById('html-root').lang = LANG;
+  const root = document.getElementById('html-root');
+  root.lang = LANG;
+  root.setAttribute('dir', LANG==='ar' ? 'rtl' : 'ltr');
 })();
 function applyI18n(){
   const t = window._T;
@@ -404,19 +439,26 @@ function applyI18n(){
     const k = el.dataset.i18n;
     if(typeof t[k]==='string') el.textContent = t[k];
   });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    const k = el.dataset.i18nPlaceholder;
+    if(typeof t[k]==='string') el.placeholder = t[k];
+  });
   document.getElementById('page-title').textContent = t.page_title;
   document.title = t.page_title;
+  const sel = document.getElementById('lang-switch');
+  if(sel) sel.value = window._LANG;
 }
-applyI18n();
-document.querySelectorAll('#lang-switch button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const lang = btn.dataset.lang;
-    const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url);
-    window._LANG = lang; window._T = I18N[lang];
-    document.getElementById('html-root').lang = lang;
-    applyI18n();
-  });
+document.getElementById('lang-switch').addEventListener('change', (e)=>{
+  const lang = e.target.value;
+  if(!I18N[lang]) return;
+  const url = new URL(location.href); url.searchParams.set('lang', lang); history.replaceState(null,'',url);
+  window._LANG = lang; window._T = I18N[lang];
+  const root = document.getElementById('html-root');
+  root.lang = lang;
+  root.setAttribute('dir', lang==='ar' ? 'rtl' : 'ltr');
+  applyI18n();
 });
+applyI18n();
 /* ─────────────────────────────────
    공통 헬퍼
 ───────────────────────────────── */
@@ -428,10 +470,10 @@ function toast(msg,dur=2400){
 }
 function copy(text){
   if(navigator.clipboard&&navigator.clipboard.writeText)
-    navigator.clipboard.writeText(text).then(()=>toast('✅ 복사됨'));
+    navigator.clipboard.writeText(text).then(()=>toast(window._T.toast_copied));
   else{const ta=document.createElement('textarea');ta.value=text;
     ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);
-    ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('✅ 복사됨');}
+    ta.select();document.execCommand('copy');document.body.removeChild(ta);toast(window._T.toast_copied);}
 }
 
 /* ─────────────────────────────────
@@ -474,10 +516,10 @@ function loadLogo(inp){
   const fr=new FileReader();
   fr.onload=e=>{
     qrLogoImg=new Image();qrLogoImg.onload=()=>genQr();qrLogoImg.src=e.target.result;
-    $('qr-logo-name').textContent=f.name;$('qr-logo-clear').style.display='';
+    $('qr-logo-name').removeAttribute('data-i18n');$('qr-logo-name').textContent=f.name;$('qr-logo-clear').style.display='';
   };fr.readAsDataURL(f);
 }
-function clearLogo(){qrLogoImg=null;$('qr-logo-name').textContent='선택 안 함';$('qr-logo-clear').style.display='none';$('qr-logo-fi').value='';genQr();}
+function clearLogo(){qrLogoImg=null;$('qr-logo-name').setAttribute('data-i18n','logo_none');$('qr-logo-name').textContent=window._T.logo_none;$('qr-logo-clear').style.display='none';$('qr-logo-fi').value='';genQr();}
 
 /* QR 인코딩 — 순수 JS (Reed-Solomon 기반 간소화 구현) */
 // 외부 라이브러리 없이 QR코드를 그리기 위해 qrcodegen 라이브러리를 동적 로드
@@ -493,7 +535,7 @@ function loadQrLib(){
       const s2=document.createElement('script');
       s2.src='https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
       s2.onload=()=>{qrLib='qrcode-npm';resolve('qrcode-npm');};
-      s2.onerror=()=>reject(new Error('QR 라이브러리 로드 실패'));
+      s2.onerror=()=>reject(new Error('QR library load failed'));
       document.head.appendChild(s2);
     };
     document.head.appendChild(s);
@@ -534,17 +576,17 @@ async function genQr(){
       // qrcode npm 방식
       QRCode.toCanvas(c,content,{width:size,margin,color:{dark:fg,light:bg},errorCorrectionLevel:ec},(err)=>{
         if(!err)drawLogoOnQr(ctx,size);
-        else toast('❌ QR 생성 오류: '+err.message);
+        else toast(tr(window._T.toast_qr_error,{msg:err.message}));
       });
     }
     $('qr-canvas').style.display='block';
     $('qr-placeholder').style.display='none';
   }catch(e){
-    toast('⚠️ 인터넷 연결이 필요해요 (QR 라이브러리 로딩)');
+    toast(window._T.toast_need_internet);
     // 폴백: 텍스트만 표시
     ctx.fillStyle=bg;ctx.fillRect(0,0,size,size);
     ctx.fillStyle=fg;ctx.font=`${Math.min(14,size/20)}px DM Mono,monospace`;
-    ctx.textAlign='center';ctx.fillText('QR 생성에 인터넷이 필요해요',size/2,size/2);
+    ctx.textAlign='center';ctx.fillText(window._T.canvas_fallback_text,size/2,size/2);
     c.style.display='block';$('qr-placeholder').style.display='none';
   }
 }
@@ -560,7 +602,7 @@ function drawLogoOnQr(ctx,size){
 
 function dlQr(fmt){
   const c=$('qr-canvas');
-  if(c.style.display==='none'||!c.width){toast('⚠️ QR코드를 먼저 생성하세요');return;}
+  if(c.style.display==='none'||!c.width){toast(window._T.toast_need_generate_first);return;}
   if(fmt==='png'){
     const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='pomiai-qr.png';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
@@ -571,14 +613,14 @@ function dlQr(fmt){
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pomiai-qr.svg';
     document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
   }
-  toast('✅ 다운로드 완료');
+  toast(window._T.toast_dl_complete);
 }
 function copyQrDataUrl(){
   const c=$('qr-canvas');
-  if(c.style.display==='none'){toast('⚠️ QR코드를 먼저 생성하세요');return;}
+  if(c.style.display==='none'){toast(window._T.toast_need_generate_first);return;}
   c.toBlob(b=>{
-    try{navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(()=>toast('✅ 이미지 복사됨'));}
-    catch(e){copy(c.toDataURL());toast('✅ DataURL 복사됨');}
+    try{navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(()=>toast(window._T.toast_img_copied));}
+    catch(e){copy(c.toDataURL());toast(window._T.toast_dataurl_copied);}
   });
 }
 
