@@ -1,0 +1,2297 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Sans+Arabic:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #f0eae2;
+    --surface: #fbf8f3;
+    --surface-raised: #ffffff;
+    --ink: #241d1a;
+    --ink-soft: #5c5148;
+    --line: #d9cfc2;
+    --line-strong: #c2b6a5;
+    --accent: #c1442d;
+    --accent-ink: #ffffff;
+    --accent-soft: #f2ddd6;
+    --good: #2f7d5b;
+    --good-soft: #e1efe7;
+    --warn: #a8721a;
+    --warn-soft: #f5e9d3;
+    --bad: #8b2e3b;
+    --bad-soft: #f1dcdf;
+    --focus: #8a5a2a;
+    --brand-blue: #2e6da8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1b1714;
+      --surface: #242019;
+      --surface-raised: #2b261e;
+      --ink: #ede7dd;
+      --ink-soft: #b6ab9c;
+      --line: #3a322c;
+      --line-strong: #4b4139;
+      --accent: #e6684f;
+      --accent-ink: #1b1714;
+      --accent-soft: #402823;
+      --good: #4fbe8c;
+      --good-soft: #1f3329;
+      --warn: #e3a542;
+      --warn-soft: #3a2f18;
+      --bad: #d9636f;
+      --bad-soft: #3a2124;
+      --focus: #e3b774;
+      --brand-blue: #6fa8dc;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #1b1714;
+    --surface: #242019;
+    --surface-raised: #2b261e;
+    --ink: #ede7dd;
+    --ink-soft: #b6ab9c;
+    --line: #3a322c;
+    --line-strong: #4b4139;
+    --accent: #e6684f;
+    --accent-ink: #1b1714;
+    --accent-soft: #402823;
+    --good: #4fbe8c;
+    --good-soft: #1f3329;
+    --warn: #e3a542;
+    --warn-soft: #3a2f18;
+    --bad: #d9636f;
+    --bad-soft: #3a2124;
+    --focus: #e3b774;
+    --brand-blue: #6fa8dc;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', 'Inter', 'Noto Sans JP', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans Arabic', sans-serif;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 28px 20px 96px;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Gowun Batang', 'Noto Serif KR', serif;
+    font-weight: 700;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3,
+  [lang="ar"] h1, [lang="ar"] h2, [lang="ar"] h3 {
+    font-family: 'Noto Sans Arabic', sans-serif;
+  }
+
+  a { color: var(--accent); }
+
+  /* ---------- Brand bar ---------- */
+  .brand-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    max-width: 760px;
+    margin: 0 auto 32px;
+    padding: 0 4px;
+  }
+  .brand-mark {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+  }
+  .brand-mark:hover { color: var(--brand-blue); }
+  .brand-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--brand-blue);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .brand-icon svg { width: 13px; height: 13px; }
+
+  .lang-select-wrap {
+    position: relative;
+  }
+  #lang-select {
+    font: inherit;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    padding: 7px 30px 7px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-raised);
+    color: var(--ink);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .lang-select-wrap::after {
+    content: "▾";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--ink-soft);
+    pointer-events: none;
+  }
+  [dir="rtl"] .lang-select-wrap::after { right: auto; left: 12px; }
+  [dir="rtl"] #lang-select { padding: 7px 12px 7px 30px; }
+  #lang-select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    text-align: center;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 44px;
+  }
+
+  .stamp {
+    width: 108px;
+    height: 108px;
+    margin: 0 auto 22px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(-7deg);
+    position: relative;
+    color: var(--accent);
+  }
+  .stamp::before {
+    content: "";
+    position: absolute;
+    inset: 7px;
+    border: 1px dashed var(--accent);
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+  .stamp-text {
+    font-family: 'Gowun Batang', serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    white-space: pre-line;
+  }
+  [lang="ar"] .stamp-text, [lang="ja"] .stamp-text, [lang="zh"] .stamp-text, [lang="tw"] .stamp-text {
+    font-family: 'Noto Sans Arabic', 'Noto Sans JP', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
+    font-size: 13px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+
+  h1 {
+    font-size: clamp(24px, 4.4vw, 32px);
+    margin-bottom: 14px;
+  }
+
+  .lede {
+    max-width: 46ch;
+    margin: 0 auto 22px;
+    color: var(--ink-soft);
+    font-size: 15.5px;
+  }
+
+  .notice {
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    max-width: 56ch;
+    margin: 0 auto;
+  }
+  [dir="rtl"] .notice { text-align: right; border-left: none; border-right: 3px solid var(--accent); }
+  .notice strong {
+    color: var(--ink);
+    font-weight: 700;
+    margin-right: 4px;
+  }
+  [dir="rtl"] .notice strong { margin-right: 0; margin-left: 4px; }
+
+  /* ---------- Form blocks ---------- */
+  .block {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 26px 24px 28px;
+    margin-bottom: 22px;
+  }
+
+  .block h2 {
+    font-size: 19px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .block-hint {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    margin: 0 0 18px;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+  .field-row label {
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .field-row input[type="text"] {
+    font: inherit;
+    padding: 10px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--surface-raised);
+    color: var(--ink);
+    width: 100%;
+  }
+  .field-row input[type="text"]:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+  }
+
+  /* ---------- Component rows (radio chips) ---------- */
+  .component-row {
+    padding: 14px 0;
+    border-top: 1px solid var(--line);
+  }
+  .component-row:first-child { border-top: none; padding-top: 0; }
+
+  .component-row .comp-label {
+    font-weight: 500;
+    font-size: 15px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chip-group input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  .chip-group label {
+    font-size: 13.5px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-raised);
+    color: var(--ink-soft);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .chip-group input[type="radio"]:checked + label {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 500;
+  }
+
+  .chip-group input[type="radio"]:focus-visible + label {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Checklists ---------- */
+  .check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 11px 4px;
+    border-top: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .check-item:first-child { border-top: none; }
+
+  .check-item input[type="checkbox"] {
+    margin-top: 3px;
+    width: 17px;
+    height: 17px;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+  .check-item input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .check-item .txt { font-size: 14.5px; }
+  .check-item.negative .txt { color: var(--ink-soft); font-style: italic; }
+
+  /* ---------- Submit ---------- */
+  .diagnose-btn {
+    display: block;
+    width: 100%;
+    font: inherit;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 15px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.12s ease, opacity 0.12s ease;
+  }
+  .diagnose-btn:hover { opacity: 0.92; }
+  .diagnose-btn:active { transform: scale(0.99); }
+  .diagnose-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .validation-msg {
+    color: var(--bad);
+    font-size: 13.5px;
+    text-align: center;
+    margin-top: 12px;
+  }
+
+  /* ---------- Result ---------- */
+  .result {
+    margin-top: 40px;
+    padding-top: 8px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .result { animation: rise 0.4s ease both; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .verdict {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 22px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  .verdict.good { background: var(--good-soft); }
+  .verdict.warn { background: var(--warn-soft); }
+  .verdict.bad  { background: var(--bad-soft); }
+
+  .verdict-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 5px 11px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .verdict.good .verdict-badge { background: var(--good); color: #fff; }
+  .verdict.warn .verdict-badge { background: var(--warn); color: #24190a; }
+  .verdict.bad  .verdict-badge { background: var(--bad); color: #fff; }
+
+  .verdict-body h3 { font-size: 18px; margin-bottom: 4px; }
+  .verdict-body p { margin: 0; font-size: 14px; color: var(--ink-soft); }
+
+  .reasons {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .reasons h4, .evidence-status h4 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+    font-weight: 500;
+  }
+  .reasons ul { margin: 0; padding-left: 20px; }
+  [dir="rtl"] .reasons ul { padding-left: 0; padding-right: 20px; }
+  .reasons li { margin-bottom: 8px; font-size: 14.5px; }
+  .reasons li:last-child { margin-bottom: 0; }
+
+  .evidence-status {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .ev-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    font-size: 14px;
+  }
+  .ev-icon {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .ev-row.have .ev-icon { background: var(--good-soft); color: var(--good); }
+  .ev-row.missing .ev-icon { background: var(--bad-soft); color: var(--bad); }
+  .ev-row.missing .txt { color: var(--ink-soft); }
+
+  .summary-box {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .summary-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .summary-head h3 { font-size: 15px; }
+  .summary-head button {
+    font: inherit;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    padding: 7px 13px;
+    border-radius: 6px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-raised);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .summary-head button:hover { border-color: var(--accent); color: var(--accent); }
+  .summary-head button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .summary-head button.copied { background: var(--good); color: #fff; border-color: var(--good); }
+
+  #summary-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.75;
+    padding: 18px 20px;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-x: auto;
+    color: var(--ink);
+    text-align: left;
+    direction: ltr;
+  }
+
+  .fine-print {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    text-align: center;
+    margin: 0 0 24px;
+  }
+
+  .reset-btn {
+    display: block;
+    margin: 0 auto;
+    font: inherit;
+    font-size: 13.5px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .reset-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .page-footer {
+    text-align: center;
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft);
+  }
+  .footer-tagline {
+    font-family: 'Gowun Batang', serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 8px;
+    font-style: italic;
+  }
+  .footer-brand {
+    font-size: 12.5px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.02em;
+    margin: 0;
+  }
+  .footer-brand a { color: var(--ink-soft); }
+  .footer-brand a:hover { color: var(--brand-blue); }
+
+  @media (max-width: 520px) {
+    .field-row { grid-template-columns: 1fr; }
+    .brand-bar { flex-wrap: wrap; }
+  }
+</style>
+
+<div class="brand-bar">
+  <a class="brand-mark" href="https://checkpomi.com" target="_blank" rel="noopener">
+    <span class="brand-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 12.5L9.5 18L20 6" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
+    checkpomi.com
+  </a>
+  <div class="lang-select-wrap">
+    <select id="lang-select" aria-label="Language"></select>
+  </div>
+</div>
+
+<main class="page">
+
+  <header class="masthead">
+    <div class="stamp" aria-hidden="true"><span class="stamp-text" id="stamp-text"></span></div>
+    <p class="eyebrow" id="t-eyebrow"></p>
+    <h1 id="t-title"></h1>
+    <p class="lede" id="t-lede"></p>
+    <div class="notice"><strong id="t-notice-label"></strong><span id="t-notice-body"></span></div>
+  </header>
+
+  <form id="diagnosis-form" novalidate>
+
+    <section class="block">
+      <h2><span class="num">A</span><span id="t-secA"></span></h2>
+      <div class="field-row">
+        <label for="song-title" id="t-songtitle-label"></label>
+        <input type="text" id="song-title" autocomplete="off">
+      </div>
+      <div class="field-row">
+        <label for="ai-tool" id="t-aitool-label"></label>
+        <input type="text" id="ai-tool" autocomplete="off">
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="num">B</span><span id="t-secB"></span></h2>
+      <p class="block-hint" id="t-secB-hint"></p>
+      <div class="component-grid" id="component-grid"></div>
+    </section>
+
+    <section class="block">
+      <h2><span class="num">C</span><span id="t-secC"></span></h2>
+      <p class="block-hint" id="t-secC-hint"></p>
+      <div class="check-list" id="contribution-list"></div>
+    </section>
+
+    <section class="block">
+      <h2><span class="num">D</span><span id="t-secD"></span></h2>
+      <p class="block-hint" id="t-secD-hint"></p>
+      <div class="check-list" id="evidence-list"></div>
+    </section>
+
+    <button type="submit" class="diagnose-btn" id="t-diagnose-btn"></button>
+    <p class="validation-msg" id="validation-msg" role="alert" hidden></p>
+  </form>
+
+  <section class="result" id="result" hidden>
+    <div class="verdict" id="verdict"></div>
+
+    <div class="reasons">
+      <h4 id="t-reasons-heading"></h4>
+      <ul id="reasons-list"></ul>
+    </div>
+
+    <div class="evidence-status">
+      <h4 id="t-evidence-heading"></h4>
+      <div id="evidence-status-list"></div>
+    </div>
+
+    <div class="summary-box">
+      <div class="summary-head">
+        <h3 id="t-summary-heading"></h3>
+        <button type="button" id="copy-btn"></button>
+      </div>
+      <pre id="summary-text"></pre>
+    </div>
+
+    <p class="fine-print" id="t-fine-print"></p>
+
+    <button type="button" id="reset-btn" class="reset-btn"></button>
+  </section>
+
+  <footer class="page-footer">
+    <p class="footer-tagline">Creating Smiles, One Sound at a Time</p>
+    <p class="footer-brand" id="t-footer"></p>
+  </footer>
+</main>
+
+<script>
+window.__KOMCA_STRINGS__ = {
+  ja:   {
+    "eyebrow": "KOMCAの2026年8月改定基準に対応",
+    "title": "AI音楽著作権セルフチェック",
+    "lede": "あなたのAI制作楽曲がKOMCAの著作権登録の対象になりそうか、事前に確認できます。これは参考用のセルフチェックであり、公式審査ではありません。",
+    "noticeLabel": "注意",
+    "noticeBody": "このツールは法律相談やKOMCAの公式審査に代わるものではありません。結果はあくまで参考用であり、最終的な登録可否はKOMCAの審査プロセスによって決定されます。",
+    "stamp": "AI制作\nセルフチェック",
+    "secA": "楽曲情報",
+    "songTitleLabel": "曲名",
+    "songTitlePh": "例: Clean Conscience",
+    "aiToolLabel": "使用したAIツール",
+    "aiToolPh": "例: Suno AI",
+    "secB": "各構成要素の制作方法",
+    "secBHint": "各構成要素について、主に誰(何)が制作したかを選択してください。",
+    "compLabels": [
+      "歌詞",
+      "作曲(メロディ)",
+      "編曲",
+      "演奏・ボーカル"
+    ],
+    "compOptions": [
+      "人が制作",
+      "人とAIの共同制作",
+      "AI生成"
+    ],
+    "secC": "人による創作的寄与",
+    "secCHint": "当てはまる項目をすべて選択してください。",
+    "contributions": [
+      "歌詞やメロディを自分で書いた、または大幅に修正した",
+      "AIの出力を編集・再構成・再構築した",
+      "コード進行や構成、編曲を自分で設計した",
+      "複数のAI出力の中から選んで練り上げる際、創作的な判断を繰り返し行った",
+      "AIにプロンプトを入力しただけで、その後の修正は行っていない"
+    ],
+    "secD": "裏付け資料",
+    "secDHint": "提示できる証拠資料を選択してください。証拠が多いほど有利になります。",
+    "evidence": [
+      "歌詞・メロディの草稿または修正履歴ファイル",
+      "AIへの元のプロンプトと生成された出力",
+      "制作過程の画面録画またはキャプチャ",
+      "共同制作者とのやり取りの記録",
+      "DAW(制作ソフト)のプロジェクトファイル"
+    ],
+    "diagnoseBtn": "診断結果を見る",
+    "validationMsg": "Bセクションのすべての構成要素について、制作方法を選択してください。",
+    "reasonsHeading": "この結果の根拠",
+    "evidenceHeading": "証拠資料の状況",
+    "evidenceMissingSuffix": "(なし)",
+    "summaryHeading": "KOMCA提出用サマリー",
+    "copyBtn": "コピー",
+    "copiedBtn": "コピーしました!",
+    "finePrintPre": "これはあくまで参考診断です。公式基準は",
+    "finePrintLink": "KOMCA公式サイト",
+    "finePrintPost": "でご確認ください。",
+    "resetBtn": "最初からやり直す",
+    "footer": "pomiai · checkpomi.com",
+    "verdict": {
+      "noAI": {
+        "badge": "AI不使用",
+        "headline": "この楽曲にAIは関与していません",
+        "sub": "このセルフチェックツールは、100%人間が制作した楽曲には適用されません。",
+        "reason": "すべての構成要素が「人が制作」と選択されました。"
+      },
+      "red": {
+        "badge": "登録は難しい可能性",
+        "headline": "現状では著作権登録が難しい可能性があります",
+        "sub": "KOMCAのdisclosure-first基準では、実質的かつ主導的な人間の創作的寄与を示す証拠が必要です。",
+        "reasonNoPositive": "人間の創作的寄与を裏付ける項目が選択されていません。",
+        "reasonAllAI": "すべての構成要素が「AI生成」と選択されました。",
+        "reasonOnlyPrompt": "プロンプトを入力しただけで、それ以上の修正は行っていないと回答されました。",
+        "reasonSuggestion": "歌詞の書き直しや編曲の作り込みなど、実質的な寄与を加えてから、もう一度チェックしてみてください。"
+      },
+      "green": {
+        "badge": "可能性が高い",
+        "headline": "著作権登録の可能性は高いと考えられます",
+        "sub": "十分な人間の創作的寄与と裏付け資料が確認されました。",
+        "reasonPositive": "{n}件の人間による寄与項目が確認されました。",
+        "reasonEvidence": "{n}件の裏付け資料をお持ちです。"
+      },
+      "amberEvidence": {
+        "badge": "証拠資料の追加が必要",
+        "headline": "寄与はあるものの、証拠資料が不足しています",
+        "sub": "裏付け資料が不足していると、審査で不利に働く可能性があります。",
+        "reasonPositive": "{n}件の人間による寄与項目が確認されました。",
+        "reasonEvidenceLack": "証拠資料が{n}件しかありません。3件以上を推奨します。"
+      },
+      "amberWeak": {
+        "badge": "寄与の強化が必要",
+        "headline": "人間の寄与がやや弱い状態です",
+        "sub": "より実質的な創作的寄与があれば、登録の可能性が高まります。",
+        "reasonWeak": "確認された人間による寄与項目は{n}件のみです。"
+      }
+    },
+    "summary": {
+      "title": "【KOMCA提出用セルフチェックサマリー】",
+      "songTitleLine": "曲名: ",
+      "aiToolLine": "使用したAIツール: ",
+      "notEntered": "(未入力)",
+      "componentsHeading": "【構成要素別の制作方法】",
+      "contributionsHeading": "【人による創作的寄与】",
+      "noneApplicable": "選択なし",
+      "evidenceHeading": "【提示可能な裏付け資料】",
+      "resultLine": "診断結果: ",
+      "referenceNote": "※本サマリーはあくまで参考用のセルフチェックであり、KOMCAの公式審査結果とは異なる場合があります。"
+    }
+  },
+  zh:   {
+    "eyebrow": "基于KOMCA 2026年8月修订标准",
+    "title": "AI音乐版权自查工具",
+    "lede": "提前检测你借助AI创作的歌曲是否有可能通过KOMCA的版权登记。本工具仅供参考自查，并非官方审核。",
+    "noticeLabel": "提示",
+    "noticeBody": "本工具不能替代法律咨询或KOMCA的官方审核。结果仅供参考——最终是否符合资格由KOMCA的审核流程决定。",
+    "stamp": "AI创作\n自查",
+    "secA": "歌曲信息",
+    "songTitleLabel": "歌曲名称",
+    "songTitlePh": "例如：问心无愧",
+    "aiToolLabel": "使用的AI工具",
+    "aiToolPh": "例如：Suno AI",
+    "secB": "各构成要素的制作方式",
+    "secBHint": "请为每个构成要素选择主要由谁（或什么）完成创作。",
+    "compLabels": [
+      "歌词",
+      "作曲（旋律）",
+      "编曲",
+      "演奏／人声"
+    ],
+    "compOptions": [
+      "人工创作",
+      "人工+AI协作",
+      "AI生成"
+    ],
+    "secC": "人工创作贡献",
+    "secCHint": "请勾选所有符合的项目。",
+    "contributions": [
+      "我亲自撰写或大幅修改了歌词／旋律",
+      "我对AI生成的内容进行了编辑、重新编排或结构调整",
+      "我亲自设计了和弦进行、结构或编曲",
+      "我在多个AI生成结果中反复进行了创作性的筛选与打磨判断",
+      "我只是向AI输入了提示词，之后没有再做任何修改"
+    ],
+    "secD": "佐证材料",
+    "secDHint": "请勾选你能够提供的证明材料。证据越多，越有利于你的情况。",
+    "evidence": [
+      "歌词／旋律的初稿或修改历史文件",
+      "原始AI提示词及生成结果",
+      "制作过程的录屏或截图",
+      "与共同创作者的沟通记录",
+      "DAW（制作软件）工程文件"
+    ],
+    "diagnoseBtn": "查看诊断结果",
+    "validationMsg": "请为B部分的每个构成要素选择制作方式。",
+    "reasonsHeading": "结果依据",
+    "evidenceHeading": "证据状态",
+    "evidenceMissingSuffix": "（无）",
+    "summaryHeading": "KOMCA提交用摘要",
+    "copyBtn": "复制",
+    "copiedBtn": "已复制！",
+    "finePrintPre": "本结果仅供参考诊断。请前往查看官方标准：",
+    "finePrintLink": "KOMCA官方网站",
+    "finePrintPost": "。",
+    "resetBtn": "重新开始",
+    "footer": "pomiai · checkpomi.com",
+    "verdict": {
+      "noAI": {
+        "badge": "未使用AI",
+        "headline": "本曲未使用AI参与创作",
+        "sub": "本诊断工具不适用于100%人工创作的歌曲。",
+        "reason": "所有构成要素均标注为人工创作。"
+      },
+      "red": {
+        "badge": "登记可能性较低",
+        "headline": "以目前情况来看，版权登记可能较为困难",
+        "sub": "KOMCA的公示优先标准要求提供实质性、主导性人工创作贡献的证据。",
+        "reasonNoPositive": "未勾选任何支持人工创作贡献的项目。",
+        "reasonAllAI": "所有构成要素均标注为AI生成。",
+        "reasonOnlyPrompt": "你表示除输入提示词外未做任何进一步修改。",
+        "reasonSuggestion": "建议增加实质性贡献——例如重写歌词或调整编曲——之后再次进行检测。"
+      },
+      "green": {
+        "badge": "可能性较高",
+        "headline": "版权登记看起来很有可能通过",
+        "sub": "已确认具备充分的人工创作贡献与佐证材料。",
+        "reasonPositive": "已确认{n}项人工创作贡献。",
+        "reasonEvidence": "你拥有{n}项佐证材料。"
+      },
+      "amberEvidence": {
+        "badge": "需要更多证据",
+        "headline": "已有创作贡献，但证据不足",
+        "sub": "佐证材料不足可能在审核中对你不利。",
+        "reasonPositive": "已确认{n}项人工创作贡献。",
+        "reasonEvidenceLack": "你目前只有{n}项证据，建议准备3项以上。"
+      },
+      "amberWeak": {
+        "badge": "需要更强的创作贡献",
+        "headline": "人工创作贡献略显不足",
+        "sub": "增加更实质性的创作贡献将提高登记通过的可能性。",
+        "reasonWeak": "仅确认了{n}项人工创作贡献。"
+      }
+    },
+    "summary": {
+      "title": "【KOMCA提交用自查摘要】",
+      "songTitleLine": "歌曲名称：",
+      "aiToolLine": "使用的AI工具：",
+      "notEntered": "（未填写）",
+      "componentsHeading": "【各构成要素制作方式】",
+      "contributionsHeading": "【人工创作贡献】",
+      "noneApplicable": "未勾选任何项",
+      "evidenceHeading": "【可提供的佐证材料】",
+      "resultLine": "诊断结果：",
+      "referenceNote": "* 本摘要仅供自查参考，可能与KOMCA官方审核结果存在差异。"
+    }
+  },
+  tw:   {
+    "eyebrow": "反映KOMCA 2026年8月修訂標準",
+    "title": "AI音樂著作權自我檢測",
+    "lede": "事先檢查你的AI輔助創作歌曲是否有可能符合KOMCA著作權登記資格。這是參考用的自我檢測,並非官方審查。",
+    "noticeLabel": "注意事項",
+    "noticeBody": "本工具無法取代法律諮詢或KOMCA的官方審查。結果僅供參考——最終是否符合資格,由KOMCA的審查程序決定。",
+    "stamp": "AI創作\n自我檢測",
+    "secA": "歌曲資訊",
+    "songTitleLabel": "歌曲名稱",
+    "songTitlePh": "例如:Clean Conscience",
+    "aiToolLabel": "使用的AI工具",
+    "aiToolPh": "例如:Suno AI",
+    "secB": "各構成要素的製作方式",
+    "secBHint": "請針對每個構成要素,選擇主要由誰或什麼製作而成。",
+    "compLabels": [
+      "歌詞",
+      "作曲(旋律)",
+      "編曲",
+      "演奏/人聲"
+    ],
+    "compOptions": [
+      "人類創作",
+      "人類與AI協作",
+      "AI生成"
+    ],
+    "secC": "人類創作貢獻",
+    "secCHint": "請選擇所有符合的項目。",
+    "contributions": [
+      "我親自撰寫或大幅修改了歌詞/旋律",
+      "我編輯、重新編排或重整了AI產出的內容",
+      "我親自設計了和弦進行、結構或編曲",
+      "我在多個AI產出結果中反覆進行篩選與調整,做出創作判斷",
+      "我只輸入了提示詞給AI,之後沒有再做任何編輯"
+    ],
+    "secD": "佐證資料",
+    "secDHint": "請選擇你能提供的佐證資料。佐證資料越多,越能強化你的登記依據。",
+    "evidence": [
+      "歌詞/旋律的草稿或修改歷程檔案",
+      "原始AI提示詞與生成結果",
+      "製作過程的螢幕錄影或截圖",
+      "與共同創作者的溝通紀錄",
+      "DAW(製作軟體)專案檔案"
+    ],
+    "diagnoseBtn": "查看診斷結果",
+    "validationMsg": "請為B部分的每一項構成要素選擇製作方式。",
+    "reasonsHeading": "此結果的判斷依據",
+    "evidenceHeading": "佐證資料狀況",
+    "evidenceMissingSuffix": "(尚未提供)",
+    "summaryHeading": "提交KOMCA用摘要",
+    "copyBtn": "複製",
+    "copiedBtn": "已複製!",
+    "finePrintPre": "此結果僅為參考診斷。請至",
+    "finePrintLink": "KOMCA官方網站",
+    "finePrintPost": "查看官方標準。",
+    "resetBtn": "重新開始",
+    "footer": "pomiai · checkpomi.com",
+    "verdict": {
+      "noAI": {
+        "badge": "未使用AI",
+        "headline": "這首歌曲並未使用AI",
+        "sub": "本檢測工具不適用於100%由人類創作的歌曲。",
+        "reason": "所有構成要素皆標記為人類創作。"
+      },
+      "red": {
+        "badge": "登記可能性低",
+        "headline": "以目前狀況來看,著作權登記可能有困難",
+        "sub": "KOMCA的公開揭露優先標準,要求提出實質且具主導性的人類創作貢獻證明。",
+        "reasonNoPositive": "未選擇任何支持人類創作貢獻的項目。",
+        "reasonAllAI": "所有構成要素皆標記為AI生成。",
+        "reasonOnlyPrompt": "你表示除了輸入提示詞之外,並未做任何進一步編輯。",
+        "reasonSuggestion": "建議嘗試加入實質貢獻,例如重寫歌詞或調整編曲架構,再重新檢測一次。"
+      },
+      "green": {
+        "badge": "可能性高",
+        "headline": "著作權登記看起來相當有可能",
+        "sub": "已確認具備充分的人類創作貢獻與佐證資料。",
+        "reasonPositive": "已確認{n}項人類貢獻項目。",
+        "reasonEvidence": "你擁有{n}項佐證資料。"
+      },
+      "amberEvidence": {
+        "badge": "需要更多佐證資料",
+        "headline": "已有創作貢獻,但佐證資料不足",
+        "sub": "佐證資料不足,在審查時可能對你不利。",
+        "reasonPositive": "已確認{n}項人類貢獻項目。",
+        "reasonEvidenceLack": "你目前只有{n}項佐證資料,建議準備3項以上。"
+      },
+      "amberWeak": {
+        "badge": "需要更強的創作貢獻",
+        "headline": "人類創作貢獻略顯薄弱",
+        "sub": "提出更實質的創作貢獻,將有助於提高登記成功的機會。",
+        "reasonWeak": "僅確認{n}項人類貢獻項目。"
+      }
+    },
+    "summary": {
+      "title": "【KOMCA提交用自我檢測摘要】",
+      "songTitleLine": "歌曲名稱:",
+      "aiToolLine": "使用的AI工具:",
+      "notEntered": "(未填寫)",
+      "componentsHeading": "【各構成要素製作方式】",
+      "contributionsHeading": "【人類創作貢獻】",
+      "noneApplicable": "未選擇任何項目",
+      "evidenceHeading": "【可提供的佐證資料】",
+      "resultLine": "診斷結果:",
+      "referenceNote": "* 本摘要僅供自我檢測參考之用,實際結果可能與KOMCA官方審查結果有所不同。"
+    }
+  },
+  de:   {
+    "eyebrow": "Basierend auf dem überarbeiteten KOMCA-Standard vom August 2026",
+    "title": "KI-Musik-Urheberrechts-Selbstdiagnose",
+    "lede": "Prüfe im Voraus, ob dein mit KI-Unterstützung entstandener Song voraussichtlich für die Urheberrechtsregistrierung bei KOMCA infrage kommt. Dies ist eine Selbstdiagnose zur Orientierung, keine offizielle Prüfung.",
+    "noticeLabel": "Hinweis",
+    "noticeBody": "Dieses Tool ersetzt weder eine Rechtsberatung noch die offizielle Prüfung durch KOMCA. Die Ergebnisse dienen nur zur Orientierung — die endgültige Registrierungsfähigkeit wird durch das Prüfverfahren von KOMCA festgestellt.",
+    "stamp": "KI-Erstellung\nSelbstprüfung",
+    "secA": "Songinformationen",
+    "songTitleLabel": "Songtitel",
+    "songTitlePh": "z. B. Clean Conscience",
+    "aiToolLabel": "Verwendetes KI-Tool",
+    "aiToolPh": "z. B. Suno AI",
+    "secB": "Wie die einzelnen Elemente entstanden sind",
+    "secBHint": "Wähle für jedes Element aus, wer oder was es hauptsächlich erstellt hat.",
+    "compLabels": [
+      "Text",
+      "Komposition (Melodie)",
+      "Arrangement",
+      "Performance / Gesang"
+    ],
+    "compOptions": [
+      "Von Menschen erstellt",
+      "Zusammenarbeit von Mensch und KI",
+      "KI-generiert"
+    ],
+    "secC": "Kreativer Beitrag des Menschen",
+    "secCHint": "Wähle alle zutreffenden Punkte aus.",
+    "contributions": [
+      "Ich habe den Text/die Melodie selbst geschrieben oder wesentlich überarbeitet",
+      "Ich habe die KI-Ausgabe bearbeitet, umgestellt oder neu strukturiert",
+      "Ich habe Akkordfolge, Struktur oder Arrangement selbst gestaltet",
+      "Ich habe wiederholt kreative Entscheidungen getroffen, um unter mehreren KI-Ausgaben auszuwählen und diese zu verfeinern",
+      "Ich habe der KI nur einen Prompt eingegeben und danach keine weiteren Änderungen vorgenommen"
+    ],
+    "secD": "Belege",
+    "secDHint": "Wähle die Belege aus, die du vorweisen kannst. Mehr Belege stärken deinen Fall.",
+    "evidence": [
+      "Entwürfe oder Bearbeitungsverlauf des Textes/der Melodie",
+      "Ursprüngliche KI-Prompts und erzeugte Ausgaben",
+      "Bildschirmaufnahmen oder Screenshots des Produktionsprozesses",
+      "Kommunikationsnachweise mit Mitwirkenden",
+      "DAW-Projektdateien (Produktionssoftware)"
+    ],
+    "diagnoseBtn": "Diagnose ansehen",
+    "validationMsg": "Bitte wähle für jedes Element in Abschnitt B eine Herstellungsweise aus.",
+    "reasonsHeading": "Grundlage dieses Ergebnisses",
+    "evidenceHeading": "Status der Belege",
+    "evidenceMissingSuffix": "(nicht vorhanden)",
+    "summaryHeading": "Zusammenfassung für die Einreichung bei KOMCA",
+    "copyBtn": "Kopieren",
+    "copiedBtn": "Kopiert!",
+    "finePrintPre": "Dies ist nur eine Diagnose zur Orientierung. Den offiziellen Standard findest du auf der",
+    "finePrintLink": "offiziellen Website von KOMCA",
+    "finePrintPost": ".",
+    "resetBtn": "Neu starten",
+    "footer": "pomiai · checkpomi.com",
+    "verdict": {
+      "noAI": {
+        "badge": "Keine KI verwendet",
+        "headline": "Bei diesem Song war keine KI beteiligt",
+        "sub": "Dieses Diagnosetool gilt nicht für Songs, die zu 100 % von Menschen erstellt wurden.",
+        "reason": "Alle Elemente wurden als von Menschen erstellt markiert."
+      },
+      "red": {
+        "badge": "Registrierung unwahrscheinlich",
+        "headline": "Eine Urheberrechtsregistrierung dürfte derzeit schwierig sein",
+        "sub": "Der offenlegungsbasierte Standard von KOMCA verlangt einen Nachweis über einen wesentlichen und federführenden kreativen Beitrag des Menschen.",
+        "reasonNoPositive": "Es wurde kein Punkt ausgewählt, der einen kreativen Beitrag des Menschen belegt.",
+        "reasonAllAI": "Alle Elemente wurden als KI-generiert markiert.",
+        "reasonOnlyPrompt": "Du hast angegeben, dass über die Eingabe eines Prompts hinaus keine weiteren Änderungen vorgenommen wurden.",
+        "reasonSuggestion": "Versuche, einen wesentlichen Beitrag zu leisten — etwa den Text umzuschreiben oder das Arrangement zu gestalten — und führe die Prüfung dann erneut durch."
+      },
+      "green": {
+        "badge": "Hohe Wahrscheinlichkeit",
+        "headline": "Eine Urheberrechtsregistrierung erscheint wahrscheinlich",
+        "sub": "Es wurden ein ausreichender kreativer Beitrag des Menschen sowie unterstützende Belege gefunden.",
+        "reasonPositive": "{n} Punkt(e) zum menschlichen Beitrag wurden bestätigt.",
+        "reasonEvidence": "Du verfügst über {n} Beleg(e)."
+      },
+      "amberEvidence": {
+        "badge": "Mehr Belege erforderlich",
+        "headline": "Beitrag ist vorhanden, aber Belege fehlen",
+        "sub": "Fehlende Belege können sich bei der Prüfung nachteilig auswirken.",
+        "reasonPositive": "{n} Punkt(e) zum menschlichen Beitrag wurden bestätigt.",
+        "reasonEvidenceLack": "Du hast nur {n} Beleg(e). Empfohlen werden 3 oder mehr."
+      },
+      "amberWeak": {
+        "badge": "Stärkerer Beitrag erforderlich",
+        "headline": "Der menschliche Beitrag ist etwas schwach",
+        "sub": "Ein wesentlicherer kreativer Beitrag würde deine Chancen auf eine Registrierung verbessern.",
+        "reasonWeak": "Es wurde(n) nur {n} Punkt(e) zum menschlichen Beitrag bestätigt."
+      }
+    },
+    "summary": {
+      "title": "[Selbstprüfungs-Zusammenfassung für die Einreichung bei KOMCA]",
+      "songTitleLine": "Songtitel: ",
+      "aiToolLine": "Verwendetes KI-Tool: ",
+      "notEntered": "(nicht angegeben)",
+      "componentsHeading": "[Herstellungsweise nach Element]",
+      "contributionsHeading": "[Kreativer Beitrag des Menschen]",
+      "noneApplicable": "Nichts ausgewählt",
+      "evidenceHeading": "[Verfügbare Belege]",
+      "resultLine": "Diagnoseergebnis: ",
+      "referenceNote": "* Diese Zusammenfassung dient nur als Orientierung zur Selbstprüfung und kann vom offiziellen Prüfergebnis von KOMCA abweichen."
+    }
+  },
+  fr:   {
+    "eyebrow": "Reflète les critères révisés de la KOMCA d'août 2026",
+    "title": "Auto-diagnostic des droits d'auteur pour la musique IA",
+    "lede": "Vérifiez à l'avance si votre chanson créée avec l'aide de l'IA a de bonnes chances d'être enregistrée aux droits d'auteur auprès de la KOMCA. Il s'agit d'un auto-diagnostic à titre indicatif, et non d'un examen officiel.",
+    "noticeLabel": "Avis",
+    "noticeBody": "Cet outil ne remplace pas un conseil juridique ni l'examen officiel de la KOMCA. Les résultats sont fournis à titre indicatif uniquement — l'éligibilité finale est déterminée par le processus d'examen de la KOMCA.",
+    "stamp": "Création IA\nAuto-vérification",
+    "secA": "Informations sur le morceau",
+    "songTitleLabel": "Titre du morceau",
+    "songTitlePh": "ex. Clean Conscience",
+    "aiToolLabel": "Outil d'IA utilisé",
+    "aiToolPh": "ex. Suno AI",
+    "secB": "Comment chaque élément a été créé",
+    "secBHint": "Pour chaque élément, sélectionnez qui ou quoi l'a principalement créé.",
+    "compLabels": [
+      "Paroles",
+      "Composition (mélodie)",
+      "Arrangement",
+      "Interprétation / Chant"
+    ],
+    "compOptions": [
+      "Créé par un humain",
+      "Collaboration humain + IA",
+      "Généré par l'IA"
+    ],
+    "secC": "Contribution créative humaine",
+    "secCHint": "Sélectionnez tous les éléments qui s'appliquent.",
+    "contributions": [
+      "J'ai écrit ou substantiellement révisé les paroles/la mélodie moi-même",
+      "J'ai édité, réorganisé ou restructuré le résultat généré par l'IA",
+      "J'ai personnellement conçu la progression d'accords, la structure ou l'arrangement",
+      "J'ai fait des choix créatifs à plusieurs reprises en sélectionnant et en affinant parmi plusieurs résultats générés par l'IA",
+      "Je me suis contenté(e) de saisir un prompt à l'IA et je n'ai fait aucune modification par la suite"
+    ],
+    "secD": "Pièces justificatives",
+    "secDHint": "Sélectionnez les preuves que vous pouvez fournir. Plus vous avez de preuves, plus votre dossier est solide.",
+    "evidence": [
+      "Brouillons ou fichiers d'historique des révisions des paroles/de la mélodie",
+      "Prompts IA originaux et résultats générés",
+      "Enregistrements ou captures d'écran du processus de production",
+      "Historique des échanges avec les co-créateurs",
+      "Fichiers de projet DAW (logiciel de production)"
+    ],
+    "diagnoseBtn": "Voir le diagnostic",
+    "validationMsg": "Veuillez sélectionner une méthode de production pour chaque élément de la section B.",
+    "reasonsHeading": "Base de ce résultat",
+    "evidenceHeading": "État des preuves",
+    "evidenceMissingSuffix": "(non disponible)",
+    "summaryHeading": "Résumé pour la soumission à la KOMCA",
+    "copyBtn": "Copier",
+    "copiedBtn": "Copié !",
+    "finePrintPre": "Ceci n'est qu'un diagnostic indicatif. Consultez le critère officiel sur",
+    "finePrintLink": "le site officiel de la KOMCA",
+    "finePrintPost": ".",
+    "resetBtn": "Recommencer",
+    "footer": "pomiai · checkpomi.com",
+    "verdict": {
+      "noAI": {
+        "badge": "Aucune IA utilisée",
+        "headline": "L'IA n'a pas été impliquée dans ce morceau",
+        "sub": "Cet outil de diagnostic ne s'applique pas aux morceaux créés à 100 % par un humain.",
+        "reason": "Chaque élément a été indiqué comme créé par un humain."
+      },
+      "red": {
+        "badge": "Enregistrement peu probable",
+        "headline": "L'enregistrement des droits d'auteur pourrait être difficile en l'état",
+        "sub": "Le critère « disclosure-first » de la KOMCA exige une preuve de contribution créative humaine substantielle et déterminante.",
+        "reasonNoPositive": "Aucun élément appuyant une contribution créative humaine n'a été sélectionné.",
+        "reasonAllAI": "Chaque élément a été indiqué comme généré par l'IA.",
+        "reasonOnlyPrompt": "Vous avez indiqué n'avoir fait aucune modification au-delà de la saisie d'un prompt.",
+        "reasonSuggestion": "Essayez d'ajouter une contribution substantielle — comme réécrire les paroles ou façonner l'arrangement — puis relancez le diagnostic."
+      },
+      "green": {
+        "badge": "Probabilité élevée",
+        "headline": "L'enregistrement des droits d'auteur semble probable",
+        "sub": "Une contribution créative humaine suffisante et des preuves à l'appui ont été trouvées.",
+        "reasonPositive": "{n} élément(s) de contribution humaine ont été confirmés.",
+        "reasonEvidence": "Vous disposez de {n} pièce(s) justificative(s)."
+      },
+      "amberEvidence": {
+        "badge": "Davantage de preuves nécessaires",
+        "headline": "La contribution est présente, mais les preuves manquent",
+        "sub": "Un manque de preuves à l'appui peut jouer en votre défaveur lors de l'examen.",
+        "reasonPositive": "{n} élément(s) de contribution humaine ont été confirmés.",
+        "reasonEvidenceLack": "Vous ne disposez que de {n} pièce(s) justificative(s). Il est recommandé d'en avoir au moins 3."
+      },
+      "amberWeak": {
+        "badge": "Contribution à renforcer",
+        "headline": "La contribution humaine est quelque peu faible",
+        "sub": "Une contribution créative plus substantielle améliorerait vos chances d'enregistrement.",
+        "reasonWeak": "Seulement {n} élément(s) de contribution humaine ont été confirmés."
+      }
+    },
+    "summary": {
+      "title": "[Résumé de l'auto-diagnostic pour la soumission à la KOMCA]",
+      "songTitleLine": "Titre du morceau : ",
+      "aiToolLine": "Outil d'IA utilisé : ",
+      "notEntered": "(non renseigné)",
+      "componentsHeading": "[Méthode de production par élément]",
+      "contributionsHeading": "[Contribution créative humaine]",
+      "noneApplicable": "Aucun élément sélectionné",
+      "evidenceHeading": "[Preuves disponibles]",
+      "resultLine": "Résultat du diagnostic : ",
+      "referenceNote": "* Ce résumé est fourni à titre indicatif pour auto-vérification uniquement et peut différer du résultat de l'examen officiel de la KOMCA."
+    }
+  },
+  nl:   {
+    "eyebrow": "Gebaseerd op de herziene KOMCA-norm van augustus 2026",
+    "title": "Zelftest Auteursrecht AI-muziek",
+    "lede": "Controleer vooraf of jouw met AI gemaakte nummer waarschijnlijk in aanmerking komt voor auteursrechtregistratie bij KOMCA. Dit is een oriënterende zelftest en geen officiële beoordeling.",
+    "noticeLabel": "Let op",
+    "noticeBody": "Deze tool vervangt geen juridisch advies of de officiële beoordeling door KOMCA. De resultaten zijn uitsluitend ter referentie — de uiteindelijke registratiemogelijkheid wordt bepaald door het beoordelingsproces van KOMCA.",
+    "stamp": "AI-creatie\nZelftest",
+    "secA": "Nummerinformatie",
+    "songTitleLabel": "Titel van het nummer",
+    "songTitlePh": "bijv. Clean Conscience",
+    "aiToolLabel": "Gebruikte AI-tool",
+    "aiToolPh": "bijv. Suno AI",
+    "secB": "Hoe elk onderdeel is gemaakt",
+    "secBHint": "Geef voor elk onderdeel aan wie of wat het voornamelijk heeft gemaakt.",
+    "compLabels": [
+      "Songtekst",
+      "Compositie (melodie)",
+      "Arrangement",
+      "Uitvoering / Zang"
+    ],
+    "compOptions": [
+      "Door mens gemaakt",
+      "Samenwerking mens + AI",
+      "Door AI gegenereerd"
+    ],
+    "secC": "Creatieve bijdrage van de mens",
+    "secCHint": "Selecteer alle items die van toepassing zijn.",
+    "contributions": [
+      "Ik heb de songtekst/melodie zelf geschreven of ingrijpend bewerkt",
+      "Ik heb de AI-output bewerkt, herschikt of herstructureerd",
+      "Ik heb zelf het akkoordenschema, de structuur of het arrangement ontworpen",
+      "Ik heb herhaaldelijk creatieve keuzes gemaakt bij het selecteren en verfijnen van meerdere AI-outputs",
+      "Ik heb alleen een prompt aan de AI gegeven en daarna geen verdere aanpassingen gedaan"
+    ],
+    "secD": "Bewijsmateriaal",
+    "secDHint": "Selecteer het bewijsmateriaal dat je kunt aanleveren. Meer bewijs versterkt je zaak.",
+    "evidence": [
+      "Conceptbestanden of bewerkingsgeschiedenis van de songtekst/melodie",
+      "Originele AI-prompts en gegenereerde output",
+      "Schermopnames of screenshots van het productieproces",
+      "Communicatie met medemakers",
+      "Projectbestanden van je DAW (productiesoftware)"
+    ],
+    "diagnoseBtn": "Bekijk diagnose",
+    "validationMsg": "Selecteer voor elk onderdeel in sectie B een manier van maken.",
+    "reasonsHeading": "Onderbouwing van dit resultaat",
+    "evidenceHeading": "Status bewijsmateriaal",
+    "evidenceMissingSuffix": "(niet beschikbaar)",
+    "summaryHeading": "Samenvatting voor indiening bij KOMCA",
+    "copyBtn": "Kopiëren",
+    "copiedBtn": "Gekopieerd!",
+    "finePrintPre": "Dit is slechts een oriënterende diagnose. Bekijk de officiële norm op",
+    "finePrintLink": "de officiële website van KOMCA",
+    "finePrintPost": ".",
+    "resetBtn": "Opnieuw beginnen",
+    "footer": "pomiai · checkpomi.com",
+    "verdict": {
+      "noAI": {
+        "badge": "Geen AI gebruikt",
+        "headline": "AI was niet betrokken bij dit nummer",
+        "sub": "Deze diagnosetool is niet van toepassing op nummers die voor 100% door een mens zijn gemaakt.",
+        "reason": "Elk onderdeel is gemarkeerd als door mens gemaakt."
+      },
+      "red": {
+        "badge": "Registratie onwaarschijnlijk",
+        "headline": "Auteursrechtregistratie lijkt in de huidige situatie moeilijk",
+        "sub": "De disclosure-first-norm van KOMCA vereist bewijs van een wezenlijke, leidende creatieve bijdrage van een mens.",
+        "reasonNoPositive": "Er is geen item geselecteerd dat een creatieve bijdrage van de mens onderbouwt.",
+        "reasonAllAI": "Elk onderdeel is gemarkeerd als door AI gegenereerd.",
+        "reasonOnlyPrompt": "Je hebt aangegeven dat er, naast het invoeren van een prompt, geen verdere aanpassingen zijn gedaan.",
+        "reasonSuggestion": "Probeer een wezenlijke bijdrage toe te voegen — zoals het herschrijven van de songtekst of het vormgeven van het arrangement — en voer de test dan opnieuw uit."
+      },
+      "green": {
+        "badge": "Grote kans",
+        "headline": "Auteursrechtregistratie lijkt waarschijnlijk",
+        "sub": "Er is voldoende creatieve bijdrage van de mens en bewijsmateriaal aangetroffen.",
+        "reasonPositive": "{n} item(s) met menselijke bijdrage zijn bevestigd.",
+        "reasonEvidence": "Je hebt {n} stuk(ken) bewijsmateriaal."
+      },
+      "amberEvidence": {
+        "badge": "Meer bewijs nodig",
+        "headline": "Er is een bijdrage, maar het bewijsmateriaal ontbreekt",
+        "sub": "Een gebrek aan bewijsmateriaal kan tijdens de beoordeling in je nadeel werken.",
+        "reasonPositive": "{n} item(s) met menselijke bijdrage zijn bevestigd.",
+        "reasonEvidenceLack": "Je hebt slechts {n} stuk(ken) bewijsmateriaal. 3 of meer wordt aanbevolen."
+      },
+      "amberWeak": {
+        "badge": "Sterkere bijdrage nodig",
+        "headline": "De menselijke bijdrage is enigszins zwak",
+        "sub": "Een meer wezenlijke creatieve bijdrage zou je registratiekansen verbeteren.",
+        "reasonWeak": "Slechts {n} item(s) met menselijke bijdrage zijn bevestigd."
+      }
+    },
+    "summary": {
+      "title": "[Samenvatting zelftest voor indiening bij KOMCA]",
+      "songTitleLine": "Titel van het nummer: ",
+      "aiToolLine": "Gebruikte AI-tool: ",
+      "notEntered": "(niet ingevuld)",
+      "componentsHeading": "[Manier van maken per onderdeel]",
+      "contributionsHeading": "[Creatieve bijdrage van de mens]",
+      "noneApplicable": "Niets geselecteerd",
+      "evidenceHeading": "[Beschikbaar bewijsmateriaal]",
+      "resultLine": "Diagnoseresultaat: ",
+      "referenceNote": "* Deze samenvatting is uitsluitend bedoeld als referentie voor de zelftest en kan afwijken van de officiële beoordelingsuitkomst van KOMCA."
+    }
+  },
+  sv:   {
+    "eyebrow": "Speglar KOMCAs reviderade kriterier från augusti 2026",
+    "title": "Självtest för upphovsrätt till AI-musik",
+    "lede": "Kontrollera i förväg om din AI-assisterade låt sannolikt kan godkännas för upphovsrättsregistrering hos KOMCA. Detta är ett vägledande självtest, inte en officiell granskning.",
+    "noticeLabel": "Obs",
+    "noticeBody": "Det här verktyget ersätter inte juridisk rådgivning eller KOMCAs officiella granskning. Resultaten är endast vägledande — den slutgiltiga bedömningen görs av KOMCAs granskningsprocess.",
+    "stamp": "AI-skapande\nSjälvtest",
+    "secA": "Låtinformation",
+    "songTitleLabel": "Låttitel",
+    "songTitlePh": "t.ex. Rent samvete",
+    "aiToolLabel": "AI-verktyg som använts",
+    "aiToolPh": "t.ex. Suno AI",
+    "secB": "Hur varje del skapades",
+    "secBHint": "Välj för varje del vem eller vad som huvudsakligen skapade den.",
+    "compLabels": [
+      "Text",
+      "Komposition (melodi)",
+      "Arrangemang",
+      "Framförande / Sång"
+    ],
+    "compOptions": [
+      "Skapad av människa",
+      "Samarbete mellan människa och AI",
+      "AI-genererad"
+    ],
+    "secC": "Mänskligt kreativt bidrag",
+    "secCHint": "Välj alla alternativ som stämmer.",
+    "contributions": [
+      "Jag skrev eller reviderade i väsentlig grad texten/melodin själv",
+      "Jag redigerade, arrangerade om eller omstrukturerade AI:ns resultat",
+      "Jag utformade själv ackordföljden, strukturen eller arrangemanget",
+      "Jag gjorde upprepade kreativa bedömningar när jag valde ut och förfinade bland flera AI-resultat",
+      "Jag matade bara in en prompt till AI:n och gjorde inga ytterligare redigeringar efteråt"
+    ],
+    "secD": "Styrkande underlag",
+    "secDHint": "Välj det underlag du kan tillhandahålla. Mer underlag stärker ditt ärende.",
+    "evidence": [
+      "Utkasts- eller versionshistorikfiler för texten/melodin",
+      "Ursprungliga AI-prompter och genererade resultat",
+      "Skärminspelningar eller skärmbilder från produktionsprocessen",
+      "Kommunikationsunderlag med medskapare",
+      "Projektfiler från DAW (produktionsprogramvara)"
+    ],
+    "diagnoseBtn": "Visa diagnos",
+    "validationMsg": "Välj en produktionsmetod för varje del i avsnitt B.",
+    "reasonsHeading": "Grund för resultatet",
+    "evidenceHeading": "Underlagsstatus",
+    "evidenceMissingSuffix": "(saknas)",
+    "summaryHeading": "Sammanfattning för inlämning till KOMCA",
+    "copyBtn": "Kopiera",
+    "copiedBtn": "Kopierat!",
+    "finePrintPre": "Detta är endast en vägledande diagnos. Kontrollera de officiella kriterierna på",
+    "finePrintLink": "KOMCAs officiella webbplats",
+    "finePrintPost": ".",
+    "resetBtn": "Börja om",
+    "footer": "pomiai · checkpomi.com",
+    "verdict": {
+      "noAI": {
+        "badge": "Ingen AI använd",
+        "headline": "AI var inte inblandad i den här låten",
+        "sub": "Det här diagnosverktyget gäller inte för låtar som är 100 % skapade av människor.",
+        "reason": "Alla delar markerades som skapade av människa."
+      },
+      "red": {
+        "badge": "Registrering osannolik",
+        "headline": "Upphovsrättsregistrering kan bli svårt i nuläget",
+        "sub": "KOMCAs disclosure-first-kriterier kräver bevis på ett väsentligt och ledande mänskligt kreativt bidrag.",
+        "reasonNoPositive": "Inget alternativ som styrker mänskligt kreativt bidrag valdes.",
+        "reasonAllAI": "Alla delar markerades som AI-genererade.",
+        "reasonOnlyPrompt": "Du angav att inga ytterligare redigeringar gjordes utöver att mata in en prompt.",
+        "reasonSuggestion": "Försök lägga till ett väsentligt bidrag — till exempel genom att skriva om texten eller forma arrangemanget — och kör sedan testet igen."
+      },
+      "green": {
+        "badge": "Hög sannolikhet",
+        "headline": "Upphovsrättsregistrering ser lovande ut",
+        "sub": "Tillräckligt mänskligt kreativt bidrag och styrkande underlag hittades.",
+        "reasonPositive": "{n} punkt(er) för mänskligt bidrag bekräftades.",
+        "reasonEvidence": "Du har {n} styrkande underlag."
+      },
+      "amberEvidence": {
+        "badge": "Behöver mer underlag",
+        "headline": "Bidrag finns, men underlag saknas",
+        "sub": "Brist på styrkande underlag kan slå negativt mot dig under granskningen.",
+        "reasonPositive": "{n} punkt(er) för mänskligt bidrag bekräftades.",
+        "reasonEvidenceLack": "Du har bara {n} underlag. 3 eller fler rekommenderas."
+      },
+      "amberWeak": {
+        "badge": "Behöver starkare bidrag",
+        "headline": "Det mänskliga bidraget är något svagt",
+        "sub": "Ett mer väsentligt kreativt bidrag skulle förbättra dina chanser till registrering.",
+        "reasonWeak": "Endast {n} punkt(er) för mänskligt bidrag bekräftades."
+      }
+    },
+    "summary": {
+      "title": "[Sammanfattning av självtest för inlämning till KOMCA]",
+      "songTitleLine": "Låttitel: ",
+      "aiToolLine": "AI-verktyg som använts: ",
+      "notEntered": "(ej angivet)",
+      "componentsHeading": "[Produktionsmetod per del]",
+      "contributionsHeading": "[Mänskligt kreativt bidrag]",
+      "noneApplicable": "Inget valt",
+      "evidenceHeading": "[Tillgängligt styrkande underlag]",
+      "resultLine": "Diagnosresultat: ",
+      "referenceNote": "* Denna sammanfattning är endast avsedd som vägledning för självtest och kan skilja sig från KOMCAs officiella granskningsresultat."
+    }
+  },
+  da:   {
+    "eyebrow": "Afspejler KOMCA's reviderede standard fra august 2026",
+    "title": "Selvtjek af ophavsret til AI-musik",
+    "lede": "Tjek på forhånd, om din AI-understøttede sang sandsynligvis kan opnå ophavsretsregistrering hos KOMCA. Dette er et vejledende selvtjek, ikke en officiel vurdering.",
+    "noticeLabel": "Bemærk",
+    "noticeBody": "Dette værktøj erstatter ikke juridisk rådgivning eller KOMCA's officielle sagsbehandling. Resultaterne er kun vejledende – den endelige afgørelse om registrering træffes af KOMCA's sagsbehandling.",
+    "stamp": "AI-skabelse\nSelvtjek",
+    "secA": "Sanginfo",
+    "songTitleLabel": "Sangtitel",
+    "songTitlePh": "fx Clean Conscience",
+    "aiToolLabel": "Anvendt AI-værktøj",
+    "aiToolPh": "fx Suno AI",
+    "secB": "Hvordan hvert element er skabt",
+    "secBHint": "Vælg for hvert element, hvem eller hvad der primært har skabt det.",
+    "compLabels": [
+      "Tekst",
+      "Komposition (melodi)",
+      "Arrangement",
+      "Fremførelse / vokal"
+    ],
+    "compOptions": [
+      "Skabt af menneske",
+      "Menneske + AI i samarbejde",
+      "Genereret af AI"
+    ],
+    "secC": "Menneskeligt kreativt bidrag",
+    "secCHint": "Vælg alle punkter, der gælder.",
+    "contributions": [
+      "Jeg skrev eller omarbejdede selv teksten/melodien væsentligt",
+      "Jeg redigerede, omarrangerede eller omstrukturerede AI'ens output",
+      "Jeg udformede selv akkordforløb, opbygning eller arrangement",
+      "Jeg traf gentagne gange kreative valg, mens jeg udvalgte og finjusterede mellem flere AI-output",
+      "Jeg indtastede kun en prompt til AI'en og foretog ingen yderligere redigering bagefter"
+    ],
+    "secD": "Dokumentation",
+    "secDHint": "Vælg den dokumentation, du kan fremvise. Mere dokumentation styrker din sag.",
+    "evidence": [
+      "Udkast eller redigeringshistorik for tekst/melodi",
+      "Oprindelige AI-prompts og genererede output",
+      "Skærmoptagelser eller skærmbilleder af produktionsprocessen",
+      "Korrespondance med medskabere",
+      "DAW-projektfiler (produktionssoftware)"
+    ],
+    "diagnoseBtn": "Se vurdering",
+    "validationMsg": "Vælg venligst en produktionsmetode for hvert element i afsnit B.",
+    "reasonsHeading": "Grundlag for resultatet",
+    "evidenceHeading": "Status på dokumentation",
+    "evidenceMissingSuffix": "(ikke tilgængelig)",
+    "summaryHeading": "Opsummering til indsendelse hos KOMCA",
+    "copyBtn": "Kopiér",
+    "copiedBtn": "Kopieret!",
+    "finePrintPre": "Dette er kun en vejledende vurdering. Tjek den officielle standard på",
+    "finePrintLink": "KOMCA's officielle hjemmeside",
+    "finePrintPost": ".",
+    "resetBtn": "Start forfra",
+    "footer": "pomiai · checkpomi.com",
+    "verdict": {
+      "noAI": {
+        "badge": "AI ikke brugt",
+        "headline": "AI var ikke involveret i denne sang",
+        "sub": "Dette selvtjek-værktøj gælder ikke for sange, der er 100 % menneskeskabte.",
+        "reason": "Alle elementer blev markeret som skabt af mennesker."
+      },
+      "red": {
+        "badge": "Registrering usandsynlig",
+        "headline": "Ophavsretsregistrering kan blive svær, som det ser ud nu",
+        "sub": "KOMCA's disclosure-first-standard kræver dokumentation for et reelt og styrende menneskeligt kreativt bidrag.",
+        "reasonNoPositive": "Der blev ikke valgt noget punkt, der understøtter et menneskeligt kreativt bidrag.",
+        "reasonAllAI": "Alle elementer blev markeret som genereret af AI.",
+        "reasonOnlyPrompt": "Du angav, at der ikke blev foretaget yderligere redigering ud over at indtaste en prompt.",
+        "reasonSuggestion": "Prøv at tilføje et væsentligt bidrag – som fx at omskrive teksten eller forme arrangementet – og lav derefter tjekket igen."
+      },
+      "green": {
+        "badge": "Høj sandsynlighed",
+        "headline": "Ophavsretsregistrering ser sandsynlig ud",
+        "sub": "Der blev fundet tilstrækkeligt menneskeligt kreativt bidrag og dokumentation.",
+        "reasonPositive": "{n} punkt(er) om menneskeligt bidrag blev bekræftet.",
+        "reasonEvidence": "Du har {n} stykke(r) dokumentation."
+      },
+      "amberEvidence": {
+        "badge": "Mere dokumentation nødvendig",
+        "headline": "Bidraget er til stede, men dokumentationen mangler",
+        "sub": "Manglende dokumentation kan tale imod dig under sagsbehandlingen.",
+        "reasonPositive": "{n} punkt(er) om menneskeligt bidrag blev bekræftet.",
+        "reasonEvidenceLack": "Du har kun {n} stykke(r) dokumentation. 3 eller flere anbefales."
+      },
+      "amberWeak": {
+        "badge": "Stærkere bidrag nødvendigt",
+        "headline": "Det menneskelige bidrag er noget svagt",
+        "sub": "Et mere væsentligt kreativt bidrag vil forbedre dine chancer for registrering.",
+        "reasonWeak": "Kun {n} punkt(er) om menneskeligt bidrag blev bekræftet."
+      }
+    },
+    "summary": {
+      "title": "[Opsummering af selvtjek til indsendelse hos KOMCA]",
+      "songTitleLine": "Sangtitel: ",
+      "aiToolLine": "Anvendt AI-værktøj: ",
+      "notEntered": "(ikke angivet)",
+      "componentsHeading": "[Produktionsmetode pr. element]",
+      "contributionsHeading": "[Menneskeligt kreativt bidrag]",
+      "noneApplicable": "Intet valgt",
+      "evidenceHeading": "[Tilgængelig dokumentation]",
+      "resultLine": "Resultat af vurdering: ",
+      "referenceNote": "* Denne opsummering er kun til vejledende selvtjek og kan afvige fra KOMCA's officielle sagsbehandlingsresultat."
+    }
+  },
+  nn:   {
+    "eyebrow": "Basert på KOMCAs reviderte standard fra august 2026",
+    "title": "Selvdiagnose for AI-musikk og opphavsrett",
+    "lede": "Sjekk på forhånd om AI-assistert sang sannsynligvis kvalifiserer for opphavsrettsregistrering hos KOMCA. Dette er en veiledende selvsjekk, ikke en offisiell vurdering.",
+    "noticeLabel": "Merk",
+    "noticeBody": "Dette verktøyet erstatter ikke juridisk rådgivning eller KOMCAs offisielle vurdering. Resultatene er kun veiledende — endelig kvalifisering avgjøres av KOMCAs vurderingsprosess.",
+    "stamp": "AI-skaping\nSelvsjekk",
+    "secA": "Sanginfo",
+    "songTitleLabel": "Sangtittel",
+    "songTitlePh": "f.eks. Clean Conscience",
+    "aiToolLabel": "AI-verktøy brukt",
+    "aiToolPh": "f.eks. Suno AI",
+    "secB": "Hvordan hver del ble laget",
+    "secBHint": "Velg for hver del hvem eller hva som primært skapte den.",
+    "compLabels": [
+      "Tekst",
+      "Komposisjon (melodi)",
+      "Arrangement",
+      "Fremføring / vokal"
+    ],
+    "compOptions": [
+      "Laget av menneske",
+      "Menneske + AI i samarbeid",
+      "AI-generert"
+    ],
+    "secC": "Menneskelig kreativt bidrag",
+    "secCHint": "Velg alle punkter som passer.",
+    "contributions": [
+      "Jeg skrev eller reviderte teksten/melodien betydelig selv",
+      "Jeg redigerte, omorganiserte eller restrukturerte AI-resultatet",
+      "Jeg utformet selv akkordprogresjonen, strukturen eller arrangementet",
+      "Jeg gjorde gjentatte kreative vurderinger ved å velge og finpusse blant flere AI-resultater",
+      "Jeg skrev kun inn en prompt til AI-en og gjorde ingen videre redigering etterpå"
+    ],
+    "secD": "Dokumentasjon",
+    "secDHint": "Velg dokumentasjonen du kan fremlegge. Mer dokumentasjon styrker saken din.",
+    "evidence": [
+      "Utkast eller revisjonshistorikk for tekst/melodi",
+      "Originale AI-prompter og genererte resultater",
+      "Skjermopptak eller bilder av produksjonsprosessen",
+      "Kommunikasjon med medskapere",
+      "DAW-prosjektfiler (produksjonsprogramvare)"
+    ],
+    "diagnoseBtn": "Se diagnose",
+    "validationMsg": "Velg en produksjonsmetode for hver del i seksjon B.",
+    "reasonsHeading": "Grunnlag for dette resultatet",
+    "evidenceHeading": "Status for dokumentasjon",
+    "evidenceMissingSuffix": "(ikke tilgjengelig)",
+    "summaryHeading": "Oppsummering for innsending til KOMCA",
+    "copyBtn": "Kopier",
+    "copiedBtn": "Kopiert!",
+    "finePrintPre": "Dette er kun en veiledende diagnose. Sjekk den offisielle standarden på",
+    "finePrintLink": "KOMCAs offisielle nettsted",
+    "finePrintPost": ".",
+    "resetBtn": "Start på nytt",
+    "footer": "pomiai · checkpomi.com",
+    "verdict": {
+      "noAI": {
+        "badge": "Ingen AI brukt",
+        "headline": "AI var ikke involvert i denne sangen",
+        "sub": "Dette diagnoseverktøyet gjelder ikke for sanger som er 100 % laget av mennesker.",
+        "reason": "Alle delene ble merket som laget av menneske."
+      },
+      "red": {
+        "badge": "Registrering usannsynlig",
+        "headline": "Opphavsrettsregistrering kan bli vanskelig slik det ser ut nå",
+        "sub": "KOMCAs disclosure-first-standard krever dokumentasjon på et reelt og ledende menneskelig kreativt bidrag.",
+        "reasonNoPositive": "Ingen punkter som støtter menneskelig kreativt bidrag ble valgt.",
+        "reasonAllAI": "Alle delene ble merket som AI-generert.",
+        "reasonOnlyPrompt": "Du oppga at det ikke ble gjort videre redigering utover å skrive inn en prompt.",
+        "reasonSuggestion": "Prøv å legge til et betydelig bidrag — som å omskrive teksten eller forme arrangementet — og kjør deretter sjekken på nytt."
+      },
+      "green": {
+        "badge": "Høy sannsynlighet",
+        "headline": "Opphavsrettsregistrering ser sannsynlig ut",
+        "sub": "Det ble funnet tilstrekkelig menneskelig kreativt bidrag og dokumentasjon.",
+        "reasonPositive": "{n} punkt(er) med menneskelig bidrag ble bekreftet.",
+        "reasonEvidence": "Du har {n} stykke(r) dokumentasjon."
+      },
+      "amberEvidence": {
+        "badge": "Trenger mer dokumentasjon",
+        "headline": "Bidraget er til stede, men dokumentasjonen mangler",
+        "sub": "Manglende dokumentasjon kan slå negativt ut under vurderingen.",
+        "reasonPositive": "{n} punkt(er) med menneskelig bidrag ble bekreftet.",
+        "reasonEvidenceLack": "Du har bare {n} stykke(r) dokumentasjon. 3 eller flere anbefales."
+      },
+      "amberWeak": {
+        "badge": "Trenger sterkere bidrag",
+        "headline": "Det menneskelige bidraget er noe svakt",
+        "sub": "Et mer betydelig kreativt bidrag vil øke sjansene for registrering.",
+        "reasonWeak": "Bare {n} punkt(er) med menneskelig bidrag ble bekreftet."
+      }
+    },
+    "summary": {
+      "title": "[Oppsummering av selvsjekk for innsending til KOMCA]",
+      "songTitleLine": "Sangtittel: ",
+      "aiToolLine": "AI-verktøy brukt: ",
+      "notEntered": "(ikke oppgitt)",
+      "componentsHeading": "[Produksjonsmetode per del]",
+      "contributionsHeading": "[Menneskelig kreativt bidrag]",
+      "noneApplicable": "Ingen valgt",
+      "evidenceHeading": "[Tilgjengelig dokumentasjon]",
+      "resultLine": "Diagnoseresultat: ",
+      "referenceNote": "* Denne oppsummeringen er kun veiledende for selvsjekk og kan avvike fra KOMCAs offisielle vurderingsresultat."
+    }
+  },
+  ar:   {
+    "eyebrow": "يعكس معايير KOMCA المعدَّلة في أغسطس 2026",
+    "title": "التشخيص الذاتي لحقوق نشر موسيقى الذكاء الاصطناعي",
+    "lede": "تحقّق مسبقًا مما إذا كانت أغنيتك التي شارك في صنعها الذكاء الاصطناعي مؤهلة على الأرجح لتسجيل حقوق النشر لدى KOMCA. هذا فحص ذاتي مرجعي، وليس مراجعة رسمية.",
+    "noticeLabel": "تنبيه",
+    "noticeBody": "لا تُغني هذه الأداة عن الاستشارة القانونية أو المراجعة الرسمية لدى KOMCA. النتائج مخصصة للاسترشاد فقط، ويتحدد الأهلية النهائية من خلال عملية مراجعة KOMCA.",
+    "stamp": "إبداع بالذكاء الاصطناعي\nفحص ذاتي",
+    "secA": "معلومات الأغنية",
+    "songTitleLabel": "عنوان الأغنية",
+    "songTitlePh": "مثال: Clean Conscience",
+    "aiToolLabel": "أداة الذكاء الاصطناعي المستخدمة",
+    "aiToolPh": "مثال: Suno AI",
+    "secB": "كيفية صنع كل عنصر",
+    "secBHint": "لكل عنصر، اختر من أو ما الذي صنعه بشكل أساسي.",
+    "compLabels": [
+      "الكلمات",
+      "التلحين (اللحن)",
+      "التوزيع",
+      "الأداء / الغناء"
+    ],
+    "compOptions": [
+      "من صنع الإنسان",
+      "تعاون بين الإنسان والذكاء الاصطناعي",
+      "من صنع الذكاء الاصطناعي"
+    ],
+    "secC": "المساهمة الإبداعية البشرية",
+    "secCHint": "اختر كل عنصر ينطبق عليك.",
+    "contributions": [
+      "كتبتُ الكلمات/اللحن بنفسي أو أجريتُ عليها تعديلات جوهرية",
+      "قمتُ بتحرير مخرجات الذكاء الاصطناعي أو إعادة ترتيبها أو إعادة هيكلتها",
+      "صممتُ بنفسي تتابع الأوتار أو البنية أو التوزيع",
+      "اتخذتُ قرارات إبداعية متكررة أثناء اختيار وتنقيح مخرجات متعددة من الذكاء الاصطناعي",
+      "اكتفيتُ بإدخال أمر توجيهي (prompt) للذكاء الاصطناعي ولم أجرِ أي تعديلات لاحقة"
+    ],
+    "secD": "المستندات الداعمة",
+    "secDHint": "اختر المستندات التي يمكنك تقديمها. زيادة المستندات تعزز موقفك.",
+    "evidence": [
+      "ملفات مسودة أو سجل تعديلات للكلمات/اللحن",
+      "الأوامر التوجيهية (prompts) الأصلية للذكاء الاصطناعي والمخرجات الناتجة عنها",
+      "تسجيلات أو لقطات شاشة لعملية الإنتاج",
+      "سجلات التواصل مع المتعاونين في الإبداع",
+      "ملفات مشروع DAW (برنامج الإنتاج)"
+    ],
+    "diagnoseBtn": "عرض التشخيص",
+    "validationMsg": "يرجى اختيار طريقة الإنتاج لكل عنصر في القسم B.",
+    "reasonsHeading": "أساس هذه النتيجة",
+    "evidenceHeading": "حالة المستندات الداعمة",
+    "evidenceMissingSuffix": "(غير متوفر)",
+    "summaryHeading": "ملخص للتقديم إلى KOMCA",
+    "copyBtn": "نسخ",
+    "copiedBtn": "تم النسخ!",
+    "finePrintPre": "هذا تشخيص مرجعي فقط. اطّلع على المعيار الرسمي في",
+    "finePrintLink": "الموقع الرسمي لـ KOMCA",
+    "finePrintPost": ".",
+    "resetBtn": "البدء من جديد",
+    "footer": "pomiai · checkpomi.com",
+    "verdict": {
+      "noAI": {
+        "badge": "لم يُستخدم ذكاء اصطناعي",
+        "headline": "لم يشارك الذكاء الاصطناعي في هذه الأغنية",
+        "sub": "لا تنطبق أداة التشخيص هذه على الأغاني المصنوعة بالكامل من قبل الإنسان بنسبة 100%.",
+        "reason": "تم تحديد جميع العناصر على أنها من صنع الإنسان."
+      },
+      "red": {
+        "badge": "التسجيل غير مرجّح",
+        "headline": "قد يكون تسجيل حقوق النشر صعبًا في الوضع الحالي",
+        "sub": "يتطلب معيار KOMCA القائم على الإفصاح إثبات مساهمة إبداعية بشرية جوهرية وقيادية.",
+        "reasonNoPositive": "لم يتم اختيار أي عنصر يدعم المساهمة الإبداعية البشرية.",
+        "reasonAllAI": "تم تحديد جميع العناصر على أنها من صنع الذكاء الاصطناعي.",
+        "reasonOnlyPrompt": "أشرتَ إلى عدم إجراء أي تعديلات لاحقة بعد إدخال الأمر التوجيهي.",
+        "reasonSuggestion": "حاول إضافة مساهمة جوهرية — مثل إعادة كتابة الكلمات أو تشكيل التوزيع — ثم أعد الفحص مرة أخرى."
+      },
+      "green": {
+        "badge": "احتمالية عالية",
+        "headline": "يبدو تسجيل حقوق النشر مرجّحًا",
+        "sub": "تم العثور على مساهمة إبداعية بشرية كافية ومستندات داعمة.",
+        "reasonPositive": "تم تأكيد {n} عنصر (عناصر) من المساهمة البشرية.",
+        "reasonEvidence": "لديك {n} من المستندات الداعمة."
+      },
+      "amberEvidence": {
+        "badge": "يحتاج إلى مزيد من المستندات",
+        "headline": "المساهمة موجودة، لكن المستندات الداعمة ناقصة",
+        "sub": "قد يعمل نقص المستندات الداعمة ضدك أثناء المراجعة.",
+        "reasonPositive": "تم تأكيد {n} عنصر (عناصر) من المساهمة البشرية.",
+        "reasonEvidenceLack": "لديك {n} فقط من المستندات. يُنصح بثلاثة أو أكثر."
+      },
+      "amberWeak": {
+        "badge": "يحتاج إلى مساهمة أقوى",
+        "headline": "المساهمة البشرية ضعيفة نوعًا ما",
+        "sub": "من شأن مساهمة إبداعية أكثر جوهرية أن تحسّن فرص التسجيل.",
+        "reasonWeak": "تم تأكيد {n} عنصر (عناصر) فقط من المساهمة البشرية."
+      }
+    },
+    "summary": {
+      "title": "[ملخص الفحص الذاتي للتقديم إلى KOMCA]",
+      "songTitleLine": "عنوان الأغنية: ",
+      "aiToolLine": "أداة الذكاء الاصطناعي المستخدمة: ",
+      "notEntered": "(لم يُدخَل)",
+      "componentsHeading": "[طريقة الإنتاج لكل عنصر]",
+      "contributionsHeading": "[المساهمة الإبداعية البشرية]",
+      "noneApplicable": "لم يتم اختيار أي عنصر",
+      "evidenceHeading": "[المستندات الداعمة المتوفرة]",
+      "resultLine": "نتيجة التشخيص: ",
+      "referenceNote": "* هذا الملخص مخصص للفحص الذاتي المرجعي فقط وقد يختلف عن نتيجة المراجعة الرسمية لدى KOMCA."
+    }
+  },
+  ko: {
+    eyebrow: "KOMCA 2026.08 개정 기준 반영",
+    title: "AI 음악 저작권 등록 자가진단",
+    lede: "AI로 만든 곡, KOMCA에 저작권 등록이 가능할지 미리 점검해보세요. 정식 심사가 아닌 참고용 자가진단입니다.",
+    noticeLabel: "안내",
+    noticeBody: "이 도구는 법적 자문이나 KOMCA의 공식 심사 결과를 대체하지 않습니다. 결과는 참고용이며 최종 등록 가능 여부는 KOMCA 심사를 통해 결정됩니다.",
+    stamp: "AI 창작\n자가진단",
+    secA: "곡 정보",
+    songTitleLabel: "곡 제목",
+    songTitlePh: "예: Clean Conscience",
+    aiToolLabel: "사용한 AI 도구",
+    aiToolPh: "예: Suno AI",
+    secB: "구성 요소별 제작 방식",
+    secBHint: "각 구성 요소를 누가·무엇이 주도적으로 만들었는지 선택하세요.",
+    compLabels: ["가사", "작곡(멜로디)", "편곡", "연주 · 보컬"],
+    compOptions: ["사람이 직접", "사람+AI 협업", "AI가 생성"],
+    secC: "사람의 창작 기여",
+    secCHint: "해당하는 항목을 모두 선택하세요.",
+    contributions: [
+      "가사·멜로디를 직접 쓰거나 실질적으로 수정했다",
+      "AI 결과물을 편집·재배열·재구성했다",
+      "코드 진행, 곡 구조, 편곡을 직접 설계했다",
+      "여러 AI 결과물 중 선택하고 다듬는 과정에서 창작적 판단을 반복적으로 내렸다",
+      "AI에게 프롬프트만 입력했을 뿐 이후 수정 작업은 하지 않았다"
+    ],
+    secD: "증빙 자료",
+    secDHint: "제출 가능한 근거 자료를 선택하세요. 많을수록 심사에 유리합니다.",
+    evidence: [
+      "가사·멜로디 초안 또는 수정 이력 파일",
+      "AI 프롬프트 및 생성 결과물 원본",
+      "제작 과정 스크린 녹화 또는 캡처",
+      "공동 창작자와의 커뮤니케이션 기록",
+      "DAW(작업 프로그램) 프로젝트 파일"
+    ],
+    diagnoseBtn: "진단 결과 보기",
+    validationMsg: "B단계의 모든 구성 요소에 대해 제작 방식을 선택해주세요.",
+    reasonsHeading: "진단 근거",
+    evidenceHeading: "증빙 자료 현황",
+    evidenceMissingSuffix: "(미보유)",
+    summaryHeading: "KOMCA 제출용 요약",
+    copyBtn: "복사하기",
+    copiedBtn: "복사됨!",
+    finePrintPre: "이 진단은 참고용이며 공식 심사 기준은",
+    finePrintLink: "KOMCA 공식 사이트",
+    finePrintPost: "에서 확인하세요.",
+    resetBtn: "다시 진단하기",
+    footer: "pomiai · checkpomi.com",
+    verdict: {
+      noAI: {
+        badge: "AI 미사용",
+        headline: "AI가 관여하지 않은 곡입니다",
+        sub: "이 진단 도구는 100% 사람이 창작한 곡에는 적용되지 않습니다.",
+        reason: "모든 구성 요소가 사람에 의해 제작된 것으로 표시되었습니다."
+      },
+      red: {
+        badge: "등록 어려움",
+        headline: "현재 상태로는 저작권 등록이 어려울 수 있습니다",
+        sub: "KOMCA의 disclosure-first 기준은 사람의 실질적·주도적 창작 기여 확인을 요구합니다.",
+        reasonNoPositive: "사람의 창작 기여를 뒷받침하는 항목이 선택되지 않았습니다.",
+        reasonAllAI: "모든 구성 요소가 AI에 의해 생성된 것으로 표시되었습니다.",
+        reasonOnlyPrompt: "프롬프트 입력 외 추가 수정 작업이 없었던 것으로 표시되었습니다.",
+        reasonSuggestion: "가사 수정, 편곡 참여 등 실질적 기여를 추가한 뒤 다시 진단해보세요."
+      },
+      green: {
+        badge: "등록 가능성 높음",
+        headline: "저작권 등록 가능성이 높습니다",
+        sub: "사람의 창작 기여와 증빙 자료가 충분히 확인됩니다.",
+        reasonPositive: "사람의 창작 기여 항목 {n}개가 확인되었습니다.",
+        reasonEvidence: "증빙 자료 {n}개를 보유하고 있습니다."
+      },
+      amberEvidence: {
+        badge: "증빙 보완 필요",
+        headline: "창작 기여는 있으나 증빙 자료가 부족합니다",
+        sub: "심사 시 창작 기여를 뒷받침할 자료가 부족하면 불리할 수 있습니다.",
+        reasonPositive: "사람의 창작 기여 항목 {n}개가 확인되었습니다.",
+        reasonEvidenceLack: "증빙 자료가 {n}개뿐입니다. 3개 이상 확보를 권장합니다."
+      },
+      amberWeak: {
+        badge: "기여 보완 필요",
+        headline: "창작 기여가 다소 약합니다",
+        sub: "등록 가능성을 높이려면 더 실질적인 창작 기여가 필요합니다.",
+        reasonWeak: "사람의 창작 기여 항목이 {n}개만 확인되었습니다."
+      }
+    },
+    summary: {
+      title: "[KOMCA 제출용 자가진단 요약]",
+      songTitleLine: "곡 제목: ",
+      aiToolLine: "사용 AI 도구: ",
+      notEntered: "(미입력)",
+      componentsHeading: "[구성 요소별 제작 방식]",
+      contributionsHeading: "[사람의 창작 기여]",
+      noneApplicable: "해당 없음",
+      evidenceHeading: "[보유 증빙 자료]",
+      resultLine: "진단 결과: ",
+      referenceNote: "※ 본 요약은 자가진단 참고용이며 KOMCA 공식 심사 결과와 다를 수 있습니다."
+    }
+  },
+  en: {
+    eyebrow: "Reflects KOMCA's Aug 2026 revised standard",
+    title: "AI Music Copyright Self-Diagnostic",
+    lede: "Check in advance whether your AI-assisted song is likely to qualify for copyright registration with KOMCA. This is a reference self-check, not an official review.",
+    noticeLabel: "Notice",
+    noticeBody: "This tool does not replace legal advice or KOMCA's official review. Results are for reference only — final eligibility is determined by KOMCA's review process.",
+    stamp: "AI Creation\nSelf-Check",
+    secA: "Song Info",
+    songTitleLabel: "Song title",
+    songTitlePh: "e.g. Clean Conscience",
+    aiToolLabel: "AI tool used",
+    aiToolPh: "e.g. Suno AI",
+    secB: "How each component was made",
+    secBHint: "For each component, select who or what primarily created it.",
+    compLabels: ["Lyrics", "Composition (melody)", "Arrangement", "Performance / Vocals"],
+    compOptions: ["Human-made", "Human + AI collaboration", "AI-generated"],
+    secC: "Human creative contribution",
+    secCHint: "Select every item that applies.",
+    contributions: [
+      "I wrote or substantially revised the lyrics/melody myself",
+      "I edited, rearranged, or restructured the AI output",
+      "I personally designed the chord progression, structure, or arrangement",
+      "I repeatedly made creative judgment calls while selecting and refining among multiple AI outputs",
+      "I only entered a prompt to the AI and made no further edits afterward"
+    ],
+    secD: "Supporting evidence",
+    secDHint: "Select the evidence you can provide. More evidence strengthens your case.",
+    evidence: [
+      "Draft or revision-history files of the lyrics/melody",
+      "Original AI prompts and generated outputs",
+      "Screen recordings or captures of the production process",
+      "Communication records with co-creators",
+      "DAW (production software) project files"
+    ],
+    diagnoseBtn: "See diagnosis",
+    validationMsg: "Please select a production method for every component in section B.",
+    reasonsHeading: "Basis for this result",
+    evidenceHeading: "Evidence status",
+    evidenceMissingSuffix: "(not available)",
+    summaryHeading: "Summary for KOMCA submission",
+    copyBtn: "Copy",
+    copiedBtn: "Copied!",
+    finePrintPre: "This is a reference diagnosis only. Check the official standard at",
+    finePrintLink: "KOMCA's official site",
+    finePrintPost: ".",
+    resetBtn: "Start over",
+    footer: "pomiai · checkpomi.com",
+    verdict: {
+      noAI: {
+        badge: "No AI used",
+        headline: "AI was not involved in this song",
+        sub: "This diagnostic tool does not apply to songs that are 100% human-created.",
+        reason: "Every component was marked as human-made."
+      },
+      red: {
+        badge: "Registration unlikely",
+        headline: "Copyright registration may be difficult as things stand",
+        sub: "KOMCA's disclosure-first standard requires evidence of substantial, leading human creative contribution.",
+        reasonNoPositive: "No item supporting human creative contribution was selected.",
+        reasonAllAI: "Every component was marked as AI-generated.",
+        reasonOnlyPrompt: "You indicated no further edits were made beyond entering a prompt.",
+        reasonSuggestion: "Try adding substantial contribution — such as rewriting lyrics or shaping the arrangement — then run the check again."
+      },
+      green: {
+        badge: "High likelihood",
+        headline: "Copyright registration looks likely",
+        sub: "Sufficient human creative contribution and supporting evidence were found.",
+        reasonPositive: "{n} human-contribution item(s) were confirmed.",
+        reasonEvidence: "You have {n} piece(s) of supporting evidence."
+      },
+      amberEvidence: {
+        badge: "Needs more evidence",
+        headline: "Contribution is present, but evidence is lacking",
+        sub: "A lack of supporting evidence can work against you during review.",
+        reasonPositive: "{n} human-contribution item(s) were confirmed.",
+        reasonEvidenceLack: "You only have {n} piece(s) of evidence. 3 or more is recommended."
+      },
+      amberWeak: {
+        badge: "Needs stronger contribution",
+        headline: "Human contribution is somewhat weak",
+        sub: "More substantial creative contribution would improve your chances of registration.",
+        reasonWeak: "Only {n} human-contribution item(s) were confirmed."
+      }
+    },
+    summary: {
+      title: "[Self-Check Summary for KOMCA Submission]",
+      songTitleLine: "Song title: ",
+      aiToolLine: "AI tool used: ",
+      notEntered: "(not entered)",
+      componentsHeading: "[Production method by component]",
+      contributionsHeading: "[Human creative contribution]",
+      noneApplicable: "None selected",
+      evidenceHeading: "[Available supporting evidence]",
+      resultLine: "Diagnostic result: ",
+      referenceNote: "* This summary is for self-check reference only and may differ from KOMCA's official review outcome."
+    }
+  }
+};
+</script>
+<script>
+(function () {
+  var LANGS = [
+    { code: "ko", native: "한국어" },
+    { code: "en", native: "English" },
+    { code: "ja", native: "日本語" },
+    { code: "zh", native: "简体中文" },
+    { code: "tw", native: "繁體中文" },
+    { code: "de", native: "Deutsch" },
+    { code: "fr", native: "Français" },
+    { code: "nl", native: "Nederlands" },
+    { code: "sv", native: "Svenska" },
+    { code: "da", native: "Dansk" },
+    { code: "nn", native: "Norsk" },
+    { code: "ar", native: "العربية" }
+  ];
+  var RTL = { ar: true };
+
+  var STRINGS = window.__KOMCA_STRINGS__ || {};
+
+  var COMPONENT_KEYS = ["lyrics", "composition", "arrangement", "performance"];
+  var COMPONENT_OPTION_KEYS = ["human", "hybrid", "ai"];
+  var CONTRIB_KEYS = ["c1", "c2", "c3", "c4", "c5"];
+  var EVIDENCE_KEYS = ["e1", "e2", "e3", "e4", "e5"];
+
+  function S(lang) { return STRINGS[lang] || STRINGS.en || STRINGS.ko; }
+
+  var currentLang = (function () {
+    var saved = null;
+    try { saved = localStorage.getItem("komca-lang"); } catch (e) {}
+    if (saved && STRINGS[saved]) return saved;
+    var nav = (navigator.language || "ko").toLowerCase();
+    if (nav.indexOf("ko") === 0) return "ko";
+    if (nav.indexOf("ja") === 0) return "ja";
+    if (nav.indexOf("zh-tw") === 0 || nav.indexOf("zh-hant") === 0) return "tw";
+    if (nav.indexOf("zh") === 0) return "zh";
+    if (nav.indexOf("de") === 0) return "de";
+    if (nav.indexOf("fr") === 0) return "fr";
+    if (nav.indexOf("nl") === 0) return "nl";
+    if (nav.indexOf("sv") === 0) return "sv";
+    if (nav.indexOf("da") === 0) return "da";
+    if (nav.indexOf("no") === 0 || nav.indexOf("nb") === 0 || nav.indexOf("nn") === 0) return "nn";
+    if (nav.indexOf("ar") === 0) return "ar";
+    return STRINGS.ko ? "ko" : "en";
+  })();
+
+  var langSelect = document.getElementById("lang-select");
+  LANGS.forEach(function (l) {
+    var opt = document.createElement("option");
+    opt.value = l.code;
+    opt.textContent = l.native;
+    if (l.code === currentLang) opt.selected = true;
+    langSelect.appendChild(opt);
+  });
+  langSelect.addEventListener("change", function () {
+    setLang(langSelect.value);
+  });
+
+  var form = document.getElementById("diagnosis-form");
+  var validationMsg = document.getElementById("validation-msg");
+  var resultSection = document.getElementById("result");
+
+  function el(id) { return document.getElementById(id); }
+
+  function renderStatic(lang) {
+    var s = S(lang);
+    document.documentElement.setAttribute("lang", lang);
+    document.documentElement.setAttribute("dir", RTL[lang] ? "rtl" : "ltr");
+
+    el("stamp-text").textContent = s.stamp;
+    el("t-eyebrow").textContent = s.eyebrow;
+    el("t-title").textContent = s.title;
+    el("t-lede").textContent = s.lede;
+    el("t-notice-label").textContent = s.noticeLabel;
+    el("t-notice-body").textContent = " " + s.noticeBody;
+
+    el("t-secA").textContent = s.secA;
+    el("t-songtitle-label").textContent = s.songTitleLabel;
+    el("song-title").placeholder = s.songTitlePh;
+    el("t-aitool-label").textContent = s.aiToolLabel;
+    el("ai-tool").placeholder = s.aiToolPh;
+
+    el("t-secB").textContent = s.secB;
+    el("t-secB-hint").textContent = s.secBHint;
+    el("t-secC").textContent = s.secC;
+    el("t-secC-hint").textContent = s.secCHint;
+    el("t-secD").textContent = s.secD;
+    el("t-secD-hint").textContent = s.secDHint;
+
+    el("t-diagnose-btn").textContent = s.diagnoseBtn;
+    el("t-reasons-heading").textContent = s.reasonsHeading;
+    el("t-evidence-heading").textContent = s.evidenceHeading;
+    el("t-summary-heading").textContent = s.summaryHeading;
+    el("copy-btn").textContent = s.copyBtn;
+    el("reset-btn").textContent = s.resetBtn;
+    el("t-footer").textContent = s.footer;
+
+    var fp = el("t-fine-print");
+    fp.textContent = "";
+    fp.appendChild(document.createTextNode(s.finePrintPre + " "));
+    var a = document.createElement("a");
+    a.href = "https://www.komca.or.kr";
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = s.finePrintLink;
+    fp.appendChild(a);
+    fp.appendChild(document.createTextNode(" " + s.finePrintPost));
+
+    buildComponentGrid(s);
+    buildCheckList(el("contribution-list"), CONTRIB_KEYS, s.contributions, true);
+    buildCheckList(el("evidence-list"), EVIDENCE_KEYS, s.evidence, false);
+  }
+
+  function buildComponentGrid(s) {
+    var grid = el("component-grid");
+    grid.innerHTML = "";
+    COMPONENT_KEYS.forEach(function (key, i) {
+      var row = document.createElement("div");
+      row.className = "component-row";
+      var label = document.createElement("span");
+      label.className = "comp-label";
+      label.textContent = s.compLabels[i];
+      row.appendChild(label);
+
+      var group = document.createElement("div");
+      group.className = "chip-group";
+      COMPONENT_OPTION_KEYS.forEach(function (optKey, j) {
+        var id = key + "-" + optKey;
+        var input = document.createElement("input");
+        input.type = "radio";
+        input.name = key;
+        input.id = id;
+        input.value = optKey;
+        var lab = document.createElement("label");
+        lab.setAttribute("for", id);
+        lab.textContent = s.compOptions[j];
+        group.appendChild(input);
+        group.appendChild(lab);
+      });
+      row.appendChild(group);
+      grid.appendChild(row);
+    });
+  }
+
+  function buildCheckList(container, keys, labels, negLast) {
+    container.innerHTML = "";
+    keys.forEach(function (key, i) {
+      var isNegative = negLast && i === keys.length - 1;
+      var row = document.createElement("label");
+      row.className = "check-item" + (isNegative ? " negative" : "");
+      row.setAttribute("for", key);
+      var input = document.createElement("input");
+      input.type = "checkbox";
+      input.id = key;
+      input.value = key;
+      var span = document.createElement("span");
+      span.className = "txt";
+      span.textContent = labels[i];
+      row.appendChild(input);
+      row.appendChild(span);
+      container.appendChild(row);
+    });
+  }
+
+  function setLang(lang) {
+    currentLang = lang;
+    try { localStorage.setItem("komca-lang", lang); } catch (e) {}
+    renderStatic(lang);
+    resultSection.hidden = true;
+    validationMsg.hidden = true;
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var s = S(currentLang);
+
+    var componentValues = {};
+    var missingComponent = false;
+    COMPONENT_KEYS.forEach(function (key) {
+      var checked = form.querySelector('input[name="' + key + '"]:checked');
+      if (!checked) missingComponent = true;
+      componentValues[key] = checked ? checked.value : null;
+    });
+
+    if (missingComponent) {
+      validationMsg.textContent = s.validationMsg;
+      validationMsg.hidden = false;
+      return;
+    }
+    validationMsg.hidden = true;
+
+    var contribChecked = {};
+    CONTRIB_KEYS.forEach(function (key) { contribChecked[key] = el(key).checked; });
+    var evidenceChecked = {};
+    EVIDENCE_KEYS.forEach(function (key) { evidenceChecked[key] = el(key).checked; });
+
+    var songTitle = el("song-title").value.trim();
+    var aiTool = el("ai-tool").value.trim();
+
+    runDiagnosis(componentValues, contribChecked, evidenceChecked, songTitle, aiTool, s);
+  });
+
+  function runDiagnosis(components, contrib, evidence, songTitle, aiTool, s) {
+    var values = COMPONENT_KEYS.map(function (k) { return components[k]; });
+    var aiInvolved = values.some(function (v) { return v !== "human"; });
+    var allAI = values.every(function (v) { return v === "ai"; });
+
+    var positiveKeys = ["c1", "c2", "c3", "c4"];
+    var positiveScore = positiveKeys.filter(function (k) { return contrib[k]; }).length;
+    var onlyNegative = contrib.c5 && positiveScore === 0;
+    var evidenceScore = EVIDENCE_KEYS.filter(function (k) { return evidence[k]; }).length;
+
+    var v = s.verdict;
+    var verdictClass, badge, headline, sub, reasons = [];
+
+    if (!aiInvolved) {
+      verdictClass = "good"; badge = v.noAI.badge;
+      headline = v.noAI.headline; sub = v.noAI.sub;
+      reasons.push(v.noAI.reason);
+    } else if (positiveScore === 0 || (allAI && onlyNegative)) {
+      verdictClass = "bad"; badge = v.red.badge;
+      headline = v.red.headline; sub = v.red.sub;
+      reasons.push(v.red.reasonNoPositive);
+      if (allAI) reasons.push(v.red.reasonAllAI);
+      if (contrib.c5) reasons.push(v.red.reasonOnlyPrompt);
+      reasons.push(v.red.reasonSuggestion);
+    } else if (positiveScore >= 2 && evidenceScore >= 3) {
+      verdictClass = "good"; badge = v.green.badge;
+      headline = v.green.headline; sub = v.green.sub;
+      reasons.push(v.green.reasonPositive.replace("{n}", positiveScore));
+      reasons.push(v.green.reasonEvidence.replace("{n}", evidenceScore));
+    } else if (positiveScore >= 1 && evidenceScore < 3) {
+      verdictClass = "warn"; badge = v.amberEvidence.badge;
+      headline = v.amberEvidence.headline; sub = v.amberEvidence.sub;
+      reasons.push(v.amberEvidence.reasonPositive.replace("{n}", positiveScore));
+      reasons.push(v.amberEvidence.reasonEvidenceLack.replace("{n}", evidenceScore));
+    } else {
+      verdictClass = "warn"; badge = v.amberWeak.badge;
+      headline = v.amberWeak.headline; sub = v.amberWeak.sub;
+      reasons.push(v.amberWeak.reasonWeak.replace("{n}", positiveScore));
+    }
+
+    var verdictEl = el("verdict");
+    verdictEl.className = "verdict " + verdictClass;
+    verdictEl.innerHTML =
+      '<span class="verdict-badge">' + escapeHtml(badge) + '</span>' +
+      '<div class="verdict-body"><h3>' + escapeHtml(headline) + '</h3><p>' + escapeHtml(sub) + '</p></div>';
+
+    var reasonsList = el("reasons-list");
+    reasonsList.innerHTML = "";
+    reasons.forEach(function (r) {
+      var li = document.createElement("li");
+      li.textContent = r;
+      reasonsList.appendChild(li);
+    });
+
+    var evStatus = el("evidence-status-list");
+    evStatus.innerHTML = "";
+    EVIDENCE_KEYS.forEach(function (key, i) {
+      var have = evidence[key];
+      var row = document.createElement("div");
+      row.className = "ev-row " + (have ? "have" : "missing");
+      row.innerHTML =
+        '<span class="ev-icon">' + (have ? "✓" : "-") + '</span>' +
+        '<span class="txt">' + escapeHtml(s.evidence[i]) + (have ? "" : " " + escapeHtml(s.evidenceMissingSuffix)) + '</span>';
+      evStatus.appendChild(row);
+    });
+
+    var compOptMap = { human: s.compOptions[0], hybrid: s.compOptions[1], ai: s.compOptions[2] };
+    var sm = s.summary;
+    var lines = [];
+    lines.push(sm.title);
+    lines.push(sm.songTitleLine + (songTitle || sm.notEntered));
+    lines.push(sm.aiToolLine + (aiTool || sm.notEntered));
+    lines.push("");
+    lines.push(sm.componentsHeading);
+    COMPONENT_KEYS.forEach(function (key, i) {
+      lines.push("- " + s.compLabels[i] + ": " + compOptMap[components[key]]);
+    });
+    lines.push("");
+    lines.push(sm.contributionsHeading);
+    var contribLines = CONTRIB_KEYS.filter(function (k) { return contrib[k]; })
+      .map(function (k) { return "- " + s.contributions[CONTRIB_KEYS.indexOf(k)]; });
+    lines.push(contribLines.length ? contribLines.join("\n") : "- " + sm.noneApplicable);
+    lines.push("");
+    lines.push(sm.evidenceHeading);
+    var evLines = EVIDENCE_KEYS.filter(function (k) { return evidence[k]; })
+      .map(function (k) { return "- " + s.evidence[EVIDENCE_KEYS.indexOf(k)]; });
+    lines.push(evLines.length ? evLines.join("\n") : "- " + sm.noneApplicable);
+    lines.push("");
+    lines.push(sm.resultLine + badge);
+    lines.push(sm.referenceNote);
+
+    el("summary-text").textContent = lines.join("\n");
+
+    resultSection.hidden = false;
+    resultSection.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  }
+
+  function escapeHtml(str) {
+    var d = document.createElement("div");
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  el("copy-btn").addEventListener("click", function () {
+    var text = el("summary-text").textContent;
+    var btn = this;
+    var original = S(currentLang).copyBtn;
+    function done() {
+      btn.textContent = S(currentLang).copiedBtn;
+      btn.classList.add("copied");
+      setTimeout(function () { btn.textContent = original; btn.classList.remove("copied"); }, 1600);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+    function fallbackCopy() {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand("copy"); done(); } catch (err) {}
+      document.body.removeChild(ta);
+    }
+  });
+
+  el("reset-btn").addEventListener("click", function () {
+    form.reset();
+    resultSection.hidden = true;
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  renderStatic(currentLang);
+})();
+</script>
