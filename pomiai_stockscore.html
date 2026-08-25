@@ -1,0 +1,2418 @@
+<!DOCTYPE html>
+<html lang="ko" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="pomiai stock score dashboard: KOSPI200 / KOSDAQ150 valuation (PER, PBR, ROE), AI diagnostic score, AI price prediction and supply/demand signal for your watchlist. Export to CSV/Excel or print/save as PDF.">
+<title id="page-title">관심종목 진단 · AI예측 대시보드 | pomiai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    color-scheme: light;
+    --bg: #f7f5f0;
+    --surface: #ffffff;
+    --surface-2: #efece4;
+    --text-primary: #16181c;
+    --text-secondary: #565a66;
+    --text-muted: #8c8f97;
+    --border: rgba(15,20,30,0.11);
+    --border-strong: rgba(15,20,30,0.18);
+    --accent: #3a4f73;
+    --accent-strong: #24344f;
+    --accent-tint: #e7ebf3;
+    --badge-kospi: #b34d20;
+    --badge-kospi-bg: #fbe6d8;
+    --badge-kosdaq: #10805a;
+    --badge-kosdaq-bg: #dcf3e9;
+    --badge-etc: #493a9e;
+    --badge-etc-bg: #eae6fa;
+    --up: #b8302f;
+    --up-bg: #fbe6e5;
+    --down: #1f5fac;
+    --down-bg: #e4edfa;
+    --neutral: #8c8f97;
+    --shadow: 0 1px 2px rgba(20,20,15,0.04), 0 8px 24px -14px rgba(20,20,15,0.18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0c0d0f;
+      --surface: #17181c;
+      --surface-2: #1e2024;
+      --text-primary: #f4f4f2;
+      --text-secondary: #c3c2b7;
+      --text-muted: #8c8f97;
+      --border: rgba(255,255,255,0.10);
+      --border-strong: rgba(255,255,255,0.18);
+      --accent: #93a9d6;
+      --accent-strong: #b7c6e8;
+      --accent-tint: rgba(147,169,214,0.14);
+      --badge-kospi: #f0a578;
+      --badge-kospi-bg: rgba(217,89,38,0.18);
+      --badge-kosdaq: #6fe0b8;
+      --badge-kosdaq-bg: rgba(25,158,112,0.18);
+      --badge-etc: #c3bdf5;
+      --badge-etc-bg: rgba(144,133,233,0.18);
+      --up: #ea8280;
+      --up-bg: rgba(224,102,100,0.16);
+      --down: #7fa9e6;
+      --down-bg: rgba(57,135,229,0.16);
+      --neutral: #93949b;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -14px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0c0d0f;
+    --surface: #17181c;
+    --surface-2: #1e2024;
+    --text-primary: #f4f4f2;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8c8f97;
+    --border: rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.18);
+    --accent: #93a9d6;
+    --accent-strong: #b7c6e8;
+    --accent-tint: rgba(147,169,214,0.14);
+    --badge-kospi: #f0a578;
+    --badge-kospi-bg: rgba(217,89,38,0.18);
+    --badge-kosdaq: #6fe0b8;
+    --badge-kosdaq-bg: rgba(25,158,112,0.18);
+    --badge-etc: #c3bdf5;
+    --badge-etc-bg: rgba(144,133,233,0.18);
+    --up: #ea8280;
+    --up-bg: rgba(224,102,100,0.16);
+    --down: #7fa9e6;
+    --down-bg: rgba(57,135,229,0.16);
+    --neutral: #93949b;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -14px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: "IBM Plex Sans KR", "Pretendard", "Apple SD Gothic Neo", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .num { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 20px 64px;
+  }
+
+  /* ---------- header ---------- */
+  header { margin-bottom: 22px; }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .eyebrow {
+    margin: 0 0 4px;
+    font-size: 12.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(22px, 3.2vw, 30px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .meta-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .updated {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .updated .num { color: var(--text-primary); font-weight: 500; }
+  .refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .refresh-btn:hover { background: var(--accent-strong); }
+  .refresh-btn:active { transform: translateY(1px); }
+  .refresh-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .refresh-icon { display:inline-block; transition: transform .5s ease; }
+  .refresh-btn.spinning .refresh-icon { transform: rotate(360deg); }
+
+  .cadence-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ---------- stat tiles ---------- */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+  }
+  .stat-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow);
+  }
+  .stat-tile .label {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .stat-tile .value {
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .stat-tile .value.up { color: var(--up); }
+  .stat-tile .value.down { color: var(--down); }
+  .stat-tile .sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ---------- controls ---------- */
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 22px 0 12px;
+  }
+  .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .12s ease;
+  }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .chip[data-active="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .chip[data-active="true"] .count { opacity: .85; }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .chip-check input[type="checkbox"] { margin: 0; accent-color: var(--accent); cursor: pointer; }
+  .chip-check:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .search-sort { display: flex; align-items: center; gap: 8px; }
+  #searchInput, #sortSelect {
+    font-family: inherit;
+    font-size: 13px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 7px 10px;
+  }
+  #searchInput { width: 160px; }
+  #searchInput:focus-visible, #sortSelect:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* ---------- export ---------- */
+  .export-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--accent-strong);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background .12s ease;
+  }
+  .icon-btn:hover { background: var(--accent-tint); }
+  .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .export-note { font-size: 11.5px; color: var(--text-muted); }
+  .export-note.export-error { color: var(--down); }
+  .export-note.export-ok { color: var(--up); }
+
+  /* ---------- table ---------- */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: auto;
+    box-shadow: var(--shadow);
+  }
+  table { border-collapse: collapse; width: 100%; min-width: 1360px; }
+  thead th {
+    position: sticky; top: 0;
+    background: var(--surface-2);
+    text-align: left;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  thead th:hover { color: var(--text-secondary); }
+  thead th .arrow { font-size: 10px; margin-left: 3px; opacity: .5; }
+  th.group-start, td.group-start { border-left: 1px solid var(--border-strong); }
+  .fund-num { color: var(--text-secondary); }
+  .fund-num.pos { color: var(--up); }
+  .fund-num.neg { color: var(--down); }
+  .fund-empty { color: var(--text-muted); font-size: 12px; }
+  .fund-inferred { font-size: 10px; color: var(--text-muted); }
+  .earn-cell { font-size: 12px; color: var(--text-secondary); max-width: 230px; white-space: normal; line-height: 1.4; }
+  thead th[data-sorted="true"] { color: var(--accent); }
+  thead th[data-sorted="true"] .arrow { opacity: 1; }
+  tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface-2); }
+
+  .name-cell .name { font-weight: 600; }
+  .name-cell .code { font-size: 11.5px; color: var(--text-muted); margin-left: 6px; }
+  tr.child-row:not(.watch-row) td { background: var(--surface-2); }
+  tr.child-row:not(.watch-row):hover td { background: var(--surface-2); filter: brightness(0.97); }
+  tr.child-row .name { font-weight: 500; color: var(--text-secondary); }
+  .child-arrow { display: inline-block; color: var(--text-muted); margin-right: 4px; font-weight: 400; }
+  .pref-tag { font-size: 10.5px; color: var(--text-muted); }
+  .gap-rate { font-size: 10px; margin-top: 2px; font-weight: 500; }
+  .gap-rate.up { color: var(--up); }
+  .gap-rate.down { color: var(--down); }
+
+  /* ---------- 관심종목 강조 ---------- */
+  tr.watch-row td { background: var(--accent-tint); }
+  tr.watch-row:hover td { background: var(--accent-tint); filter: brightness(0.96); }
+  tr.watch-row.child-row td { background: var(--accent-tint); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .badge.kospi { background: var(--badge-kospi-bg); color: var(--badge-kospi); }
+  .badge.kosdaq { background: var(--badge-kosdaq-bg); color: var(--badge-kosdaq); }
+  .badge.etc { background: var(--badge-etc-bg); color: var(--badge-etc); }
+
+  .chg { font-weight: 600; }
+  .chg.up { color: var(--up); }
+  .chg.down { color: var(--down); }
+  .chg.flat { color: var(--neutral); }
+  .chg .arrow { font-size: 11px; }
+
+  .score-wrap { display: flex; align-items: center; gap: 8px; min-width: 108px; }
+  .score-bar-bg { flex: 1; height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 4px; background: var(--accent); }
+  .score-num { font-weight: 600; width: 26px; text-align: right; }
+  .score-empty { color: var(--text-muted); font-size: 12px; }
+
+  .ai-val.up { color: var(--up); font-weight: 600; }
+  .ai-val.down { color: var(--down); font-weight: 600; }
+  .ai-empty { color: var(--text-muted); font-size: 12px; }
+
+  .supply-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-secondary);
+  }
+  .supply-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .supply-pill.s-strong .dot { background: var(--up); }
+  .supply-pill.s-mid .dot { background: var(--neutral); }
+  .supply-pill.s-weak .dot { background: var(--down); }
+  .supply-empty { color: var(--text-muted); font-size: 12px; }
+
+  .empty-row td { text-align: center; padding: 30px; color: var(--text-muted); }
+
+  /* ---------- footer ---------- */
+  footer {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text-muted);
+  }
+  footer a { color: var(--accent); }
+  footer .foot-title { color: var(--text-secondary); font-weight: 600; margin-bottom: 3px; }
+
+  @media (max-width: 760px) {
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .header-top { align-items: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  /* ---------- print / PDF ---------- */
+  @media print {
+    body { background: #fff; color: #111; }
+    .page { max-width: 100%; padding: 8px 0; }
+    .refresh-btn, .cadence-note, .controls, .export-row, .stat-row { display: none !important; }
+    .table-wrap { box-shadow: none; border: 1px solid #ccc; overflow: visible; }
+    table { min-width: 0; width: 100%; font-size: 10.5px; }
+    thead th { position: static; background: #f0f0ee; color: #333; }
+    tbody tr:hover td { background: inherit; }
+    tr.watch-row td, tr.child-row td { background: #eef1f6 !important; }
+    * { box-shadow: none !important; }
+    footer { font-size: 9.5px; }
+  }
+
+
+/* ================= pomiai brand / i18n additions ================= */
+body {
+  font-family: "IBM Plex Sans KR", "Pretendard", "Apple SD Gothic Neo", "Noto Sans JP", "Noto Sans SC", "Noto Sans TC", "Noto Sans Arabic", "Noto Sans", system-ui, sans-serif;
+}
+.pomiai-topbar {
+  max-width: 1180px;
+  margin: 0 auto 14px;
+  padding: 10px 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pomiai-topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+}
+.pomiai-topbar-brand:hover { color: var(--accent); }
+.pomiai-topbar-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.pomiai-topbar-icon svg { width: 12px; height: 12px; }
+.pomiai-lang-wrap { position: relative; }
+#lang-select {
+  font: inherit;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  padding: 6px 28px 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.pomiai-lang-wrap::after {
+  content: "▾";
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+#lang-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.pomiai-brand-footer-line {
+  margin-top: 10px !important;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px !important;
+}
+.pomiai-brand-footer-line a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.pomiai-brand-footer-line a:hover { text-decoration: underline; }
+
+/* RTL (Arabic) layout */
+html[dir="rtl"] .page { direction: rtl; }
+html[dir="rtl"] body { font-family: "Noto Sans Arabic", "IBM Plex Sans KR", system-ui, sans-serif; }
+html[dir="rtl"] .pomiai-topbar,
+html[dir="rtl"] .header-top,
+html[dir="rtl"] .meta-block,
+html[dir="rtl"] .controls,
+html[dir="rtl"] .search-sort,
+html[dir="rtl"] .chip-row,
+html[dir="rtl"] .export-row { direction: rtl; }
+html[dir="rtl"] .name-cell .code { margin-left: 0; margin-right: 6px; }
+html[dir="rtl"] #searchInput { text-align: right; }
+/* Financial data table stays LTR internally for numeral/column legibility, a common
+   convention on Arabic finance sites; only its outer placement follows RTL page flow. */
+html[dir="rtl"] .table-wrap { direction: ltr; }
+html[dir="rtl"] .table-wrap thead th,
+html[dir="rtl"] .table-wrap td { text-align: left; }
+
+@media (max-width: 760px) {
+  .pomiai-topbar { padding: 10px 20px 0; }
+}
+
+/* print: hide brand chrome not relevant to the printed/PDF table */
+@media print {
+  .pomiai-topbar { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+
+<div class="pomiai-topbar">
+  <a class="pomiai-topbar-brand" href="https://checkpomi.com" target="_blank" rel="noopener">
+    <span class="pomiai-topbar-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5L9.5 18L20 6" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>
+    pomiai &middot; checkpomi.com
+  </a>
+  <div class="pomiai-lang-wrap">
+    <select id="lang-select" aria-label="Language"></select>
+  </div>
+</div>
+
+<div class="page">
+  <header>
+    <div class="header-top">
+      <div class="title-block">
+        <p class="eyebrow" data-i18n="eyebrow"></p>
+        <h1 data-i18n="h1"></h1>
+      </div>
+      <div class="meta-block">
+        <div>
+          <div class="updated"><span data-i18n="updated_prefix"></span> <span class="num" id="dataAsOf">2026-08-25 23:40 KST</span><span data-i18n="updated_suffix"></span></div>
+          <div class="cadence-note" data-i18n="cadence_note"></div>
+        </div>
+        <button class="refresh-btn" id="refreshBtn"><span class="refresh-icon">↻</span> <span data-i18n="refresh_btn"></span></button>
+      </div>
+    </div>
+    <div class="stat-row" id="statRow"></div>
+  </header>
+
+  <div class="controls">
+    <div class="chip-row" id="chipRow"></div>
+    <div class="search-sort">
+      <input id="searchInput" type="text" data-i18n-placeholder="search_placeholder" />
+      <select id="sortSelect">
+        <option value="score-desc" data-i18n="sort_score_desc"></option>
+        <option value="score-asc" data-i18n="sort_score_asc"></option>
+        <option value="chg-desc" data-i18n="sort_chg_desc"></option>
+        <option value="chg-asc" data-i18n="sort_chg_asc"></option>
+        <option value="ai-desc" data-i18n="sort_ai_desc"></option>
+        <option value="per-asc" data-i18n="sort_per_asc"></option>
+        <option value="pbr-asc" data-i18n="sort_pbr_asc"></option>
+        <option value="roe-desc" data-i18n="sort_roe_desc"></option>
+        <option value="name-asc" data-i18n="sort_name_asc"></option>
+        <option value="market" data-i18n="sort_market"></option>
+      </select>
+    </div>
+  </div>
+
+  <div class="export-row">
+    <button class="icon-btn" id="exportCsvBtn" data-i18n="export_csv_btn"></button>
+    <button class="icon-btn" id="printBtn" data-i18n="export_print_btn"></button>
+    <span class="export-note" id="exportStatus" data-i18n="export_note_default"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table id="stockTable">
+      <thead>
+        <tr>
+          <th data-key="name"><span data-i18n="col_name"></span> <span class="arrow">▾</span></th>
+          <th data-key="market"><span data-i18n="col_market"></span> <span class="arrow">▾</span></th>
+          <th data-key="price"><span data-i18n="col_price"></span> <span class="arrow">▾</span></th>
+          <th data-key="chg"><span data-i18n="col_chg"></span> <span class="arrow">▾</span></th>
+          <th data-key="score" class="group-start"><span data-i18n="col_score"></span> <span class="arrow">▾</span></th>
+          <th data-key="ai"><span data-i18n="col_ai"></span> <span class="arrow">▾</span></th>
+          <th data-key="supply"><span data-i18n="col_supply"></span> <span class="arrow">▾</span></th>
+          <th data-key="per" class="group-start"><span data-i18n="col_per"></span> <span class="arrow">▾</span></th>
+          <th data-key="pbr"><span data-i18n="col_pbr"></span> <span class="arrow">▾</span></th>
+          <th data-key="roe"><span data-i18n="col_roe"></span> <span class="arrow">▾</span></th>
+          <th><span data-i18n="col_earn"></span></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <p class="foot-title" data-i18n="foot_title"></p>
+    <p data-i18n-html="foot_p1"></p>
+    <p data-i18n-html="foot_p2"></p>
+    <p data-i18n-html="foot_p3"></p>
+    <p>
+      시장구분은 2026년 8월 기준 RISE 200·RISE 코스닥150 ETF 편입종목 및 kr.investing.com 코스피200 구성종목 목록을 기준으로 분류했습니다. 코스피200·코스닥150은 정기변경(통상 6월·12월)으로 구성종목이 바뀔 수 있습니다.
+    </p>
+    <p data-i18n-html="foot_p4"></p>
+    <p data-i18n="foot_p5"></p>
+    <p class="pomiai-brand-footer-line"><span id="t-footer-by"></span> <a href="https://checkpomi.com" target="_blank" rel="noopener">pomiai &middot; checkpomi.com</a></p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var I18N = {
+  "ko": {
+    "title": "관심종목 진단 · AI예측 대시보드",
+    "eyebrow": "관심종목 스코어보드",
+    "h1": "관심종목 진단 · AI예측 대시보드",
+    "updated_prefix": "데이터 기준",
+    "updated_suffix": " · 밸류라인 + 한경(우선주 시세) · 코스피200·코스닥150 전 종목 PER·PBR·진단점수·AI예측 포함",
+    "cadence_note": "평일 장중(09~15시) 매시 자동 갱신 + 새로고침 시 최신 발행본 표시 · 색이 있는 행 배경 = 관심종목",
+    "refresh_btn": "새로고침",
+    "search_placeholder": "종목명 검색",
+    "sort_score_desc": "진단점수 높은순",
+    "sort_score_asc": "진단점수 낮은순",
+    "sort_chg_desc": "등락률 높은순",
+    "sort_chg_asc": "등락률 낮은순",
+    "sort_ai_desc": "AI예측 높은순",
+    "sort_per_asc": "PER 낮은순(저평가)",
+    "sort_pbr_asc": "PBR 낮은순(저평가)",
+    "sort_roe_desc": "ROE 높은순",
+    "sort_name_asc": "이름순",
+    "sort_market": "시장구분순",
+    "col_name": "종목",
+    "col_market": "시장구분",
+    "col_price": "현재가",
+    "col_chg": "등락률",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "최근 실적(YoY)",
+    "col_score": "진단점수",
+    "col_ai": "AI예측(10일)",
+    "col_supply": "수급신호",
+    "lbl_total_stocks": "전체 종목",
+    "lbl_all": "전체",
+    "lbl_kospi200": "코스피200",
+    "lbl_kosdaq150": "코스닥150",
+    "lbl_pref": "우선주",
+    "lbl_watch": "관심종목",
+    "lbl_avg_score": "평균 진단점수(관심종목)",
+    "lbl_etc": "기타",
+    "unit_stocks": "종목",
+    "unit_score": "점",
+    "supply_verystrong": "매우강함",
+    "supply_strong": "강함",
+    "supply_mid": "보통",
+    "supply_weak": "약함",
+    "supply_veryweak": "매우약함",
+    "trend_up": "상승",
+    "trend_down": "하락",
+    "ai_no_value_suffix": "(수치 미표시)",
+    "no_data": "데이터없음",
+    "pref_suffix": "(우선주)",
+    "empty_message": "조건에 맞는 종목이 없습니다",
+    "valinferred_per": "본주 환산",
+    "valinferred_roe": "본주 동일",
+    "gap_label": "본주대비",
+    "foot_title": "참고 사항",
+    "foot_p1": "진단점수·AI예측 등락률·수급신호는 <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">밸류라인</a>이 빅데이터·ARIMA 기반 알고리즘으로 산출한 값을 그대로 가져온 것입니다 (효성화학은 원자료 표기가 다른 종목과 척도가 달라 \"13\"으로 그대로 표기했습니다). 우선주(●우 종목) 10개는 밸류라인이 AI 진단·예측·수급신호를 아예 산출하지 않아(개별 페이지 자체가 없음) 이 세 항목만 \"데이터없음(우선주)\"입니다 — 현재가·등락률은 다른 시세 소스에서 별도로 채워 넣었고, 거래가 뜸한 일부는 최근 체결일을 표기했습니다. 시장구분은 보통주 기준이 아닌 개별 증권 기준이라 우선주는 모두 \"기타\"로 표시했습니다. 달바글로벌은 사용자가 준 이름(\"달마글로벌\")과 실제 상장명이 달라 정정해 표기했습니다. GS건설은 2026년 5월 정기변경에서 코스피200에서 편출되어 현재는 \"기타\"입니다.",
+    "foot_p2": "우선주는 밸류라인 점수가 없는 대신 본주와 흐름이 비슷하다고 보고, 정렬 기준(진단점수·등락률·AI예측·이름·시장구분 등)과 무관하게 항상 자신의 본주(↳ 표시) 바로 아래에 붙여서 보여줍니다. 시장 필터로 \"기타\"만 볼 때처럼 본주가 화면에 없으면 우선주도 독립된 한 행으로 일반 정렬됩니다.",
+    "foot_p3": "PER·PBR·ROE·최근 실적(YoY)은 밸류라인이 공시 기준으로 산출한 값이며, 대부분 2026년 2분기(26.2Q) 실적 기준입니다(일부는 \"잠정\"). PER·PBR이 음수인 경우는 최근 분기 적자를 의미합니다. 우선주는 밸류라인이 별도 수치를 제공하지 않아 <strong>본주 PER·PBR × (우선주가/본주가)</strong>로 환산한 참고값이며(\"본주 환산\" 표기), ROE는 회사 전체 지표라 본주와 동일값을 그대로 썼습니다(\"본주 동일\" 표기) — 실제 공시 수치가 아니라 근사치이니 투자 판단에는 원 공시자료를 확인하세요.",
+    "foot_p4": "색이 있는 행 배경은 사용자가 지정한 <strong>관심종목</strong>(56개)입니다. 나머지 코스피200·코스닥150 구성종목(약 307개)도 중복을 제거한 뒤 밸류라인·한경에서 현재가·PER·PBR·ROE·진단점수·AI예측·수급신호를 모두 조회해 채워 넣었으며, 상단 체크박스로 전체/코스피200/코스닥150/우선주/관심종목을 자유롭게 조합해 볼 수 있습니다. 다만 관심종목 외 종목은 매시 자동 갱신 대상이 아니라 이번에 채운 시점 기준 스냅샷이며(추후 자동 갱신 범위 확대 예정), 일부 신규상장·지주사 전환 종목(예: 삼성에피스홀딩스)은 데이터 소스에서 코드가 확인되지 않아 이름·시장구분만 표시됩니다. 우선주 행의 \"본주대비\" 괴리율은 (우선주가－본주가)/본주가 로 계산한 값이며, 필터 상태와 무관하게 항상 표시됩니다.",
+    "foot_p5": "이 페이지는 투자 자문이 아닌 참고용 정보이며, 투자 판단과 책임은 본인에게 있습니다.",
+    "footer_by": "Product by",
+    "export_csv_btn": "⬇ CSV(엑셀) 다운로드",
+    "export_print_btn": "🖨 인쇄 / PDF로 저장",
+    "export_note_default": "현재 필터·검색·정렬 기준으로 화면에 보이는 결과만 내보냅니다",
+    "export_no_downloads": "이 화면에서는 다운로드를 지원하지 않아요. 대화창에서 받은 로컬 HTML 파일을 열어 이용해주세요.",
+    "export_done_prefix": "다운로드 완료: ",
+    "export_cancelled": "다운로드를 취소했습니다.",
+    "export_restricted": "이 화면에서는 CSV 다운로드가 제한되어 있어요. 로컬 HTML 파일에서 이용해주세요.",
+    "export_failed_prefix": "다운로드에 실패했습니다: ",
+    "export_failed_unknown": "알 수 없는 오류",
+    "csv_filename_prefix": "관심종목_스코어보드_",
+    "csv_col_code": "종목코드",
+    "csv_col_ai_trend": "AI예측(추세)",
+    "csv_col_gap": "본주대비 괴리율(%)"
+  },
+  "en": {
+    "title": "Watchlist Diagnostics · AI Prediction Dashboard",
+    "eyebrow": "Watchlist Scoreboard",
+    "h1": "Watchlist Diagnostics · AI Prediction Dashboard",
+    "updated_prefix": "Data as of",
+    "updated_suffix": " · Valueline + Hankyung (preferred stock prices) · Includes PER, PBR, diagnostic score, and AI prediction for all KOSPI200 and KOSDAQ150 constituents",
+    "cadence_note": "Automatically updated hourly during weekday trading hours (09:00–15:00) + refresh shows the latest published version · Colored row background = watchlist stock",
+    "refresh_btn": "Refresh",
+    "search_placeholder": "Search by stock name",
+    "sort_score_desc": "Diagnostic score: high to low",
+    "sort_score_asc": "Diagnostic score: low to high",
+    "sort_chg_desc": "Change: high to low",
+    "sort_chg_asc": "Change: low to high",
+    "sort_ai_desc": "AI prediction: high to low",
+    "sort_per_asc": "PER: low to high (undervalued)",
+    "sort_pbr_asc": "PBR: low to high (undervalued)",
+    "sort_roe_desc": "ROE: high to low",
+    "sort_name_asc": "By name",
+    "sort_market": "By market",
+    "col_name": "Stock",
+    "col_market": "Market",
+    "col_price": "Price",
+    "col_chg": "Change",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "Latest Earnings (YoY)",
+    "col_score": "Diagnostic Score",
+    "col_ai": "AI Prediction (10-Day)",
+    "col_supply": "Supply/Demand Signal",
+    "lbl_total_stocks": "Total Stocks",
+    "lbl_all": "All",
+    "lbl_kospi200": "KOSPI200",
+    "lbl_kosdaq150": "KOSDAQ150",
+    "lbl_pref": "Preferred Stock",
+    "lbl_watch": "Watchlist",
+    "lbl_avg_score": "Average Diagnostic Score (Watchlist)",
+    "lbl_etc": "Other",
+    "unit_stocks": " stocks",
+    "unit_score": " pts",
+    "supply_verystrong": "Very Strong",
+    "supply_strong": "Strong",
+    "supply_mid": "Moderate",
+    "supply_weak": "Weak",
+    "supply_veryweak": "Very Weak",
+    "trend_up": "Up",
+    "trend_down": "Down",
+    "ai_no_value_suffix": "(No value shown)",
+    "no_data": "No data",
+    "pref_suffix": " (Preferred)",
+    "empty_message": "No stocks match the current filters",
+    "valinferred_per": "Converted from Common",
+    "valinferred_roe": "Same as Common",
+    "gap_label": "vs. Common",
+    "foot_title": "Notes",
+    "foot_p1": "The diagnostic score, AI-predicted change, and supply/demand signal are values taken directly from <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a>'s big-data/ARIMA-based algorithm (for 효성화학, the raw data uses a different scale than other stocks, so it is shown as-is as \"13\"). For the 10 preferred stocks (marked ●Pref), Valueline does not calculate AI diagnostics, predictions, or supply/demand signals at all (no individual page exists for these), so only these three fields show \"No data (Preferred)\" — price and change were filled in separately from another quote source, and for some that trade infrequently, the most recent trade date is shown. Market classification is based on the individual security rather than the common stock, so all preferred stocks are labeled \"Other.\" For 달바글로벌, the name provided by the user (\"달마글로벌\") differed from its actual listed name, so it has been corrected here. GS건설 was removed from KOSPI200 in the May 2026 periodic rebalancing and is now classified as \"Other.\"",
+    "foot_p2": "Since preferred stocks have no Valueline score, they are assumed to move similarly to their common stock and are always displayed directly beneath their common stock (marked with ↳), regardless of the sort criteria (diagnostic score, change, AI prediction, name, market, etc.). When the common stock is not shown on screen — such as when filtering to view \"Other\" only — the preferred stock is instead displayed as its own independent row, sorted normally.",
+    "foot_p3": "PER, PBR, ROE, and latest earnings (YoY) are values calculated by Valueline based on regulatory disclosures, mostly for Q2 2026 (26.2Q) results (some are \"preliminary\"). A negative PER or PBR indicates a loss in the most recent quarter. Since Valueline does not provide separate figures for preferred stocks, PER and PBR are reference values converted using <strong>Common-stock PER/PBR × (preferred price / common price)</strong> (labeled \"Converted from Common\"), and ROE is a company-wide metric, so the common stock's value is used as-is (labeled \"Same as Common\") — these are approximations, not actual disclosed figures, so please check the original disclosure materials before making investment decisions.",
+    "foot_p4": "The colored row background indicates the <strong>watchlist</strong> stocks (56) designated by the user. The remaining KOSPI200 and KOSDAQ150 constituents (approximately 307 stocks), after removing duplicates, also had their price, PER, PBR, ROE, diagnostic score, AI prediction, and supply/demand signal fully retrieved from Valueline and Hankyung, and the checkboxes at the top let you freely combine All / KOSPI200 / KOSDAQ150 / Preferred / Watchlist views. However, stocks outside the watchlist are not part of the hourly automatic update and instead reflect a snapshot from when the data was last populated (the scope of automatic updates will be expanded in the future); for some newly listed or holding-company-converted stocks (e.g., 삼성에피스홀딩스), the code could not be identified in the data source, so only the name and market classification are shown. The \"vs. Common\" gap for preferred stock rows is calculated as (preferred price − common price) / common price, and is always displayed regardless of the filter state.",
+    "foot_p5": "This page provides reference information only, not investment advice; investment decisions and their consequences are the user's own responsibility.",
+    "footer_by": "Product by",
+    "export_csv_btn": "⬇ Download CSV (Excel)",
+    "export_print_btn": "🖨 Print / Save as PDF",
+    "export_note_default": "Exports only the results currently visible on screen, based on the active filters, search, and sort order",
+    "export_no_downloads": "Downloads aren't supported in this view. Please open the local HTML file you received in the chat to use this feature.",
+    "export_done_prefix": "Download complete: ",
+    "export_cancelled": "Download cancelled.",
+    "export_restricted": "CSV download is restricted in this view. Please use the local HTML file instead.",
+    "export_failed_prefix": "Download failed: ",
+    "export_failed_unknown": "Unknown error",
+    "csv_filename_prefix": "Watchlist_Scoreboard_",
+    "csv_col_code": "Code",
+    "csv_col_ai_trend": "AI Prediction (Trend)",
+    "csv_col_gap": "vs. Common Gap (%)"
+  },
+  "ja": {
+    "title": "注目銘柄診断・AI予測ダッシュボード",
+    "eyebrow": "注目銘柄スコアボード",
+    "h1": "注目銘柄診断・AI予測ダッシュボード",
+    "updated_prefix": "データ基準日",
+    "updated_suffix": " · バリューライン + 韓国経済新聞（優先株時価） · KOSPI200・KOSDAQ150全銘柄のPER・PBR・診断スコア・AI予測を含む",
+    "cadence_note": "平日の取引時間中（9時〜15時）は毎時自動更新 + 更新時に最新版を表示 · 色付きの行背景 = 注目銘柄",
+    "refresh_btn": "更新",
+    "search_placeholder": "銘柄名を検索",
+    "sort_score_desc": "診断スコアが高い順",
+    "sort_score_asc": "診断スコアが低い順",
+    "sort_chg_desc": "騰落率が高い順",
+    "sort_chg_asc": "騰落率が低い順",
+    "sort_ai_desc": "AI予測が高い順",
+    "sort_per_asc": "PERが低い順（割安）",
+    "sort_pbr_asc": "PBRが低い順（割安）",
+    "sort_roe_desc": "ROEが高い順",
+    "sort_name_asc": "名前順",
+    "sort_market": "市場区分順",
+    "col_name": "銘柄",
+    "col_market": "市場区分",
+    "col_price": "現在値",
+    "col_chg": "騰落率",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "直近実績（前年比）",
+    "col_score": "診断スコア",
+    "col_ai": "AI予測（10日）",
+    "col_supply": "需給シグナル",
+    "lbl_total_stocks": "全銘柄",
+    "lbl_all": "全体",
+    "lbl_kospi200": "KOSPI200",
+    "lbl_kosdaq150": "KOSDAQ150",
+    "lbl_pref": "優先株",
+    "lbl_watch": "注目銘柄",
+    "lbl_avg_score": "平均診断スコア（注目銘柄）",
+    "lbl_etc": "その他",
+    "unit_stocks": "銘柄",
+    "unit_score": "点",
+    "supply_verystrong": "非常に強い",
+    "supply_strong": "強い",
+    "supply_mid": "普通",
+    "supply_weak": "弱い",
+    "supply_veryweak": "非常に弱い",
+    "trend_up": "上昇",
+    "trend_down": "下落",
+    "ai_no_value_suffix": "（数値非表示）",
+    "no_data": "データなし",
+    "pref_suffix": "（優先株）",
+    "empty_message": "条件に一致する銘柄がありません",
+    "valinferred_per": "普通株換算",
+    "valinferred_roe": "普通株同値",
+    "gap_label": "普通株比",
+    "foot_title": "参考事項",
+    "foot_p1": "診断スコア・AI予測騰落率・需給シグナルは、<a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">バリューライン</a>がビッグデータ・ARIMAベースのアルゴリズムで算出した値をそのまま採用しています（효성화학は原資料の表記が他銘柄と尺度が異なるため、「13」のままとしています）。優先株（●優銘柄）10銘柄は、バリューラインがAI診断・予測・需給シグナルを一切算出していないため（個別ページ自体が存在しない）、この3項目のみ「データなし（優先株）」となります — 現在値・騰落率は別の時価ソースから個別に補完しており、取引が少ない一部銘柄については直近の約定日を表示しています。市場区分は普通株基準ではなく個別証券基準であるため、優先株はすべて「その他」と表示しています。달바글로벌は利用者から提供された名称（「달마글로벌」）と実際の上場名称が異なっていたため、訂正して表記しています。GS건설は2026年5月の定期変更でKOSPI200から除外され、現在は「その他」です。",
+    "foot_p2": "優先株はバリューラインのスコアがない代わりに普通株と値動きが似ていると見なし、並び替え基準（診断スコア・騰落率・AI予測・名前・市場区分など）に関わらず、常に自身の普通株（↳表示）の直下に連結して表示します。市場フィルターで「その他」のみを表示する場合のように普通株が画面上にない場合は、優先株も独立した1行として通常の並び替え対象になります。",
+    "foot_p3": "PER・PBR・ROE・直近実績（前年比）はバリューラインが公示基準で算出した値であり、大部分は2026年第2四半期（26.2Q）実績基準です（一部は「暫定」）。PER・PBRがマイナスの場合は直近四半期の赤字を意味します。優先株についてはバリューラインが個別数値を提供していないため、<strong>普通株PER・PBR × (優先株価/普通株価)</strong>で換算した参考値であり（「普通株換算」表記）、ROEは会社全体の指標であるため普通株と同じ値をそのまま使用しています（「普通株同値」表記） — 実際の公示数値ではなく近似値のため、投資判断には原公示資料をご確認ください。",
+    "foot_p4": "色付きの行背景は利用者が指定した<strong>注目銘柄</strong>（56銘柄）です。残りのKOSPI200・KOSDAQ150構成銘柄（約307銘柄）も重複を除去した上でバリューライン・韓国経済新聞から現在値・PER・PBR・ROE・診断スコア・AI予測・需給シグナルをすべて取得して補完しており、上部のチェックボックスで全体／KOSPI200／KOSDAQ150／優先株／注目銘柄を自由に組み合わせて表示できます。ただし注目銘柄以外の銘柄は毎時自動更新の対象ではなく、今回の取得時点でのスナップショットです（今後、自動更新の対象範囲を拡大予定）。また一部の新規上場・持株会社転換銘柄（例：삼성에피스홀딩스）はデータソース上でコードが確認できず、名前・市場区分のみ表示しています。優先株行の「普通株比」乖離率は (優先株価－普通株価)/普通株価 で算出した値であり、フィルターの状態に関わらず常に表示されます。",
+    "foot_p5": "このページは投資助言ではなく参考情報であり、投資判断とその責任はご本人にあります。",
+    "footer_by": "Product by",
+    "export_csv_btn": "⬇ CSV（エクセル）ダウンロード",
+    "export_print_btn": "🖨 印刷／PDFで保存",
+    "export_note_default": "現在のフィルター・検索・並び替え条件で画面に表示されている結果のみを書き出します",
+    "export_no_downloads": "この画面ではダウンロードに対応していません。チャットで受け取ったローカルのHTMLファイルを開いてご利用ください。",
+    "export_done_prefix": "ダウンロード完了：",
+    "export_cancelled": "ダウンロードをキャンセルしました。",
+    "export_restricted": "この画面ではCSVダウンロードが制限されています。ローカルのHTMLファイルでご利用ください。",
+    "export_failed_prefix": "ダウンロードに失敗しました：",
+    "export_failed_unknown": "不明なエラー",
+    "csv_filename_prefix": "注目銘柄_スコアボード_",
+    "csv_col_code": "銘柄コード",
+    "csv_col_ai_trend": "AI予測（トレンド）",
+    "csv_col_gap": "普通株比乖離率（%）"
+  },
+  "zh_CN": {
+    "title": "自选股诊断 · AI预测仪表盘",
+    "eyebrow": "自选股评分榜",
+    "h1": "自选股诊断 · AI预测仪表盘",
+    "updated_prefix": "数据截至",
+    "updated_suffix": " · Valueline + Hankyung（优先股行情）· 包含KOSPI200·KOSDAQ150全部成分股的PER·PBR·诊断评分·AI预测",
+    "cadence_note": "交易日盘中（09~15时）每小时自动更新 + 刷新时显示最新发布版本 · 带底色行背景 = 自选股",
+    "refresh_btn": "刷新",
+    "search_placeholder": "搜索股票名称",
+    "sort_score_desc": "诊断评分从高到低",
+    "sort_score_asc": "诊断评分从低到高",
+    "sort_chg_desc": "涨跌幅从高到低",
+    "sort_chg_asc": "涨跌幅从低到高",
+    "sort_ai_desc": "AI预测从高到低",
+    "sort_per_asc": "PER从低到高（低估）",
+    "sort_pbr_asc": "PBR从低到高（低估）",
+    "sort_roe_desc": "ROE从高到低",
+    "sort_name_asc": "按名称排序",
+    "sort_market": "按市场分类排序",
+    "col_name": "股票",
+    "col_market": "市场分类",
+    "col_price": "现价",
+    "col_chg": "涨跌幅",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "近期业绩（同比）",
+    "col_score": "诊断评分",
+    "col_ai": "AI预测（10日）",
+    "col_supply": "供需信号",
+    "lbl_total_stocks": "全部股票",
+    "lbl_all": "全部",
+    "lbl_kospi200": "KOSPI200",
+    "lbl_kosdaq150": "KOSDAQ150",
+    "lbl_pref": "优先股",
+    "lbl_watch": "自选股",
+    "lbl_avg_score": "平均诊断评分（自选股）",
+    "lbl_etc": "其他",
+    "unit_stocks": "只",
+    "unit_score": "分",
+    "supply_verystrong": "极强",
+    "supply_strong": "强",
+    "supply_mid": "中等",
+    "supply_weak": "弱",
+    "supply_veryweak": "极弱",
+    "trend_up": "上涨",
+    "trend_down": "下跌",
+    "ai_no_value_suffix": "（不显示数值）",
+    "no_data": "无数据",
+    "pref_suffix": "（优先股）",
+    "empty_message": "没有符合条件的股票",
+    "valinferred_per": "普通股换算",
+    "valinferred_roe": "普通股同值",
+    "gap_label": "较普通股",
+    "foot_title": "参考事项",
+    "foot_p1": "诊断评分、AI预测、涨跌幅、供需信号均为直接引用<a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a>基于大数据与ARIMA算法计算得出的数值（其中효성화학因原始数据的计量单位与其他个股不同，按原值直接标注为\"13\"）。优先股（标记为\"●우\"的股票）共10只，因Valueline并未计算其AI诊断、预测和供需信号（没有单独的个股页面），故仅这三项标注为\"无数据（优先股）\"——现价和涨跌幅另行取自其他行情数据源，其中部分交易不活跃的股票标注了最近成交日期。市场分类是按单一证券（而非普通股）为标准划分的，因此优先股统一标注为\"其他\"。달바글로벌因用户提供的名称（\"달마글로벌\"）与实际上市名称不同，已更正标注。GS건설已于2026年5月定期调整中被剔除出KOSPI200，目前标注为\"其他\"。",
+    "foot_p2": "优先股由于没有Valueline评分，故视为其走势与普通股相近，无论排序方式（诊断评分、涨跌幅、AI预测、名称、市场分类等）为何，都固定显示在其对应普通股（标记为↳）的正下方。若像市场筛选仅显示\"其他\"那样普通股未出现在画面中，优先股则会作为独立一行按一般排序方式显示。",
+    "foot_p3": "PER、PBR、ROE、近期业绩（同比）均为Valueline依据公开披露资料计算所得的数值，大多数以2026年第2季度（26.2Q）业绩为基准（部分为\"预估\"）。PER、PBR为负数时，代表最近一个季度出现亏损。优先股由于Valueline未提供单独数值，采用<strong>普通股PER、PBR × (优先股价/普通股价)</strong>换算得出的参考值（标注为\"普通股换算\"），ROE则因属于公司整体指标，直接沿用与普通股相同的数值（标注为\"普通股同值\"）——这些并非实际披露数值，而是估算值，投资判断请务必核对原始公开披露资料。",
+    "foot_p4": "带底色的行是用户指定的<strong>自选股</strong>（56只）。其余KOSPI200、KOSDAQ150成分股（约307只）在去重后，也从Valueline、Hankyung查询并填入了现价、PER、PBR、ROE、诊断评分、AI预测、供需信号等全部数据，可通过顶部的复选框自由组合查看全部/KOSPI200/KOSDAQ150/优先股/自选股。不过，自选股以外的股票并非每小时自动更新对象，而是本次填入时点的快照（后续将扩大自动更新范围），部分新上市、转为控股公司的股票（如：삼성에피스홀딩스）因数据源中无法确认代码，仅显示名称和市场分类。优先股行中的\"较普通股\"偏离率，是按 (优先股价－普通股价)/普通股价 计算所得的数值，无论筛选状态如何都会始终显示。",
+    "foot_p5": "本页面仅供参考，不构成投资建议，投资判断及责任由本人自行承担。",
+    "footer_by": "出品方",
+    "export_csv_btn": "⬇ 下载CSV（Excel）",
+    "export_print_btn": "🖨 打印 / 保存为PDF",
+    "export_note_default": "仅导出当前筛选·搜索·排序条件下画面中显示的结果",
+    "export_no_downloads": "此画面不支持下载。请打开从对话框获取的本地HTML文件后使用。",
+    "export_done_prefix": "下载完成：",
+    "export_cancelled": "已取消下载。",
+    "export_restricted": "此画面的CSV下载功能受限。请在本地HTML文件中使用。",
+    "export_failed_prefix": "下载失败：",
+    "export_failed_unknown": "未知错误",
+    "csv_filename_prefix": "自选股评分榜_",
+    "csv_col_code": "股票代码",
+    "csv_col_ai_trend": "AI预测（趋势）",
+    "csv_col_gap": "较普通股偏离率(%)"
+  },
+  "zh_TW": {
+    "title": "自選股診斷 · AI預測儀表板",
+    "eyebrow": "自選股評分看板",
+    "h1": "自選股診斷 · AI預測儀表板",
+    "updated_prefix": "資料基準",
+    "updated_suffix": " · Valueline + 韓經（特別股股價） · 涵蓋KOSPI200·KOSDAQ150全部成分股之PER·PBR·診斷分數·AI預測",
+    "cadence_note": "平日盤中（09~15時）每小時自動更新 + 重新整理時顯示最新發布版本 · 有顏色的列背景 = 自選股",
+    "refresh_btn": "重新整理",
+    "search_placeholder": "搜尋股票名稱",
+    "sort_score_desc": "診斷分數高到低",
+    "sort_score_asc": "診斷分數低到高",
+    "sort_chg_desc": "漲跌幅高到低",
+    "sort_chg_asc": "漲跌幅低到高",
+    "sort_ai_desc": "AI預測高到低",
+    "sort_per_asc": "PER低到高（低估）",
+    "sort_pbr_asc": "PBR低到高（低估）",
+    "sort_roe_desc": "ROE高到低",
+    "sort_name_asc": "依名稱排序",
+    "sort_market": "依市場別排序",
+    "col_name": "股票",
+    "col_market": "市場別",
+    "col_price": "現價",
+    "col_chg": "漲跌幅",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "近期業績（YoY）",
+    "col_score": "診斷分數",
+    "col_ai": "AI預測（10日）",
+    "col_supply": "籌碼訊號",
+    "lbl_total_stocks": "全部股票",
+    "lbl_all": "全部",
+    "lbl_kospi200": "KOSPI200",
+    "lbl_kosdaq150": "KOSDAQ150",
+    "lbl_pref": "特別股",
+    "lbl_watch": "自選股",
+    "lbl_avg_score": "平均診斷分數（自選股）",
+    "lbl_etc": "其他",
+    "unit_stocks": "檔",
+    "unit_score": "分",
+    "supply_verystrong": "非常強",
+    "supply_strong": "強",
+    "supply_mid": "普通",
+    "supply_weak": "弱",
+    "supply_veryweak": "非常弱",
+    "trend_up": "上漲",
+    "trend_down": "下跌",
+    "ai_no_value_suffix": "（未顯示數值）",
+    "no_data": "無資料",
+    "pref_suffix": "（特別股）",
+    "empty_message": "查無符合條件的股票",
+    "valinferred_per": "普通股換算",
+    "valinferred_roe": "普通股相同",
+    "gap_label": "較普通股",
+    "foot_title": "參考事項",
+    "foot_p1": "診斷分數、AI預測漲跌幅、籌碼訊號皆直接採用<a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a>以大數據與ARIMA為基礎的演算法所算出的數值（효성화학因原始資料的標示基準與其他個股不同，故直接沿用原值標示為「13」）。10檔特別股（標示為●特的個股）由於Valueline完全未提供AI診斷、預測、籌碼訊號（甚至沒有個股頁面），因此僅這三個項目顯示為「無資料（特別股）」——現價、漲跌幅則另外從其他行情來源填入，部分交易量稀少的個股則標示最近成交日。市場別是以個別證券為基準，而非以普通股為準，因此特別股一律標示為「其他」。달바글로벌因使用者提供的名稱（「달마글로벌」）與實際上市名稱不同，已更正標示。GS건설於2026年5月定期調整中遭剔除出KOSPI200，目前標示為「其他」。",
+    "foot_p2": "特別股雖無Valueline評分，但假設其走勢與普通股相近，因此無論排序依據為何（診斷分數、漲跌幅、AI預測、名稱、市場別等），皆固定顯示於其普通股（標示↳）正下方。若如市場篩選僅顯示「其他」時普通股未出現在畫面上，則該特別股會改以獨立一列依一般排序方式顯示。",
+    "foot_p3": "PER、PBR、ROE、近期業績（YoY）為Valueline依公開財報基準所計算之數值，大多以2026年第2季（26.2Q）財報為準（部分為「暫定」）。PER、PBR為負數時代表最近一季為虧損。特別股因Valueline未另行提供數值，故以<strong>普通股PER、PBR × （特別股股價/普通股股價）</strong>換算為參考值（標示為「普通股換算」），ROE則因屬公司整體指標，直接沿用普通股數值（標示為「普通股相同」）——此為近似值而非實際公開數值，投資判斷請查閱原始公開資料。",
+    "foot_p4": "有顏色的列背景為使用者指定的<strong>自選股</strong>（56檔）。其餘KOSPI200、KOSDAQ150成分股（約307檔）在去除重複後，也已從Valueline、韓經查詢並填入現價、PER、PBR、ROE、診斷分數、AI預測、籌碼訊號，並可透過上方核取方塊自由組合檢視全部/KOSPI200/KOSDAQ150/特別股/自選股。惟自選股以外的個股並非每小時自動更新對象，而是本次填入時間點的快照（未來將擴大自動更新範圍），部分新上市、轉型控股公司的個股（例如：삼성에피스홀딩스）因資料來源無法確認代碼，僅顯示名稱與市場別。特別股列的「較普通股」乖離率是以（特別股股價－普通股股價）/普通股股價計算而得，無論篩選狀態為何皆固定顯示。",
+    "foot_p5": "本頁面僅供參考，並非投資建議，投資判斷與責任由使用者自行承擔。",
+    "footer_by": "Product by",
+    "export_csv_btn": "⬇ 下載CSV（Excel）",
+    "export_print_btn": "🖨 列印 / 儲存為PDF",
+    "export_note_default": "僅匯出目前篩選·搜尋·排序條件下畫面顯示的結果",
+    "export_no_downloads": "此畫面不支援下載。請開啟從對話視窗取得的本機HTML檔案後使用。",
+    "export_done_prefix": "下載完成：",
+    "export_cancelled": "已取消下載。",
+    "export_restricted": "此畫面的CSV下載功能受限。請於本機HTML檔案中使用。",
+    "export_failed_prefix": "下載失敗：",
+    "export_failed_unknown": "未知錯誤",
+    "csv_filename_prefix": "自選股評分看板_",
+    "csv_col_code": "股票代碼",
+    "csv_col_ai_trend": "AI預測（趨勢）",
+    "csv_col_gap": "較普通股乖離率(%)"
+  },
+  "de_DE": {
+    "title": "Watchlist-Diagnose · KI-Prognose-Dashboard",
+    "eyebrow": "Watchlist-Scoreboard",
+    "h1": "Watchlist-Diagnose · KI-Prognose-Dashboard",
+    "updated_prefix": "Datenstand",
+    "updated_suffix": " · Valueline + Hankyung (Vorzugsaktienkurse) · Enthält PER, PBR, Diagnosewert und KI-Prognose für alle KOSPI200- und KOSDAQ150-Werte",
+    "cadence_note": "Automatische stündliche Aktualisierung an Handelstagen (09–15 Uhr) + Anzeige der neuesten Version beim Neuladen · Farbig hinterlegte Zeilen = Watchlist-Aktien",
+    "refresh_btn": "Aktualisieren",
+    "search_placeholder": "Aktienname suchen",
+    "sort_score_desc": "Diagnosewert absteigend",
+    "sort_score_asc": "Diagnosewert aufsteigend",
+    "sort_chg_desc": "Kursveränderung absteigend",
+    "sort_chg_asc": "Kursveränderung aufsteigend",
+    "sort_ai_desc": "KI-Prognose absteigend",
+    "sort_per_asc": "PER aufsteigend (unterbewertet)",
+    "sort_pbr_asc": "PBR aufsteigend (unterbewertet)",
+    "sort_roe_desc": "ROE absteigend",
+    "sort_name_asc": "Nach Name",
+    "sort_market": "Nach Marktsegment",
+    "col_name": "Aktie",
+    "col_market": "Marktsegment",
+    "col_price": "Aktueller Kurs",
+    "col_chg": "Veränderung",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "Letzte Ergebnisse (YoY)",
+    "col_score": "Diagnosewert",
+    "col_ai": "KI-Prognose (10 Tage)",
+    "col_supply": "Angebots-/Nachfragesignal",
+    "lbl_total_stocks": "Alle Aktien",
+    "lbl_all": "Alle",
+    "lbl_kospi200": "KOSPI200",
+    "lbl_kosdaq150": "KOSDAQ150",
+    "lbl_pref": "Vorzugsaktien",
+    "lbl_watch": "Watchlist",
+    "lbl_avg_score": "Durchschnittlicher Diagnosewert (Watchlist)",
+    "lbl_etc": "Sonstige",
+    "unit_stocks": " Aktien",
+    "unit_score": " Pkt.",
+    "supply_verystrong": "Sehr stark",
+    "supply_strong": "Stark",
+    "supply_mid": "Mittel",
+    "supply_weak": "Schwach",
+    "supply_veryweak": "Sehr schwach",
+    "trend_up": "Anstieg",
+    "trend_down": "Rückgang",
+    "ai_no_value_suffix": "(kein Wert angezeigt)",
+    "no_data": "Keine Daten",
+    "pref_suffix": " (Vorzugsaktie)",
+    "empty_message": "Keine Aktien entsprechen den Kriterien",
+    "valinferred_per": "Umgerechnet von Stammaktie",
+    "valinferred_roe": "Identisch mit Stammaktie",
+    "gap_label": "Abweichung zur Stammaktie",
+    "foot_title": "Hinweise",
+    "foot_p1": "Diagnosewert, KI-Prognose, Kursveränderung und Angebots-/Nachfragesignal werden unverändert von den Werten übernommen, die <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> mithilfe eines auf Big Data und ARIMA basierenden Algorithmus berechnet (bei 효성화학 weicht die Skala der Rohdaten von der anderer Aktien ab, daher wurde der Wert unverändert als „13“ übernommen). Für die 10 Vorzugsaktien (Kennzeichnung ●우) berechnet Valueline überhaupt keine KI-Diagnose, -Prognose oder ein Angebots-/Nachfragesignal (es existiert keine eigene Seite dafür); daher zeigen nur diese drei Felder „Keine Daten (Vorzugsaktie)“ — aktueller Kurs und Kursveränderung wurden separat aus anderen Kursdatenquellen ergänzt, und bei einigen selten gehandelten Werten wurde das Datum der letzten Ausführung angegeben. Da sich das Marktsegment nicht nach der Stammaktie, sondern nach dem einzelnen Wertpapier richtet, werden alle Vorzugsaktien als „Sonstige“ angezeigt. Bei 달바글로벌 wich der vom Nutzer angegebene Name („달마글로벌“) vom tatsächlichen Börsennamen ab und wurde entsprechend korrigiert. GS건설 wurde bei der planmäßigen Indexanpassung im Mai 2026 aus dem KOSPI200 entfernt und wird derzeit als „Sonstige“ geführt.",
+    "foot_p2": "Da für Vorzugsaktien kein Valueline-Wert vorliegt, wird angenommen, dass sie sich ähnlich wie ihre Stammaktie entwickeln; unabhängig vom gewählten Sortierkriterium (Diagnosewert, Kursveränderung, KI-Prognose, Name, Marktsegment usw.) werden sie stets direkt unter ihrer Stammaktie (Kennzeichnung ↳) angezeigt. Ist die Stammaktie nicht sichtbar — etwa wenn der Marktfilter nur „Sonstige“ anzeigt —, wird die Vorzugsaktie als eigenständige Zeile normal einsortiert.",
+    "foot_p3": "PER, PBR, ROE und die letzten Ergebnisse (YoY) werden von Valueline auf Basis der Unternehmensmeldungen berechnet, größtenteils für das 2. Quartal 2026 (26.2Q) (teilweise als „vorläufig“ gekennzeichnet). Ein negativer PER- oder PBR-Wert bedeutet einen Verlust im letzten Quartal. Da Valueline für Vorzugsaktien keine gesonderten Werte bereitstellt, handelt es sich hierbei um Näherungswerte, die als <strong>PER/PBR der Stammaktie × (Kurs der Vorzugsaktie / Kurs der Stammaktie)</strong> umgerechnet wurden (Kennzeichnung „Umgerechnet von Stammaktie“); der ROE ist eine unternehmensweite Kennzahl und wurde daher unverändert vom Wert der Stammaktie übernommen (Kennzeichnung „Identisch mit Stammaktie“) — da es sich nicht um die tatsächlich gemeldeten Werte, sondern um Näherungswerte handelt, prüfen Sie für Anlageentscheidungen bitte die Originalmeldungen.",
+    "foot_p4": "Farbig hinterlegte Zeilen kennzeichnen die vom Nutzer festgelegte <strong>Watchlist</strong> (56 Aktien). Für die übrigen KOSPI200- und KOSDAQ150-Mitgliedsaktien (rund 307 Aktien) wurden nach Entfernung von Duplikaten ebenfalls aktueller Kurs, PER, PBR, ROE, Diagnosewert, KI-Prognose und Angebots-/Nachfragesignal aus Valueline und Hankyung abgerufen; über die Kontrollkästchen oben lassen sich Alle/KOSPI200/KOSDAQ150/Vorzugsaktien/Watchlist frei kombinieren. Aktien außerhalb der Watchlist werden jedoch nicht stündlich automatisch aktualisiert, sondern stellen eine Momentaufnahme zum Zeitpunkt der letzten Befüllung dar (der Umfang der automatischen Aktualisierung soll künftig erweitert werden); bei einigen neu notierten Aktien oder Unternehmen, die in eine Holdingstruktur umgewandelt wurden (z. B. 삼성에피스홀딩스), konnte der Code in der Datenquelle nicht ermittelt werden, sodass nur Name und Marktsegment angezeigt werden. Die „Abweichung zur Stammaktie“ in der Zeile der Vorzugsaktie wird als (Kurs der Vorzugsaktie − Kurs der Stammaktie) / Kurs der Stammaktie berechnet und immer angezeigt, unabhängig vom Filterstatus.",
+    "foot_p5": "Diese Seite dient nur zu Informationszwecken und stellt keine Anlageberatung dar; die Anlageentscheidung und deren Verantwortung liegen allein bei Ihnen.",
+    "footer_by": "Produkt von",
+    "export_csv_btn": "⬇ CSV (Excel) herunterladen",
+    "export_print_btn": "🖨 Drucken / Als PDF speichern",
+    "export_note_default": "Es werden nur die aktuell mit den gewählten Filter-, Such- und Sortiereinstellungen angezeigten Ergebnisse exportiert.",
+    "export_no_downloads": "Downloads werden in dieser Ansicht nicht unterstützt. Bitte öffnen Sie die im Chat erhaltene lokale HTML-Datei und nutzen Sie diese dort.",
+    "export_done_prefix": "Download abgeschlossen: ",
+    "export_cancelled": "Der Download wurde abgebrochen.",
+    "export_restricted": "In dieser Ansicht ist der CSV-Download eingeschränkt. Bitte nutzen Sie die lokale HTML-Datei.",
+    "export_failed_prefix": "Download fehlgeschlagen: ",
+    "export_failed_unknown": "Unbekannter Fehler",
+    "csv_filename_prefix": "Watchlist_Scoreboard_",
+    "csv_col_code": "Aktiencode",
+    "csv_col_ai_trend": "KI-Prognose (Trend)",
+    "csv_col_gap": "Abweichung zur Stammaktie (%)"
+  },
+  "fr_FR": {
+    "title": "Diagnostic des valeurs suivies · Tableau de bord de prévision IA",
+    "eyebrow": "Scoreboard des valeurs suivies",
+    "h1": "Diagnostic des valeurs suivies · Tableau de bord de prévision IA",
+    "updated_prefix": "Données au",
+    "updated_suffix": " · Valueline + Hankyung (cours des actions préférentielles) · Inclut le PER, le PBR, le score de diagnostic et la prévision IA pour toutes les valeurs du KOSPI200 et du KOSDAQ150",
+    "cadence_note": "Mise à jour automatique toutes les heures pendant les heures de marché en semaine (9h-15h), avec affichage de la dernière version publiée lors de l'actualisation · Ligne à fond coloré = valeur suivie",
+    "refresh_btn": "Actualiser",
+    "search_placeholder": "Rechercher une valeur",
+    "sort_score_desc": "Score de diagnostic décroissant",
+    "sort_score_asc": "Score de diagnostic croissant",
+    "sort_chg_desc": "Variation décroissante",
+    "sort_chg_asc": "Variation croissante",
+    "sort_ai_desc": "Prévision IA décroissante",
+    "sort_per_asc": "PER croissant (sous-évaluées)",
+    "sort_pbr_asc": "PBR croissant (sous-évaluées)",
+    "sort_roe_desc": "ROE décroissant",
+    "sort_name_asc": "Ordre alphabétique",
+    "sort_market": "Par marché",
+    "col_name": "Valeur",
+    "col_market": "Marché",
+    "col_price": "Cours actuel",
+    "col_chg": "Variation",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "Résultats récents (YoY)",
+    "col_score": "Score de diagnostic",
+    "col_ai": "Prévision IA (10 jours)",
+    "col_supply": "Signal offre/demande",
+    "lbl_total_stocks": "Total des valeurs",
+    "lbl_all": "Toutes",
+    "lbl_kospi200": "KOSPI200",
+    "lbl_kosdaq150": "KOSDAQ150",
+    "lbl_pref": "Actions préférentielles",
+    "lbl_watch": "Valeurs suivies",
+    "lbl_avg_score": "Score de diagnostic moyen (valeurs suivies)",
+    "lbl_etc": "Autres",
+    "unit_stocks": " actions",
+    "unit_score": " pts",
+    "supply_verystrong": "Très fort",
+    "supply_strong": "Fort",
+    "supply_mid": "Moyen",
+    "supply_weak": "Faible",
+    "supply_veryweak": "Très faible",
+    "trend_up": "Hausse",
+    "trend_down": "Baisse",
+    "ai_no_value_suffix": "(valeur non affichée)",
+    "no_data": "Données indisponibles",
+    "pref_suffix": "(action préférentielle)",
+    "empty_message": "Aucune valeur ne correspond aux critères",
+    "valinferred_per": "Converti (action ordinaire)",
+    "valinferred_roe": "Identique (action ordinaire)",
+    "gap_label": "Écart vs action ordinaire",
+    "foot_title": "Remarques",
+    "foot_p1": "Le score de diagnostic, la variation prévue par l'IA et le signal offre/demande sont repris tels quels des valeurs calculées par <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> à l'aide d'un algorithme fondé sur le big data et le modèle ARIMA (pour 효성화학, l'échelle des données sources diffère de celle des autres valeurs ; la valeur \"13\" a donc été reprise telle quelle). Pour les 10 actions préférentielles (valeurs marquées ●우), Valueline ne calcule pas du tout le diagnostic IA, la prévision ni le signal offre/demande (ces actions ne disposent pas de page dédiée) ; ces trois éléments affichent donc uniquement la mention \"Données indisponibles (action préférentielle)\" — le cours actuel et la variation ont été renseignés séparément à partir d'une autre source de cotation, et pour les valeurs peu échangées, la date de la dernière transaction est indiquée. Le marché est classé par titre individuel et non par action ordinaire ; toutes les actions préférentielles sont donc affichées comme \"Autres\". Pour 달바글로벌, le nom fourni par l'utilisateur (\"달마글로벌\") différait de la dénomination officielle cotée ; il a donc été corrigé. GS건설 a été retiré du KOSPI200 lors de la révision périodique de mai 2026 et figure désormais dans \"Autres\".",
+    "foot_p2": "Comme les actions préférentielles ne disposent pas de score Valueline, on considère qu'elles suivent une évolution proche de celle de leur action ordinaire ; elles sont donc toujours affichées juste en dessous de leur action ordinaire (indiquée par ↳), quel que soit le critère de tri (score de diagnostic, variation, prévision IA, nom, marché, etc.). Si l'action ordinaire n'apparaît pas à l'écran — par exemple lorsque le filtre de marché n'affiche que \"Autres\" — l'action préférentielle est alors affichée comme une ligne indépendante, triée normalement.",
+    "foot_p3": "Le PER, le PBR, le ROE et les résultats récents (YoY) sont des valeurs calculées par Valueline sur la base des publications officielles, la plupart se référant aux résultats du 2e trimestre 2026 (26.2Q) (certains étant \"provisoires\"). Un PER ou un PBR négatif signifie une perte au dernier trimestre. Pour les actions préférentielles, Valueline ne fournit pas de valeurs distinctes ; il s'agit donc de valeurs de référence obtenues par <strong>PER/PBR de l'action ordinaire × (cours de l'action préférentielle / cours de l'action ordinaire)</strong> (mention \"Converti (action ordinaire)\"), et le ROE, étant un indicateur global de l'entreprise, reprend directement la même valeur que celle de l'action ordinaire (mention \"Identique (action ordinaire)\") — ce ne sont pas les chiffres officiels réels mais des approximations ; veuillez consulter les documents de publication originaux pour toute décision d'investissement.",
+    "foot_p4": "Les lignes à fond coloré correspondent aux <strong>valeurs suivies</strong> (56 actions) définies par l'utilisateur. Les autres valeurs composant le KOSPI200 et le KOSDAQ150 (environ 307 actions), une fois les doublons supprimés, ont également été renseignées avec le cours actuel, le PER, le PBR, le ROE, le score de diagnostic, la prévision IA et le signal offre/demande, obtenus auprès de Valueline et de Hankyung ; les cases à cocher en haut de page permettent de combiner librement Toutes / KOSPI200 / KOSDAQ150 / Actions préférentielles / Valeurs suivies. Toutefois, les valeurs autres que les valeurs suivies ne sont pas mises à jour automatiquement chaque heure : il s'agit d'un instantané pris au moment du dernier remplissage (l'extension de la mise à jour automatique est prévue ultérieurement). Pour certaines valeurs récemment introduites en bourse ou converties en société holding (par exemple 삼성에피스홀딩스), le code n'a pas pu être identifié dans la source de données ; seuls le nom et le marché sont donc affichés. La valeur \"Écart vs action ordinaire\" affichée sur les lignes des actions préférentielles est calculée comme (cours de l'action préférentielle − cours de l'action ordinaire) / cours de l'action ordinaire ; elle est toujours affichée, quel que soit l'état des filtres.",
+    "foot_p5": "Cette page fournit des informations à titre indicatif uniquement et ne constitue pas un conseil en investissement ; les décisions d'investissement relèvent de la seule responsabilité de l'utilisateur.",
+    "footer_by": "Produit par",
+    "export_csv_btn": "⬇ Télécharger au format CSV (Excel)",
+    "export_print_btn": "🖨 Imprimer / Enregistrer en PDF",
+    "export_note_default": "Seuls les résultats actuellement affichés à l'écran, selon les filtres, la recherche et le tri en cours, sont exportés.",
+    "export_no_downloads": "Le téléchargement n'est pas pris en charge dans cet affichage. Veuillez ouvrir le fichier HTML local reçu dans la conversation et l'utiliser à partir de là.",
+    "export_done_prefix": "Téléchargement terminé : ",
+    "export_cancelled": "Le téléchargement a été annulé.",
+    "export_restricted": "Le téléchargement CSV est limité dans cet affichage. Veuillez l'utiliser depuis le fichier HTML local.",
+    "export_failed_prefix": "Échec du téléchargement : ",
+    "export_failed_unknown": "Erreur inconnue",
+    "csv_filename_prefix": "Valeurs_Suivies_Scoreboard_",
+    "csv_col_code": "Code valeur",
+    "csv_col_ai_trend": "Prévision IA (tendance)",
+    "csv_col_gap": "Écart vs action ordinaire (%)"
+  },
+  "nl_NL": {
+    "title": "Watchlist-diagnose · AI-voorspellingsdashboard",
+    "eyebrow": "Watchlist-scorebord",
+    "h1": "Watchlist-diagnose · AI-voorspellingsdashboard",
+    "updated_prefix": "Gegevens per",
+    "updated_suffix": " · Valueline + Hankyung (koersen preferente aandelen) · inclusief PER, PBR, diagnosescore en AI-voorspelling voor alle aandelen in de KOSPI200 en KOSDAQ150",
+    "cadence_note": "Automatische update elk uur tijdens handelsuren op werkdagen (09.00-15.00 uur) + bij vernieuwen wordt de meest recente publicatie getoond · Gekleurde rijachtergrond = watchlistaandeel",
+    "refresh_btn": "Vernieuwen",
+    "search_placeholder": "Zoek op aandeelnaam",
+    "sort_score_desc": "Diagnosescore: hoog naar laag",
+    "sort_score_asc": "Diagnosescore: laag naar hoog",
+    "sort_chg_desc": "Koersverandering: hoog naar laag",
+    "sort_chg_asc": "Koersverandering: laag naar hoog",
+    "sort_ai_desc": "AI-voorspelling: hoog naar laag",
+    "sort_per_asc": "PER: laag naar hoog (ondergewaardeerd)",
+    "sort_pbr_asc": "PBR: laag naar hoog (ondergewaardeerd)",
+    "sort_roe_desc": "ROE: hoog naar laag",
+    "sort_name_asc": "Op naam",
+    "sort_market": "Op marktsegment",
+    "col_name": "Aandeel",
+    "col_market": "Marktsegment",
+    "col_price": "Huidige koers",
+    "col_chg": "Verandering",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "Recente resultaten (YoY)",
+    "col_score": "Diagnosescore",
+    "col_ai": "AI-voorspelling (10 dagen)",
+    "col_supply": "Vraag-en-aanbodsignaal",
+    "lbl_total_stocks": "Totaal aandelen",
+    "lbl_all": "Alle",
+    "lbl_kospi200": "KOSPI200",
+    "lbl_kosdaq150": "KOSDAQ150",
+    "lbl_pref": "Preferente aandelen",
+    "lbl_watch": "Watchlist",
+    "lbl_avg_score": "Gemiddelde diagnosescore (watchlist)",
+    "lbl_etc": "Overig",
+    "unit_stocks": " aandelen",
+    "unit_score": " pt",
+    "supply_verystrong": "Zeer sterk",
+    "supply_strong": "Sterk",
+    "supply_mid": "Gemiddeld",
+    "supply_weak": "Zwak",
+    "supply_veryweak": "Zeer zwak",
+    "trend_up": "Stijging",
+    "trend_down": "Daling",
+    "ai_no_value_suffix": " (waarde niet weergegeven)",
+    "no_data": "Geen data",
+    "pref_suffix": " (preferent aandeel)",
+    "empty_message": "Geen aandelen voldoen aan de criteria",
+    "valinferred_per": "Herleid van hoofdaandeel",
+    "valinferred_roe": "Gelijk aan hoofdaandeel",
+    "gap_label": "T.o.v. hoofdaandeel",
+    "foot_title": "Opmerkingen",
+    "foot_p1": "De diagnosescore, de door AI voorspelde koersverandering en het vraag-en-aanbodsignaal zijn rechtstreeks overgenomen uit de waarden die <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> berekent met een op big data en ARIMA gebaseerd algoritme (voor 효성화학 wijkt de schaal van de brongegevens af van andere aandelen, daarom is de waarde ongewijzigd als \"13\" weergegeven). Voor de 10 preferente aandelen (●우-aandelen) berekent Valueline in het geheel geen AI-diagnose, -voorspelling of -vraag-en-aanbodsignaal (er bestaat geen aparte pagina), waardoor voor deze drie velden alleen \"Geen data (preferent aandeel)\" wordt getoond — de huidige koers en koersverandering zijn afzonderlijk aangevuld uit een andere koersbron, en voor een aantal weinig verhandelde aandelen is de datum van de laatste transactie vermeld. Het marktsegment is gebaseerd op het individuele effect en niet op het gewone aandeel, waardoor preferente aandelen allemaal als \"Overig\" worden weergegeven. Bij 달바글로벌 week de door de gebruiker opgegeven naam (\"달마글로벌\") af van de werkelijke beursnaam en is dit gecorrigeerd. GS건설 is bij de reguliere herweging van mei 2026 uit de KOSPI200 verwijderd en valt nu onder \"Overig\".",
+    "foot_p2": "Omdat preferente aandelen geen Valueline-score hebben maar naar verwachting een vergelijkbaar koersverloop volgen als het hoofdaandeel, worden ze — ongeacht het sorteercriterium (diagnosescore, koersverandering, AI-voorspelling, naam, marktsegment enz.) — altijd direct onder hun eigen hoofdaandeel (aangeduid met ↳) weergegeven. Staat het hoofdaandeel niet op het scherm, zoals wanneer met de marktfilter alleen \"Overig\" wordt getoond, dan wordt het preferente aandeel als losse rij volgens de normale sortering weergegeven.",
+    "foot_p3": "PER, PBR, ROE en de recente resultaten (YoY) zijn door Valueline berekend op basis van officiële bekendmakingen en hebben grotendeels betrekking op het tweede kwartaal van 2026 (26.2Q) (een deel is \"voorlopig\"). Een negatieve PER of PBR duidt op een verlies in het meest recente kwartaal. Omdat Valueline voor preferente aandelen geen aparte cijfers levert, zijn deze berekend als referentiewaarde via <strong>PER/PBR van het hoofdaandeel × (koers preferent aandeel / koers hoofdaandeel)</strong> (aangeduid als \"Herleid van hoofdaandeel\"); voor ROE — een bedrijfsbreed kengetal — is dezelfde waarde als die van het hoofdaandeel overgenomen (aangeduid als \"Gelijk aan hoofdaandeel\") — dit zijn benaderingen en geen officiële cijfers, raadpleeg voor beleggingsbeslissingen de originele bekendmakingen.",
+    "foot_p4": "De gekleurde rijachtergrond geeft de door de gebruiker gemarkeerde <strong>watchlistaandelen</strong> (56 aandelen) aan. Voor de overige samenstellende aandelen van de KOSPI200 en KOSDAQ150 (ongeveer 307 aandelen) zijn, na verwijdering van duplicaten, eveneens de huidige koers, PER, PBR, ROE, diagnosescore, AI-voorspelling en het vraag-en-aanbodsignaal opgehaald bij Valueline en Hankyung; via de selectievakjes bovenaan kunt u Alle, KOSPI200, KOSDAQ150, Preferente aandelen en Watchlist vrij combineren. Aandelen buiten de watchlist worden echter niet elk uur automatisch bijgewerkt, maar tonen een momentopname van het tijdstip waarop de gegevens zijn opgehaald (uitbreiding van de automatische update is gepland); voor een aantal recent genoteerde aandelen of aandelen die zijn omgezet naar een holdingstructuur (bijv. 삼성에피스홀딩스) kon de code niet in de databron worden gevonden, waardoor alleen de naam en het marktsegment worden weergegeven. De \"T.o.v. hoofdaandeel\"-afwijking bij rijen van preferente aandelen wordt berekend als (koers preferent aandeel－koers hoofdaandeel)/koers hoofdaandeel en wordt altijd weergegeven, ongeacht de filterinstelling.",
+    "foot_p5": "Deze pagina biedt uitsluitend informatie ter referentie en vormt geen beleggingsadvies; beleggingsbeslissingen en de verantwoordelijkheid daarvoor liggen bij uzelf.",
+    "footer_by": "Product by",
+    "export_csv_btn": "⬇ CSV (Excel) downloaden",
+    "export_print_btn": "🖨 Afdrukken / Opslaan als PDF",
+    "export_note_default": "Alleen de resultaten die op basis van de huidige filters, zoekopdracht en sortering op het scherm worden weergegeven, worden geëxporteerd.",
+    "export_no_downloads": "Downloaden wordt in deze weergave niet ondersteund. Open het lokale HTML-bestand dat u in het gesprek hebt ontvangen en gebruik het daar.",
+    "export_done_prefix": "Download voltooid: ",
+    "export_cancelled": "Het downloaden is geannuleerd.",
+    "export_restricted": "In deze weergave is het downloaden van CSV beperkt. Gebruik hiervoor het lokale HTML-bestand.",
+    "export_failed_prefix": "Downloaden mislukt: ",
+    "export_failed_unknown": "Onbekende fout",
+    "csv_filename_prefix": "Watchlist_Scorebord_",
+    "csv_col_code": "Aandelencode",
+    "csv_col_ai_trend": "AI-voorspelling (trend)",
+    "csv_col_gap": "Afwijking t.o.v. hoofdaandeel (%)"
+  },
+  "sv_SE": {
+    "title": "Diagnos för bevakningslista · AI-prognospanel",
+    "eyebrow": "Poängtavla för bevakningslista",
+    "h1": "Diagnos för bevakningslista · AI-prognospanel",
+    "updated_prefix": "Data per",
+    "updated_suffix": " · Valueline + Hankyung (kurser för preferensaktier) · Omfattar PER, PBR, diagnospoäng och AI-prognos för samtliga aktier i KOSPI200 och KOSDAQ150",
+    "cadence_note": "Automatisk uppdatering varje timme på vardagar under handelstid (kl. 09–15) + senaste publicerade version visas vid omladdning · Färgad radbakgrund = bevakad aktie",
+    "refresh_btn": "Uppdatera",
+    "search_placeholder": "Sök aktienamn",
+    "sort_score_desc": "Diagnospoäng, högst först",
+    "sort_score_asc": "Diagnospoäng, lägst först",
+    "sort_chg_desc": "Kursförändring, högst först",
+    "sort_chg_asc": "Kursförändring, lägst först",
+    "sort_ai_desc": "AI-prognos, högst först",
+    "sort_per_asc": "PER, lägst först (undervärderad)",
+    "sort_pbr_asc": "PBR, lägst först (undervärderad)",
+    "sort_roe_desc": "ROE, högst först",
+    "sort_name_asc": "Efter namn",
+    "sort_market": "Efter marknadssegment",
+    "col_name": "Aktie",
+    "col_market": "Marknadssegment",
+    "col_price": "Aktuellt pris",
+    "col_chg": "Förändring",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "Senaste resultat (YoY)",
+    "col_score": "Diagnospoäng",
+    "col_ai": "AI-prognos (10 dagar)",
+    "col_supply": "Utbuds-/efterfrågesignal",
+    "lbl_total_stocks": "Totalt antal aktier",
+    "lbl_all": "Alla",
+    "lbl_kospi200": "KOSPI200",
+    "lbl_kosdaq150": "KOSDAQ150",
+    "lbl_pref": "Preferensaktier",
+    "lbl_watch": "Bevakade aktier",
+    "lbl_avg_score": "Genomsnittlig diagnospoäng (bevakade aktier)",
+    "lbl_etc": "Övrigt",
+    "unit_stocks": " aktier",
+    "unit_score": " p",
+    "supply_verystrong": "Mycket stark",
+    "supply_strong": "Stark",
+    "supply_mid": "Medel",
+    "supply_weak": "Svag",
+    "supply_veryweak": "Mycket svag",
+    "trend_up": "Uppgång",
+    "trend_down": "Nedgång",
+    "ai_no_value_suffix": "(inget värde visas)",
+    "no_data": "Ingen data",
+    "pref_suffix": "(preferensaktie)",
+    "empty_message": "Inga aktier matchar de valda villkoren",
+    "valinferred_per": "Omräknad från stamaktien",
+    "valinferred_roe": "Samma som stamaktien",
+    "gap_label": "Avvikelse mot stamaktien",
+    "foot_title": "Anmärkningar",
+    "foot_p1": "Diagnospoäng, AI-prognosens kursförändring och utbuds-/efterfrågesignal hämtas direkt från de värden som <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> beräknar med en algoritm baserad på big data och ARIMA (för 효성화학 skiljer sig skalan i källdatan från övriga aktier, så värdet har återgetts oförändrat som \"13\"). För de 10 preferensaktierna (märkta med ●우) beräknar Valueline inte alls AI-diagnos, AI-prognos eller utbuds-/efterfrågesignal (det finns ingen egen sida för dem), så dessa tre fält visar enbart \"Ingen data (preferensaktie)\" — aktuellt pris och kursförändring har hämtats separat från andra kurskällor, och för aktier med gles handel anges datumet för senaste avslut. Marknadssegmentet anges per enskilt värdepapper och inte utifrån stamaktien, så alla preferensaktier visas som \"Övrigt\". 달바글로벌 har korrigerats i listan eftersom det namn som ursprungligen angavs (\"달마글로벌\") skiljer sig från det faktiska börsnoterade namnet. GS건설 uteslöts ur KOSPI200 vid den ordinarie indexjusteringen i maj 2026 och klassificeras därför för närvarande som \"Övrigt\".",
+    "foot_p2": "Eftersom preferensaktier saknar Valueline-poäng antas de följa samma kursutveckling som sin stamaktie, och de visas därför alltid direkt under sin stamaktie (markerad med ↳), oavsett vilket sorteringskriterium som används (diagnospoäng, kursförändring, AI-prognos, namn, marknadssegment osv.). Om stamaktien inte visas på skärmen — till exempel när marknadsfiltret är inställt på enbart \"Övrigt\" — sorteras preferensaktien istället som en fristående rad enligt den vanliga sorteringen.",
+    "foot_p3": "PER, PBR, ROE och senaste resultat (YoY) är värden som Valueline beräknat utifrån offentliggjord finansiell information, och avser i de flesta fall resultatet för andra kvartalet 2026 (26.2Q) (vissa är \"preliminära\"). Ett negativt PER eller PBR innebär förlust under det senaste kvartalet. För preferensaktier tillhandahåller Valueline inga separata siffror, så värdena är istället beräknade referensvärden enligt <strong>stamaktiens PER/PBR × (preferensaktiens kurs / stamaktiens kurs)</strong> (märkta \"Omräknad från stamaktien\"), medan ROE är ett bolagsövergripande nyckeltal och därför visas med samma värde som stamaktien (märkt \"Samma som stamaktien\") — dessa är approximationer och inte faktiska offentliggjorda siffror, så kontrollera originalkällan innan du fattar investeringsbeslut.",
+    "foot_p4": "Radar med färgad bakgrund är de <strong>bevakade aktierna</strong> (56 aktier) som användaren själv har valt ut. Övriga aktier i KOSPI200 och KOSDAQ150 (cirka 307 aktier) har, efter borttagning av dubbletter, också fyllts i med aktuellt pris, PER, PBR, ROE, diagnospoäng, AI-prognos och utbuds-/efterfrågesignal från Valueline och Hankyung, och kryssrutorna högst upp gör det möjligt att fritt kombinera Alla / KOSPI200 / KOSDAQ150 / Preferensaktier / Bevakade aktier. Observera dock att aktier utanför bevakningslistan inte uppdateras automatiskt varje timme, utan visas som en ögonblicksbild från den tidpunkt då de senast fylldes i (automatisk uppdatering planeras utökas till fler aktier framöver). Vissa nyligen noterade aktier eller aktier som konverterats till holdingbolag (t.ex. 삼성에피스홀딩스) saknar identifierbar kod i datakällan och visas därför endast med namn och marknadssegment. Avvikelsen \"Avvikelse mot stamaktien\" för preferensaktierader beräknas som (preferensaktiens kurs － stamaktiens kurs) / stamaktiens kurs, och visas alltid oavsett vilket filter som är valt.",
+    "foot_p5": "Denna sida utgör inte investeringsrådgivning utan är endast avsedd som referensinformation. Investeringsbeslut och ansvaret för dessa vilar helt på användaren.",
+    "footer_by": "Produkt av",
+    "export_csv_btn": "⬇ Ladda ner CSV (Excel)",
+    "export_print_btn": "🖨 Skriv ut / Spara som PDF",
+    "export_note_default": "Endast de resultat som visas på skärmen utifrån aktuellt filter, sökning och sortering exporteras",
+    "export_no_downloads": "Nedladdning stöds inte i den här vyn. Öppna den lokala HTML-filen som du fått i chattfönstret för att använda funktionen.",
+    "export_done_prefix": "Nedladdning klar: ",
+    "export_cancelled": "Nedladdningen avbröts.",
+    "export_restricted": "CSV-nedladdning är begränsad i den här vyn. Använd den lokala HTML-filen istället.",
+    "export_failed_prefix": "Nedladdningen misslyckades: ",
+    "export_failed_unknown": "Okänt fel",
+    "csv_filename_prefix": "Bevakningslista_Poangtavla_",
+    "csv_col_code": "Aktiekod",
+    "csv_col_ai_trend": "AI-prognos (trend)",
+    "csv_col_gap": "Avvikelse mot stamaktien (%)"
+  },
+  "nn_NO": {
+    "title": "Diagnose av favorittaksjar · AI-prognose-dashbord",
+    "eyebrow": "Poengtavle for favorittaksjar",
+    "h1": "Diagnose av favorittaksjar · AI-prognose-dashbord",
+    "updated_prefix": "Data per",
+    "updated_suffix": " · Valueline + Hankyung (kurs på preferanseaksjar) · Inkluderer PER, PBR, diagnosepoeng og AI-prognose for alle aksjar i KOSPI200 og KOSDAQ150",
+    "cadence_note": "Automatisk oppdatering kvar time i handelstida på kvardagar (09–15) + viser siste utgåve når du oppdaterer sida · Rad med farga bakgrunn = favorittaksjar",
+    "refresh_btn": "Oppdater",
+    "search_placeholder": "Søk etter aksjenamn",
+    "sort_score_desc": "Diagnosepoeng, høgast først",
+    "sort_score_asc": "Diagnosepoeng, lågast først",
+    "sort_chg_desc": "Endring, høgast først",
+    "sort_chg_asc": "Endring, lågast først",
+    "sort_ai_desc": "AI-prognose, høgast først",
+    "sort_per_asc": "PER, lågast først (undervurdert)",
+    "sort_pbr_asc": "PBR, lågast først (undervurdert)",
+    "sort_roe_desc": "ROE, høgast først",
+    "sort_name_asc": "Etter namn",
+    "sort_market": "Etter marknad",
+    "col_name": "Aksje",
+    "col_market": "Marknad",
+    "col_price": "Kurs",
+    "col_chg": "Endring",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "Siste resultat (YoY)",
+    "col_score": "Diagnosepoeng",
+    "col_ai": "AI-prognose (10 dagar)",
+    "col_supply": "Tilbod/etterspurnad-signal",
+    "lbl_total_stocks": "Alle aksjar",
+    "lbl_all": "Alle",
+    "lbl_kospi200": "KOSPI200",
+    "lbl_kosdaq150": "KOSDAQ150",
+    "lbl_pref": "Preferanseaksjar",
+    "lbl_watch": "Favorittaksjar",
+    "lbl_avg_score": "Gjennomsnittleg diagnosepoeng (favorittaksjar)",
+    "lbl_etc": "Anna",
+    "unit_stocks": " aksjar",
+    "unit_score": " p",
+    "supply_verystrong": "Svært sterkt",
+    "supply_strong": "Sterkt",
+    "supply_mid": "Middels",
+    "supply_weak": "Svakt",
+    "supply_veryweak": "Svært svakt",
+    "trend_up": "Oppgang",
+    "trend_down": "Nedgang",
+    "ai_no_value_suffix": "(verdi ikkje vist)",
+    "no_data": "Ingen data",
+    "pref_suffix": "(preferanseaksje)",
+    "empty_message": "Ingen aksjar oppfyller vilkåra",
+    "valinferred_per": "Omrekna frå stamaksjen",
+    "valinferred_roe": "Same som stamaksjen",
+    "gap_label": "Avvik frå stamaksje",
+    "foot_title": "Merknader",
+    "foot_p1": "Diagnosepoenga, AI-prognosen for kursendring og signalet for tilbod og etterspurnad er henta direkte frå verdiar som <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> har rekna ut med ein algoritme basert på stordata og ARIMA (for 효성화학 er dei opphavlege tala oppgitt på ein annan skala enn for dei andre aksjane, så verdien er ført vidare uendra som «13»). For dei 10 preferanseaksjane (●우-merkte aksjar) reknar Valueline ikkje ut AI-diagnose, -prognose eller tilbod/etterspurnad-signal i det heile (dei har inga eiga side), så berre desse tre felta viser «Ingen data(preferanseaksje)» for dei — kurs og endring er henta frå ei anna kjelde, og for nokre aksjar med lite handel er siste handelsdato oppgitt i staden. Marknadskategorien er sett etter det einskilde verdipapiret og ikkje etter stamaksjen, så alle preferanseaksjar er merkte «Anna». 달바글로벌 er retta til rett namn fordi namnet brukaren oppgav («달마글로벌») skil seg frå det faktiske noterte namnet. GS건설 vart teke ut av KOSPI200 ved den faste revisjonen i mai 2026, og er no merkt «Anna».",
+    "foot_p2": "Sidan preferanseaksjar ikkje har eigne Valueline-poeng, går ein ut frå at dei følgjer same kursutvikling som stamaksjen, og dei vert difor alltid viste rett under stamaksjen sin (merkt med ↳), uavhengig av sorteringa (diagnosepoeng, endring, AI-prognose, namn, marknad osv.). Dersom stamaksjen ikkje er synleg på skjermen — til dømes når marknadsfilteret berre viser «Anna» — vert preferanseaksjen i staden vist som ei eiga rad i vanleg sortering.",
+    "foot_p3": "PER, PBR, ROE og siste resultat (YoY) er verdiar som Valueline har rekna ut på grunnlag av børsmeldingar, og dei fleste gjeld resultatet for 2. kvartal 2026 (26.2Q) (nokre er «førebels»). Negativ PER eller PBR tyder underskot i siste kvartal. Sidan Valueline ikkje oppgir eigne tal for preferanseaksjar, er desse verdiane rekna ut som referanseverdiar med <strong>PER/PBR til stamaksjen × (preferanseaksjekurs / stamaksjekurs)</strong> (merkt «Omrekna frå stamaksjen»), medan ROE er eit tal for heile selskapet og difor er sett likt med verdien for stamaksjen («Same som stamaksjen») — dette er tilnærma verdiar og ikkje faktiske meldingstal, så sjå dei opphavlege børsmeldingane før du tek investeringsavgjerder.",
+    "foot_p4": "Rader med farga bakgrunn er dei <strong>favorittaksjane</strong> (56 aksjar) som brukaren har valt ut. Dei resterande aksjane i KOSPI200 og KOSDAQ150 (om lag 307 aksjar), etter at duplikatar er fjerna, er òg fylte inn med kurs, PER, PBR, ROE, diagnosepoeng, AI-prognose og tilbod/etterspurnad-signal henta frå Valueline og Hankyung, og du kan fritt kombinere avmerkingsboksane øvst for Alle / KOSPI200 / KOSDAQ150 / preferanseaksjar / favorittaksjar. Merk at aksjar utanom favorittaksjane ikkje vert automatisk oppdaterte kvar time, men er eit augeblinksbilete frå det tidspunktet dei vart fylte inn (utvida automatisk oppdatering er planlagd seinare); for enkelte nyleg noterte aksjar eller aksjar som har gått over til holdingselskap (til dømes 삼성에피스홀딩스) manglar det kode i datakjelda, så berre namn og marknad er viste. Avviket «Avvik frå stamaksje» for preferanseaksjerader er rekna ut som (preferanseaksjekurs－stamaksjekurs)/stamaksjekurs, og vert alltid vist, uavhengig av filterstatus.",
+    "foot_p5": "Denne sida gjev berre informasjon til referanse, ikkje investeringsråd, og investeringsavgjerder og ansvar ligg hos deg sjølv.",
+    "footer_by": "Product by",
+    "export_csv_btn": "⬇ Last ned CSV (Excel)",
+    "export_print_btn": "🖨 Skriv ut / Lagre som PDF",
+    "export_note_default": "Eksporterer berre resultata som er synlege på skjermen ut frå gjeldande filter, søk og sortering",
+    "export_no_downloads": "Denne skjermen støttar ikkje nedlasting. Opn den lokale HTML-fila du fekk i samtalevindauget, og bruk ho derifrå.",
+    "export_done_prefix": "Nedlasting fullført: ",
+    "export_cancelled": "Nedlastinga vart avbroten.",
+    "export_restricted": "CSV-nedlasting er avgrensa på denne skjermen. Bruk den lokale HTML-fila i staden.",
+    "export_failed_prefix": "Nedlastinga feila: ",
+    "export_failed_unknown": "Ukjend feil",
+    "csv_filename_prefix": "favorittaksjar_poengtavle_",
+    "csv_col_code": "Aksjekode",
+    "csv_col_ai_trend": "AI-prognose (trend)",
+    "csv_col_gap": "Avvik frå stamaksje (%)"
+  },
+  "da_DK": {
+    "title": "Diagnose af favoritaktier · AI-prognosedashboard",
+    "eyebrow": "Scoreboard for favoritaktier",
+    "h1": "Diagnose af favoritaktier · AI-prognosedashboard",
+    "updated_prefix": "Data pr.",
+    "updated_suffix": " · Valueline + Hankyung (kurser for præferenceaktier) · Inkluderer PER, PBR, diagnosescore og AI-prognose for alle aktier i KOSPI200 og KOSDAQ150",
+    "cadence_note": "Automatisk opdatering hver time i markedstiden på hverdage (09-15) + viser seneste udgivne version ved genindlæsning · Rækker med farvet baggrund = favoritaktier",
+    "refresh_btn": "Opdater",
+    "search_placeholder": "Søg efter aktienavn",
+    "sort_score_desc": "Diagnosescore, højeste først",
+    "sort_score_asc": "Diagnosescore, laveste først",
+    "sort_chg_desc": "Kursændring, højeste først",
+    "sort_chg_asc": "Kursændring, laveste først",
+    "sort_ai_desc": "AI-prognose, højeste først",
+    "sort_per_asc": "PER, laveste først (undervurderet)",
+    "sort_pbr_asc": "PBR, laveste først (undervurderet)",
+    "sort_roe_desc": "ROE, højeste først",
+    "sort_name_asc": "Alfabetisk",
+    "sort_market": "Efter markedssegment",
+    "col_name": "Aktie",
+    "col_market": "Markedssegment",
+    "col_price": "Aktuel kurs",
+    "col_chg": "Kursændring",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "Seneste resultat (å/å)",
+    "col_score": "Diagnosescore",
+    "col_ai": "AI-prognose (10 dage)",
+    "col_supply": "Udbuds-/efterspørgselssignal",
+    "lbl_total_stocks": "Aktier i alt",
+    "lbl_all": "Alle",
+    "lbl_kospi200": "KOSPI200",
+    "lbl_kosdaq150": "KOSDAQ150",
+    "lbl_pref": "Præferenceaktier",
+    "lbl_watch": "Favoritaktier",
+    "lbl_avg_score": "Gennemsnitlig diagnosescore (favoritaktier)",
+    "lbl_etc": "Øvrige",
+    "unit_stocks": " aktier",
+    "unit_score": " point",
+    "supply_verystrong": "Meget stærkt",
+    "supply_strong": "Stærkt",
+    "supply_mid": "Middel",
+    "supply_weak": "Svagt",
+    "supply_veryweak": "Meget svagt",
+    "trend_up": "Stigning",
+    "trend_down": "Fald",
+    "ai_no_value_suffix": "(værdi ikke vist)",
+    "no_data": "Ingen data",
+    "pref_suffix": "(præferenceaktie)",
+    "empty_message": "Ingen aktier opfylder de valgte kriterier",
+    "valinferred_per": "Omregnet fra stamaktien",
+    "valinferred_roe": "Samme som stamaktien",
+    "gap_label": "I forhold til stamaktien",
+    "foot_title": "Bemærkninger",
+    "foot_p1": "Diagnosescore, den AI-forudsagte kursændring og udbuds-/efterspørgselssignalet er hentet direkte fra de værdier, som <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> beregner med en algoritme baseret på big data og ARIMA (for 효성화학 er rådataens notation på en anden skala end de øvrige aktier, så værdien er vist uændret som \"13\"). For de 10 præferenceaktier (mærket ●우) beregner Valueline slet ikke AI-diagnose, -prognose eller udbuds-/efterspørgselssignal (der findes ingen separat side for dem), så disse tre felter viser blot \"Ingen data (præferenceaktie)\" — aktuel kurs og kursændring er indhentet fra en anden kursdatakilde, og for aktier med sjælden handel er den seneste handelsdato angivet. Markedssegmentet er baseret på det enkelte værdipapir og ikke stamaktien, så alle præferenceaktier vises som \"Øvrige\". 달바글로벌 er rettet, da det navn, brugeren oprindeligt angav (\"달마글로벌\"), afveg fra det faktiske børsnoterede navn. GS건설 blev udgået af KOSPI200 ved den ordinære revision i maj 2026 og er derfor nu vist som \"Øvrige\".",
+    "foot_p2": "Da præferenceaktier ikke har en Valueline-score, antages det, at de følger samme kursudvikling som stamaktien, og de vises derfor altid lige under deres stamaktie (markeret med ↳) uanset det valgte sorteringskriterium (diagnosescore, kursændring, AI-prognose, navn, markedssegment osv.). Hvis stamaktien ikke er synlig på skærmen – f.eks. når markedsfilteret kun viser \"Øvrige\" – vises præferenceaktien i stedet som en almindelig, selvstændig række i den generelle sortering.",
+    "foot_p3": "PER, PBR, ROE og seneste resultat (å/å) er værdier, som Valueline har beregnet på baggrund af offentliggjorte regnskaber, og de fleste er baseret på resultatet for 2. kvartal 2026 (26.2Q) (nogle er \"foreløbige\"). Negativ PER eller PBR betyder underskud i det seneste kvartal. Da Valueline ikke leverer separate tal for præferenceaktier, er referenceværdien beregnet som <strong>stamaktiens PER/PBR × (præferenceaktiens kurs / stamaktiens kurs)</strong> (vist som \"Omregnet fra stamaktien\"), og for ROE, som er et nøgletal for hele virksomheden, er samme værdi som stamaktien anvendt uændret (vist som \"Samme som stamaktien\") — disse er tilnærmede værdier og ikke de faktiske offentliggjorte tal, så tjek de oprindelige regnskabsdata, før du træffer investeringsbeslutninger.",
+    "foot_p4": "Rækker med farvet baggrund er de <strong>favoritaktier</strong>, som brugeren har angivet (56 aktier). For de øvrige aktier i KOSPI200 og KOSDAQ150 (ca. 307 aktier) er aktuel kurs, PER, PBR, ROE, diagnosescore, AI-prognose og udbuds-/efterspørgselssignal også hentet fra Valueline og Hankyung, efter at dubletter er fjernet, og du kan frit kombinere Alle/KOSPI200/KOSDAQ150/præferenceaktier/favoritaktier via afkrydsningsfelterne øverst. Bemærk dog, at aktier uden for favoritlisten ikke opdateres automatisk hver time, men vises som et øjebliksbillede fra det tidspunkt, hvor de senest blev indhentet (omfanget af automatisk opdatering udvides senere), og at visse nynoterede aktier eller aktier, der er overgået til holdingselskabsstruktur (f.eks. 삼성에피스홀딩스), kun vises med navn og markedssegment, da koden ikke kunne bekræftes i datakilden. Afvigelsesprocenten \"I forhold til stamaktien\" for præferenceaktie-rækker beregnes som (præferenceaktiens kurs－stamaktiens kurs)/stamaktiens kurs og vises altid, uanset filterindstilling.",
+    "foot_p5": "Denne side udgør ikke investeringsrådgivning, men er kun til orientering. Investeringsbeslutninger og ansvaret herfor påhviler brugeren selv.",
+    "footer_by": "Product by",
+    "export_csv_btn": "⬇ Download CSV (Excel)",
+    "export_print_btn": "🖨 Udskriv / Gem som PDF",
+    "export_note_default": "Kun de resultater, der aktuelt vises på skærmen ud fra de valgte filtre, søgning og sortering, eksporteres",
+    "export_no_downloads": "Download understøttes ikke i denne visning. Åbn den lokale HTML-fil, du har modtaget i chatvinduet, for at bruge funktionen.",
+    "export_done_prefix": "Download fuldført: ",
+    "export_cancelled": "Download annulleret.",
+    "export_restricted": "CSV-download er begrænset i denne visning. Brug venligst den lokale HTML-fil i stedet.",
+    "export_failed_prefix": "Download mislykkedes: ",
+    "export_failed_unknown": "Ukendt fejl",
+    "csv_filename_prefix": "Favoritaktier_Scoreboard_",
+    "csv_col_code": "Aktiekode",
+    "csv_col_ai_trend": "AI-prognose (trend)",
+    "csv_col_gap": "Afvigelse i forhold til stamaktien (%)"
+  },
+  "ar": {
+    "title": "لوحة تشخيص الأسهم المفضلة · تنبؤ الذكاء الاصطناعي",
+    "eyebrow": "لوحة نتائج الأسهم المفضلة",
+    "h1": "لوحة تشخيص الأسهم المفضلة · تنبؤ الذكاء الاصطناعي",
+    "updated_prefix": "البيانات حتى",
+    "updated_suffix": " · Valueline + 한경 (أسعار الأسهم الممتازة) · يشمل PER وPBR ودرجة التشخيص وتنبؤ الذكاء الاصطناعي لجميع أسهم KOSPI200 وKOSDAQ150",
+    "cadence_note": "تحديث تلقائي كل ساعة خلال ساعات تداول أيام الأسبوع (09:00–15:00) + عرض أحدث نسخة منشورة عند التحديث · خلفية الصف الملوّنة = من الأسهم المفضلة",
+    "refresh_btn": "تحديث",
+    "search_placeholder": "البحث عن اسم السهم",
+    "sort_score_desc": "الأعلى في درجة التشخيص",
+    "sort_score_asc": "الأدنى في درجة التشخيص",
+    "sort_chg_desc": "الأعلى في نسبة التغير",
+    "sort_chg_asc": "الأدنى في نسبة التغير",
+    "sort_ai_desc": "الأعلى في تنبؤ الذكاء الاصطناعي",
+    "sort_per_asc": "الأدنى في PER (مقوّم بأقل من قيمته)",
+    "sort_pbr_asc": "الأدنى في PBR (مقوّم بأقل من قيمته)",
+    "sort_roe_desc": "الأعلى في ROE",
+    "sort_name_asc": "حسب الاسم",
+    "sort_market": "حسب تصنيف السوق",
+    "col_name": "السهم",
+    "col_market": "تصنيف السوق",
+    "col_price": "السعر الحالي",
+    "col_chg": "نسبة التغير",
+    "col_per": "PER",
+    "col_pbr": "PBR",
+    "col_roe": "ROE",
+    "col_earn": "أحدث النتائج (سنويًا)",
+    "col_score": "درجة التشخيص",
+    "col_ai": "تنبؤ الذكاء الاصطناعي (10 أيام)",
+    "col_supply": "إشارة العرض والطلب",
+    "lbl_total_stocks": "إجمالي الأسهم",
+    "lbl_all": "الكل",
+    "lbl_kospi200": "KOSPI200",
+    "lbl_kosdaq150": "KOSDAQ150",
+    "lbl_pref": "الأسهم الممتازة",
+    "lbl_watch": "الأسهم المفضلة",
+    "lbl_avg_score": "متوسط درجة التشخيص (الأسهم المفضلة)",
+    "lbl_etc": "أخرى",
+    "unit_stocks": " سهم",
+    "unit_score": " نقطة",
+    "supply_verystrong": "قوي جدًا",
+    "supply_strong": "قوي",
+    "supply_mid": "متوسط",
+    "supply_weak": "ضعيف",
+    "supply_veryweak": "ضعيف جدًا",
+    "trend_up": "ارتفاع",
+    "trend_down": "انخفاض",
+    "ai_no_value_suffix": "(القيمة غير معروضة)",
+    "no_data": "لا توجد بيانات",
+    "pref_suffix": "(سهم ممتاز)",
+    "empty_message": "لا توجد أسهم مطابقة للشروط المحددة",
+    "valinferred_per": "محوّل من السهم العادي",
+    "valinferred_roe": "مطابق للسهم العادي",
+    "gap_label": "مقابل السهم العادي",
+    "foot_title": "ملاحظات",
+    "foot_p1": "درجة التشخيص، ونسبة التغير المتوقعة بالذكاء الاصطناعي، وإشارة العرض والطلب هي قيم مأخوذة كما هي من <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> التي تحسبها بخوارزمية قائمة على البيانات الضخمة ونموذج ARIMA (بالنسبة لـ 효성화학، ولأن مقياس البيانات الأصلية يختلف عن باقي الأسهم، تم إدراج القيمة كما وردت وهي \"13\"). بالنسبة إلى الأسهم الممتازة العشرة (المعلّمة بالرمز ●우)، ولأن Valueline لا تحسب لها التشخيص أو التنبؤ بالذكاء الاصطناعي أو إشارة العرض والطلب على الإطلاق (لا توجد لها صفحة مستقلة)، فإن هذه العناصر الثلاثة فقط تظهر بعبارة \"لا توجد بيانات (سهم ممتاز)\" — أما السعر الحالي ونسبة التغير فقد تم تعبئتهما من مصدر تسعير آخر، وبالنسبة إلى بعض الأسهم قليلة التداول تم عرض تاريخ آخر تنفيذ للصفقة. ولأن تصنيف السوق يُحدَّد وفقًا للورقة المالية الفردية وليس وفقًا للسهم العادي، فقد صُنِّفت جميع الأسهم الممتازة ضمن فئة \"أخرى\". أما 달바글로벌 فقد جرى تصحيح اسمه لأن الاسم الذي قدّمه المستخدم (\"달마글로벌\") يختلف عن اسم الإدراج الفعلي. أما GS건설 فقد استُبعد من مؤشر KOSPI200 في إعادة التوازن الدورية لشهر مايو 2026، وهو مصنّف حاليًا ضمن فئة \"أخرى\".",
+    "foot_p2": "نظرًا لعدم توفر درجة من Valueline للأسهم الممتازة، ولافتراض أن أداءها يتحرك بشكل مشابه لأداء سهمها العادي المقابل، فإنها تُعرض دائمًا مباشرة أسفل سهمها العادي (بعلامة ↳)، بصرف النظر عن معيار الترتيب المستخدم (درجة التشخيص، نسبة التغير، تنبؤ الذكاء الاصطناعي، الاسم، تصنيف السوق، وغيرها). أما إذا لم يكن السهم العادي معروضًا على الشاشة — كما يحدث عند تصفية السوق لعرض فئة \"أخرى\" فقط — فيُرتَّب السهم الممتاز أيضًا بشكل طبيعي كصف مستقل.",
+    "foot_p3": "قيم PER وPBR وROE وأحدث النتائج (سنويًا) محسوبة من قبل Valueline استنادًا إلى الإفصاحات الرسمية، ومعظمها مبني على نتائج الربع الثاني من عام 2026 (26.2Q) (بعضها \"مبدئي\"). وتشير القيمة السالبة لـ PER أو PBR إلى وجود خسارة في الربع الأخير. وبما أن Valueline لا توفر أرقامًا منفصلة للأسهم الممتازة، فإن PER وPBR لها قيم مرجعية محوّلة عبر معادلة <strong>PER/PBR للسهم العادي × (سعر السهم الممتاز / سعر السهم العادي)</strong> (وتُعرَض بعبارة \"محوّل من السهم العادي\")، أما ROE فهو مؤشر على مستوى الشركة ككل، لذا استُخدمت نفس قيمة السهم العادي كما هي (وتُعرَض بعبارة \"مطابق للسهم العادي\") — وبما أنها تقديرات وليست أرقامًا فعلية من الإفصاحات، يُرجى الرجوع إلى مصادر الإفصاح الأصلية عند اتخاذ القرارات الاستثمارية.",
+    "foot_p4": "تشير خلفية الصف الملوّنة إلى <strong>الأسهم المفضلة</strong> (56 سهمًا) التي حددها المستخدم. أما بقية الأسهم المكوّنة لمؤشري KOSPI200 وKOSDAQ150 (نحو 307 أسهم) فقد تم أيضًا، بعد إزالة التكرار، تعبئتها بالكامل ببيانات السعر الحالي وPER وPBR وROE ودرجة التشخيص وتنبؤ الذكاء الاصطناعي وإشارة العرض والطلب من Valueline و한경، ويمكن دمج الفئات (الكل / KOSPI200 / KOSDAQ150 / الأسهم الممتازة / الأسهم المفضلة) بحرية باستخدام مربعات الاختيار في الأعلى. غير أن الأسهم خارج قائمة الأسهم المفضلة لا تخضع للتحديث التلقائي كل ساعة، بل هي لقطة زمنية اعتبارًا من وقت التعبئة الحالي (ومن المخطط توسيع نطاق التحديث التلقائي لاحقًا)، كما أن بعض الأسهم المُدرجة حديثًا أو التي تحوّلت إلى شركة قابضة (مثل 삼성에피스홀딩스) لا يظهر لها سوى الاسم وتصنيف السوق، لأن رمزها لم يتم التحقق منه في مصدر البيانات. أما نسبة الفارق \"مقابل السهم العادي\" في صفوف الأسهم الممتازة فتُحسب بالمعادلة (سعر السهم الممتاز － سعر السهم العادي) / سعر السهم العادي، وتظهر دائمًا بصرف النظر عن حالة الفلترة.",
+    "foot_p5": "هذه الصفحة معلومات مرجعية وليست استشارة استثمارية، والقرار الاستثماري والمسؤولية عنه تقع على عاتق المستخدم.",
+    "footer_by": "المنتج من",
+    "export_csv_btn": "⬇ تنزيل CSV (إكسل)",
+    "export_print_btn": "🖨 طباعة / حفظ كملف PDF",
+    "export_note_default": "يتم تصدير النتائج المعروضة على الشاشة فقط وفقًا لمعايير التصفية والبحث والترتيب الحالية",
+    "export_no_downloads": "لا يدعم هذا العرض التنزيل. يُرجى فتح ملف HTML المحلي الذي حصلت عليه من نافذة المحادثة لاستخدام هذه الميزة.",
+    "export_done_prefix": "اكتمل التنزيل: ",
+    "export_cancelled": "تم إلغاء التنزيل.",
+    "export_restricted": "تنزيل ملفات CSV مقيّد في هذا العرض. يُرجى استخدام ملف HTML المحلي.",
+    "export_failed_prefix": "فشل التنزيل: ",
+    "export_failed_unknown": "خطأ غير معروف",
+    "csv_filename_prefix": "watchlist_scoreboard_",
+    "csv_col_code": "رمز السهم",
+    "csv_col_ai_trend": "تنبؤ الذكاء الاصطناعي (الاتجاه)",
+    "csv_col_gap": "نسبة الفارق مقابل السهم العادي (%)"
+  }
+};
+  var LANG_OPTIONS = [["ko", "🇰🇷 한국어"], ["en", "🇺🇸 English"], ["ja", "🇯🇵 日本語"], ["zh_CN", "🇨🇳 简体中文"], ["zh_TW", "🇹🇼 繁體中文"], ["de_DE", "🇩🇪 Deutsch"], ["fr_FR", "🇫🇷 Français"], ["nl_NL", "🇳🇱 Nederlands"], ["sv_SE", "🇸🇪 Svenska"], ["nn_NO", "🇳🇴 Norsk"], ["da_DK", "🇩🇰 Dansk"], ["ar", "🇸🇦 العربية"]];
+
+  function applyI18n() {
+    var t = window._T;
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var k = el.getAttribute('data-i18n');
+      if (typeof t[k] === 'string') el.textContent = t[k];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+      var k = el.getAttribute('data-i18n-html');
+      if (typeof t[k] === 'string') el.innerHTML = t[k];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+      var k = el.getAttribute('data-i18n-placeholder');
+      if (typeof t[k] === 'string') el.placeholder = t[k];
+    });
+    var titleText = t.title + ' | pomiai';
+    var titleEl = document.getElementById('page-title');
+    if (titleEl) titleEl.textContent = titleText;
+    document.title = titleText;
+    var footerByEl = document.getElementById('t-footer-by');
+    if (footerByEl) footerByEl.textContent = t.footer_by;
+    setExportStatus(t.export_note_default, null);
+  }
+
+  function normalizeLang(raw) {
+    raw = (raw || 'ko').toLowerCase();
+    if (raw.indexOf('ko') === 0) return 'ko';
+    if (raw.indexOf('ja') === 0) return 'ja';
+    if (raw.indexOf('zh') === 0) return /tw|hant|hk|mo/.test(raw) ? 'zh_TW' : 'zh_CN';
+    if (raw.indexOf('de') === 0) return 'de_DE';
+    if (raw.indexOf('fr') === 0) return 'fr_FR';
+    if (raw.indexOf('nl') === 0) return 'nl_NL';
+    if (raw.indexOf('sv') === 0) return 'sv_SE';
+    if (raw.indexOf('da') === 0) return 'da_DK';
+    if (raw.indexOf('nn') === 0 || raw.indexOf('nb') === 0 || raw.indexOf('no') === 0) return 'nn_NO';
+    if (raw.indexOf('ar') === 0) return 'ar';
+    if (raw.indexOf('en') === 0) return 'en';
+    return 'ko';
+  }
+
+  function setLang(lang, opts) {
+    opts = opts || {};
+    if (!I18N[lang]) lang = 'ko';
+    window._LANG = lang;
+    window._T = I18N[lang];
+    var root = document.getElementById('html-root');
+    root.setAttribute('lang', lang === 'zh_CN' ? 'zh-CN' : (lang === 'zh_TW' ? 'zh-TW' : lang));
+    root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    try { localStorage.setItem('pomiai-stockscore-lang', lang); } catch (e) {}
+    if (!opts.skipUrl) {
+      try {
+        var url = new URL(location.href);
+        url.searchParams.set('lang', lang);
+        history.replaceState(null, '', url.toString());
+      } catch (e) {}
+    }
+    var sel = document.getElementById('lang-select');
+    if (sel && sel.value !== lang) sel.value = lang;
+    applyI18n();
+    renderAll();
+  }
+
+  function initLang() {
+    var sel = document.getElementById('lang-select');
+    LANG_OPTIONS.forEach(function (pair) {
+      var opt = document.createElement('option');
+      opt.value = pair[0];
+      opt.textContent = pair[1];
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', function () { setLang(sel.value); });
+
+    var params = new URLSearchParams(location.search);
+    var urlLang = params.get('lang');
+    var saved = null;
+    try { saved = localStorage.getItem('pomiai-stockscore-lang'); } catch (e) {}
+    var initial = (urlLang && I18N[urlLang]) ? urlLang
+      : (saved && I18N[saved]) ? saved
+      : normalizeLang(navigator.language);
+    if (!I18N[initial]) initial = 'ko';
+    setLang(initial, { skipUrl: !!urlLang });
+  }
+
+  var WATCHLIST = [
+    {name:"삼성전자", code:"005930", market:"KOSPI200", price:249500, chg:-2.92, score:92, ai:7.66, supply:"약함", per:10.04, pbr:2.66, roe:17.58, cap:"15,024,936억", earn:"매출 +130% / 영업이익 +1813.84% YoY (26.2Q)"},
+    {name:"삼성전자우", code:"005935", market:"기타", pref:true, parent:"005930", price:189300, chg:-8.55, score:null, ai:null, supply:null, per:7.62, pbr:2.02, roe:17.58, valInferred:true},
+    {name:"SK하이닉스", code:"000660", market:"KOSPI200", price:1584000, chg:-5.21, score:97, ai:null, aiTrend:"상승", supply:"약함", per:7.54, pbr:4.65, roe:45.74, cap:"12,206,527억", earn:"영업이익 +557.15% YoY (26.2Q)"},
+    {name:"LG에너지솔루션", code:"373220", market:"KOSPI200", price:353500, chg:-2.35, score:32, ai:-4.61, supply:"보통", per:-50.33, pbr:3.79, roe:-7.53, cap:"847,080억", earn:"매출 +33.56% YoY, 영업손실·순손실 지속 (26.2Q)"},
+    {name:"삼성SDI", code:"006400", market:"KOSPI200", price:515000, chg:7.74, score:29, ai:null, aiTrend:"상승", supply:"약함", per:1021.25, pbr:1.59, roe:0.15, cap:"415,015억"},
+    {name:"삼성SDI우", code:"006405", market:"기타", pref:true, parent:"006400", price:207500, chg:1.22, score:null, ai:null, supply:null, per:411.53, pbr:0.64, roe:0.15, valInferred:true},
+    {name:"LG화학", code:"051910", market:"KOSPI200", price:273000, chg:8.12, score:30, ai:-2.78, supply:"매우약함", per:-12.74, pbr:0.54, roe:-5.91, cap:"192,717억", earn:"매출 +19.04% / 영업이익 +25.76% YoY, 흑자전환 (26.2Q)"},
+    {name:"LG화학우", code:"051915", market:"기타", pref:true, parent:"051910", price:118400, chg:-4.21, score:null, ai:null, supply:null, per:-5.53, pbr:0.23, roe:-5.91, valInferred:true},
+    {name:"LG전자", code:"066570", market:"KOSPI200", price:194500, chg:-3.95, score:54, ai:null, supply:"약함", per:30.44, pbr:1.18, roe:3.82, cap:"316,811억", earn:"영업이익 +146.96% YoY (26.2Q)"},
+    {name:"LG전자우", code:"066575", market:"기타", pref:true, parent:"066570", price:71200, chg:3.34, score:null, ai:null, supply:null, per:11.14, pbr:0.43, roe:3.82, valInferred:true},
+    {name:"LG", code:"003550", market:"KOSPI200", price:107700, chg:-2.45, score:58, ai:null, aiTrend:"상승", supply:"보통", per:22.64, pbr:0.55, roe:1.66, cap:"171,603억", earn:"매출 +19.02% / 영업이익 +92.49% YoY (26.2Q)"},
+    {name:"LG우", code:"003555", market:"기타", pref:true, parent:"003550", price:62700, chg:-3.54, score:null, ai:null, supply:null, per:13.18, pbr:0.32, roe:1.66, valInferred:true, note:"가격은 7/28 마지막 체결 기준(거래 뜸함)"},
+    {name:"NAVER", code:"035420", market:"KOSPI200", price:223500, chg:0.68, score:68, ai:5.79, supply:"보통", per:16.80, pbr:1.15, roe:6.16, cap:"339,891억", earn:"매출 +16.25% / 영업이익 -0.24% YoY (26.2Q)"},
+    {name:"카카오", code:"035720", market:"KOSPI200", price:35800, chg:0.00, score:63, ai:null, aiTrend:"하락", supply:"매우약함", per:44.76, pbr:1.32, roe:2.94, cap:"158,587억"},
+    {name:"셀트리온", code:"068270", market:"KOSPI200", price:190600, chg:-1.75, score:77, ai:-1.20, supply:"매우강함", per:28.63, pbr:2.52, roe:7.17, cap:"451,277억", earn:"매출 +44.96% / 영업이익 +86.33% YoY (26.2Q)"},
+    {name:"한미약품", code:"128940", market:"KOSPI200", price:482000, chg:-10.74, score:70, ai:null, aiTrend:"상승", supply:"매우강함", per:31.87, pbr:4.93, roe:13.27, cap:"69,179억", earn:"매출 +29.33% / 영업이익 +116.9% YoY (26.2Q)"},
+    {name:"에코프로", code:"086520", market:"KOSDAQ150", price:81700, chg:-7.26, score:43, ai:-1.96, supply:"약함", per:78.03, pbr:4.92, roe:6.31, cap:"110,929억"},
+    {name:"에코프로비엠", code:"247540", market:"KOSDAQ150", price:105600, chg:-7.45, score:35, ai:null, aiTrend:"상승", supply:"보통", per:261.72, pbr:6.38, roe:3.20, cap:"114,462억", earn:"매출 -26.04% YoY (26.2Q)"},
+    {name:"효성화학", code:"298000", market:"기타", note:"코스피200·코스닥150 미편입", price:60300, chg:-1.63, score:13, scoreNote:"원자료 척도 다름", ai:-11.42, supply:"매우약함", per:8.43, pbr:0.33, roe:3.57, cap:"2,324억", earn:"매출 +41.22% YoY, 영업이익 흑자전환 (26.2Q)"},
+    {name:"GS리테일", code:"007070", market:"KOSPI200", price:27250, chg:-1.62, score:45, ai:null, supply:"매우강함", per:29.03, pbr:0.71, roe:2.43, cap:"23,159억", earn:"매출 +6.53% / 영업이익 +31.66% YoY (26.2Q, 잠정)"},
+    {name:"CJ제일제당", code:"097950", market:"KOSPI200", price:189600, chg:3.04, score:34, ai:-1.72, supply:"약함", per:-4.20, pbr:0.38, roe:-6.79, cap:"28,543억", earn:"매출 +9.55% / 영업이익 -18.55% YoY, 순손실 (26.2Q)"},
+    {name:"CJ제일제당우", code:"097955", market:"기타", pref:true, parent:"097950", price:125800, chg:2.36, score:null, ai:null, supply:null, per:-2.79, pbr:0.25, roe:-6.79, valInferred:true, note:"가격은 8/14 마지막 체결 기준(거래 뜸함)"},
+    {name:"F&F", code:"383220", market:"KOSPI200", price:67000, chg:-2.62, score:76, ai:null, aiTrend:"하락", supply:"약함", per:5.00, pbr:1.30, roe:25.90, cap:"25,666억", earn:"순이익 +16.52% YoY (26.2Q, 잠정)"},
+    {name:"HMM", code:"011200", market:"KOSPI200", price:21700, chg:-4.19, score:60, ai:null, supply:"매우강함", per:14.29, pbr:0.71, roe:4.99, cap:"204,683억", earn:"매출 +29.71% / 영업이익 +51.87% YoY (26.2Q)"},
+    {name:"삼성생명", code:"032830", market:"KOSPI200", price:285000, chg:-0.18, score:56, ai:null, aiTrend:"상승", supply:"매우약함", per:18.11, pbr:0.35, roe:1.93, cap:"571,000억", earn:"매출 +71.93% / 영업이익 -31.98% / 순이익 -8.34% YoY (26.2Q, 잠정)"},
+    {name:"POSCO홀딩스", code:"005490", market:"KOSPI200", price:310000, chg:-3.58, score:41, ai:-2.43, supply:"약함", supplyNote:"기관 5일 연속 매도", per:18.23, pbr:0.43, roe:1.45, cap:"245,649억", earn:"매출 +9.7% / 영업이익 +34.89% YoY (26.2Q)"},
+    {name:"한국타이어앤테크놀로지", code:"161390", market:"KOSPI200", price:71500, chg:2.00, score:60, ai:null, aiTrend:"상승", supply:"보통", per:7.94, pbr:0.70, roe:8.77, cap:"88,571억", earn:"매출 +5.83% / 영업이익 +58.09% / 순이익 +77.48% YoY (26.2Q, 잠정)"},
+    {name:"HL만도", code:"204320", market:"KOSPI200", price:52100, chg:-3.87, score:49, ai:null, supply:"보통", per:14.19, pbr:0.82, roe:4.24, cap:"23,995억", earn:"매출 +3.93% / 영업이익 +2.8% YoY (26.2Q)"},
+    {name:"달바글로벌", code:"483650", market:"KOSPI200", note:"사용자 표기 '달마글로벌' → 정정", price:213500, chg:-5.11, score:87, ai:-1.37, supply:"강함", per:26.43, pbr:11.43, roe:43.25, cap:"29,048억", earn:"매출 +45.56% YoY (26.2Q)"},
+    {name:"대한항공", code:"003490", market:"KOSPI200", price:25800, chg:2.99, score:43, ai:null, aiTrend:"하락", supply:"매우약함", per:-37.40, pbr:0.91, roe:5.68, cap:"95,737억", earn:"매출 +16.41% YoY, 영업손실 지속 (26.2Q)"},
+    {name:"HD현대중공업", code:"329180", market:"KOSPI200", price:455500, chg:0.55, score:80, ai:-1.59, supply:"약함", per:18.90, pbr:4.51, roe:19.61, cap:"475,474억", earn:"매출 +52.69% YoY (26.2Q)"},
+    {name:"삼성중공업", code:"010140", market:"KOSPI200", price:20100, chg:-0.50, score:70, ai:-4.24, supply:"매우약함", per:30.49, pbr:3.61, roe:11.85, cap:"177,760억"},
+    {name:"현대차", code:"005380", market:"KOSPI200", price:411500, chg:-0.60, score:34, ai:null, aiTrend:"상승", supply:"약함", per:10.41, pbr:0.69, roe:7.21, cap:"847,697억", earn:"매출 +1.92% / 영업이익 -20.84% YoY (26.2Q)"},
+    {name:"현대차3우B", code:"005389", market:"기타", pref:true, parent:"005380", price:191700, chg:-0.83, score:null, ai:null, supply:null, per:4.85, pbr:0.32, roe:7.21, valInferred:true, note:"가격은 8/21 마지막 체결 기준"},
+    {name:"DL이앤씨", code:"375500", market:"KOSPI200", price:68200, chg:-4.21, score:56, ai:-4.72, supply:"보통", per:4.27, pbr:0.48, roe:9.35, cap:"26,544억", earn:"매출 -9.47% / 영업이익 +26.32% YoY (26.2Q)"},
+    {name:"DL이앤씨2우(전환)", code:"37550L", market:"기타", pref:true, parent:"375500", price:45250, chg:-2.06, score:null, ai:null, supply:null, per:2.83, pbr:0.32, roe:9.35, valInferred:true, note:"가격은 8/24 마지막 체결 기준"},
+    {name:"하림지주", code:"003380", market:"KOSDAQ150", price:10580, chg:-1.21, score:50, ai:-1.31, supply:"보통", supplyNote:"8/14 매우강함→보통", per:7.08, pbr:0.33, roe:4.62, cap:"11,850억", earn:"매출 +23.58% / 영업이익 +19.69% YoY (26.2Q)"},
+    {name:"팬오션", code:"028670", market:"KOSPI200", price:6510, chg:3.01, score:58, ai:4.25, supply:"매우강함", per:9.98, pbr:0.53, roe:5.36, cap:"33,785억", earn:"매출 +47.93% YoY (26.2Q)"},
+    {name:"두산밥캣", code:"241560", market:"KOSPI200", price:60800, chg:1.33, score:64, ai:null, supply:"약함", per:11.54, pbr:0.73, roe:5.59, cap:"57,514억", earn:"매출 +9.02% / 영업이익 +40% YoY (26.2Q)"},
+    {name:"한화생명", code:"088350", market:"KOSPI200", price:5510, chg:3.18, score:46, ai:1.08, supply:"매우강함", per:4.15, pbr:0.28, roe:6.53, cap:"45,511억", earn:"순이익 +215.47% YoY (26.2Q, 잠정)"},
+    {name:"한국전력", code:"015760", market:"KOSPI200", price:32350, chg:2.70, score:45, ai:-3.93, supply:"매우약함", per:2.58, pbr:0.40, roe:17.33, cap:"202,219억", earn:"매출 -0.14% / 영업이익 -47.16% / 순이익 -76.48% YoY (26.2Q)"},
+    {name:"BNK금융지주", code:"138930", market:"KOSPI200", price:14835, chg:3.31, score:55, ai:-0.26, supply:"매우약함", per:5.87, pbr:0.41, roe:6.89, cap:"44,563억"},
+    {name:"GS", code:"078930", market:"KOSPI200", price:118400, chg:-0.75, score:63, ai:null, aiTrend:"상승", supply:"매우약함", per:4.56, pbr:0.65, roe:8.63, cap:"106,458억", earn:"매출 +24.93% / 영업이익 +253.39% YoY (26.2Q)"},
+    {name:"GS우", code:"078935", market:"기타", pref:true, parent:"078930", price:64500, chg:3.20, score:null, ai:null, supply:null, per:2.48, pbr:0.35, roe:8.63, valInferred:true},
+    {name:"주성엔지니어링", code:"036930", market:"KOSDAQ150", price:168200, chg:-0.24, score:31, ai:null, aiTrend:"상승", supply:"약함", per:1034.85, pbr:12.67, roe:1.22, cap:"78,367억"},
+    {name:"두산에너빌리티", code:"034020", market:"KOSPI200", price:73000, chg:-0.41, score:48, ai:-1.19, supply:"매우약함", per:258.25, pbr:5.73, roe:1.92, cap:"467,610억", earn:"매출 +3.41% / 영업이익 +15.92% / 순이익 +20.39% YoY (26.2Q)"},
+    {name:"파마리서치", code:"214450", market:"KOSDAQ150", price:416000, chg:3.87, score:93, ai:null, aiTrend:"상승", supply:"매우약함", per:22.30, pbr:5.49, roe:24.64, cap:"41,611억"},
+    {name:"GS건설", code:"006360", market:"기타", note:"2026년 5월 정기변경에서 코스피200 편출", price:35000, chg:3.24, score:35, ai:null, supply:"매우강함", per:22.23, pbr:0.59, roe:1.35, cap:"29,012억", earn:"매출 -13.04% / 영업이익 -43.63% YoY (26.2Q)"},
+    {name:"한국가스공사", code:"036460", market:"KOSPI200", price:36500, chg:2.38, score:43, ai:null, aiTrend:"상승", supply:"보통", supplyNote:"8/20 매우강함→보통", per:5.80, pbr:0.28, roe:2.76, cap:"32,910억", earn:"매출 -1.6% / 영업이익 +66.89% YoY (26.2Q)"},
+    {name:"한진중공업홀딩스", code:"003480", market:"기타", note:"코스피200·코스닥150 미편입", price:4700, chg:2.29, score:50, ai:-3.04, supply:"약함", per:2.02, pbr:0.29, roe:13.89, cap:"1,357억", earn:"매출 +2.25% / 영업이익 +274.36% YoY (26.2Q)"},
+    {name:"유수홀딩스", code:"000700", market:"기타", note:"코스피200·코스닥150 미편입", price:6550, chg:1.71, score:65, ai:-1.27, supply:"매우강함", per:10.88, pbr:0.49, roe:3.04, cap:"1,677억", earn:"매출 +18.86% YoY (26.2Q)"},
+    {name:"대상", code:"001680", market:"KOSPI200", price:16570, chg:-2.93, score:36, ai:null, supply:"매우약함", per:-1.91, pbr:0.53, roe:-27.62, cap:"5,741억"},
+    {name:"한화솔루션", code:"009830", market:"KOSPI200", price:32050, chg:-8.95, score:17, ai:null, supply:"보통", per:-42.46, pbr:0.74, roe:-6.85, cap:"72,078억", earn:"매출 +47.01% / 영업이익 +200.33% YoY (26.2Q)"},
+    {name:"한화솔루션우", code:"009835", market:"기타", pref:true, parent:"009830", price:18080, chg:-1.20, score:null, ai:null, supply:null, per:-23.95, pbr:0.42, roe:-6.85, valInferred:true},
+    {name:"DL", code:"000210", market:"KOSPI200", price:48150, chg:2.67, score:45, ai:null, aiTrend:"하락", supply:"약함", per:6.97, pbr:0.23, roe:-1.39, cap:"9,828억", earn:"매출 +26.19% / 영업이익 +256.11% YoY, 흑자전환 (26.2Q)"},
+    {name:"DL우", code:"000215", market:"기타", pref:true, parent:"000210", price:23550, chg:1.95, score:null, ai:null, supply:null, per:3.41, pbr:0.11, roe:-1.39, valInferred:true}
+  ].filter(function(d){ return !d.skip; });
+  WATCHLIST.forEach(function (d) { d.watch = true; });
+
+  // 코스피200 구성종목 (2026.08 기준, kr.investing.com) — 관심종목과 겹치지 않는 종목은
+  // 이름·시장구분만 가벼운 형태(UNIVERSE)로 별도 표시한다
+  var KOSPI200_NAMES = [
+    "한온시스템","금호석유화학","LG전자","삼성전기","한올바이오파마","제일기획","대웅제약","한화에어로스페이스",
+    "세아제강지주","한국앤컴퍼니","롯데정밀화학","HMM","삼성중공업","대한전선","삼성화재","현대건설","현대백화점",
+    "롯데케미칼","CJ제일제당","CJ대한통운","하나금융지주","현대글로비스","고려아연","롯데쇼핑","롯데칠성","한화엔진",
+    "현대모비스","현대차","현대제철","SK이노베이션","팬오션","삼성증권","KB금융","BNK금융지주","현대엘리베이",
+    "아모레퍼시픽","DB하이텍","강원랜드","LG화학","삼성카드","삼성생명","SK하이닉스","태광산업","삼성전자","삼성E&A",
+    "한화오션","한미약품","미래에셋증권","아모레G","DN오토모티브","한화생명","현대위아","엔씨소프트","삼성SDI",
+    "세아베스틸지주","신한지주","롯데지주","DB손해보험","DL","한화솔루션","하이트진로","기아","금호타이어","LG디스플레이",
+    "LG이노텍","OCI홀딩스","SK텔레콤","S-Oil","영풍","LS일렉트릭","삼성물산","KT&G","풍산","신세계","코오롱인더",
+    "한전기술","LG유플러스","NAVER","농심","에스원","GS","대상","후성","녹십자","TKG휴켐스","KT","LG","LS","에스엘",
+    "대한항공","두산","한화","오뚜기","LG생활건강","코웨이","한국전력","한국가스공사","오리온홀딩스","POSCO홀딩스",
+    "유한양행","대한유화","포스코인터내셔널","대우건설","KCC","SKC","한국금융지주","HD한국조선해양","기업은행",
+    "두산에너빌리티","NH투자증권","현대해상","아세아","미원상사","대웅","삼양식품","코스모화학","동원산업","GS리테일",
+    "이수페타시스","율촌화학","호텔신라","한미사이언스","한샘","영원무역홀딩스","한솔케미칼","동원시스템즈","한국카본",
+    "키움증권","한미반도체","한국항공우주","한전KPS","지역난방공사","HD현대마린엔진","미스토홀딩스","영원무역",
+    "메리츠금융지주","iM금융지주","이마트","한국타이어앤테크놀로지","한국콜마","JB금융지주","한진칼","현대로템",
+    "종근당","코스맥스","HL만도","씨에스윈드","삼성SDS","LIG넥스원","포스코퓨처엠","포스코DX","동서","파라다이스",
+    "카카오","엘앤에프","셀트리온","더블유게임즈","삼성바이오로직스","두산밥캣","HD현대","HD현대일렉트릭","HD건설기계",
+    "넷마블","미원에스씨","오리온","BGF리테일","SK케미칼","효성티앤씨","효성중공업","효성첨단소재","롯데웰푸드",
+    "현대오토에버","우리금융지주","한일시멘트","한화시스템","SK바이오팜","하이브","DL이앤씨","SK바사","SKIET",
+    "에스디바이오센서","F&F","카카오뱅크","크래프톤","HD현대중공업","카카오페이","SK스퀘어","LG에너지솔루션","OCI",
+    "이수스페셜티케미컬","두산로보틱스","에코프로머티리얼즈","에이피알","HD현대마린솔루션","산일전기","LG씨엔에스",
+    "달바글로벌","삼성에피스홀딩스"
+  ];
+  var KOSDAQ150_NAMES = [
+    "알테오젠","에코프로","에코프로비엠","주성엔지니어링","HLB","펩트론","레인보우로보틱스","원익IPS","이오테크닉스",
+    "리노공업","에이비엘바이오","HPSP","로보티즈","파마리서치","리가켐바이오","심텍","피에스케이","삼천당제약",
+    "제주반도체","디앤디파마텍","유진테크","서진시스템","우리기술","보로노이","실리콘투","올릭스","하나마이크론",
+    "ISC","테스","동진쎄미켐","고영","에스티팜","솔브레인","휴젤","티에스이","오름테라퓨틱","브이엠","현대무벡스",
+    "에스피지","오스코텍","티씨케이","테크윙","펄어비스","네이처셀","비에이치아이","파크시스템스","JYP Ent.","태성",
+    "씨젠","엘앤씨바이오","클래시스","대주전자재료","에스엠","두산테스나","케어젠","코스메카코리아","셀트리온제약",
+    "비츠로셀","피에스케이홀딩스","큐리옥스바이오시스템즈","휴림로봇","RFHIC","원익홀딩스","에임드바이오","코미코",
+    "아이티센글로벌","클로봇","에스앤에스텍","HK이노엔","루닛","성호전자","현대바이오","와이지엔터테인먼트","피엔티",
+    "차바이오텍","하나머티리얼즈","신성델타테크","기가비스","인텔리안테크","지아이이노베이션","하림지주","LS마린솔루션",
+    "쏠리드","제룡전기","로보스타","쎄트렉아이","나노신소재","필옵틱스","레이크머티리얼즈","케이엠더블유","LS머트리얼즈",
+    "유일로보틱스","덕산네오룩스","SFA넥셀","원익QnC","와이씨","성광벤드","SFA반도체","에프에스티","CJ ENM","삼현",
+    "엔켐","아난티","선익시스템","제이앤티씨","에이치브이엠","카카오게임즈","젬백스","코나아이","NHN KCP","시노펙스",
+    "서부T&D","SFA","카페24","SOOP","동성화인텍","우리기술투자","위메이드","미래에셋벤처투자","아이쓰리시스템",
+    "스튜디오드래곤","펌텍코리아","인카금융서비스","삼표시멘트","안랩","성우하이텍","브이티","가온칩스","포스코엠텍",
+    "한컴","큐렉소","다우데이타","컴투스","한라캐스트","이녹스첨단소재","천보","감성코퍼레이션","넥스틴","디어유",
+    "솔브레인홀딩스","유진로봇","넥슨게임즈","메가스터디교육","네오위즈","네오셈","웹젠","데브시스터즈","위메이드맥스",
+    "동화기업","씨앤씨인터내셔널"
+  ];
+  // 소스마다 표기가 다른 종목명을 관심종목 실제 표기로 맞춰 중복 제거한다
+  var NAME_ALIAS = { "LG에너지솔루션": "LG에너지솔루션", "LG엔솔": "LG에너지솔루션" };
+
+  // 관심종목 외 코스피200·코스닥150 종목의 실제 데이터(코드/현재가/PER/PBR/진단점수/AI예측 등).
+  // 채워지는 대로 이 객체에 하나씩 추가되며, 아직 없는 종목은 이름·시장구분만 표시된다(점진적 백필).
+  var UNIVERSE_DATA = {
+    "한온시스템": {code:"018880", price:3525, chg:0, score:46, ai:null, supply:"약함", per:-714.4, pbr:0.88, roe:-0.12, cap:"36,176억", earn:"매출 +0.6% / 영업이익 +61.25% YoY (26.2Q)"},
+    "금호석유화학": {code:"011780", price:117200, chg:-2.33, score:57, ai:-3.17, supply:"약함", per:5.84, pbr:0.44, roe:7.49, cap:"30,189억", earn:"매출 +27.9% / 영업이익 +419.7% YoY (26.2Q)"},
+    "삼성전기": {code:"009150", price:1316000, chg:-5.73, score:69, ai:11.97, supply:"보통", per:97.56, pbr:9.61, roe:8.37, cap:"982,969억", earn:"매출 +24.15% / 영업이익 +106.74% YoY (26.2Q)"},
+    "한올바이오파마": {code:"009420", price:56500, chg:-9.74, score:28, ai:null, supply:"매우약함", per:-119.53, pbr:18.41, roe:-15.41, cap:"29,516억", earn:null},
+    "제일기획": {code:"030000", price:18850, chg:-0.68, score:62, ai:-0.48, supply:"보통", per:10.52, pbr:1.43, roe:13.63, cap:"21,835억", earn:null},
+    "대웅제약": {code:"069620", price:122200, chg:-1.93, score:59, ai:null, supply:"보통", per:7.39, pbr:1.36, roe:19.48, cap:"14,437억", earn:"매출 +10.61% / 영업이익 +17.65% YoY (26.2Q)"},
+    "한화에어로스페이스": {code:"012450", price:1115000, chg:0.9, score:68, ai:-1.41, supply:"보통", per:27.63, pbr:4.75, roe:16.13, cap:"569,776억", earn:"매출 +47.25% / 영업이익 +58.51% YoY (26.2Q)"},
+    "세아제강지주": {code:"003030", price:97700, chg:-1.91, score:40, ai:-4.75, supply:"매우약함", per:32.13, pbr:0.19, roe:0.6, cap:"4,125억", earn:null},
+    "한국앤컴퍼니": {code:"000240", price:24600, chg:-1.01, score:71, ai:-1.41, supply:"보통", per:6.62, pbr:0.47, roe:7.18, cap:"23,591억", earn:null},
+    "롯데정밀화학": {code:"004000", price:48550, chg:2.32, score:67, ai:null, supply:"강함", per:10.23, pbr:0.51, roe:5.01, cap:"12,526억", earn:"매출 +38.05% / 영업이익 +610.52% YoY (26.2Q)"},
+    "대한전선": {code:"001440", price:26200, chg:-1.87, score:41, ai:-0.18, supply:"매우약함", per:-331.27, pbr:2.72, roe:-0.82, cap:"52,330억", earn:"26.2Q 잠정 순손실 896억원, 적자 지속"},
+    "삼성화재": {code:"000810", price:634000, chg:-0.31, score:65, ai:0.63, supply:"보통", per:12.96, pbr:0.77, roe:5.93, cap:"283,958억", earn:"매출 -5.78% / 영업이익 +9.1% YoY (26.2Q)"},
+    "현대건설": {code:"000720", price:121100, chg:14.68, score:36, ai:8.99, supply:"약함", per:26.2, pbr:1.27, roe:4.67, cap:"117,592억", earn:"매출 -11.38% / 영업이익 +20.66% YoY (26.2Q)"},
+    "현대백화점": {code:"069960", price:93700, chg:0.32, score:40, ai:null, supply:"매우약함", per:8.72, pbr:0.43, roe:4.54, cap:"20,206억", earn:"매출 -1.13% / 영업이익 -8.7% / 순이익 +52.45% YoY (26.2Q)"},
+    "롯데케미칼": {code:"011170", price:54700, chg:-0.91, score:13, ai:-6, supply:"약함", per:-1.94, pbr:0.17, roe:-8.8, cap:"23,612억", earn:null},
+    "CJ대한통운": {code:"000120", price:73500, chg:-0.54, score:40, ai:-3.58, supply:"약함", per:7.56, pbr:0.4, roe:5.77, cap:"16,858억", earn:"매출 +10.88% / 영업이익 -11.87% YoY (26.2Q)"},
+    "하나금융지주": {code:"086790", price:130800, chg:1.63, score:54, ai:0.31, supply:"매우강함", per:8.39, pbr:0.74, roe:8.76, cap:"353,111억", earn:null},
+    "현대글로비스": {code:"086280", price:198900, chg:1.12, score:66, ai:-2.46, supply:"보통", per:9.57, pbr:1.35, roe:16.13, cap:"147,525억", earn:"매출 +15.82% / 영업이익 -8.13% YoY (26.2Q)"},
+    "고려아연": {code:"010130", price:1399000, chg:4.09, score:57, ai:null, supply:"매우강함", per:28.49, pbr:2.47, roe:8.63, cap:"280,533억", earn:"매출 +66.59% / 영업이익 +126.79% YoY (26.2Q)"},
+    "롯데쇼핑": {code:"023530", price:97100, chg:-5.73, score:39, ai:null, supply:"매우약함", per:17.81, pbr:0.19, roe:1.07, cap:"29,137억", earn:"매출 +4.04% / 영업이익 +121.24% YoY (26.2Q)"},
+    "롯데칠성": {code:"005300", price:97700, chg:-0.31, score:45, ai:-3.7, supply:"약함", per:13.91, pbr:0.58, roe:4.2, cap:"9,093억", earn:"매출 +2.35% / 영업이익 -10.44% YoY (26.2Q)"},
+    "한화엔진": {code:"082740", price:47450, chg:5.68, score:70, ai:null, supply:"약함", per:42.85, pbr:5.67, roe:13.24, cap:"37,468억", earn:null},
+    "현대모비스": {code:"012330", price:481500, chg:-3.41, score:59, ai:0.3, supply:"보통", per:12.45, pbr:0.88, roe:6.93, cap:"452,302억", earn:"매출 +2.44% / 영업이익 +12.09% YoY (26.2Q)"},
+    "현대제철": {code:"004020", price:28050, chg:0, score:44, ai:1.76, supply:"약함", per:-201.53, pbr:0.19, roe:-0.09, cap:"37,432억", earn:null},
+    "SK이노베이션": {code:"096770", price:124800, chg:-0.87, score:42, ai:null, supply:"매우강함", per:-17.72, pbr:0.79, roe:-4.46, cap:"210,978억", earn:null},
+    "삼성증권": {code:"016360", price:88400, chg:2.08, score:75, ai:-6.28, supply:"매우약함", per:5.06, pbr:0.86, roe:16.9, cap:"77334억", earn:null},
+    "KB금융": {code:"105560", price:166400, chg:2.02, score:36, ai:-0.53, supply:"매우약함", per:9.1, pbr:0.94, roe:10.32, cap:"578496억", earn:null},
+    "현대엘리베이": {code:"017800", price:72200, chg:-0.55, score:53, ai:-0.7, supply:"약함", per:7.71, pbr:2.62, roe:33.89, cap:"28381억", earn:"매출 +8.68% / 영업이익 +52.34% YoY (26.2Q)"},
+    "아모레퍼시픽": {code:"090430", price:138000, chg:1.02, score:61, ai:null, supply:"매우강함", per:28.41, pbr:1.46, roe:5.13, cap:"80720억", earn:null},
+    "DB하이텍": {code:"000990", price:87100, chg:-2.9, score:81, ai:9.46, supply:"약함", per:10.83, pbr:1.56, roe:14.44, cap:"39024억", earn:null},
+    "강원랜드": {code:"035250", price:14590, chg:1.74, score:62, ai:-1.33, supply:"매우약함", per:11.02, pbr:0.83, roe:7.49, cap:"31214억", earn:"매출 -4.23% / 영업이익 -26.21% YoY (26.2Q)"},
+    "삼성카드": {code:"029780", price:46200, chg:0.11, score:72, ai:-0.98, supply:"약함", per:8.4, pbr:0.59, roe:6.97, cap:"53469억", earn:null},
+    "태광산업": {code:"003240", price:850000, chg:4.68, score:19, ai:-1.07, supply:"약함", per:26.5, pbr:0.23, roe:0.85, cap:"9041억", earn:null},
+    "삼성E&A": {code:"028050", price:45850, chg:2.34, score:68, ai:-1.88, supply:"약함", per:13.24, pbr:1.75, roe:12.96, cap:"87808억", earn:"매출 +19.8% / 영업이익 +51% YoY (26.2Q)"},
+    "한화오션": {code:"042660", price:86600, chg:3.84, score:69, ai:-3.29, supply:"약함", per:12.32, pbr:3.4, roe:27.57, cap:"255549억", earn:"매출 +65.24% / 영업이익 +98.04% YoY (26.2Q)"},
+    "미래에셋증권": {code:"006800", price:35800, chg:3.02, score:81, ai:-1.4, supply:"매우약함", per:4.88, pbr:1.16, roe:23.73, cap:"194449억", earn:"매출 +181.11% / 영업이익 +397.53% YoY (26.2Q)"},
+    "아모레G": {code:"002790", price:26200, chg:-0.76, score:59, ai:null, supply:"매우강함", per:16.62, pbr:0.58, roe:3.47, cap:"20185억", earn:"매출 +14.55% / 영업이익 +53.26% YoY (26.2Q)"},
+    "DN오토모티브": {code:"007340", price:48550, chg:1.57, score:65, ai:0.31, supply:"매우강함", per:7.21, pbr:1.17, roe:13.67, cap:"27968억", earn:"매출 +37.34% / 영업이익 +68.96% YoY (26.2Q)"},
+    "현대위아": {code:"011210", price:59400, chg:-3.26, score:46, ai:-1.31, supply:"약함", per:21.88, pbr:0.42, roe:1.91, cap:"16154억", earn:null},
+    "엔씨소프트": {code:"036570", price:224500, chg:0, score:73, ai:-0.65, supply:"매우약함", per:7.48, pbr:1.31, roe:17.45, cap:"48366억", earn:"매출 +101.49% / 영업이익 +1053.03% YoY (26.2Q)"},
+    "세아베스틸지주": {code:"001430", price:41900, chg:0.24, score:45, ai:0.36, supply:"보통", per:16.75, pbr:0.75, roe:4.48, cap:"14990억", earn:null},
+    "신한지주": {code:"055550", price:103300, chg:-0.77, score:37, ai:-2.08, supply:"강함", per:8.89, pbr:0.8, roe:8.95, cap:"484942억", earn:null},
+    "롯데지주": {code:"004990", price:22450, chg:0.22, score:34, ai:0.45, supply:"약함", per:-4.2, pbr:0.36, roe:-8.59, cap:"22325억", earn:null},
+    "DB손해보험": {code:"005830", price:182500, chg:1.11, score:52, ai:null, supply:"약함", per:6.68, pbr:0.87, roe:13.04, cap:"118228억", earn:null},
+    "하이트진로": {code:"000080", price:15370, chg:-0.84, score:41, ai:-1.38, supply:"강함", per:23.09, pbr:0.94, roe:4.08, cap:"10871억", earn:"매출 -4.32% / 영업이익 +0.74% YoY (26.2Q)"},
+    "기아": {code:"000270", price:131500, chg:0.46, score:67, ai:-1.3, supply:"약함", per:7.02, pbr:0.76, roe:10.91, cap:"513393억", earn:null},
+    "금호타이어": {code:"073240", price:7290, chg:19.9, score:62, ai:23.59, supply:"보통", per:5.05, pbr:0.78, roe:15.44, cap:"17465억", earn:"매출 +9.13% / 영업이익 +4.03% YoY (26.2Q)"},
+    "LG디스플레이": {code:"034220", price:9500, chg:-1.55, score:31, ai:null, supply:"매우약함", per:-3.51, pbr:0.75, roe:-1.26, cap:"47500억", earn:"매출 +0.45% YoY, 영업손실 지속 (26.2Q)"},
+    "LG이노텍": {code:"011070", price:572000, chg:0.35, score:71, ai:2.8, supply:"약함", per:20.34, pbr:2.12, roe:7.97, cap:"134903억", earn:"매출 +40.48% / 영업이익 +2057.43% YoY (26.2Q)"},
+    "OCI홀딩스": {code:"010060", price:275000, chg:2.23, score:37, ai:-1.12, supply:"약함", per:134.4, pbr:1.23, roe:0.91, cap:"50223억", earn:"매출 +31.81% YoY, 영업이익 흑자전환 (26.2Q)"},
+    "SK텔레콤": {code:"017670", price:98900, chg:-3.32, score:46, ai:4.17, supply:"매우강함", per:29.4, pbr:1.42, roe:4.84, cap:"219,730억", earn:"매출 +0.47% / 영업이익 +67.34% YoY (26.2Q)"},
+    "S-Oil": {code:"010950", price:139900, chg:-0.92, score:58, ai:null, supply:"강함", per:10.43, pbr:1.58, roe:9.85, cap:"158,967억", earn:"매출 +40.94% YoY, 영업이익 흑자전환 (26.2Q)"},
+    "영풍": {code:"000670", price:40350, chg:2.28, score:31, ai:4.04, supply:"강함", per:6.82, pbr:0.18, roe:-8.06, cap:"7,263억", earn:"매출 +42.23% YoY, 영업이익 흑자전환, 순이익 3,769억 (26.2Q)"},
+    "LS일렉트릭": {code:"010120", price:195400, chg:1.61, score:70, ai:-5.41, supply:"약함", per:74.2, pbr:13.54, roe:16.31, cap:"288,450억", earn:"매출 +32.18% / 영업이익 +64.39% YoY (26.2Q)"},
+    "삼성물산": {code:"028260", price:364500, chg:-7.84, score:66, ai:11.48, supply:"약함", per:21.16, pbr:0.56, roe:4.09, cap:"591,101억", earn:"매출 +19.69% / 영업이익 +37.09% YoY (26.2Q)"},
+    "KT&G": {code:"033780", price:175700, chg:1.44, score:65, ai:-2.04, supply:"매우약함", per:12.52, pbr:1.86, roe:13.1, cap:"179,800억", earn:"매출 +9.93% / 영업이익 +18.45% YoY (26.2Q)"},
+    "풍산": {code:"103140", price:79000, chg:-0.25, score:50, ai:-1.9, supply:"보통", per:10.83, pbr:0.9, roe:8.26, cap:"22,195억", earn:null},
+    "신세계": {code:"004170", price:395000, chg:-1.37, score:52, ai:-5.28, supply:"매우약함", per:22.38, pbr:0.7, roe:1.63, cap:"37,828억", earn:"매출 +5.11% / 영업이익 +121.84% YoY (26.2Q)"},
+    "코오롱인더": {code:"120110", price:56200, chg:9.13, score:45, ai:null, supply:"보통", per:16.03, pbr:0.37, roe:2.32, cap:"15,422억", earn:null},
+    "한전기술": {code:"052690", price:94200, chg:0.75, score:41, ai:-4.84, supply:"매우약함", per:96.27, pbr:5.84, roe:6.07, cap:"35,736억", earn:"매출 +0.99% YoY, 영업이익 흑자전환, 순이익 +736.04% YoY (26.2Q)"},
+    "LG유플러스": {code:"032640", price:14870, chg:1.43, score:43, ai:null, supply:"약함", per:11.79, pbr:0.7, roe:6.05, cap:"63,112억", earn:"매출 -3.89% / 영업이익 +13.12% YoY (26.2Q)"},
+    "농심": {code:"004370", price:451000, chg:-0.99, score:64, ai:null, supply:"보통", per:14.07, pbr:0.92, roe:6.54, cap:"27,706억", earn:"매출 +10.18% / 영업이익 +47.57% YoY (26.2Q)"},
+    "에스원": {code:"012750", price:72300, chg:-1.36, score:58, ai:0.41, supply:"보통", per:17.62, pbr:1.67, roe:9.45, cap:"27,853억", earn:null},
+    "후성": {code:"093370", price:12220, chg:2.35, score:44, ai:2.63, supply:"약함", per:35.13, pbr:3.5, roe:-1.33, cap:"12,806억", earn:"매출 +51.54% / 영업이익 +58.44% YoY (26.2Q)"},
+    "녹십자": {code:"006280", price:126900, chg:-1.78, score:38, ai:null, supply:"약함", per:-108.66, pbr:1.23, roe:-1.13, cap:"15,099억", earn:null},
+    "TKG휴켐스": {code:"069260", price:16120, chg:0.88, score:67, ai:-2.64, supply:"보통", per:10.13, pbr:0.7, roe:6.72, cap:"6,532억", earn:"매출 +36.87% / 영업이익 +49.24% YoY (26.2Q)"},
+    "KT": {code:"030200", price:52500, chg:0.19, score:51, ai:-0.58, supply:"매우약함", per:10.21, pbr:0.71, roe:8.49, cap:"132,311억", earn:"매출 -10.06% / 영업이익 -36.12% YoY (26.2Q)"},
+    "LS": {code:"006260", price:277000, chg:-5.62, score:43, ai:-4.17, supply:"매우약함", per:21.4, pbr:1.73, roe:6.72, cap:"91,572억", earn:"매출 +40.35% / 영업이익 +140.89% YoY (26.2Q)"},
+    "에스엘": {code:"005850", price:59000, chg:2.79, score:69, ai:null, supply:"강함", per:7.77, pbr:1.03, roe:13.27, cap:"26,661억", earn:null},
+    "두산": {code:"000150", price:1085000, chg:0.65, score:46, ai:null, supply:"매우약함", per:45.29, pbr:6.38, roe:14.09, cap:"174,570억", earn:null},
+    "한화": {code:"000880", price:118100, chg:17.4, score:56, ai:61.89, supply:"매우약함", per:7.34, pbr:0.44, roe:3.54, cap:"59,086억", earn:"매출 +48.83% / 영업이익 +80.72% YoY (26.2Q)"},
+    "오뚜기": {code:"007310", price:331500, chg:-0.45, score:47, ai:-3.11, supply:"보통", per:18.28, pbr:0.62, roe:3.42, cap:"13,346억", earn:"매출 +4.63% / 영업이익 +0.34% YoY (26.2Q)"},
+    "LG생활건강": {code:"051900", price:316000, chg:0.96, score:53, ai:-3.05, supply:"약함", per:-62.48, pbr:0.83, roe:-1.34, cap:"46,873억", earn:null},
+    "코웨이": {code:"021240", price:95900, chg:2.68, score:63, ai:-0.63, supply:"약함", per:9.93, pbr:1.78, roe:17.92, cap:"67,866억", earn:"매출 +14.56% / 영업이익 +4.32% YoY (26.2Q)"},
+    "오리온홀딩스": {code:"001800", price:25500, chg:0, score:70, ai:-1.18, supply:"약함", per:10.93, pbr:0.6, roe:5.41, cap:"15,340억", earn:"매출 +20.74% / 영업이익 +28.65% YoY (26.2Q)"},
+    "유한양행": {code:"000100", price:82300, chg:-1.32, score:58, ai:null, supply:"보통", per:27.65, pbr:2.75, roe:9.28, cap:"65,550억", earn:"매출 +10.44% / 영업이익 +34.11% YoY (26.2Q)"},
+    "대한유화": {code:"006650", price:82000, chg:-1.09, score:61, ai:-0.12, supply:"약함", per:7.31, pbr:0.29, roe:4.42, cap:"5,389억", earn:"매출 +12.93% / 영업이익 적자지속 YoY (26.2Q)"},
+    "포스코인터내셔널": {code:"047050", price:50600, chg:-3.25, score:46, ai:-5.17, supply:"약함", per:10.75, pbr:1.27, roe:10.08, cap:"89,017억", earn:"매출 +18.38% / 영업이익 +26.89% YoY (26.2Q)"},
+    "대우건설": {code:"047040", price:18010, chg:-2.12, score:22, ai:2.62, supply:"강함", per:-9.56, pbr:2.06, roe:-21.54, cap:"74,004억", earn:"매출 -10.11% / 영업이익 흑자전환 YoY (26.2Q)"},
+    "KCC": {code:"002380", price:420000, chg:-2.78, score:48, ai:-6.63, supply:"보통", per:2.17, pbr:0.46, roe:21.13, cap:"37,121억", earn:"매출 +5.91% / 영업이익 -8.19% YoY (26.2Q)"},
+    "SKC": {code:"011790", price:85900, chg:0.94, score:12, ai:-0.35, supply:"보통", per:-5.24, pbr:2.12, roe:-85.16, cap:"42,208억", earn:"매출 +38.24% / 영업이익 적자지속 YoY (26.2Q)"},
+    "한국금융지주": {code:"071050", price:191500, chg:4.47, score:83, ai:null, supply:"약함", per:3.33, pbr:0.71, roe:21.39, cap:"102,146억", earn:null},
+    "HD한국조선해양": {code:"009540", price:353500, chg:1.43, score:76, ai:-1.64, supply:"매우약함", per:7.15, pbr:1.66, roe:18.58, cap:"246,644억", earn:"매출 +20.17% / 영업이익 +72.51% YoY (26.2Q)"},
+    "기업은행": {code:"024110", price:20400, chg:2, score:55, ai:-1.95, supply:"매우약함", per:6.14, pbr:0.44, roe:7.2, cap:"162,675억", earn:null},
+    "NH투자증권": {code:"005940", price:25950, chg:-5.64, score:83, ai:-0.18, supply:"매우약함", per:7.82, pbr:1.02, roe:13.04, cap:"101,532억", earn:null},
+    "현대해상": {code:"001450", price:50800, chg:0.4, score:66, ai:null, supply:"약함", per:3.71, pbr:0.66, roe:17.87, cap:"43,136억", earn:"매출 -6.04% / 영업이익 +46.9% YoY (26.2Q)"},
+    "아세아": {code:"183190", price:10140, chg:1, score:39, ai:null, supply:"매우강함", per:30.63, pbr:0.33, roe:1.93, cap:"3,612억", earn:"매출 -2.34% / 영업이익 -41.92% YoY (26.2Q)"},
+    "미원상사": {code:"002840", price:124300, chg:2.14, score:61, ai:null, supply:"약함", per:10.59, pbr:1.31, roe:9.92, cap:"5,594억", earn:"매출 +16.94% / 영업이익 +96.25% YoY (26.2Q)"},
+    "대웅": {code:"003090", price:17910, chg:-0.28, score:57, ai:1.05, supply:"보통", per:5.67, pbr:0.84, roe:14.79, cap:"10,442억", earn:null},
+    "삼양식품": {code:"003230", price:1437000, chg:2.35, score:82, ai:7.73, supply:"매우강함", per:21.69, pbr:6.91, roe:31.32, cap:"105,764억", earn:"매출 +39.28% / 영업이익 +46.71% YoY (26.2Q)"},
+    "코스모화학": {code:"005420", price:9940, chg:1.74, score:19, ai:null, supply:"보통", per:-14.56, pbr:1.62, roe:-11.13, cap:"3,752억", earn:"매출 +21.93% / 영업이익 흑자전환 YoY (26.2Q)"},
+    "동원산업": {code:"006040", price:37650, chg:-0.26, score:56, ai:null, supply:"보통", per:4.04, pbr:0.45, roe:11.22, cap:"16,663억", earn:null},
+    "이수페타시스": {code:"007660", price:105000, chg:0.57, score:83, ai:8.96, supply:"매우강함", per:38.7, pbr:9.05, roe:23.39, cap:"76,639억", earn:"매출 +46.99% / 영업이익 +72.84% YoY (26.2Q)"},
+    "율촌화학": {code:"008730", price:14860, chg:-5.35, score:15, ai:null, supply:"매우강함", per:73.96, pbr:1.26, roe:1.71, cap:"3,685억", earn:"매출 +30.47% / 영업이익 +746.14% YoY (26.2Q)"},
+    "호텔신라": {code:"008770", price:42400, chg:0.24, score:33, ai:-1.07, supply:"매우약함", per:-12.03, pbr:1.46, roe:-14.41, cap:"16,641억", earn:"매출 -5.23% / 영업이익 +606% YoY (26.2Q)"},
+    "한미사이언스": {code:"008930", price:56500, chg:25.7, score:59, ai:null, supply:"매우강함", per:20.62, pbr:2.93, roe:14.22, cap:"30,742억", earn:null},
+    "한샘": {code:"009240", price:39050, chg:-0.26, score:47, ai:-2.26, supply:"보통", per:77.25, pbr:2.3, roe:2.98, cap:"9,214억", earn:"매출 -9.19% / 영업이익 +400.23% YoY (26.2Q)"},
+    "영원무역홀딩스": {code:"009970", price:195700, chg:2.46, score:77, ai:null, supply:"매우강함", per:6.27, pbr:0.79, roe:12.64, cap:"24,742억", earn:null},
+    "한솔케미칼": {code:"014680", price:202000, chg:-0.49, score:74, ai:-4.53, supply:"보통", per:14.18, pbr:2, roe:14.11, cap:"21,912억", earn:"매출 +11.55% / 영업이익 +1.84% YoY (26.2Q)"},
+    "동원시스템즈": {code:"014820", price:20100, chg:0.95, score:44, ai:-0.9, supply:"보통", per:9.84, pbr:0.66, roe:6.74, cap:"5,827억", earn:null},
+    "한국카본": {code:"017960", price:23450, chg:0.64, score:67, ai:null, supply:null, per:12.7, pbr:2.09, roe:16.43, cap:"12,118억", earn:null},
+    "키움증권": {code:"039490", price:275500, chg:3.77, score:78, ai:-5.5, supply:"약함", per:3.93, pbr:0.89, roe:22.82, cap:"72,259억", earn:null},
+    "한미반도체": {code:"042700", price:206000, chg:-1.44, score:84, ai:-1.39, supply:"약함", per:89.72, pbr:26.67, roe:28.04, cap:"199,202억", earn:"매출 +39.5% / 영업이익 +51.02% YoY (26.2Q)"},
+    "한국항공우주": {code:"047810", price:130700, chg:0.54, score:42, ai:-1.11, supply:"매우약함", per:71.46, pbr:6.67, roe:10.61, cap:"126,718억", earn:"매출 +40.99% / 영업이익 -43.15% YoY (26.2Q)"},
+    "한전KPS": {code:"051600", price:43500, chg:-0.68, score:59, ai:-0.99, supply:"매우약함", per:15.18, pbr:1.46, roe:10.87, cap:"19,710억", earn:"매출 -3.53% / 영업이익 -33.59% YoY (26.2Q)"},
+    "지역난방공사": {code:"071320", price:72900, chg:0.55, score:52, ai:8.95, supply:"강함", per:2.37, pbr:0.34, roe:14.4, cap:"8,395억", earn:"매출 +4.82% YoY, 영업이익 흑자전환 330억 (26.2Q)"},
+    "HD현대마린엔진": {code:"071970", price:58200, chg:0.34, score:94, ai:null, supply:"약함", per:10.97, pbr:3.94, roe:35.9, cap:"19,674억", earn:null},
+    "미스토홀딩스": {code:"081660", price:42500, chg:-0.93, score:55, ai:-0.92, supply:"약함", per:9.74, pbr:1.12, roe:11.48, cap:"22,564억", earn:null},
+    "영원무역": {code:"111770", price:75900, chg:1.61, score:78, ai:-2.36, supply:"약함", per:5.69, pbr:0.74, roe:12.87, cap:"33,632억", earn:"매출 +18.64% / 영업이익 +20.49% YoY (26.2Q)"},
+    "메리츠금융지주": {code:"138040", price:115400, chg:0.17, score:68, ai:-3.98, supply:"보통", per:7.89, pbr:1.68, roe:21.3, cap:"193,119억", earn:"영업이익 +1.88% / 순이익 +7.29% YoY (26.2Q)"},
+    "iM금융지주": {code:"139130", price:17550, chg:2.57, score:49, ai:1.48, supply:"보통", per:6.29, pbr:0.42, roe:6.75, cap:"27,096억", earn:null},
+    "이마트": {code:"139480", price:78500, chg:0.51, score:44, ai:-1.79, supply:"매우약함", per:17.21, pbr:0.19, roe:1.08, cap:"21,552억", earn:"매출 -1.76% YoY, 영업손실 430억 (적자전환, 26.2Q)"},
+    "한국콜마": {code:"161890", price:143300, chg:4.83, score:61, ai:null, supply:"매우강함", per:18.3, pbr:3.38, roe:16.77, cap:"33,826억", earn:"매출 +17.85% / 영업이익 +50.17% YoY (26.2Q)"},
+    "JB금융지주": {code:"175330", price:27500, chg:0.92, score:62, ai:null, supply:"보통", per:6.83, pbr:0.82, roe:12.06, cap:"50,827억", earn:null},
+    "한진칼": {code:"180640", price:117300, chg:-1.43, score:36, ai:11.54, supply:"보통", per:47.45, pbr:2.32, roe:4.89, cap:"79,447억", earn:null},
+    "현대로템": {code:"064350", price:143200, chg:-2.52, score:83, ai:12.56, supply:"약함", per:19.23, pbr:4.85, roe:25.25, cap:"156,292억", earn:null},
+    "종근당": {code:"185750", price:67500, chg:-2.32, score:50, ai:-0.3, supply:"약함", per:12.09, pbr:0.94, roe:7.83, cap:"9,538억", earn:"매출 +10.03% / 영업이익 -21.28% YoY (26.2Q)"},
+    "코스맥스": {code:"192820", price:286000, chg:5.54, score:54, ai:null, supply:"보통", per:17.61, pbr:5.02, roe:28.5, cap:"32,460억", earn:"매출 +27.48% / 영업이익 +21.25% YoY (26.2Q)"},
+    "씨에스윈드": {code:"112610", price:46550, chg:-3.82, score:44, ai:null, supply:"매우강함", per:453.72, pbr:1.53, roe:-1.42, cap:"19,631억", earn:"매출 +5.6% / 영업이익 +45.16% YoY (26.2Q)"},
+    "삼성SDS": {code:"018260", price:226000, chg:-3, score:55, ai:-2.67, supply:"매우강함", per:27.78, pbr:1.75, roe:6.46, cap:"180,290억", earn:"매출 +5.86% / 영업이익 +0.71% YoY (26.2Q)"},
+    "LIG넥스원": {code:"079550", price:717000, chg:3.17, score:56, ai:-0.63, supply:"약함", per:55.14, pbr:9.9, roe:17.96, cap:"157,740억", earn:null},
+    "포스코퓨처엠": {code:"003670", price:170900, chg:0, score:26, ai:null, supply:"매우강함", per:341.16, pbr:3.62, roe:-0.34, cap:"152,009억", earn:"매출 +2.8% / 영업이익 +2045.58% YoY (26.2Q)"},
+    "포스코DX": {code:"022100", price:19650, chg:-3.91, score:50, ai:-1.81, supply:"약함", per:97.15, pbr:5.51, roe:6.19, cap:"31,091억", earn:"매출 -14.76% / 영업이익 -42.27% YoY (26.2Q)"},
+    "동서": {code:"026960", price:24800, chg:0.61, score:56, ai:null, supply:"매우약함", per:17.05, pbr:1.46, roe:8.58, cap:"24,576억", earn:null},
+    "파라다이스": {code:"034230", price:9620, chg:1.91, score:43, ai:-4.89, supply:"매우약함", per:11.72, pbr:0.5, roe:4.6, cap:"8,744억", earn:"매출 +11.82% / 영업이익 -17.04% YoY (26.2Q)"},
+    "엘앤에프": {code:"066970", price:120400, chg:-0.99, score:27, ai:null, supply:"매우강함", per:-15.33, pbr:6.38, roe:-72.99, cap:"49,473억", earn:"매출 +70.18% / 영업이익 흑자전환 YoY (26.2Q)"},
+    "더블유게임즈": {code:"192080", price:58800, chg:-1.01, score:80, ai:-2.39, supply:"약함", per:7.01, pbr:0.94, roe:12.1, cap:"12,577억", earn:"매출 +22.5% / 영업이익 +29% YoY (26.2Q)"},
+    "삼성바이오로직스": {code:"207940", price:1541000, chg:-2.03, score:84, ai:null, supply:"매우강함", per:36.7, pbr:8.71, roe:23.7, cap:"728,157억", earn:"매출 +30.24% / 영업이익 +22.89% YoY (26.2Q)"},
+    "HD현대": {code:"267250", price:215500, chg:1.65, score:72, ai:-2.36, supply:"보통", per:6.12, pbr:1.37, roe:13.95, cap:"167,465억", earn:"매출 +30.2% / 영업이익 +262.16% YoY (26.2Q)"},
+    "HD현대일렉트릭": {code:"267260", price:720000, chg:0.28, score:87, ai:-2.96, supply:"약함", per:30.51, pbr:11.51, roe:37.82, cap:"259,539억", earn:"매출 +26% / 영업이익 +37.24% YoY (26.2Q)"},
+    "HD건설기계": {code:"267270", price:138600, chg:-0.65, score:73, ai:3.94, supply:"약함", per:27.13, pbr:1.41, roe:5.21, cap:"66,420억", earn:null},
+    "넷마블": {code:"251270", price:37050, chg:-1.2, score:48, ai:-0.79, supply:"약함", per:7.54, pbr:0.5, roe:6.64, cap:"30,810억", earn:null},
+    "미원에스씨": {code:"268280", price:131100, chg:-1.35, score:71, ai:5.57, supply:"매우강함", per:7.59, pbr:1.35, roe:14.47, cap:"6,645억", earn:"매출 +20.79% / 영업이익 +93.22% YoY (26.2Q)"},
+    "오리온": {code:"271560", price:128300, chg:2.31, score:75, ai:-5.55, supply:"매우약함", per:11.83, pbr:1.22, roe:10.33, cap:"49,569억", earn:"매출 +14.98% / 영업이익 +9.16% YoY (26.2Q)"},
+    "BGF리테일": {code:"282330", price:145900, chg:3.18, score:61, ai:-4.34, supply:"매우강함", per:11.72, pbr:1.91, roe:16.63, cap:"25,217억", earn:"매출 +5.97% / 영업이익 +22.22% YoY (26.2Q)"},
+    "SK케미칼": {code:"285130", price:50000, chg:0.4, score:38, ai:null, supply:"보통", per:117.18, pbr:0.35, roe:0.3, cap:"8,615억", earn:"매출 +24.84% / 영업이익 흑자전환 YoY (26.2Q)"},
+    "효성티앤씨": {code:"298020", price:346500, chg:2.21, score:47, ai:null, supply:"매우강함", per:50.13, pbr:0.9, roe:1.8, cap:"14,671억", earn:"매출 +27.89% / 영업이익 +157.45% YoY (26.2Q)"},
+    "효성중공업": {code:"298040", price:2692000, chg:-3.58, score:76, ai:-1.26, supply:"약함", per:44.5, pbr:10.06, roe:22.61, cap:"260,341억", earn:"매출 +10.6% / 영업이익 +60.89% YoY (26.2Q)"},
+    "효성첨단소재": {code:"298050", price:183200, chg:2.23, score:36, ai:null, supply:"강함", per:-47.79, pbr:0.97, roe:-2.04, cap:"8,207억", earn:"매출 +13.01% / 영업이익 +32.09% YoY (26.2Q)"},
+    "롯데웰푸드": {code:"280360", price:123400, chg:0.16, score:53, ai:null, supply:"보통", per:13.27, pbr:0.5, roe:3.78, cap:"11,358억", earn:"매출 +8.59% / 영업이익 +88.47% YoY (26.2Q)"},
+    "현대오토에버": {code:"307950", price:450500, chg:-1.96, score:64, ai:8.18, supply:"강함", per:63.93, pbr:6.45, roe:10.08, cap:"126,013억", earn:null},
+    "우리금융지주": {code:"316140", price:32400, chg:1.41, score:34, ai:null, supply:"보통", per:7.26, pbr:0.6, roe:8.18, cap:"232,625억", earn:null},
+    "한일시멘트": {code:"300720", price:14300, chg:-1.38, score:44, ai:1.49, supply:"매우약함", per:14.43, pbr:0.59, roe:4.09, cap:"10,664억", earn:null},
+    "한화시스템": {code:"272210", price:70100, chg:-0.28, score:49, ai:-0.71, supply:"강함", per:71.43, pbr:2.96, roe:4.14, cap:"132,810억", earn:"매출 +45.48% / 영업이익 +218.77% YoY (26.2Q)"},
+    "SK바이오팜": {code:"326030", price:86400, chg:3.23, score:92, ai:null, supply:"약함", per:16.88, pbr:6.62, roe:37.42, cap:"67,663억", earn:"매출 +40.33% / 영업이익 +56.85% YoY (26.2Q)"},
+    "하이브": {code:"352820", price:167200, chg:-3.58, score:45, ai:-1.22, supply:"매우약함", per:-20.16, pbr:2.18, roe:-10.83, cap:"74,747억", earn:null},
+    "SK바사": {code:"302440", price:37550, chg:-1.96, score:27, ai:null, supply:"매우강함", per:-35.48, pbr:1.72, roe:-4.85, cap:"30,049억", earn:"매출 -3.8% / 영업손실 지속 YoY (26.2Q)"},
+    "SKIET": {code:"361610", price:15360, chg:0.33, score:6, ai:-0.59, supply:"보통", per:-0.79, pbr:0.97, roe:-10.56, cap:"12,522억", earn:"매출 -52.22% / 영업손실 지속 YoY (26.2Q)"},
+    "에스디바이오센서": {code:"137310", price:6250, chg:-3.4, score:30, ai:-4.08, supply:"약함", per:-1.04, pbr:0.32, roe:-30.4, cap:"7,812억", earn:"매출 +12% / 순이익 -94.07% YoY (26.2Q)"},
+    "카카오뱅크": {code:"323410", price:21600, chg:1.41, score:43, ai:-1.4, supply:"매우약함", per:18.27, pbr:1.49, roe:8.16, cap:"101,627억", earn:null},
+    "크래프톤": {code:"259960", price:224000, chg:0.9, score:86, ai:-3.42, supply:"매우약함", per:12.38, pbr:1.43, roe:11.99, cap:"103,349억", earn:"매출 +94.88% / 영업이익 +67% YoY (26.2Q)"},
+    "카카오페이": {code:"377300", price:44800, chg:5.41, score:63, ai:7.28, supply:"보통", per:69.06, pbr:3.07, roe:3.13, cap:"60,602억", earn:"매출 +40.62% / 영업이익 +528.22% YoY (26.2Q)"},
+    "SK스퀘어": {code:"402340", price:1076000, chg:-4.19, score:89, ai:0.36, supply:"보통", per:4.51, pbr:2.7, roe:43.26, cap:"1,481,506억", earn:"매출 +967.24% / 영업이익 +1273.78% YoY (26.2Q)"},
+    "OCI": {code:"456040", price:80700, chg:0.62, score:45, ai:null, supply:"보통", per:83.03, pbr:0.61, roe:0.73, cap:"7,180억", earn:"매출 +1.52% YoY, 영업이익·순이익 흑자전환 (26.2Q)"},
+    "이수스페셜티케미컬": {code:"457190", price:63900, chg:-0.47, score:32, ai:-4.09, supply:"보통", per:287.06, pbr:13.7, roe:4.77, cap:"19,401억", earn:"매출 +8.35% / 영업이익 흑자전환 (26.2Q)"},
+    "두산로보틱스": {code:"454910", price:70200, chg:0.72, score:22, ai:-1.29, supply:"매우약함", per:-84.36, pbr:13.19, roe:-15.63, cap:"45,180억", earn:"매출 +289.96% / 영업손실 지속 (26.2Q)"},
+    "에코프로머티리얼즈": {code:"450080", price:36050, chg:-3.48, score:19, ai:-7.27, supply:"보통", per:393.09, pbr:2.26, roe:0.57, cap:"26,449억", earn:"매출 +129.01% / 영업손실 지속 (26.2Q)"},
+    "에이피알": {code:"278470", price:405500, chg:-0.98, score:93, ai:null, supply:"매우강함", per:34.31, pbr:22.88, roe:66.69, cap:"153,309억", earn:"매출 +134.19% / 영업이익 +119.31% YoY (26.2Q)"},
+    "HD현대마린솔루션": {code:"443060", price:197700, chg:-2.61, score:80, ai:3.99, supply:"강함", per:27.95, pbr:10.48, roe:37.48, cap:"91,012억", earn:"매출 +24.09% / 영업이익 +17.61% YoY (26.2Q)"},
+    "산일전기": {code:"062040", price:164800, chg:-8.04, score:82, ai:10.81, supply:"보통", per:27.46, pbr:7.47, roe:27.18, cap:"50,499억", earn:null},
+    "LG씨엔에스": {code:"064400", price:78900, chg:2.07, score:70, ai:0.96, supply:"강함", per:16.23, pbr:2.56, roe:15.79, cap:"74,893억", earn:"매출 +4.15% / 영업이익 -9.17% YoY (26.2Q)"},
+    "삼성에피스홀딩스": {code:null, price:null, chg:null, score:null, ai:null, supply:null, per:null, pbr:null, roe:null, cap:null, earn:null},
+    "알테오젠": {code:"196170", price:320500, chg:0.16, score:83, ai:null, supply:"매우강함", per:118.62, pbr:42.39, roe:35.73, cap:"223,245억", earn:null},
+    "HLB": {code:"028300", price:38650, chg:-3.13, score:12, ai:null, supply:"약함", per:-23.52, pbr:14.59, roe:-62.02, cap:"51,481억", earn:"매출 +77.99% / 영업손실 지속 (26.2Q)"},
+    "펩트론": {code:"087010", price:181000, chg:-1.04, score:23, ai:-1, supply:"보통", per:-214.52, pbr:34.02, roe:-15.86, cap:"42,647억", earn:"매출 +1.38% / 영업손실 지속 (26.2Q)"},
+    "레인보우로보틱스": {code:"277810", price:454500, chg:2.25, score:31, ai:-0.87, supply:"매우약함", per:4985.86, pbr:63.87, roe:1.28, cap:"86,232억", earn:"매출 +97.87% / 영업손실 지속 (26.2Q)"},
+    "원익IPS": {code:"240810", price:112300, chg:5.55, score:66, ai:15.98, supply:"약함", per:29.34, pbr:4.73, roe:16.12, cap:"52,225억", earn:null},
+    "이오테크닉스": {code:"039030", price:415000, chg:0, score:80, ai:null, supply:"강함", per:47.22, pbr:6.85, roe:14.5, cap:"51,126억", earn:"매출 +35.6% / 영업이익 +51.36% YoY (26.2Q)"},
+    "리노공업": {code:"058470", price:63600, chg:-1.55, score:88, ai:-1.53, supply:"매우약함", per:26.21, pbr:6.34, roe:22.93, cap:"49,233억", earn:"매출 +27.25% / 영업이익 +37.55% YoY (26.2Q)"},
+    "에이비엘바이오": {code:"298380", price:74600, chg:-1.58, score:21, ai:-8.2, supply:"약함", per:-53.97, pbr:24.75, roe:-45.86, cap:"42,438억", earn:"매출 -73.99% / 영업이익 적자전환 (26.2Q)"},
+    "HPSP": {code:"403870", price:44900, chg:-6.46, score:80, ai:16.28, supply:"매우강함", per:46.18, pbr:12.63, roe:27.35, cap:"36,953억", earn:"매출 -10.17% / 영업이익 -1.15% YoY (26.2Q)"},
+    "로보티즈": {code:"108490", price:247500, chg:-2.56, score:39, ai:null, supply:"약함", per:-946.94, pbr:9.9, roe:-1.05, cap:"37,239억", earn:"매출 +95.14% / 영업이익 +722.89% YoY (26.2Q)"},
+    "리가켐바이오": {code:"141080", price:108300, chg:3.74, score:25, ai:-4.24, supply:"약함", per:-22.28, pbr:9.95, roe:-44.67, cap:"40,092억", earn:"매출 -83.04% / 영업손실 지속 (26.2Q)"},
+    "심텍": {code:"222800", price:116900, chg:11.12, score:36, ai:0.69, supply:"약함", per:-77.9, pbr:6.07, roe:-7.8, cap:"39,412억", earn:"매출 +51% / 영업이익 +1034.45% YoY (26.2Q)"},
+    "피에스케이": {code:"319660", price:122200, chg:-6.07, score:91, ai:null, supply:"보통", per:27.71, pbr:5.63, roe:20.32, cap:"35,397억", earn:"매출 +54.42% / 영업이익 +144.43% YoY (26.2Q)"},
+    "삼천당제약": {code:"000250", price:183900, chg:-0.43, score:47, ai:null, supply:"약함", per:423.43, pbr:14.53, roe:3.43, cap:"43,326억", earn:null},
+    "제주반도체": {code:"080220", price:81600, chg:-7.59, score:74, ai:null, supply:"보통", per:26.86, pbr:9.97, roe:37.11, cap:"30,413억", earn:null},
+    "디앤디파마텍": {code:"347850", price:55500, chg:-3.14, score:24, ai:-3.58, supply:"보통", per:-122.19, pbr:19.6, roe:-16.04, cap:"26,265억", earn:"매출 -28.39% YoY, 영업손실·순손실 지속 (26.2Q)"},
+    "유진테크": {code:"084370", price:135700, chg:5.6, score:69, ai:null, supply:"약함", per:25.93, pbr:5.31, roe:20.47, cap:"29,447억", earn:"매출 +16.38% / 영업이익 -7.7% / 순이익 +505.14% YoY (26.2Q)"},
+    "서진시스템": {code:"178320", price:38400, chg:0.66, score:21, ai:14.93, supply:"보통", per:-30.26, pbr:2.54, roe:-8.4, cap:"24,283억", earn:"매출 +58.63% YoY, 영업손실·순손실 지속 (26.2Q)"},
+    "우리기술": {code:"032820", price:11860, chg:-0.25, score:27, ai:null, supply:"강함", per:58.01, pbr:10.92, roe:18.82, cap:"20,544억", earn:"매출 -12.36% YoY, 영업손실 지속 (26.2Q)"},
+    "보로노이": {code:"310210", price:167600, chg:10.19, score:6, ai:11.5, supply:"약함", per:-41.02, pbr:40.99, roe:-99.94, cap:"28,052억", earn:null},
+    "실리콘투": {code:"257720", price:51900, chg:4.95, score:89, ai:9.16, supply:"보통", per:14.95, pbr:4.79, roe:32.06, cap:"32,427억", earn:"매출 +51.76% / 영업이익 +59% / 순이익 +103.18% YoY (26.2Q)"},
+    "올릭스": {code:"226950", price:113500, chg:-13.95, score:25, ai:null, supply:"매우약함", per:-195.19, pbr:16.52, roe:-8.47, cap:"23,906억", earn:null},
+    "하나마이크론": {code:"067310", price:34700, chg:-5.96, score:67, ai:15.89, supply:"약함", per:13.39, pbr:4.14, roe:30.98, cap:"24,535억", earn:"매출 +100.82% / 영업이익 +371.05% / 순이익 +1100.8% YoY (26.2Q)"},
+    "ISC": {code:"095340", price:154400, chg:0.13, score:88, ai:null, supply:"약함", per:44.72, pbr:5.96, roe:13.32, cap:"32,686억", earn:null},
+    "테스": {code:"095610", price:133300, chg:0.3, score:82, ai:null, supply:"보통", per:31.86, pbr:5.5, roe:17.27, cap:"25,729억", earn:"매출 +50.7% / 영업이익 +27.78% / 순이익 +80.08% YoY (26.2Q)"},
+    "동진쎄미켐": {code:"005290", price:42000, chg:2.19, score:59, ai:null, supply:"보통", per:10, pbr:1.71, roe:17.07, cap:"21,407억", earn:null},
+    "고영": {code:"098460", price:30300, chg:-6.34, score:73, ai:null, supply:"매우강함", per:81.04, pbr:6.42, roe:7.92, cap:"22,064억", earn:null},
+    "에스티팜": {code:"237690", price:110200, chg:10.53, score:79, ai:9.08, supply:"매우약함", per:26.83, pbr:3.27, roe:12.2, cap:"20,814억", earn:null},
+    "솔브레인": {code:"357780", price:334000, chg:1.21, score:71, ai:null, supply:"매우강함", per:20.36, pbr:2.26, roe:11.11, cap:"25,669억", earn:"매출 +36.34% / 영업이익 +128.17% / 순이익 +350.91% YoY (26.2Q)"},
+    "휴젤": {code:"145020", price:250500, chg:2.24, score:85, ai:null, supply:"매우약함", per:19.33, pbr:2.89, roe:14.97, cap:"30,662억", earn:null},
+    "티에스이": {code:"131290", price:249000, chg:1.43, score:79, ai:null, supply:"강함", per:24.7, pbr:5.46, roe:22.08, cap:"27,156억", earn:"매출 +60.51% / 순이익 +829.24% YoY (26.2Q)"},
+    "오름테라퓨틱": {code:"475830", price:62000, chg:-13.53, score:null, ai:null, supply:"매우강함", per:77.84, pbr:7.75, roe:9.95, cap:"13,466억", earn:"매출 +479.03% YoY, 영업손실 지속·순이익 흑자전환 (26.2Q)"},
+    "브이엠": {code:"089970", price:57800, chg:-0.52, score:86, ai:-4.94, supply:"보통", per:23.19, pbr:5.95, roe:25.64, cap:"15,296억", earn:"매출 +84.38% / 영업이익 +353.32% / 순이익 +752.4% YoY (26.2Q)"},
+    "현대무벡스": {code:"319400", price:23500, chg:2.62, score:39, ai:null, supply:"매우약함", per:139.29, pbr:14.73, roe:10.57, cap:"25,505억", earn:"매출 +1.53% / 영업이익 -28.19% / 순이익 +176.65% YoY (26.2Q)"},
+    "에스피지": {code:"058610", price:95500, chg:-7.64, score:53, ai:null, supply:"보통", per:209.37, pbr:7.26, roe:3.47, cap:"21,179억", earn:"매출 +10.32% / 영업이익 +1.96% / 순이익 +1.11% YoY (26.2Q)"},
+    "오스코텍": {code:"039200", price:34950, chg:-1.13, score:73, ai:null, supply:"강함", per:24.34, pbr:7.56, roe:31.05, cap:"13,524억", earn:null},
+    "티씨케이": {code:"064760", price:227500, chg:0.89, score:81, ai:null, supply:"보통", per:30.52, pbr:4.6, roe:15.08, cap:"25,433억", earn:null},
+    "테크윙": {code:"089030", price:48400, chg:-5.28, score:31, ai:null, supply:"매우강함", per:-151.48, pbr:8.46, roe:-5.58, cap:"17,934억", earn:"매출 순이익 -74.24% YoY (26.2Q)"},
+    "펄어비스": {code:"263750", price:33150, chg:2.95, score:67, ai:null, supply:"매우약함", per:7.49, pbr:1.94, roe:25.94, cap:"20,236억", earn:null},
+    "네이처셀": {code:"007390", price:24850, chg:5.3, score:21, ai:null, supply:"보통", per:-559.96, pbr:24.1, roe:-4.31, cap:"15,207억", earn:"매출 -3.25% YoY, 영업손실·순손실 지속 (26.2Q)"},
+    "비에이치아이": {code:"083650", price:58300, chg:4.48, score:76, ai:null, supply:"보통", per:34.13, pbr:8.8, roe:25.78, cap:"17,267억", earn:"매출 +75% / 영업이익 +123.07% / 순이익 -32.02% YoY (26.2Q)"},
+    "파크시스템스": {code:"140860", price:272000, chg:-2.68, score:64, ai:null, supply:"보통", per:79.92, pbr:5.45, roe:6.82, cap:"19,047억", earn:"매출 +10.2% / 영업이익 -34.99% / 순이익 +20.85% YoY (26.2Q)"},
+    "JYP Ent.": {code:"035900", price:39450, chg:1.68, score:83, ai:-2.21, supply:"매우약함", per:12.89, pbr:2.16, roe:16.75, cap:"13,787억", earn:"매출 -15.15% / 영업이익 -41.41% / 순이익 -40.26% YoY (26.2Q)"},
+    "태성": {code:"323280", price:48750, chg:-8.19, score:38, ai:null, supply:"매우강함", per:647.36, pbr:12.29, roe:1.9, cap:"16,216억", earn:"매출 +253.29% YoY, 영업이익·순이익 흑자전환 (26.2Q)"},
+    "씨젠": {code:"096530", price:30300, chg:-5.75, score:70, ai:null, supply:"매우강함", per:25.57, pbr:1.64, roe:6.42, cap:"16,791억", earn:"매출 +19.2% / 영업이익 +586.37% / 순이익 +126% YoY (26.2Q)"},
+    "엘앤씨바이오": {code:"290650", price:51000, chg:-4.32, score:53, ai:-9.98, supply:"약함", per:-9.03, pbr:4.15, roe:-46, cap:"13,755억", earn:"매출 +88.45% YoY, 영업이익 손익분기·순손실 281억 (26.2Q)"},
+    "클래시스": {code:"214150", price:32500, chg:-2.69, score:87, ai:-7.13, supply:"매우약함", per:15.24, pbr:3.81, roe:25.05, cap:"21,789억", earn:"매출 +26.69% / 영업이익 +2.16% / 순이익 -3.6% YoY (26.2Q)"},
+    "대주전자재료": {code:"078600", price:83300, chg:-4.58, score:47, ai:-3.98, supply:"보통", per:136.32, pbr:4.87, roe:3.57, cap:"13,710억", earn:"매출 +58.6% / 영업이익 +26.84% / 순이익 -1.64% YoY (26.2Q)"},
+    "에스엠": {code:"041510", price:72800, chg:2.54, score:80, ai:-0.71, supply:"약함", per:12.36, pbr:1.62, roe:13.14, cap:"16,255억", earn:"매출 +15.43% / 영업이익 +11.02% / 순이익 -5.55% YoY (26.2Q)"},
+    "두산테스나": {code:"131970", price:75100, chg:-2.34, score:57, ai:10.14, supply:"보통", per:42.1, pbr:3.2, roe:7.59, cap:"14,863억", earn:"매출 +6.62% YoY, 영업이익·순이익 흑자전환 (26.2Q)"},
+    "케어젠": {code:"214370", price:54200, chg:4.43, score:61, ai:-4.73, supply:"보통", per:118.79, pbr:12.43, roe:10.46, cap:"27,878억", earn:"매출 +3.73% / 영업이익 -29.64% / 순이익 -10.22% YoY (26.2Q)"},
+    "코스메카코리아": {code:"241710", price:137300, chg:0.07, score:76, ai:null, supply:"보통", per:23.1, pbr:5.38, roe:23.31, cap:"14,664억", earn:"순이익 +87.96% YoY (26.2Q)"},
+    "셀트리온제약": {code:"068760", price:43700, chg:-2.13, score:67, ai:1, supply:"보통", per:49.26, pbr:4.56, roe:9.26, cap:"19,826억", earn:"매출 +16.75% / 영업이익 +24.38% / 순이익 +23.74% YoY (26.2Q)"},
+    "비츠로셀": {code:"082920", price:35300, chg:15.55, score:88, ai:null, supply:"약함", per:19.34, pbr:3.84, roe:19.87, cap:"13,790억", earn:"매출 +34.78% / 순이익 +70.25% YoY (26.2Q)"},
+    "피에스케이홀딩스": {code:"031980", price:120700, chg:9.53, score:85, ai:29.93, supply:"매우강함", per:23.14, pbr:4.44, roe:19.19, cap:"23,762억", earn:null},
+    "큐리옥스바이오시스템즈": {code:"445680", price:53900, chg:0.37, score:14, ai:null, supply:"매우강함", per:-70.03, pbr:18.28, roe:-26.09, cap:"9,238억", earn:null},
+    "휴림로봇": {code:"090710", price:6570, chg:0.46, score:18, ai:-2.95, supply:"약함", per:-35.26, pbr:5.97, roe:-16.95, cap:"7,819억", earn:"매출 -51.65% YoY, 영업이익·순이익 적자전환 (26.2Q)"},
+    "RFHIC": {code:"218410", price:82800, chg:3.89, score:81, ai:null, supply:"보통", per:69.89, pbr:6.08, roe:8.69, cap:"21,986억", earn:null},
+    "원익홀딩스": {code:"030530", price:18980, chg:-1.4, score:32, ai:-8.61, supply:"약함", per:26.75, pbr:1.43, roe:5.36, cap:"14,868억", earn:"매출 +11.99% YoY, 영업이익·순이익 흑자전환 (26.2Q)"},
+    "에임드바이오": {code:"0009K0", price:26000, chg:0.19, score:73, ai:-1.54, supply:"보통", per:43.48, pbr:8.21, roe:18.88, cap:"16,782억", earn:"매출 +165.61% / 영업이익 +279.6% YoY, 순이익 흑자전환 (26.2Q)"},
+    "코미코": {code:"183300", price:25400, chg:-8.3, score:55, ai:15.7, supply:"강함", per:44.41, pbr:4.96, roe:11.15, cap:"14,228억", earn:"매출 +20.52% / 영업이익 -10.32% / 순이익 -58.22% YoY (26.2Q)"},
+    "아이티센글로벌": {code:"124500", price:37900, chg:16.44, score:73, ai:null, supply:"매우강함", per:10.67, pbr:4.59, roe:43.04, cap:"7,553억", earn:"매출 +80.97% / 영업이익 -61.54% / 순이익 +197.89% YoY (26.2Q)"},
+    "클로봇": {code:"466100", price:27000, chg:0.75, score:27, ai:-11.96, supply:"매우약함", per:-311.21, pbr:14.47, roe:-4.65, cap:"8,296억", earn:"매출 +12.87% YoY, 손실 지속 (26.2Q)"},
+    "에스앤에스텍": {code:"101490", price:40650, chg:-6.01, score:76, ai:-1.85, supply:"약함", per:13.8, pbr:2.59, roe:18.74, cap:"8,673억", earn:"매출 +9.39% / 영업이익 +2.27% / 순이익 +27.06% YoY (26.2Q)"},
+    "HK이노엔": {code:"195940", price:43750, chg:-0.91, score:58, ai:5.63, supply:"매우강함", per:14.89, pbr:0.95, roe:6.36, cap:"12,508억", earn:null},
+    "루닛": {code:"328130", price:9020, chg:-6.91, score:21, ai:-2.28, supply:"매우약함", per:-12.96, pbr:2.18, roe:-16.79, cap:"7,215억", earn:"매출 +22.04% YoY, 영업손실·순손실 지속 (26.2Q)"},
+    "성호전자": {code:"043260", price:18150, chg:-6.44, score:58, ai:19.24, supply:"약함", per:3.62, pbr:3.17, roe:87.37, cap:"14,246억", earn:"매출 +50.74% / 영업이익 +421.05% YoY, 순손실 전환 (26.2Q)"},
+    "현대바이오": {code:"048410", price:6790, chg:-1.45, score:8, ai:1.77, supply:"보통", per:-30.76, pbr:5.85, roe:-19.02, cap:"6,553억", earn:null},
+    "와이지엔터테인먼트": {code:"122870", price:41050, chg:3.4, score:75, ai:null, supply:"매우약함", per:21.02, pbr:1.5, roe:7.12, cap:"7,673억", earn:"매출 +27.24% / 영업이익 +48.37% / 순이익 -32.75% YoY (26.2Q)"},
+    "피엔티": {code:"137400", price:30150, chg:2.73, score:52, ai:null, supply:"약함", per:8.38, pbr:0.99, roe:11.81, cap:"7,143억", earn:null},
+    "차바이오텍": {code:"085660", price:8370, chg:3.21, score:23, ai:-0.56, supply:"매우약함", per:52.83, pbr:1.81, roe:-14.27, cap:"7,540억", earn:"매출 +5.87% YoY, 영업손실 지속·순이익 흑자전환 (26.2Q)"},
+    "하나머티리얼즈": {code:"166090", price:50900, chg:-4.68, score:87, ai:-2.63, supply:"약함", per:16.45, pbr:1.72, roe:10.47, cap:"10,561억", earn:"매출 +40.56% / 영업이익 +206.09% / 순이익 +262.83% YoY (26.2Q)"},
+    "신성델타테크": {code:"065350", price:28150, chg:2.36, score:34, ai:-1.09, supply:"약함", per:33.84, pbr:3.04, roe:8.97, cap:"7,737억", earn:null},
+    "기가비스": {code:"420770", price:104600, chg:-0.66, score:78, ai:-5.83, supply:"약함", per:63.91, pbr:6.46, roe:10.11, cap:"13,348억", earn:"매출 223억 / 영업이익 66억 / 순이익 59억 (26.2Q, 잠정)"},
+    "인텔리안테크": {code:"189300", price:77200, chg:-1.78, score:48, ai:8.48, supply:"강함", per:24.07, pbr:3.02, roe:12.54, cap:"8,440억", earn:null},
+    "지아이이노베이션": {code:"358570", price:8770, chg:-5.9, score:20, ai:1.21, supply:"약함", per:-16.33, pbr:5.25, roe:-32.14, cap:"5,658억", earn:null},
+    "LS마린솔루션": {code:"060370", price:30800, chg:-4.79, score:58, ai:-1.14, supply:"강함", per:99.03, pbr:2.71, roe:2.74, cap:"16,899억", earn:null},
+    "쏠리드": {code:"050890", price:9040, chg:-4.84, score:68, ai:-2.36, supply:"약함", per:10.59, pbr:1.54, roe:14.86, cap:"5,772억", earn:"매출 +24.74% / 영업이익 -14.63% YoY, 순손실 (26.2Q)"},
+    "제룡전기": {code:"033100", price:46400, chg:0.32, score:73, ai:null, supply:"약함", per:13.56, pbr:3.01, roe:22.18, cap:"7,453억", earn:"매출 -40.94% / 영업이익 -74.35% / 순이익 +19.22% YoY (26.2Q)"},
+    "로보스타": {code:"090360", price:78200, chg:-3.81, score:16, ai:-2.31, supply:"보통", per:1967.06, pbr:8.64, roe:0.44, cap:"7,625억", earn:"매출 +34.19% YoY, 영업이익·순이익 흑자전환 (26.2Q)"},
+    "쎄트렉아이": {code:"099320", price:71900, chg:1.13, score:49, ai:-5.66, supply:"약함", per:83.43, pbr:3.15, roe:3.78, cap:"7,786억", earn:"매출 +14.96% / 영업이익 -32.52% / 순이익 -85.95% YoY (26.2Q)"},
+    "나노신소재": {code:"121600", price:46500, chg:-5.39, score:54, ai:null, supply:"약함", per:39.56, pbr:2.29, roe:5.79, cap:"6,027억", earn:"매출 +24.48% / 영업이익 +189.35% YoY, 순이익 흑자전환 (26.2Q, 잠정)"},
+    "필옵틱스": {code:"161580", price:26500, chg:-5.19, score:7, ai:3.96, supply:"약함", per:-33.07, pbr:6.01, roe:-18.17, cap:"6,552억", earn:"매출 -75.75% YoY, 영업손실 지속 (26.2Q, 잠정)"},
+    "레이크머티리얼즈": {code:"281740", price:13400, chg:1.13, score:43, ai:7.54, supply:"강함", per:71.01, pbr:6.26, roe:8.82, cap:"8,709억", earn:"매출 +19.08% / 영업이익 +39.95% / 순이익 +131.15% YoY (26.2Q)"},
+    "케이엠더블유": {code:"032500", price:16560, chg:-0.3, score:14, ai:7.91, supply:"강함", per:-26.46, pbr:5.01, roe:-18.95, cap:"6,987억", earn:null},
+    "LS머트리얼즈": {code:"417200", price:11670, chg:-1.6, score:35, ai:-0.76, supply:"매우약함", per:1252, pbr:4.3, roe:0.34, cap:"7,895억", earn:null},
+    "유일로보틱스": {code:"388720", price:67500, chg:-3.98, score:15, ai:-0.29, supply:"약함", per:-86.26, pbr:8.63, roe:-10.01, cap:"7,952억", earn:"매출 99억 / 영업손실 14억 / 순손실 12억 (26.2Q, 잠정)"},
+    "덕산네오룩스": {code:"213420", price:35050, chg:-0.71, score:83, ai:1.52, supply:"강함", per:14.25, pbr:1.86, roe:13.04, cap:"8,703억", earn:"매출 +16.88% / 영업이익 +79.96% / 순이익 +122.41% YoY (26.2Q, 잠정)"},
+    "SFA넥셀": {code:"222080", price:8420, chg:2.56, score:70, ai:null, aiTrend:"상승", supply:"강함", per:15.65, pbr:1.23, roe:7.85, cap:"6,549억", earn:"매출 -46.83% / 영업이익 +865.47% YoY (26.2Q)"},
+    "원익QnC": {code:"074600", price:27850, chg:1.83, score:57, ai:null, aiTrend:"보합", supply:"약함", per:14.63, pbr:1.33, roe:9.05, cap:"7,190억", earn:"매출 +16.72% / 영업이익 +119.09% YoY (26.2Q)"},
+    "와이씨": {code:"232140", price:9970, chg:-6.3, score:66, ai:null, aiTrend:"상승", supply:"약함", per:25.3, pbr:2.05, roe:8.09, cap:"8,180억", earn:"매출 +30.58% / 영업이익 +244.88% YoY (26.2Q)"},
+    "성광벤드": {code:"014620", price:24000, chg:4.58, score:64, ai:-2.31, supply:"매우약함", per:16.09, pbr:1.05, roe:6.55, cap:"6,095억", earn:"매출 +10.37% / 영업이익 -7.09% YoY (26.2Q)"},
+    "SFA반도체": {code:"036540", price:5810, chg:7.79, score:41, ai:null, aiTrend:"상승", supply:"약함", per:-86.18, pbr:1.85, roe:-2.14, cap:"8,864억", earn:"매출 +65.94% YoY, 영업손실 지속 (26.2Q)"},
+    "에프에스티": {code:"036810", price:27450, chg:1.1, score:22, ai:2.74, supply:"강함", per:-39.05, pbr:2.26, roe:-5.78, cap:"5,943억", earn:null},
+    "CJ ENM": {code:"035760", price:32600, chg:-0.31, score:37, ai:-5.86, supply:"약함", per:-159.35, pbr:0.25, roe:-0.16, cap:"7,171억", earn:null},
+    "삼현": {code:"437730", price:32150, chg:-3.02, score:14, ai:-4.56, supply:"매우약함", per:-213.07, pbr:8.42, roe:-3.95, cap:"10,511억", earn:"매출 -21.83% YoY, 영업손실 적자전환 (26.2Q)"},
+    "엔켐": {code:"348370", price:21150, chg:2.92, score:15, ai:4.13, supply:"보통", per:-3.3, pbr:0.94, roe:-28.34, cap:"4,503억", earn:null},
+    "아난티": {code:"025980", price:4545, chg:15.06, score:32, ai:null, aiTrend:"상승", supply:"보통", per:-7.53, pbr:0.53, roe:-7.05, cap:"3,843억", earn:null},
+    "선익시스템": {code:"171090", price:64800, chg:1.25, score:70, ai:-7.62, supply:"약함", per:48.57, pbr:3.58, roe:7.37, cap:"6,482억", earn:"매출 -89.35% YoY, 적자전환 (26.2Q)"},
+    "제이앤티씨": {code:"204270", price:20250, chg:9.05, score:16, ai:null, aiTrend:"상승", supply:"보통", per:-16.93, pbr:5.22, roe:-30.79, cap:"10,742억", earn:"매출 -30.76% YoY, 적자지속 (26.2Q)"},
+    "에이치브이엠": {code:"295310", price:44750, chg:-6.96, score:49, ai:null, aiTrend:"상승", supply:"약함", per:153.23, pbr:3.77, roe:2.46, cap:"5,464억", earn:"매출 +74.29% / 영업이익 -46.64% YoY (26.2Q)"},
+    "카카오게임즈": {code:"293490", price:8490, chg:-1.96, score:12, ai:null, aiTrend:"상승", supply:"약함", per:-7.12, pbr:0.7, roe:-9.82, cap:"9,244억", earn:"매출 -35.22% YoY (26.2Q)"},
+    "젬백스": {code:"082270", price:10120, chg:-7.41, score:24, ai:-1.55, supply:"매우약함", per:-35.47, pbr:5.87, roe:-16.54, cap:"4,480억", earn:"매출 -9.24% YoY (26.2Q)"},
+    "코나아이": {code:"052400", price:37650, chg:-8.17, score:94, ai:null, aiTrend:"하락", supply:"매우약함", per:6.71, pbr:2.25, roe:33.59, cap:"5,971억", earn:null},
+    "NHN KCP": {code:"060250", price:14840, chg:1.92, score:69, ai:null, aiTrend:"상승", supply:"매우강함", per:11.34, pbr:1.94, roe:17.11, cap:"5,847억", earn:"매출 +27.51% / 영업이익 +24.82% YoY (26.2Q)"},
+    "시노펙스": {code:"025320", price:3910, chg:-0.64, score:37, ai:1.28, supply:"약함", per:-12787.69, pbr:2.01, roe:-0.02, cap:"3,627억", earn:"매출 -20.47% YoY, 적자전환 (26.2Q)"},
+    "서부T&D": {code:"006730", price:11260, chg:-1.14, score:62, ai:null, aiTrend:"상승", supply:"매우강함", per:8.39, pbr:0.68, roe:8.16, cap:"7,238억", earn:null},
+    "SFA": {code:"056190", price:24350, chg:-0.61, score:56, ai:null, aiTrend:"상승", supply:"강함", per:14.33, pbr:0.94, roe:6.57, cap:"8,798억", earn:"매출 -10.11% / 영업이익 +37.26% YoY (26.2Q)"},
+    "카페24": {code:"042000", price:18130, chg:-1.68, score:64, ai:null, aiTrend:"상승", supply:"매우강함", per:11.1, pbr:1.7, roe:15.3, cap:"4,458억", earn:"매출 +5.04% / 영업이익 -26.72% YoY (26.2Q)"},
+    "SOOP": {code:"067160", price:37650, chg:-0.13, score:76, ai:null, aiTrend:"하락", supply:"약함", per:4.79, pbr:0.91, roe:18.95, cap:"4,328억", earn:null},
+    "동성화인텍": {code:"033500", price:16550, chg:-5.16, score:77, ai:-2.41, supply:"약함", per:6.33, pbr:1.73, roe:27.37, cap:"5,233억", earn:"매출 +16.14% / 영업이익 +112.26% YoY (26.2Q)"},
+    "우리기술투자": {code:"041190", price:5870, chg:-0.84, score:60, ai:5.74, supply:"매우강함", per:12.03, pbr:0.56, roe:4.67, cap:"4,973억", earn:null},
+    "위메이드": {code:"112040", price:15380, chg:-4.41, score:41, ai:-3.66, supply:"매우약함", per:8.54, pbr:1.4, roe:16.29, cap:"5,462억", earn:"매출 -7.32% YoY, 영업손실 지속 (26.2Q)"},
+    "미래에셋벤처투자": {code:"100790", price:12500, chg:18.71, score:75, ai:null, aiTrend:"하락", supply:"약함", per:15.22, pbr:1.7, roe:11.19, cap:"6,640억", earn:null},
+    "아이쓰리시스템": {code:"214430", price:59600, chg:-0.67, score:63, ai:-5.11, supply:"매우약함", per:25.27, pbr:3, roe:11.88, cap:"4,355억", earn:"매출 +56% / 영업이익 +79.93% / 순이익 -17.56% YoY (26.2Q)"},
+    "스튜디오드래곤": {code:"253450", price:21450, chg:1.42, score:52, ai:-3.94, supply:"매우약함", per:20.21, pbr:0.81, roe:4.01, cap:"6,357억", earn:null},
+    "펌텍코리아": {code:"251970", price:59800, chg:4.73, score:71, ai:null, aiTrend:"상승", supply:null, per:16.41, pbr:2.24, roe:13.64, cap:"7,080억", earn:"매출 +10.84% / 영업이익 +11.44% / 순이익 +61.24% YoY (26.2Q)"},
+    "인카금융서비스": {code:"211050", price:10770, chg:2.67, score:73, ai:0.37, supply:"강함", per:5.99, pbr:2.06, roe:34.47, cap:"5,168억", earn:"매출 +41.9% / 영업이익 +36.13% / 순이익 +26.91% YoY (26.2Q)"},
+    "삼표시멘트": {code:"038500", price:7940, chg:-3.87, score:45, ai:null, aiTrend:"하락", supply:"보통", per:18.1, pbr:1.15, roe:6.35, cap:"8,914억", earn:null},
+    "안랩": {code:"053800", price:59300, chg:-1.98, score:71, ai:null, aiTrend:"상승", supply:"보통", per:11.79, pbr:1.8, roe:15.27, cap:"6,598억", earn:null},
+    "성우하이텍": {code:"015750", price:5870, chg:-1.34, score:43, ai:2.45, supply:"강함", per:2.96, pbr:0.27, roe:9.2, cap:"4,760억", earn:null},
+    "브이티": {code:"018290", price:12620, chg:3.36, score:71, ai:-4.28, supply:"약함", per:10.91, pbr:1.61, roe:14.79, cap:"4,266억", earn:"매출 +18.07% / 영업이익 -63.26% / 순이익 -86.78% YoY (26.2Q)"},
+    "가온칩스": {code:"399720", price:45250, chg:-4.03, score:19, ai:null, aiTrend:"보합", supply:"약함", per:-98, pbr:7.46, roe:-7.61, cap:"5,591억", earn:"매출 +133.18% YoY, 영업이익·순이익 흑자전환 (26.2Q)"},
+    "포스코엠텍": {code:"009520", price:10730, chg:3.37, score:49, ai:3.36, supply:"보통", per:97.91, pbr:3.72, roe:3.8, cap:"4,323억", earn:"매출 +19.98% YoY, 영업이익·순이익 흑자전환 (26.2Q)"},
+    "한컴": {code:"030520", price:17110, chg:-2.34, score:64, ai:-6.89, supply:"약함", per:10.34, pbr:1.05, roe:10.18, cap:"4,137억", earn:null},
+    "큐렉소": {code:"060280", price:8660, chg:-3.88, score:49, ai:-0.44, supply:"약함", per:64.83, pbr:3.54, roe:5.46, cap:"3,573억", earn:"매출 +40.63% YoY, 영업이익 흑자전환 (26.2Q)"},
+    "다우데이타": {code:"032190", price:20500, chg:2.86, score:51, ai:null, aiTrend:"상승", supply:"보통", per:3.11, pbr:0.47, roe:15.02, cap:"7,852억", earn:null},
+    "컴투스": {code:"078340", price:31450, chg:-2.48, score:24, ai:-4.53, supply:"매우강함", per:33.18, pbr:0.43, roe:1.28, cap:"3,899억", earn:"매출 -15.04% / 영업이익 +420.69% YoY, 순손실 적자전환 (26.2Q)"},
+    "한라캐스트": {code:"125490", price:12110, chg:0, score:29, ai:null, aiTrend:"상승", supply:"매우강함", per:78.53, pbr:4.06, roe:5.17, cap:"4,420억", earn:"매출 +40.61% / 영업이익 +111.61% YoY, 순이익 흑자전환 (26.2Q)"},
+    "이녹스첨단소재": {code:"272290", price:20300, chg:1.86, score:49, ai:-3.32, supply:"매우약함", per:6.42, pbr:0.89, roe:13.93, cap:"3,974억", earn:null},
+    "천보": {code:"278280", price:36250, chg:-0.41, score:25, ai:-3.19, supply:"보통", per:-6.89, pbr:0.98, roe:-14.29, cap:"4,460억", earn:"매출 +54.14% YoY, 영업손실·순손실 적자전환 (26.2Q)"},
+    "감성코퍼레이션": {code:"036620", price:3845, chg:0.79, score:86, ai:null, aiTrend:"하락", supply:"매우약함", per:8.8, pbr:2.63, roe:29.95, cap:"3,428억", earn:"매출 +9.18% / 영업이익 +4.09% / 순이익 +5.48% YoY (26.2Q)"},
+    "넥스틴": {code:"348210", price:34400, chg:3.3, score:23, ai:21.29, supply:"약함", per:-68.72, pbr:2.34, roe:-3.4, cap:"3,489억", earn:"매출 -10.05% YoY, 영업손실 지속·순이익 흑자전환 (26.2Q)"},
+    "디어유": {code:"376300", price:18820, chg:2.39, score:82, ai:-0.15, supply:"매우약함", per:11.74, pbr:1.94, roe:16.6, cap:"4,363억", earn:null},
+    "솔브레인홀딩스": {code:"036830", price:35350, chg:1.73, score:40, ai:5.76, supply:"강함", per:1.45, pbr:0.41, roe:27.92, cap:"7,248억", earn:null},
+    "유진로봇": {code:"056080", price:12000, chg:-5.81, score:21, ai:-9.85, supply:"약함", per:-52.15, pbr:11.34, roe:-21.75, cap:"4,588억", earn:"매출 +185.77% YoY, 영업손실·순손실 적자지속 (26.2Q)"},
+    "넥슨게임즈": {code:"225570", price:10720, chg:15.39, score:13, ai:2.06, supply:"보통", per:-11.9, pbr:2.83, roe:-23.81, cap:"6,118억", earn:"매출 +7.47% YoY, 영업이익·순이익 흑자전환 (26.2Q)"},
+    "메가스터디교육": {code:"215200", price:36050, chg:-2.57, score:71, ai:null, aiTrend:"하락", supply:"매우약함", per:4.44, pbr:0.79, roe:17.8, cap:"3,835억", earn:"매출 +1.87% / 영업이익 -13% / 순이익 -16.77% YoY (26.2Q)"},
+    "네오위즈": {code:"095660", price:18190, chg:-0.33, score:71, ai:-1.83, supply:"매우약함", per:6.23, pbr:0.72, roe:11.43, cap:"3,949억", earn:"매출 -7.21% / 영업이익 -57.27% / 순이익 +44.12% YoY (26.2Q)"},
+    "네오셈": {code:"253590", price:11140, chg:1.83, score:54, ai:1.97, supply:"보통", per:28.7, pbr:3.48, roe:12.15, cap:"4,799억", earn:"매출 +134.7% / 영업이익 +779.29% YoY, 순이익 흑자전환 (26.2Q)"},
+    "웹젠": {code:"069080", price:10820, chg:-1.01, score:56, ai:null, aiTrend:"하락", supply:"매우약함", per:10.9, pbr:0.5, roe:4.63, cap:"3,385억", earn:"매출 -2.82% / 영업이익 -8.36% YoY (26.2Q)"},
+    "데브시스터즈": {code:"194480", price:15580, chg:4.14, score:30, ai:-5.9, supply:"약함", per:-4.46, pbr:1.29, roe:-28.95, cap:"1,815억", earn:"모바일게임 매출 비중 약 95%, 해외매출 비중 73.1%"},
+    "위메이드맥스": {code:"101730", price:4095, chg:-8.18, score:24, ai:34.62, supply:"강함", per:-8.31, pbr:0.83, roe:-9.95, cap:"3,738억", earn:"매출 +2.05% YoY, 영업손실 지속 (26.2Q)"},
+    "동화기업": {code:"025900", price:6200, chg:8.39, score:20, ai:3.05, supply:"약함", per:-9.7, pbr:0.35, roe:-3.65, cap:"2,892억", earn:null},
+    "씨앤씨인터내셔널": {code:"352480", price:21900, chg:2.34, score:58, ai:null, aiTrend:"상승", supply:"보통", per:37.2, pbr:0.84, roe:2.25, cap:"2,917억", earn:"매출 -0.78% / 영업이익 -81.56% YoY, 순손실 적자전환 (26.2Q)"},
+  };
+
+  function buildUniverse() {
+    var watchNames = {};
+    WATCHLIST.forEach(function (d) { watchNames[d.name] = true; });
+    var seen = {};
+    var universe = [];
+    function addList(names, market) {
+      names.forEach(function (n) {
+        var norm = NAME_ALIAS[n] || n;
+        if (watchNames[norm] || seen[norm]) return;
+        seen[norm] = true;
+        var extra = UNIVERSE_DATA[norm] || UNIVERSE_DATA[n];
+        var base = { name: n, market: market, code: null, watch: false };
+        if (extra) { for (var k in extra) { if (extra.hasOwnProperty(k)) base[k] = extra[k]; } }
+        universe.push(base);
+      });
+    }
+    addList(KOSPI200_NAMES, "KOSPI200");
+    addList(KOSDAQ150_NAMES, "KOSDAQ150");
+    return universe;
+  }
+  var UNIVERSE = buildUniverse();
+  var STOCKS = WATCHLIST.concat(UNIVERSE);
+  var CODE_INDEX = {};
+  STOCKS.forEach(function (d) { if (d.code) CODE_INDEX[d.code] = d; });
+
+  function marketMeta() {
+    var t = window._T || I18N.ko;
+    return {
+      "KOSPI200": {label:t.lbl_kospi200, cls:"kospi"},
+      "KOSDAQ150": {label:t.lbl_kosdaq150, cls:"kosdaq"},
+      "기타": {label:t.lbl_etc, cls:"etc"}
+    };
+  }
+
+  function supplyClass(v) {
+    if (v === "매우강함" || v === "강함") return "s-strong";
+    if (v === "약함" || v === "매우약함") return "s-weak";
+    return "s-mid";
+  }
+  function supplyLabel(v) {
+    var t = window._T || I18N.ko;
+    var map = {
+      "매우강함": t.supply_verystrong,
+      "강함": t.supply_strong,
+      "보통": t.supply_mid,
+      "약함": t.supply_weak,
+      "매우약함": t.supply_veryweak
+    };
+    return map[v] || v;
+  }
+  function trendLabel(v) {
+    var t = window._T || I18N.ko;
+    var map = { "상승": t.trend_up, "하락": t.trend_down };
+    return map[v] || v;
+  }
+
+  function fmtPrice(v) {
+    if (v == null) return "—";
+    return v.toLocaleString("ko-KR") + "원";
+  }
+  function fmtChg(v) {
+    if (v == null) return {cls:"flat", text:"—"};
+    if (v > 0) return {cls:"up", text:"▲ +" + v.toFixed(2) + "%"};
+    if (v < 0) return {cls:"down", text:"▼ " + v.toFixed(2) + "%"};
+    return {cls:"flat", text:"0.00%"};
+  }
+
+  var state = { filters: new Set(["WATCH"]), sort: "score-desc", q: "" };
+
+  function computeStats() {
+    var total = STOCKS.length;
+    var byMarket = { KOSPI200: 0, KOSDAQ150: 0, "기타": 0 };
+    var scored = [];
+    var up = 0, down = 0, prefCount = 0, watchCount = 0;
+    STOCKS.forEach(function (d) {
+      byMarket[d.market]++;
+      if (d.score != null) scored.push(d.score);
+      if (d.chg > 0) up++;
+      if (d.chg < 0) down++;
+      if (d.pref) prefCount++;
+      if (d.watch) watchCount++;
+    });
+    var avgScore = scored.length ? (scored.reduce(function(a,b){return a+b;},0) / scored.length) : 0;
+    return { total: total, byMarket: byMarket, avgScore: avgScore, up: up, down: down, prefCount: prefCount, watchCount: watchCount };
+  }
+
+  function matchesFilters(d) {
+    if (state.filters.has("ALL")) return true;
+    if (state.filters.has("KOSPI200") && d.market === "KOSPI200") return true;
+    if (state.filters.has("KOSDAQ150") && d.market === "KOSDAQ150") return true;
+    if (state.filters.has("PREF") && d.pref) return true;
+    if (state.filters.has("WATCH") && d.watch) return true;
+    return false;
+  }
+
+  function renderStats() {
+    var s = computeStats();
+    var t = window._T || I18N.ko;
+    var tiles = [
+      { label: t.lbl_total_stocks, value: s.total + t.unit_stocks },
+      { label: t.lbl_watch, value: s.watchCount + t.unit_stocks },
+      { label: t.lbl_kospi200, value: s.byMarket.KOSPI200 + t.unit_stocks },
+      { label: t.lbl_kosdaq150, value: s.byMarket.KOSDAQ150 + t.unit_stocks },
+      { label: t.lbl_pref, value: s.prefCount + t.unit_stocks },
+      { label: t.lbl_avg_score, value: s.avgScore.toFixed(1) + t.unit_score }
+    ];
+    var html = tiles.map(function (t) {
+      var valClass = "value" + (t.cls ? " " + t.cls : "");
+      return '<div class="stat-tile"><div class="label">' + t.label + '</div><div class="' + valClass + '">' + t.value + '</div></div>';
+    }).join("");
+    document.getElementById("statRow").innerHTML = html;
+  }
+
+  function renderChips() {
+    var s = computeStats();
+    var t = window._T || I18N.ko;
+    var defs = [
+      { key: "ALL", label: t.lbl_all, count: s.total },
+      { key: "KOSPI200", label: t.lbl_kospi200, count: s.byMarket.KOSPI200 },
+      { key: "KOSDAQ150", label: t.lbl_kosdaq150, count: s.byMarket.KOSDAQ150 },
+      { key: "PREF", label: t.lbl_pref, count: s.prefCount },
+      { key: "WATCH", label: t.lbl_watch, count: s.watchCount }
+    ];
+    var html = defs.map(function (d) {
+      var checked = state.filters.has(d.key);
+      return '<label class="chip chip-check" data-active="' + checked + '"><input type="checkbox" data-filter="' + d.key + '"' + (checked ? " checked" : "") + ' />' + d.label + ' <span class="count">' + d.count + '</span></label>';
+    }).join("");
+    document.getElementById("chipRow").innerHTML = html;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-filter]"), function (cb) {
+      cb.addEventListener("change", function () {
+        var key = cb.getAttribute("data-filter");
+        if (key === "ALL") {
+          state.filters = new Set(["ALL"]);
+        } else {
+          state.filters.delete("ALL");
+          if (cb.checked) state.filters.add(key); else state.filters.delete(key);
+          if (state.filters.size === 0) state.filters.add("ALL");
+        }
+        renderAll();
+      });
+    });
+  }
+
+  function sortRows(rows) {
+    var key = state.sort;
+    function num(v, fallback) { return (v == null || isNaN(v)) ? fallback : v; }
+    var sorted = rows.slice();
+    switch (key) {
+      case "score-desc": sorted.sort(function(a,b){ return num(b.score,-1) - num(a.score,-1); }); break;
+      case "score-asc": sorted.sort(function(a,b){ return num(a.score,101) - num(b.score,101); }); break;
+      case "chg-desc": sorted.sort(function(a,b){ return num(b.chg,-999) - num(a.chg,-999); }); break;
+      case "chg-asc": sorted.sort(function(a,b){ return num(a.chg,999) - num(b.chg,999); }); break;
+      case "ai-desc": sorted.sort(function(a,b){ return num(b.ai,-999) - num(a.ai,-999); }); break;
+      case "per-asc": sorted.sort(function(a,b){
+          // PER은 마이너스(적자)를 "저평가"로 착시하지 않도록 0 이하는 뒤로 보낸다
+          var pa = a.per, pb = b.per;
+          var va = (pa == null) ? Infinity : (pa <= 0 ? Infinity - 1 : pa);
+          var vb = (pb == null) ? Infinity : (pb <= 0 ? Infinity - 1 : pb);
+          return va - vb;
+        }); break;
+      case "pbr-asc": sorted.sort(function(a,b){ return num(a.pbr,999) - num(b.pbr,999); }); break;
+      case "roe-desc": sorted.sort(function(a,b){ return num(b.roe,-999) - num(a.roe,-999); }); break;
+      case "name-asc": sorted.sort(function(a,b){ return a.name.localeCompare(b.name, "ko"); }); break;
+      case "market": sorted.sort(function(a,b){
+          var order = {KOSPI200:0, KOSDAQ150:1, "기타":2};
+          return order[a.market] - order[b.market] || num(b.score,-1) - num(a.score,-1);
+        }); break;
+    }
+    return sorted;
+  }
+
+  // 우선주는 밸류라인 점수가 없어 본주와 비슷한 수준으로 보고,
+  // 정렬 기준이 무엇이든 항상 짝이 되는 본주 바로 아래에 붙여서 보여준다.
+  function groupWithParents(rows) {
+    var byCode = {};
+    rows.forEach(function (r) { if (r.code) byCode[r.code] = r; r._isChild = false; });
+    var childrenMap = {};
+    var primaries = [];
+    rows.forEach(function (r) {
+      if (r.parent && byCode[r.parent]) {
+        r._isChild = true;
+        (childrenMap[r.parent] = childrenMap[r.parent] || []).push(r);
+      } else {
+        primaries.push(r);
+      }
+    });
+    var sortedPrimaries = sortRows(primaries);
+    var out = [];
+    sortedPrimaries.forEach(function (p) {
+      out.push(p);
+      if (childrenMap[p.code]) childrenMap[p.code].forEach(function (c) { out.push(c); });
+    });
+    return out;
+  }
+
+  function fmtFund(v, decimals) {
+    if (v == null || isNaN(v)) return '<span class="fund-empty">—</span>';
+    return '<span class="fund-num num">' + v.toFixed(decimals) + '</span>';
+  }
+
+  // 우선주-본주 괴리율: 필터/정렬 상태와 무관하게 전역 CODE_INDEX로 항상 계산한다
+  function gapRate(d) {
+    if (!d.pref || !d.parent) return null;
+    var p = CODE_INDEX[d.parent];
+    if (!p || d.price == null || p.price == null) return null;
+    return (d.price - p.price) / p.price * 100;
+  }
+
+  function csvEscape(v) {
+    v = (v == null) ? "" : String(v);
+    if (/[",\n\r]/.test(v)) { v = '"' + v.replace(/"/g, '""') + '"'; }
+    return v;
+  }
+
+  function setExportStatus(msg, kind) {
+    var el = document.getElementById("exportStatus");
+    if (!el) return;
+    el.textContent = msg;
+    el.className = "export-note" + (kind ? " export-" + kind : "");
+  }
+
+  // 현재 화면에 보이는 결과(필터·검색·정렬 반영)를 CSV로 내보낸다 — 엑셀에서 바로 열림
+  async function exportCSV() {
+    var rows = state.lastRows || [];
+    var t = window._T || I18N.ko;
+    var headers = [t.col_name, t.csv_col_code, t.col_market, t.lbl_watch, t.col_price, t.col_chg + "(%)", t.col_score, t.col_ai, t.csv_col_ai_trend, t.col_supply, t.col_per, t.col_pbr, t.col_roe + "(%)", t.csv_col_gap, t.col_earn];
+    var lines = [headers.map(csvEscape).join(",")];
+    rows.forEach(function (d) {
+      var mm = marketMeta()[d.market];
+      var gap = gapRate(d);
+      var row = [
+        d.name,
+        d.code || "",
+        mm ? mm.label : d.market,
+        d.watch ? "Y" : "",
+        d.price == null ? "" : d.price,
+        d.chg == null ? "" : d.chg,
+        d.score == null ? "" : d.score,
+        d.ai == null ? "" : d.ai,
+        d.ai == null ? (d.aiTrend || "") : "",
+        d.supply || "",
+        d.per == null ? "" : d.per,
+        d.pbr == null ? "" : d.pbr,
+        d.roe == null ? "" : d.roe,
+        gap == null ? "" : gap.toFixed(2),
+        d.earn || ""
+      ];
+      lines.push(row.map(csvEscape).join(","));
+    });
+    var csv = "﻿" + lines.join("\r\n"); // BOM: 엑셀에서 한글이 깨지지 않도록
+    var ts = (document.getElementById("dataAsOf").textContent.match(/[\d-]+ [\d:]+/) || [""])[0].replace(/[^0-9]/g, "").slice(0, 12);
+    var filename = t.csv_filename_prefix + (ts || "export") + ".csv";
+
+    // claude.ai 아티팩트로 열려 있으면(스크립트로 직접 내려받기가 막혀 있으므로) downloads 기능을 쓰고,
+    // 로컬 HTML로 직접 열었을 때는 일반 브라우저 다운로드를 쓴다.
+    if (window.claude && typeof window.claude.use === "function") {
+      try {
+        var downloads = await window.claude.use("downloads");
+        if (!downloads) {
+          setExportStatus(t.export_no_downloads, "error");
+          return;
+        }
+        await downloads.save({ filename: filename, data: csv });
+        setExportStatus(t.export_done_prefix + filename, "ok");
+      } catch (err) {
+        var code = err && err.code;
+        if (code === "declined") {
+          setExportStatus(t.export_cancelled, null);
+        } else if (code === "extension_not_enabled" || code === "rejected_extension") {
+          setExportStatus(t.export_restricted, "error");
+        } else {
+          setExportStatus(t.export_failed_prefix + (err && err.message ? err.message : t.export_failed_unknown), "error");
+        }
+      }
+      return;
+    }
+
+    var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    setExportStatus(t.export_done_prefix + filename, "ok");
+  }
+
+  function renderTable() {
+    var rows = STOCKS.filter(function (d) {
+      if (!matchesFilters(d)) return false;
+      if (state.q && d.name.indexOf(state.q) === -1) return false;
+      return true;
+    });
+    rows = groupWithParents(rows);
+    state.lastRows = rows; // CSV/인쇄 내보내기가 화면에 보이는 것과 동일한 결과를 쓰도록 저장
+
+    if (!rows.length) {
+      document.getElementById("tableBody").innerHTML = '<tr class="empty-row"><td colspan="11">' + (window._T||I18N.ko).empty_message + '</td></tr>';
+      return;
+    }
+
+    var t = window._T || I18N.ko;
+    var html = rows.map(function (d) {
+      var mm = marketMeta()[d.market];
+      var chg = fmtChg(d.chg);
+      var scoreCell;
+      if (d.score == null) {
+        scoreCell = '<span class="score-empty">' + t.no_data + (d.pref ? t.pref_suffix : '') + '</span>';
+      } else {
+        var pct = Math.max(0, Math.min(100, d.score));
+        scoreCell = '<div class="score-wrap"><div class="score-bar-bg"><div class="score-bar-fill" style="width:' + pct + '%"></div></div><span class="score-num num">' + d.score + '</span></div>' +
+          (d.scoreNote ? '<div class="pref-tag">' + d.scoreNote + '</div>' : '');
+      }
+      var aiCell;
+      if (d.ai != null) {
+        var cls = d.ai > 0 ? "up" : (d.ai < 0 ? "down" : "");
+        aiCell = '<span class="ai-val num ' + cls + '">' + (d.ai > 0 ? "+" : "") + d.ai.toFixed(2) + '%</span>';
+      } else if (d.aiTrend) {
+        aiCell = '<span class="ai-empty">' + trendLabel(d.aiTrend) + ' ' + t.ai_no_value_suffix + '</span>';
+      } else {
+        aiCell = '<span class="ai-empty">' + t.no_data + (d.pref ? t.pref_suffix : '') + '</span>';
+      }
+      var supplyCell;
+      if (d.supply) {
+        supplyCell = '<span class="supply-pill ' + supplyClass(d.supply) + '"><span class="dot"></span>' + supplyLabel(d.supply) + '</span>' +
+          (d.supplyNote ? '<div class="pref-tag">' + d.supplyNote + '</div>' : '');
+      } else {
+        supplyCell = '<span class="supply-empty">' + t.no_data + (d.pref ? t.pref_suffix : '') + '</span>';
+      }
+
+      var perCell = fmtFund(d.per, 2) + (d.valInferred ? '<div class="fund-inferred">' + t.valinferred_per + '</div>' : '');
+      var pbrCell = fmtFund(d.pbr, 2) + (d.valInferred ? '<div class="fund-inferred">' + t.valinferred_per + '</div>' : '');
+      var roeCell = d.roe == null ? '<span class="fund-empty">—</span>' : '<span class="fund-num num">' + d.roe.toFixed(2) + '%</span>' + (d.valInferred ? '<div class="fund-inferred">' + t.valinferred_roe + '</div>' : '');
+      var earnCell = d.earn ? '<span class="earn-cell">' + d.earn + '</span>' : '<span class="fund-empty">—</span>';
+      var gap = gapRate(d);
+      var priceCell = fmtPrice(d.price) + (gap != null ? '<div class="gap-rate ' + (gap >= 0 ? 'up' : 'down') + '">' + t.gap_label + ' ' + (gap >= 0 ? '+' : '') + gap.toFixed(1) + '%</div>' : '');
+      var rowClass = (d._isChild ? 'child-row ' : '') + (d.watch ? 'watch-row' : '');
+
+      return '<tr class="' + rowClass + '">' +
+        '<td class="name-cell"><span class="name">' + (d._isChild ? '<span class="child-arrow">↳</span>' : '') + d.name + '</span>' + (d.code ? '<span class="code num">' + d.code + '</span>' : '') + (d.note ? '<div class="pref-tag">' + d.note + '</div>' : '') + '</td>' +
+        '<td><span class="badge ' + mm.cls + '">' + mm.label + '</span></td>' +
+        '<td class="num">' + priceCell + '</td>' +
+        '<td class="chg ' + chg.cls + ' num">' + chg.text + '</td>' +
+        '<td class="group-start">' + scoreCell + '</td>' +
+        '<td>' + aiCell + '</td>' +
+        '<td>' + supplyCell + '</td>' +
+        '<td class="group-start">' + perCell + '</td>' +
+        '<td>' + pbrCell + '</td>' +
+        '<td>' + roeCell + '</td>' +
+        '<td>' + earnCell + '</td>' +
+      '</tr>';
+    }).join("");
+    document.getElementById("tableBody").innerHTML = html;
+  }
+
+  function renderAll() {
+    renderStats();
+    renderChips();
+    renderTable();
+  }
+
+  document.getElementById("searchInput").addEventListener("input", function (e) {
+    state.q = e.target.value.trim();
+    renderTable();
+  });
+  document.getElementById("sortSelect").addEventListener("change", function (e) {
+    state.sort = e.target.value;
+    renderTable();
+  });
+  document.getElementById("sortSelect").value = state.sort;
+
+  Array.prototype.forEach.call(document.querySelectorAll("th[data-key]"), function (th) {
+    th.addEventListener("click", function () {
+      var key = th.getAttribute("data-key");
+      var map = { score: "score-desc", chg: "chg-desc", ai: "ai-desc", name: "name-asc", market: "market", per: "per-asc", pbr: "pbr-asc", roe: "roe-desc" };
+      if (map[key]) {
+        state.sort = map[key];
+        document.getElementById("sortSelect").value = state.sort;
+        renderTable();
+      }
+    });
+  });
+
+  document.getElementById("refreshBtn").addEventListener("click", function () {
+    this.classList.add("spinning");
+    setTimeout(function () { location.reload(); }, 250);
+  });
+
+  document.getElementById("exportCsvBtn").addEventListener("click", exportCSV);
+  document.getElementById("printBtn").addEventListener("click", function () {
+    window.print();
+  });
+
+  initLang();
+})();
+</script>
+
+</body>
+</html>
