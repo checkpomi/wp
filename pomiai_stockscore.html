@@ -172,6 +172,28 @@
     margin-top: 4px;
   }
 
+  .snapshot-row {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .snapshot-row.is-visible { display: flex; }
+  .snapshot-label {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  #snapshotSelect {
+    font-family: inherit;
+    font-size: 12.5px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 5px 9px;
+  }
+  #snapshotSelect:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
   /* ---------- stat tiles ---------- */
   .stat-row {
     display: grid;
@@ -540,6 +562,10 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
         <div>
           <div class="updated"><span data-i18n="updated_prefix"></span> <span class="num" id="dataAsOf">2026-08-25 23:40 KST</span><span data-i18n="updated_suffix"></span></div>
           <div class="cadence-note" data-i18n="cadence_note"></div>
+          <div class="snapshot-row" id="snapshotRow">
+            <label class="snapshot-label" data-i18n="snapshot_label" for="snapshotSelect"></label>
+            <select id="snapshotSelect" aria-label="Snapshot"></select>
+          </div>
         </div>
         <button class="refresh-btn" id="refreshBtn"><span class="refresh-icon">↻</span> <span data-i18n="refresh_btn"></span></button>
       </div>
@@ -616,7 +642,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "관심종목 진단 · AI예측 대시보드",
     "updated_prefix": "데이터 기준",
     "updated_suffix": " · 밸류라인 + 한경(우선주 시세) · 코스피200·코스닥150 전 종목 PER·PBR·진단점수·AI예측 포함",
-    "cadence_note": "평일 장중(09~15시) 매시 자동 갱신 + 새로고침 시 최신 발행본 표시 · 색이 있는 행 배경 = 관심종목",
+    "cadence_note": "새 데이터가 발행될 때마다 스냅샷으로 기록됩니다 · 위에서 조회 시점을 선택할 수 있습니다 · 색이 있는 행 배경 = 관심종목",
+    "snapshot_label": "조회 시점",
     "refresh_btn": "새로고침",
     "search_placeholder": "종목명 검색",
     "sort_score_desc": "진단점수 높은순",
@@ -691,7 +718,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Watchlist Diagnostics · AI Prediction Dashboard",
     "updated_prefix": "Data as of",
     "updated_suffix": " · Valueline + Hankyung (preferred stock prices) · Includes PER, PBR, diagnostic score, and AI prediction for all KOSPI200 and KOSDAQ150 constituents",
-    "cadence_note": "Automatically updated hourly during weekday trading hours (09:00–15:00) + refresh shows the latest published version · Colored row background = watchlist stock",
+    "cadence_note": "Each new data publish is recorded as a snapshot · choose the viewing date/time above · Colored row background = watchlist stock",
+    "snapshot_label": "Snapshot",
     "refresh_btn": "Refresh",
     "search_placeholder": "Search by stock name",
     "sort_score_desc": "Diagnostic score: high to low",
@@ -766,7 +794,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "注目銘柄診断・AI予測ダッシュボード",
     "updated_prefix": "データ基準日",
     "updated_suffix": " · バリューライン + 韓国経済新聞（優先株時価） · KOSPI200・KOSDAQ150全銘柄のPER・PBR・診断スコア・AI予測を含む",
-    "cadence_note": "平日の取引時間中（9時〜15時）は毎時自動更新 + 更新時に最新版を表示 · 色付きの行背景 = 注目銘柄",
+    "cadence_note": "新しいデータが公開されるたびにスナップショットとして記録されます · 上部で表示時点を選択できます · 色付きの行背景 = 注目銘柄",
+    "snapshot_label": "表示時点",
     "refresh_btn": "更新",
     "search_placeholder": "銘柄名を検索",
     "sort_score_desc": "診断スコアが高い順",
@@ -841,7 +870,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "自选股诊断 · AI预测仪表盘",
     "updated_prefix": "数据截至",
     "updated_suffix": " · Valueline + Hankyung（优先股行情）· 包含KOSPI200·KOSDAQ150全部成分股的PER·PBR·诊断评分·AI预测",
-    "cadence_note": "交易日盘中（09~15时）每小时自动更新 + 刷新时显示最新发布版本 · 带底色行背景 = 自选股",
+    "cadence_note": "每次发布新数据都会记录为快照 · 可在上方选择查看时点 · 带底色行背景 = 自选股",
+    "snapshot_label": "查看时点",
     "refresh_btn": "刷新",
     "search_placeholder": "搜索股票名称",
     "sort_score_desc": "诊断评分从高到低",
@@ -916,7 +946,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "自選股診斷 · AI預測儀表板",
     "updated_prefix": "資料基準",
     "updated_suffix": " · Valueline + 韓經（特別股股價） · 涵蓋KOSPI200·KOSDAQ150全部成分股之PER·PBR·診斷分數·AI預測",
-    "cadence_note": "平日盤中（09~15時）每小時自動更新 + 重新整理時顯示最新發布版本 · 有顏色的列背景 = 自選股",
+    "cadence_note": "每次發布新資料都會記錄為快照 · 可在上方選擇檢視時點 · 有顏色的列背景 = 自選股",
+    "snapshot_label": "檢視時點",
     "refresh_btn": "重新整理",
     "search_placeholder": "搜尋股票名稱",
     "sort_score_desc": "診斷分數高到低",
@@ -991,7 +1022,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Watchlist-Diagnose · KI-Prognose-Dashboard",
     "updated_prefix": "Datenstand",
     "updated_suffix": " · Valueline + Hankyung (Vorzugsaktienkurse) · Enthält PER, PBR, Diagnosewert und KI-Prognose für alle KOSPI200- und KOSDAQ150-Werte",
-    "cadence_note": "Automatische stündliche Aktualisierung an Handelstagen (09–15 Uhr) + Anzeige der neuesten Version beim Neuladen · Farbig hinterlegte Zeilen = Watchlist-Aktien",
+    "cadence_note": "Jede neue Datenveröffentlichung wird als Snapshot gespeichert · wählen Sie oben den Zeitpunkt aus · Farbig hinterlegte Zeilen = Watchlist-Aktien",
+    "snapshot_label": "Zeitpunkt",
     "refresh_btn": "Aktualisieren",
     "search_placeholder": "Aktienname suchen",
     "sort_score_desc": "Diagnosewert absteigend",
@@ -1066,7 +1098,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Diagnostic des valeurs suivies · Tableau de bord de prévision IA",
     "updated_prefix": "Données au",
     "updated_suffix": " · Valueline + Hankyung (cours des actions préférentielles) · Inclut le PER, le PBR, le score de diagnostic et la prévision IA pour toutes les valeurs du KOSPI200 et du KOSDAQ150",
-    "cadence_note": "Mise à jour automatique toutes les heures pendant les heures de marché en semaine (9h-15h), avec affichage de la dernière version publiée lors de l'actualisation · Ligne à fond coloré = valeur suivie",
+    "cadence_note": "Chaque nouvelle publication de données est enregistrée sous forme d'instantané · choisissez la date ci-dessus · Ligne à fond coloré = valeur suivie",
+    "snapshot_label": "Instantané",
     "refresh_btn": "Actualiser",
     "search_placeholder": "Rechercher une valeur",
     "sort_score_desc": "Score de diagnostic décroissant",
@@ -1141,7 +1174,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Watchlist-diagnose · AI-voorspellingsdashboard",
     "updated_prefix": "Gegevens per",
     "updated_suffix": " · Valueline + Hankyung (koersen preferente aandelen) · inclusief PER, PBR, diagnosescore en AI-voorspelling voor alle aandelen in de KOSPI200 en KOSDAQ150",
-    "cadence_note": "Automatische update elk uur tijdens handelsuren op werkdagen (09.00-15.00 uur) + bij vernieuwen wordt de meest recente publicatie getoond · Gekleurde rijachtergrond = watchlistaandeel",
+    "cadence_note": "Elke nieuwe gegevenspublicatie wordt vastgelegd als momentopname · kies hierboven het tijdstip · Gekleurde rijachtergrond = watchlistaandeel",
+    "snapshot_label": "Momentopname",
     "refresh_btn": "Vernieuwen",
     "search_placeholder": "Zoek op aandeelnaam",
     "sort_score_desc": "Diagnosescore: hoog naar laag",
@@ -1216,7 +1250,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Diagnos för bevakningslista · AI-prognospanel",
     "updated_prefix": "Data per",
     "updated_suffix": " · Valueline + Hankyung (kurser för preferensaktier) · Omfattar PER, PBR, diagnospoäng och AI-prognos för samtliga aktier i KOSPI200 och KOSDAQ150",
-    "cadence_note": "Automatisk uppdatering varje timme på vardagar under handelstid (kl. 09–15) + senaste publicerade version visas vid omladdning · Färgad radbakgrund = bevakad aktie",
+    "cadence_note": "Varje ny datapublicering sparas som en ögonblicksbild · välj tidpunkt ovan · Färgad radbakgrund = bevakad aktie",
+    "snapshot_label": "Tidpunkt",
     "refresh_btn": "Uppdatera",
     "search_placeholder": "Sök aktienamn",
     "sort_score_desc": "Diagnospoäng, högst först",
@@ -1291,7 +1326,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Diagnose av favorittaksjar · AI-prognose-dashbord",
     "updated_prefix": "Data per",
     "updated_suffix": " · Valueline + Hankyung (kurs på preferanseaksjar) · Inkluderer PER, PBR, diagnosepoeng og AI-prognose for alle aksjar i KOSPI200 og KOSDAQ150",
-    "cadence_note": "Automatisk oppdatering kvar time i handelstida på kvardagar (09–15) + viser siste utgåve når du oppdaterer sida · Rad med farga bakgrunn = favorittaksjar",
+    "cadence_note": "Kvar ny datapublisering blir lagra som eit augeblinksbilete · vel tidspunkt ovanfor · Rad med farga bakgrunn = favorittaksjar",
+    "snapshot_label": "Tidspunkt",
     "refresh_btn": "Oppdater",
     "search_placeholder": "Søk etter aksjenamn",
     "sort_score_desc": "Diagnosepoeng, høgast først",
@@ -1366,7 +1402,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Diagnose af favoritaktier · AI-prognosedashboard",
     "updated_prefix": "Data pr.",
     "updated_suffix": " · Valueline + Hankyung (kurser for præferenceaktier) · Inkluderer PER, PBR, diagnosescore og AI-prognose for alle aktier i KOSPI200 og KOSDAQ150",
-    "cadence_note": "Automatisk opdatering hver time i markedstiden på hverdage (09-15) + viser seneste udgivne version ved genindlæsning · Rækker med farvet baggrund = favoritaktier",
+    "cadence_note": "Hver ny dataudgivelse gemmes som et øjebliksbillede · vælg tidspunkt ovenfor · Rækker med farvet baggrund = favoritaktier",
+    "snapshot_label": "Tidspunkt",
     "refresh_btn": "Opdater",
     "search_placeholder": "Søg efter aktienavn",
     "sort_score_desc": "Diagnosescore, højeste først",
@@ -1441,7 +1478,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "لوحة تشخيص الأسهم المفضلة · تنبؤ الذكاء الاصطناعي",
     "updated_prefix": "البيانات حتى",
     "updated_suffix": " · Valueline + 한경 (أسعار الأسهم الممتازة) · يشمل PER وPBR ودرجة التشخيص وتنبؤ الذكاء الاصطناعي لجميع أسهم KOSPI200 وKOSDAQ150",
-    "cadence_note": "تحديث تلقائي كل ساعة خلال ساعات تداول أيام الأسبوع (09:00–15:00) + عرض أحدث نسخة منشورة عند التحديث · خلفية الصف الملوّنة = من الأسهم المفضلة",
+    "cadence_note": "يتم تسجيل كل نشر جديد للبيانات كلقطة · اختر التوقيت أعلاه · خلفية الصف الملوّنة = من الأسهم المفضلة",
+    "snapshot_label": "نقطة زمنية",
     "refresh_btn": "تحديث",
     "search_placeholder": "البحث عن اسم السهم",
     "sort_score_desc": "الأعلى في درجة التشخيص",
@@ -2040,6 +2078,68 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
   var CODE_INDEX = {};
   STOCKS.forEach(function (d) { if (d.code) CODE_INDEX[d.code] = d; });
 
+  // ---------- 스냅샷(조회 시점) 로딩 ----------
+  // 밸류라인 고유값은 실시간 자동 수집이 불가능하므로, 새 데이터가 나올 때마다
+  // GitHub에 스냅샷 JSON을 추가하고 여기서 목록을 불러와 선택할 수 있게 한다.
+  // 네트워크 문제 등으로 스냅샷을 못 불러와도, 위에서 정의한 내장 데이터로 정상 동작한다.
+  var SNAPSHOT_BASE = "data/stockscore/";
+
+  function rebuildStocks() {
+    WATCHLIST.forEach(function (d) { d.watch = true; });
+    UNIVERSE = buildUniverse();
+    STOCKS = WATCHLIST.concat(UNIVERSE);
+    CODE_INDEX = {};
+    STOCKS.forEach(function (d) { if (d.code) CODE_INDEX[d.code] = d; });
+  }
+  rebuildStocks(); // 내장 데이터에도 watch 플래그를 일관되게 적용
+
+  function applySnapshotData(data) {
+    if (!data) return;
+    if (Array.isArray(data.watchlist)) WATCHLIST = data.watchlist;
+    if (data.universeData) UNIVERSE_DATA = data.universeData;
+    rebuildStocks();
+    if (data.asOf) {
+      var el = document.getElementById("dataAsOf");
+      if (el) el.textContent = data.asOf;
+    }
+    renderAll();
+  }
+
+  function loadSnapshotFile(file) {
+    return fetch(SNAPSHOT_BASE + file, { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(applySnapshotData)
+      .catch(function (err) { console.warn("[pomiai] 스냅샷 로드 실패:", file, err); });
+  }
+
+  function initSnapshots() {
+    var row = document.getElementById("snapshotRow");
+    var sel = document.getElementById("snapshotSelect");
+    if (sel) {
+      sel.addEventListener("change", function (e) { loadSnapshotFile(e.target.value); });
+    }
+    fetch(SNAPSHOT_BASE + "manifest.json", { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function (manifest) {
+        var list = (manifest && manifest.snapshots) || [];
+        if (!list.length || !sel) return;
+        sel.innerHTML = "";
+        list.forEach(function (s) {
+          var opt = document.createElement("option");
+          opt.value = s.file;
+          opt.textContent = s.label;
+          sel.appendChild(opt);
+        });
+        sel.value = list[0].file; // 최신순으로 정렬된 첫 항목이 기본값
+        if (list.length > 1 && row) row.classList.add("is-visible");
+        return loadSnapshotFile(list[0].file);
+      })
+      .catch(function (err) {
+        // 매니페스트를 못 불러오면 스냅샷 선택 UI를 숨기고 내장 데이터로 계속 동작
+        console.warn("[pomiai] 스냅샷 목록 로드 실패:", err);
+      });
+  }
+
   function marketMeta() {
     var t = window._T || I18N.ko;
     return {
@@ -2411,6 +2511,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
   });
 
   initLang();
+  initSnapshots();
 })();
 </script>
 
