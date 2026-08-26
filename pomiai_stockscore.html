@@ -2131,7 +2131,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
           sel.appendChild(opt);
         });
         sel.value = list[0].file; // 최신순으로 정렬된 첫 항목이 기본값
-        if (list.length > 1 && row) row.classList.add("is-visible");
+        if (row) row.classList.add("is-visible"); // 스냅샷이 1개뿐이어도 노출(문구가 "선택 가능"이라고 안내하므로)
         return loadSnapshotFile(list[0].file);
       })
       .catch(function (err) {
