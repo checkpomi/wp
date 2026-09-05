@@ -884,6 +884,39 @@
       "pbr": 0.11,
       "roe": -1.39,
       "valInferred": true
+    },
+    {
+      "name": "한화",
+      "code": "000880",
+      "market": "KOSPI200",
+      "price": 137400,
+      "chg": 2.77,
+      "score": 60,
+      "ai": 61.89,
+      "supply": "매우강함",
+      "per": 9.11,
+      "pbr": 0.55,
+      "roe": 5.99,
+      "cap": "73,274억",
+      "earn": "매출 +48.83% / 영업이익 +80.72% YoY (26.2Q)",
+      "aiTrend": "상승"
+    },
+    {
+      "name": "한화3우B",
+      "code": "00088K",
+      "market": "기타",
+      "pref": true,
+      "parent": "000880",
+      "price": 36200,
+      "chg": 22.92,
+      "score": null,
+      "ai": null,
+      "supply": null,
+      "per": 2.4,
+      "pbr": 0.14,
+      "roe": 5.99,
+      "valInferred": true,
+      "note": "가격은 8/25 마지막 체결 기준(거래 뜸함)"
     }
   ],
   "universeData": {
@@ -1865,20 +1898,6 @@
       "roe": 14.09,
       "cap": "182,181억",
       "earn": "매출 +4.48% / 영업이익 +38.24% YoY (26.2Q)",
-      "aiTrend": "상승"
-    },
-    "한화": {
-      "code": "000880",
-      "price": 138300,
-      "chg": 3.44,
-      "score": 60,
-      "ai": 61.89,
-      "supply": "매우강함",
-      "per": 8.86,
-      "pbr": 0.53,
-      "roe": 5.99,
-      "cap": "71,301억",
-      "earn": "매출 +48.83% / 영업이익 +80.72% YoY (26.2Q)",
       "aiTrend": "상승"
     },
     "오뚜기": {

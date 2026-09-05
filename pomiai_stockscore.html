@@ -194,6 +194,36 @@
   }
   #snapshotSelect:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
+  td.num.hist-hoverable, td.chg.hist-hoverable { cursor: help; }
+  .hist-tooltip {
+    position: fixed;
+    z-index: 9999;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    padding: 10px 12px;
+    font-size: 12px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    pointer-events: none;
+    max-width: 280px;
+  }
+  .hist-tooltip-title {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+  .hist-tooltip-table { width: 100%; border-collapse: collapse; }
+  .hist-tooltip-table th, .hist-tooltip-table td { padding: 2px 8px 2px 0; text-align: right; white-space: nowrap; }
+  .hist-tooltip-table th:first-child, .hist-tooltip-table td:first-child { text-align: left; padding-left: 0; }
+  .hist-tooltip-table th { color: var(--text-secondary); font-weight: 500; font-size: 11px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  .hist-tooltip-table td.up { color: var(--up); }
+  .hist-tooltip-table td.down { color: var(--down); }
+  .hist-tooltip-empty { color: var(--text-muted); font-size: 11.5px; }
+  html[dir="rtl"] .hist-tooltip-table th, html[dir="rtl"] .hist-tooltip-table td { text-align: left; }
+  html[dir="rtl"] .hist-tooltip-table th:first-child, html[dir="rtl"] .hist-tooltip-table td:first-child { text-align: right; }
+
   /* ---------- stat tiles ---------- */
   .stat-row {
     display: grid;
@@ -473,6 +503,16 @@ body {
   flex-shrink: 0;
 }
 .pomiai-topbar-icon svg { width: 12px; height: 12px; }
+.pomiai-topbar-left { display: inline-flex; align-items: center; gap: 14px; }
+.pomiai-topbar-yt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+.pomiai-topbar-yt:hover { color: #FF0000; }
+.pomiai-topbar-yt svg { width: 17px; height: 17px; }
 .pomiai-lang-wrap { position: relative; }
 #lang-select {
   font: inherit;
@@ -540,12 +580,17 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
 
 
 <div class="pomiai-topbar">
-  <a class="pomiai-topbar-brand" href="https://checkpomi.com" target="_blank" rel="noopener">
-    <span class="pomiai-topbar-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5L9.5 18L20 6" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </span>
-    pomiai &middot; checkpomi.com
-  </a>
+  <div class="pomiai-topbar-left">
+    <a class="pomiai-topbar-brand" href="https://checkpomi.com" target="_blank" rel="noopener">
+      <span class="pomiai-topbar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5L9.5 18L20 6" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      pomiai &middot; checkpomi.com
+    </a>
+    <a class="pomiai-topbar-yt" href="https://www.youtube.com/@pomiai_official" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M23.5 6.2a3.02 3.02 0 0 0-2.13-2.14C19.51 3.5 12 3.5 12 3.5s-7.51 0-9.37.56A3.02 3.02 0 0 0 .5 6.2 31.6 31.6 0 0 0 0 12a31.6 31.6 0 0 0 .5 5.8 3.02 3.02 0 0 0 2.13 2.14C4.49 20.5 12 20.5 12 20.5s7.51 0 9.37-.56A3.02 3.02 0 0 0 23.5 17.8 31.6 31.6 0 0 0 24 12a31.6 31.6 0 0 0-.5-5.8ZM9.6 15.6V8.4L15.8 12Z"/></svg>
+    </a>
+  </div>
   <div class="pomiai-lang-wrap">
     <select id="lang-select" aria-label="Language"></select>
   </div>
@@ -642,7 +687,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "관심종목 진단 · AI예측 대시보드",
     "updated_prefix": "데이터 기준",
     "updated_suffix": " · 밸류라인 + 한경(우선주 시세) · 코스피200·코스닥150 전 종목 PER·PBR·진단점수·AI예측 포함",
-    "cadence_note": "새 데이터가 발행될 때마다 스냅샷으로 기록됩니다 · 위에서 조회 시점을 선택할 수 있습니다 · 색이 있는 행 배경 = 관심종목",
+    "cadence_note": "매일 01:00(KST) 전일 종가 기준으로 데이터를 수집합니다 · 위에서 조회 시점을 선택할 수 있습니다 · 색이 있는 행 배경 = 관심종목",
     "snapshot_label": "조회 시점",
     "refresh_btn": "새로고침",
     "search_placeholder": "종목명 검색",
@@ -660,6 +705,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "시장구분",
     "col_price": "현재가",
     "col_chg": "등락률",
+    "hist_title": "최근 7일 기록",
+    "hist_date": "날짜",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -695,7 +742,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "진단점수·AI예측 등락률·수급신호는 <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">밸류라인</a>이 빅데이터·ARIMA 기반 알고리즘으로 산출한 값을 그대로 가져온 것입니다 (효성화학은 원자료 표기가 다른 종목과 척도가 달라 \"13\"으로 그대로 표기했습니다). 우선주(●우 종목) 10개는 밸류라인이 AI 진단·예측·수급신호를 아예 산출하지 않아(개별 페이지 자체가 없음) 이 세 항목만 \"데이터없음(우선주)\"입니다 — 현재가·등락률은 다른 시세 소스에서 별도로 채워 넣었고, 거래가 뜸한 일부는 최근 체결일을 표기했습니다. 시장구분은 보통주 기준이 아닌 개별 증권 기준이라 우선주는 모두 \"기타\"로 표시했습니다. GS건설은 2026년 5월 정기변경에서 코스피200에서 편출되어 현재는 \"기타\"입니다.",
     "foot_p2": "우선주는 밸류라인 점수가 없는 대신 본주와 흐름이 비슷하다고 보고, 정렬 기준(진단점수·등락률·AI예측·이름·시장구분 등)과 무관하게 항상 자신의 본주(↳ 표시) 바로 아래에 붙여서 보여줍니다. 시장 필터로 \"기타\"만 볼 때처럼 본주가 화면에 없으면 우선주도 독립된 한 행으로 일반 정렬됩니다.",
     "foot_p3": "PER·PBR·ROE·최근 실적(YoY)은 밸류라인이 공시 기준으로 산출한 값이며, 대부분 2026년 2분기(26.2Q) 실적 기준입니다(일부는 \"잠정\"). PER·PBR이 음수인 경우는 최근 분기 적자를 의미합니다. 우선주는 밸류라인이 별도 수치를 제공하지 않아 <strong>본주 PER·PBR × (우선주가/본주가)</strong>로 환산한 참고값이며(\"본주 환산\" 표기), ROE는 회사 전체 지표라 본주와 동일값을 그대로 썼습니다(\"본주 동일\" 표기) — 실제 공시 수치가 아니라 근사치이니 투자 판단에는 원 공시자료를 확인하세요.",
-    "foot_p4": "색이 있는 행 배경은 사용자가 지정한 <strong>관심종목</strong>(56개)입니다. 나머지 코스피200·코스닥150 구성종목(약 307개)도 중복을 제거한 뒤 밸류라인·한경에서 현재가·PER·PBR·ROE·진단점수·AI예측·수급신호를 모두 조회해 채워 넣었으며, 상단 체크박스로 전체/코스피200/코스닥150/우선주/관심종목을 자유롭게 조합해 볼 수 있습니다. 다만 관심종목 외 종목은 매시 자동 갱신 대상이 아니라 이번에 채운 시점 기준 스냅샷이며(추후 자동 갱신 범위 확대 예정), 일부 신규상장·지주사 전환 종목(예: 삼성에피스홀딩스)은 데이터 소스에서 코드가 확인되지 않아 이름·시장구분만 표시됩니다. 우선주 행의 \"본주대비\" 괴리율은 (우선주가－본주가)/본주가 로 계산한 값이며, 필터 상태와 무관하게 항상 표시됩니다.",
+    "foot_p4": "색이 있는 행 배경은 사용자가 지정한 <strong>관심종목</strong>(58개)입니다. 나머지 코스피200·코스닥150 구성종목(약 306개)도 중복을 제거한 뒤 밸류라인·한경에서 현재가·PER·PBR·ROE·진단점수·AI예측·수급신호를 모두 조회해 채워 넣었으며, 상단 체크박스로 전체/코스피200/코스닥150/우선주/관심종목을 자유롭게 조합해 볼 수 있습니다. 다만 관심종목 외 종목은 매시 자동 갱신 대상이 아니라 이번에 채운 시점 기준 스냅샷이며(추후 자동 갱신 범위 확대 예정), 일부 신규상장·지주사 전환 종목(예: 삼성에피스홀딩스)은 데이터 소스에서 코드가 확인되지 않아 이름·시장구분만 표시됩니다. 우선주 행의 \"본주대비\" 괴리율은 (우선주가－본주가)/본주가 로 계산한 값이며, 필터 상태와 무관하게 항상 표시됩니다.",
     "foot_p5": "이 페이지는 투자 자문이 아닌 참고용 정보이며, 투자 판단과 책임은 본인에게 있습니다.",
     "footer_by": "Product by",
     "export_csv_btn": "⬇ CSV(엑셀) 다운로드",
@@ -718,7 +765,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Watchlist Diagnostics · AI Prediction Dashboard",
     "updated_prefix": "Data as of",
     "updated_suffix": " · Valueline + Hankyung (preferred stock prices) · Includes PER, PBR, diagnostic score, and AI prediction for all KOSPI200 and KOSDAQ150 constituents",
-    "cadence_note": "Each new data publish is recorded as a snapshot · choose the viewing date/time above · Colored row background = watchlist stock",
+    "cadence_note": "Data is collected daily at 01:00 KST, based on the previous trading day's closing price · choose the viewing date/time above · Colored row background = watchlist stock",
     "snapshot_label": "Snapshot",
     "refresh_btn": "Refresh",
     "search_placeholder": "Search by stock name",
@@ -736,6 +783,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "Market",
     "col_price": "Price",
     "col_chg": "Change",
+    "hist_title": "Last 7 Days",
+    "hist_date": "Date",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -771,7 +820,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "The diagnostic score, AI-predicted change, and supply/demand signal are values taken directly from <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a>'s big-data/ARIMA-based algorithm (for 효성화학, the raw data uses a different scale than other stocks, so it is shown as-is as \"13\"). For the 10 preferred stocks (marked ●Pref), Valueline does not calculate AI diagnostics, predictions, or supply/demand signals at all (no individual page exists for these), so only these three fields show \"No data (Preferred)\" — price and change were filled in separately from another quote source, and for some that trade infrequently, the most recent trade date is shown. Market classification is based on the individual security rather than the common stock, so all preferred stocks are labeled \"Other.\" GS건설 was removed from KOSPI200 in the May 2026 periodic rebalancing and is now classified as \"Other.\"",
     "foot_p2": "Since preferred stocks have no Valueline score, they are assumed to move similarly to their common stock and are always displayed directly beneath their common stock (marked with ↳), regardless of the sort criteria (diagnostic score, change, AI prediction, name, market, etc.). When the common stock is not shown on screen — such as when filtering to view \"Other\" only — the preferred stock is instead displayed as its own independent row, sorted normally.",
     "foot_p3": "PER, PBR, ROE, and latest earnings (YoY) are values calculated by Valueline based on regulatory disclosures, mostly for Q2 2026 (26.2Q) results (some are \"preliminary\"). A negative PER or PBR indicates a loss in the most recent quarter. Since Valueline does not provide separate figures for preferred stocks, PER and PBR are reference values converted using <strong>Common-stock PER/PBR × (preferred price / common price)</strong> (labeled \"Converted from Common\"), and ROE is a company-wide metric, so the common stock's value is used as-is (labeled \"Same as Common\") — these are approximations, not actual disclosed figures, so please check the original disclosure materials before making investment decisions.",
-    "foot_p4": "The colored row background indicates the <strong>watchlist</strong> stocks (56) designated by the user. The remaining KOSPI200 and KOSDAQ150 constituents (approximately 307 stocks), after removing duplicates, also had their price, PER, PBR, ROE, diagnostic score, AI prediction, and supply/demand signal fully retrieved from Valueline and Hankyung, and the checkboxes at the top let you freely combine All / KOSPI200 / KOSDAQ150 / Preferred / Watchlist views. However, stocks outside the watchlist are not part of the hourly automatic update and instead reflect a snapshot from when the data was last populated (the scope of automatic updates will be expanded in the future); for some newly listed or holding-company-converted stocks (e.g., 삼성에피스홀딩스), the code could not be identified in the data source, so only the name and market classification are shown. The \"vs. Common\" gap for preferred stock rows is calculated as (preferred price − common price) / common price, and is always displayed regardless of the filter state.",
+    "foot_p4": "The colored row background indicates the <strong>watchlist</strong> stocks (58) designated by the user. The remaining KOSPI200 and KOSDAQ150 constituents (approximately 306 stocks), after removing duplicates, also had their price, PER, PBR, ROE, diagnostic score, AI prediction, and supply/demand signal fully retrieved from Valueline and Hankyung, and the checkboxes at the top let you freely combine All / KOSPI200 / KOSDAQ150 / Preferred / Watchlist views. However, stocks outside the watchlist are not part of the hourly automatic update and instead reflect a snapshot from when the data was last populated (the scope of automatic updates will be expanded in the future); for some newly listed or holding-company-converted stocks (e.g., 삼성에피스홀딩스), the code could not be identified in the data source, so only the name and market classification are shown. The \"vs. Common\" gap for preferred stock rows is calculated as (preferred price − common price) / common price, and is always displayed regardless of the filter state.",
     "foot_p5": "This page provides reference information only, not investment advice; investment decisions and their consequences are the user's own responsibility.",
     "footer_by": "Product by",
     "export_csv_btn": "⬇ Download CSV (Excel)",
@@ -794,7 +843,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "注目銘柄診断・AI予測ダッシュボード",
     "updated_prefix": "データ基準日",
     "updated_suffix": " · バリューライン + 韓国経済新聞（優先株時価） · KOSPI200・KOSDAQ150全銘柄のPER・PBR・診断スコア・AI予測を含む",
-    "cadence_note": "新しいデータが公開されるたびにスナップショットとして記録されます · 上部で表示時点を選択できます · 色付きの行背景 = 注目銘柄",
+    "cadence_note": "毎日01:00(KST)に前営業日の終値基準でデータを収集します · 上部で表示時点を選択できます · 色付きの行背景 = 注目銘柄",
     "snapshot_label": "表示時点",
     "refresh_btn": "更新",
     "search_placeholder": "銘柄名を検索",
@@ -812,6 +861,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "市場区分",
     "col_price": "現在値",
     "col_chg": "騰落率",
+    "hist_title": "直近7日間の記録",
+    "hist_date": "日付",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -847,7 +898,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "診断スコア・AI予測騰落率・需給シグナルは、<a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">バリューライン</a>がビッグデータ・ARIMAベースのアルゴリズムで算出した値をそのまま採用しています（효성화학は原資料の表記が他銘柄と尺度が異なるため、「13」のままとしています）。優先株（●優銘柄）10銘柄は、バリューラインがAI診断・予測・需給シグナルを一切算出していないため（個別ページ自体が存在しない）、この3項目のみ「データなし（優先株）」となります — 現在値・騰落率は別の時価ソースから個別に補完しており、取引が少ない一部銘柄については直近の約定日を表示しています。市場区分は普通株基準ではなく個別証券基準であるため、優先株はすべて「その他」と表示しています。GS건설は2026年5月の定期変更でKOSPI200から除外され、現在は「その他」です。",
     "foot_p2": "優先株はバリューラインのスコアがない代わりに普通株と値動きが似ていると見なし、並び替え基準（診断スコア・騰落率・AI予測・名前・市場区分など）に関わらず、常に自身の普通株（↳表示）の直下に連結して表示します。市場フィルターで「その他」のみを表示する場合のように普通株が画面上にない場合は、優先株も独立した1行として通常の並び替え対象になります。",
     "foot_p3": "PER・PBR・ROE・直近実績（前年比）はバリューラインが公示基準で算出した値であり、大部分は2026年第2四半期（26.2Q）実績基準です（一部は「暫定」）。PER・PBRがマイナスの場合は直近四半期の赤字を意味します。優先株についてはバリューラインが個別数値を提供していないため、<strong>普通株PER・PBR × (優先株価/普通株価)</strong>で換算した参考値であり（「普通株換算」表記）、ROEは会社全体の指標であるため普通株と同じ値をそのまま使用しています（「普通株同値」表記） — 実際の公示数値ではなく近似値のため、投資判断には原公示資料をご確認ください。",
-    "foot_p4": "色付きの行背景は利用者が指定した<strong>注目銘柄</strong>（56銘柄）です。残りのKOSPI200・KOSDAQ150構成銘柄（約307銘柄）も重複を除去した上でバリューライン・韓国経済新聞から現在値・PER・PBR・ROE・診断スコア・AI予測・需給シグナルをすべて取得して補完しており、上部のチェックボックスで全体／KOSPI200／KOSDAQ150／優先株／注目銘柄を自由に組み合わせて表示できます。ただし注目銘柄以外の銘柄は毎時自動更新の対象ではなく、今回の取得時点でのスナップショットです（今後、自動更新の対象範囲を拡大予定）。また一部の新規上場・持株会社転換銘柄（例：삼성에피스홀딩스）はデータソース上でコードが確認できず、名前・市場区分のみ表示しています。優先株行の「普通株比」乖離率は (優先株価－普通株価)/普通株価 で算出した値であり、フィルターの状態に関わらず常に表示されます。",
+    "foot_p4": "色付きの行背景は利用者が指定した<strong>注目銘柄</strong>（58銘柄）です。残りのKOSPI200・KOSDAQ150構成銘柄（約306銘柄）も重複を除去した上でバリューライン・韓国経済新聞から現在値・PER・PBR・ROE・診断スコア・AI予測・需給シグナルをすべて取得して補完しており、上部のチェックボックスで全体／KOSPI200／KOSDAQ150／優先株／注目銘柄を自由に組み合わせて表示できます。ただし注目銘柄以外の銘柄は毎時自動更新の対象ではなく、今回の取得時点でのスナップショットです（今後、自動更新の対象範囲を拡大予定）。また一部の新規上場・持株会社転換銘柄（例：삼성에피스홀딩스）はデータソース上でコードが確認できず、名前・市場区分のみ表示しています。優先株行の「普通株比」乖離率は (優先株価－普通株価)/普通株価 で算出した値であり、フィルターの状態に関わらず常に表示されます。",
     "foot_p5": "このページは投資助言ではなく参考情報であり、投資判断とその責任はご本人にあります。",
     "footer_by": "Product by",
     "export_csv_btn": "⬇ CSV（エクセル）ダウンロード",
@@ -870,7 +921,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "自选股诊断 · AI预测仪表盘",
     "updated_prefix": "数据截至",
     "updated_suffix": " · Valueline + Hankyung（优先股行情）· 包含KOSPI200·KOSDAQ150全部成分股的PER·PBR·诊断评分·AI预测",
-    "cadence_note": "每次发布新数据都会记录为快照 · 可在上方选择查看时点 · 带底色行背景 = 自选股",
+    "cadence_note": "每天01:00(KST)按前一交易日收盘价采集数据 · 可在上方选择查看时点 · 带底色行背景 = 自选股",
     "snapshot_label": "查看时点",
     "refresh_btn": "刷新",
     "search_placeholder": "搜索股票名称",
@@ -888,6 +939,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "市场分类",
     "col_price": "现价",
     "col_chg": "涨跌幅",
+    "hist_title": "近7天记录",
+    "hist_date": "日期",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -923,7 +976,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "诊断评分、AI预测、涨跌幅、供需信号均为直接引用<a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a>基于大数据与ARIMA算法计算得出的数值（其中효성화학因原始数据的计量单位与其他个股不同，按原值直接标注为\"13\"）。优先股（标记为\"●우\"的股票）共10只，因Valueline并未计算其AI诊断、预测和供需信号（没有单独的个股页面），故仅这三项标注为\"无数据（优先股）\"——现价和涨跌幅另行取自其他行情数据源，其中部分交易不活跃的股票标注了最近成交日期。市场分类是按单一证券（而非普通股）为标准划分的，因此优先股统一标注为\"其他\"。GS건설已于2026年5月定期调整中被剔除出KOSPI200，目前标注为\"其他\"。",
     "foot_p2": "优先股由于没有Valueline评分，故视为其走势与普通股相近，无论排序方式（诊断评分、涨跌幅、AI预测、名称、市场分类等）为何，都固定显示在其对应普通股（标记为↳）的正下方。若像市场筛选仅显示\"其他\"那样普通股未出现在画面中，优先股则会作为独立一行按一般排序方式显示。",
     "foot_p3": "PER、PBR、ROE、近期业绩（同比）均为Valueline依据公开披露资料计算所得的数值，大多数以2026年第2季度（26.2Q）业绩为基准（部分为\"预估\"）。PER、PBR为负数时，代表最近一个季度出现亏损。优先股由于Valueline未提供单独数值，采用<strong>普通股PER、PBR × (优先股价/普通股价)</strong>换算得出的参考值（标注为\"普通股换算\"），ROE则因属于公司整体指标，直接沿用与普通股相同的数值（标注为\"普通股同值\"）——这些并非实际披露数值，而是估算值，投资判断请务必核对原始公开披露资料。",
-    "foot_p4": "带底色的行是用户指定的<strong>自选股</strong>（56只）。其余KOSPI200、KOSDAQ150成分股（约307只）在去重后，也从Valueline、Hankyung查询并填入了现价、PER、PBR、ROE、诊断评分、AI预测、供需信号等全部数据，可通过顶部的复选框自由组合查看全部/KOSPI200/KOSDAQ150/优先股/自选股。不过，自选股以外的股票并非每小时自动更新对象，而是本次填入时点的快照（后续将扩大自动更新范围），部分新上市、转为控股公司的股票（如：삼성에피스홀딩스）因数据源中无法确认代码，仅显示名称和市场分类。优先股行中的\"较普通股\"偏离率，是按 (优先股价－普通股价)/普通股价 计算所得的数值，无论筛选状态如何都会始终显示。",
+    "foot_p4": "带底色的行是用户指定的<strong>自选股</strong>（58只）。其余KOSPI200、KOSDAQ150成分股（约306只）在去重后，也从Valueline、Hankyung查询并填入了现价、PER、PBR、ROE、诊断评分、AI预测、供需信号等全部数据，可通过顶部的复选框自由组合查看全部/KOSPI200/KOSDAQ150/优先股/自选股。不过，自选股以外的股票并非每小时自动更新对象，而是本次填入时点的快照（后续将扩大自动更新范围），部分新上市、转为控股公司的股票（如：삼성에피스홀딩스）因数据源中无法确认代码，仅显示名称和市场分类。优先股行中的\"较普通股\"偏离率，是按 (优先股价－普通股价)/普通股价 计算所得的数值，无论筛选状态如何都会始终显示。",
     "foot_p5": "本页面仅供参考，不构成投资建议，投资判断及责任由本人自行承担。",
     "footer_by": "出品方",
     "export_csv_btn": "⬇ 下载CSV（Excel）",
@@ -946,7 +999,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "自選股診斷 · AI預測儀表板",
     "updated_prefix": "資料基準",
     "updated_suffix": " · Valueline + 韓經（特別股股價） · 涵蓋KOSPI200·KOSDAQ150全部成分股之PER·PBR·診斷分數·AI預測",
-    "cadence_note": "每次發布新資料都會記錄為快照 · 可在上方選擇檢視時點 · 有顏色的列背景 = 自選股",
+    "cadence_note": "每天01:00(KST)按前一交易日收盤價蒐集資料 · 可在上方選擇檢視時點 · 有顏色的列背景 = 自選股",
     "snapshot_label": "檢視時點",
     "refresh_btn": "重新整理",
     "search_placeholder": "搜尋股票名稱",
@@ -964,6 +1017,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "市場別",
     "col_price": "現價",
     "col_chg": "漲跌幅",
+    "hist_title": "近7天記錄",
+    "hist_date": "日期",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -999,7 +1054,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "診斷分數、AI預測漲跌幅、籌碼訊號皆直接採用<a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a>以大數據與ARIMA為基礎的演算法所算出的數值（효성화학因原始資料的標示基準與其他個股不同，故直接沿用原值標示為「13」）。10檔特別股（標示為●特的個股）由於Valueline完全未提供AI診斷、預測、籌碼訊號（甚至沒有個股頁面），因此僅這三個項目顯示為「無資料（特別股）」——現價、漲跌幅則另外從其他行情來源填入，部分交易量稀少的個股則標示最近成交日。市場別是以個別證券為基準，而非以普通股為準，因此特別股一律標示為「其他」。GS건설於2026年5月定期調整中遭剔除出KOSPI200，目前標示為「其他」。",
     "foot_p2": "特別股雖無Valueline評分，但假設其走勢與普通股相近，因此無論排序依據為何（診斷分數、漲跌幅、AI預測、名稱、市場別等），皆固定顯示於其普通股（標示↳）正下方。若如市場篩選僅顯示「其他」時普通股未出現在畫面上，則該特別股會改以獨立一列依一般排序方式顯示。",
     "foot_p3": "PER、PBR、ROE、近期業績（YoY）為Valueline依公開財報基準所計算之數值，大多以2026年第2季（26.2Q）財報為準（部分為「暫定」）。PER、PBR為負數時代表最近一季為虧損。特別股因Valueline未另行提供數值，故以<strong>普通股PER、PBR × （特別股股價/普通股股價）</strong>換算為參考值（標示為「普通股換算」），ROE則因屬公司整體指標，直接沿用普通股數值（標示為「普通股相同」）——此為近似值而非實際公開數值，投資判斷請查閱原始公開資料。",
-    "foot_p4": "有顏色的列背景為使用者指定的<strong>自選股</strong>（56檔）。其餘KOSPI200、KOSDAQ150成分股（約307檔）在去除重複後，也已從Valueline、韓經查詢並填入現價、PER、PBR、ROE、診斷分數、AI預測、籌碼訊號，並可透過上方核取方塊自由組合檢視全部/KOSPI200/KOSDAQ150/特別股/自選股。惟自選股以外的個股並非每小時自動更新對象，而是本次填入時間點的快照（未來將擴大自動更新範圍），部分新上市、轉型控股公司的個股（例如：삼성에피스홀딩스）因資料來源無法確認代碼，僅顯示名稱與市場別。特別股列的「較普通股」乖離率是以（特別股股價－普通股股價）/普通股股價計算而得，無論篩選狀態為何皆固定顯示。",
+    "foot_p4": "有顏色的列背景為使用者指定的<strong>自選股</strong>（58檔）。其餘KOSPI200、KOSDAQ150成分股（約306檔）在去除重複後，也已從Valueline、韓經查詢並填入現價、PER、PBR、ROE、診斷分數、AI預測、籌碼訊號，並可透過上方核取方塊自由組合檢視全部/KOSPI200/KOSDAQ150/特別股/自選股。惟自選股以外的個股並非每小時自動更新對象，而是本次填入時間點的快照（未來將擴大自動更新範圍），部分新上市、轉型控股公司的個股（例如：삼성에피스홀딩스）因資料來源無法確認代碼，僅顯示名稱與市場別。特別股列的「較普通股」乖離率是以（特別股股價－普通股股價）/普通股股價計算而得，無論篩選狀態為何皆固定顯示。",
     "foot_p5": "本頁面僅供參考，並非投資建議，投資判斷與責任由使用者自行承擔。",
     "footer_by": "Product by",
     "export_csv_btn": "⬇ 下載CSV（Excel）",
@@ -1022,7 +1077,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Watchlist-Diagnose · KI-Prognose-Dashboard",
     "updated_prefix": "Datenstand",
     "updated_suffix": " · Valueline + Hankyung (Vorzugsaktienkurse) · Enthält PER, PBR, Diagnosewert und KI-Prognose für alle KOSPI200- und KOSDAQ150-Werte",
-    "cadence_note": "Jede neue Datenveröffentlichung wird als Snapshot gespeichert · wählen Sie oben den Zeitpunkt aus · Farbig hinterlegte Zeilen = Watchlist-Aktien",
+    "cadence_note": "Die Daten werden täglich um 01:00 Uhr (KST) auf Basis des Schlusskurses des vorherigen Handelstages erfasst · wählen Sie oben den Zeitpunkt aus · Farbig hinterlegte Zeilen = Watchlist-Aktien",
     "snapshot_label": "Zeitpunkt",
     "refresh_btn": "Aktualisieren",
     "search_placeholder": "Aktienname suchen",
@@ -1040,6 +1095,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "Marktsegment",
     "col_price": "Aktueller Kurs",
     "col_chg": "Veränderung",
+    "hist_title": "Letzte 7 Tage",
+    "hist_date": "Datum",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -1075,7 +1132,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "Diagnosewert, KI-Prognose, Kursveränderung und Angebots-/Nachfragesignal werden unverändert von den Werten übernommen, die <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> mithilfe eines auf Big Data und ARIMA basierenden Algorithmus berechnet (bei 효성화학 weicht die Skala der Rohdaten von der anderer Aktien ab, daher wurde der Wert unverändert als „13“ übernommen). Für die 10 Vorzugsaktien (Kennzeichnung ●우) berechnet Valueline überhaupt keine KI-Diagnose, -Prognose oder ein Angebots-/Nachfragesignal (es existiert keine eigene Seite dafür); daher zeigen nur diese drei Felder „Keine Daten (Vorzugsaktie)“ — aktueller Kurs und Kursveränderung wurden separat aus anderen Kursdatenquellen ergänzt, und bei einigen selten gehandelten Werten wurde das Datum der letzten Ausführung angegeben. Da sich das Marktsegment nicht nach der Stammaktie, sondern nach dem einzelnen Wertpapier richtet, werden alle Vorzugsaktien als „Sonstige“ angezeigt. GS건설 wurde bei der planmäßigen Indexanpassung im Mai 2026 aus dem KOSPI200 entfernt und wird derzeit als „Sonstige“ geführt.",
     "foot_p2": "Da für Vorzugsaktien kein Valueline-Wert vorliegt, wird angenommen, dass sie sich ähnlich wie ihre Stammaktie entwickeln; unabhängig vom gewählten Sortierkriterium (Diagnosewert, Kursveränderung, KI-Prognose, Name, Marktsegment usw.) werden sie stets direkt unter ihrer Stammaktie (Kennzeichnung ↳) angezeigt. Ist die Stammaktie nicht sichtbar — etwa wenn der Marktfilter nur „Sonstige“ anzeigt —, wird die Vorzugsaktie als eigenständige Zeile normal einsortiert.",
     "foot_p3": "PER, PBR, ROE und die letzten Ergebnisse (YoY) werden von Valueline auf Basis der Unternehmensmeldungen berechnet, größtenteils für das 2. Quartal 2026 (26.2Q) (teilweise als „vorläufig“ gekennzeichnet). Ein negativer PER- oder PBR-Wert bedeutet einen Verlust im letzten Quartal. Da Valueline für Vorzugsaktien keine gesonderten Werte bereitstellt, handelt es sich hierbei um Näherungswerte, die als <strong>PER/PBR der Stammaktie × (Kurs der Vorzugsaktie / Kurs der Stammaktie)</strong> umgerechnet wurden (Kennzeichnung „Umgerechnet von Stammaktie“); der ROE ist eine unternehmensweite Kennzahl und wurde daher unverändert vom Wert der Stammaktie übernommen (Kennzeichnung „Identisch mit Stammaktie“) — da es sich nicht um die tatsächlich gemeldeten Werte, sondern um Näherungswerte handelt, prüfen Sie für Anlageentscheidungen bitte die Originalmeldungen.",
-    "foot_p4": "Farbig hinterlegte Zeilen kennzeichnen die vom Nutzer festgelegte <strong>Watchlist</strong> (56 Aktien). Für die übrigen KOSPI200- und KOSDAQ150-Mitgliedsaktien (rund 307 Aktien) wurden nach Entfernung von Duplikaten ebenfalls aktueller Kurs, PER, PBR, ROE, Diagnosewert, KI-Prognose und Angebots-/Nachfragesignal aus Valueline und Hankyung abgerufen; über die Kontrollkästchen oben lassen sich Alle/KOSPI200/KOSDAQ150/Vorzugsaktien/Watchlist frei kombinieren. Aktien außerhalb der Watchlist werden jedoch nicht stündlich automatisch aktualisiert, sondern stellen eine Momentaufnahme zum Zeitpunkt der letzten Befüllung dar (der Umfang der automatischen Aktualisierung soll künftig erweitert werden); bei einigen neu notierten Aktien oder Unternehmen, die in eine Holdingstruktur umgewandelt wurden (z. B. 삼성에피스홀딩스), konnte der Code in der Datenquelle nicht ermittelt werden, sodass nur Name und Marktsegment angezeigt werden. Die „Abweichung zur Stammaktie“ in der Zeile der Vorzugsaktie wird als (Kurs der Vorzugsaktie − Kurs der Stammaktie) / Kurs der Stammaktie berechnet und immer angezeigt, unabhängig vom Filterstatus.",
+    "foot_p4": "Farbig hinterlegte Zeilen kennzeichnen die vom Nutzer festgelegte <strong>Watchlist</strong> (58 Aktien). Für die übrigen KOSPI200- und KOSDAQ150-Mitgliedsaktien (rund 306 Aktien) wurden nach Entfernung von Duplikaten ebenfalls aktueller Kurs, PER, PBR, ROE, Diagnosewert, KI-Prognose und Angebots-/Nachfragesignal aus Valueline und Hankyung abgerufen; über die Kontrollkästchen oben lassen sich Alle/KOSPI200/KOSDAQ150/Vorzugsaktien/Watchlist frei kombinieren. Aktien außerhalb der Watchlist werden jedoch nicht stündlich automatisch aktualisiert, sondern stellen eine Momentaufnahme zum Zeitpunkt der letzten Befüllung dar (der Umfang der automatischen Aktualisierung soll künftig erweitert werden); bei einigen neu notierten Aktien oder Unternehmen, die in eine Holdingstruktur umgewandelt wurden (z. B. 삼성에피스홀딩스), konnte der Code in der Datenquelle nicht ermittelt werden, sodass nur Name und Marktsegment angezeigt werden. Die „Abweichung zur Stammaktie“ in der Zeile der Vorzugsaktie wird als (Kurs der Vorzugsaktie − Kurs der Stammaktie) / Kurs der Stammaktie berechnet und immer angezeigt, unabhängig vom Filterstatus.",
     "foot_p5": "Diese Seite dient nur zu Informationszwecken und stellt keine Anlageberatung dar; die Anlageentscheidung und deren Verantwortung liegen allein bei Ihnen.",
     "footer_by": "Produkt von",
     "export_csv_btn": "⬇ CSV (Excel) herunterladen",
@@ -1098,7 +1155,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Diagnostic des valeurs suivies · Tableau de bord de prévision IA",
     "updated_prefix": "Données au",
     "updated_suffix": " · Valueline + Hankyung (cours des actions préférentielles) · Inclut le PER, le PBR, le score de diagnostic et la prévision IA pour toutes les valeurs du KOSPI200 et du KOSDAQ150",
-    "cadence_note": "Chaque nouvelle publication de données est enregistrée sous forme d'instantané · choisissez la date ci-dessus · Ligne à fond coloré = valeur suivie",
+    "cadence_note": "Les données sont collectées chaque jour à 01h00 (KST) sur la base du cours de clôture de la veille · choisissez la date ci-dessus · Ligne à fond coloré = valeur suivie",
     "snapshot_label": "Instantané",
     "refresh_btn": "Actualiser",
     "search_placeholder": "Rechercher une valeur",
@@ -1116,6 +1173,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "Marché",
     "col_price": "Cours actuel",
     "col_chg": "Variation",
+    "hist_title": "7 derniers jours",
+    "hist_date": "Date",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -1151,7 +1210,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "Le score de diagnostic, la variation prévue par l'IA et le signal offre/demande sont repris tels quels des valeurs calculées par <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> à l'aide d'un algorithme fondé sur le big data et le modèle ARIMA (pour 효성화학, l'échelle des données sources diffère de celle des autres valeurs ; la valeur \"13\" a donc été reprise telle quelle). Pour les 10 actions préférentielles (valeurs marquées ●우), Valueline ne calcule pas du tout le diagnostic IA, la prévision ni le signal offre/demande (ces actions ne disposent pas de page dédiée) ; ces trois éléments affichent donc uniquement la mention \"Données indisponibles (action préférentielle)\" — le cours actuel et la variation ont été renseignés séparément à partir d'une autre source de cotation, et pour les valeurs peu échangées, la date de la dernière transaction est indiquée. Le marché est classé par titre individuel et non par action ordinaire ; toutes les actions préférentielles sont donc affichées comme \"Autres\". GS건설 a été retiré du KOSPI200 lors de la révision périodique de mai 2026 et figure désormais dans \"Autres\".",
     "foot_p2": "Comme les actions préférentielles ne disposent pas de score Valueline, on considère qu'elles suivent une évolution proche de celle de leur action ordinaire ; elles sont donc toujours affichées juste en dessous de leur action ordinaire (indiquée par ↳), quel que soit le critère de tri (score de diagnostic, variation, prévision IA, nom, marché, etc.). Si l'action ordinaire n'apparaît pas à l'écran — par exemple lorsque le filtre de marché n'affiche que \"Autres\" — l'action préférentielle est alors affichée comme une ligne indépendante, triée normalement.",
     "foot_p3": "Le PER, le PBR, le ROE et les résultats récents (YoY) sont des valeurs calculées par Valueline sur la base des publications officielles, la plupart se référant aux résultats du 2e trimestre 2026 (26.2Q) (certains étant \"provisoires\"). Un PER ou un PBR négatif signifie une perte au dernier trimestre. Pour les actions préférentielles, Valueline ne fournit pas de valeurs distinctes ; il s'agit donc de valeurs de référence obtenues par <strong>PER/PBR de l'action ordinaire × (cours de l'action préférentielle / cours de l'action ordinaire)</strong> (mention \"Converti (action ordinaire)\"), et le ROE, étant un indicateur global de l'entreprise, reprend directement la même valeur que celle de l'action ordinaire (mention \"Identique (action ordinaire)\") — ce ne sont pas les chiffres officiels réels mais des approximations ; veuillez consulter les documents de publication originaux pour toute décision d'investissement.",
-    "foot_p4": "Les lignes à fond coloré correspondent aux <strong>valeurs suivies</strong> (56 actions) définies par l'utilisateur. Les autres valeurs composant le KOSPI200 et le KOSDAQ150 (environ 307 actions), une fois les doublons supprimés, ont également été renseignées avec le cours actuel, le PER, le PBR, le ROE, le score de diagnostic, la prévision IA et le signal offre/demande, obtenus auprès de Valueline et de Hankyung ; les cases à cocher en haut de page permettent de combiner librement Toutes / KOSPI200 / KOSDAQ150 / Actions préférentielles / Valeurs suivies. Toutefois, les valeurs autres que les valeurs suivies ne sont pas mises à jour automatiquement chaque heure : il s'agit d'un instantané pris au moment du dernier remplissage (l'extension de la mise à jour automatique est prévue ultérieurement). Pour certaines valeurs récemment introduites en bourse ou converties en société holding (par exemple 삼성에피스홀딩스), le code n'a pas pu être identifié dans la source de données ; seuls le nom et le marché sont donc affichés. La valeur \"Écart vs action ordinaire\" affichée sur les lignes des actions préférentielles est calculée comme (cours de l'action préférentielle − cours de l'action ordinaire) / cours de l'action ordinaire ; elle est toujours affichée, quel que soit l'état des filtres.",
+    "foot_p4": "Les lignes à fond coloré correspondent aux <strong>valeurs suivies</strong> (58 actions) définies par l'utilisateur. Les autres valeurs composant le KOSPI200 et le KOSDAQ150 (environ 306 actions), une fois les doublons supprimés, ont également été renseignées avec le cours actuel, le PER, le PBR, le ROE, le score de diagnostic, la prévision IA et le signal offre/demande, obtenus auprès de Valueline et de Hankyung ; les cases à cocher en haut de page permettent de combiner librement Toutes / KOSPI200 / KOSDAQ150 / Actions préférentielles / Valeurs suivies. Toutefois, les valeurs autres que les valeurs suivies ne sont pas mises à jour automatiquement chaque heure : il s'agit d'un instantané pris au moment du dernier remplissage (l'extension de la mise à jour automatique est prévue ultérieurement). Pour certaines valeurs récemment introduites en bourse ou converties en société holding (par exemple 삼성에피스홀딩스), le code n'a pas pu être identifié dans la source de données ; seuls le nom et le marché sont donc affichés. La valeur \"Écart vs action ordinaire\" affichée sur les lignes des actions préférentielles est calculée comme (cours de l'action préférentielle − cours de l'action ordinaire) / cours de l'action ordinaire ; elle est toujours affichée, quel que soit l'état des filtres.",
     "foot_p5": "Cette page fournit des informations à titre indicatif uniquement et ne constitue pas un conseil en investissement ; les décisions d'investissement relèvent de la seule responsabilité de l'utilisateur.",
     "footer_by": "Produit par",
     "export_csv_btn": "⬇ Télécharger au format CSV (Excel)",
@@ -1174,7 +1233,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Watchlist-diagnose · AI-voorspellingsdashboard",
     "updated_prefix": "Gegevens per",
     "updated_suffix": " · Valueline + Hankyung (koersen preferente aandelen) · inclusief PER, PBR, diagnosescore en AI-voorspelling voor alle aandelen in de KOSPI200 en KOSDAQ150",
-    "cadence_note": "Elke nieuwe gegevenspublicatie wordt vastgelegd als momentopname · kies hierboven het tijdstip · Gekleurde rijachtergrond = watchlistaandeel",
+    "cadence_note": "Gegevens worden dagelijks om 01:00 uur (KST) verzameld op basis van de slotkoers van de vorige handelsdag · kies hierboven het tijdstip · Gekleurde rijachtergrond = watchlistaandeel",
     "snapshot_label": "Momentopname",
     "refresh_btn": "Vernieuwen",
     "search_placeholder": "Zoek op aandeelnaam",
@@ -1192,6 +1251,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "Marktsegment",
     "col_price": "Huidige koers",
     "col_chg": "Verandering",
+    "hist_title": "Laatste 7 dagen",
+    "hist_date": "Datum",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -1227,7 +1288,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "De diagnosescore, de door AI voorspelde koersverandering en het vraag-en-aanbodsignaal zijn rechtstreeks overgenomen uit de waarden die <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> berekent met een op big data en ARIMA gebaseerd algoritme (voor 효성화학 wijkt de schaal van de brongegevens af van andere aandelen, daarom is de waarde ongewijzigd als \"13\" weergegeven). Voor de 10 preferente aandelen (●우-aandelen) berekent Valueline in het geheel geen AI-diagnose, -voorspelling of -vraag-en-aanbodsignaal (er bestaat geen aparte pagina), waardoor voor deze drie velden alleen \"Geen data (preferent aandeel)\" wordt getoond — de huidige koers en koersverandering zijn afzonderlijk aangevuld uit een andere koersbron, en voor een aantal weinig verhandelde aandelen is de datum van de laatste transactie vermeld. Het marktsegment is gebaseerd op het individuele effect en niet op het gewone aandeel, waardoor preferente aandelen allemaal als \"Overig\" worden weergegeven. GS건설 is bij de reguliere herweging van mei 2026 uit de KOSPI200 verwijderd en valt nu onder \"Overig\".",
     "foot_p2": "Omdat preferente aandelen geen Valueline-score hebben maar naar verwachting een vergelijkbaar koersverloop volgen als het hoofdaandeel, worden ze — ongeacht het sorteercriterium (diagnosescore, koersverandering, AI-voorspelling, naam, marktsegment enz.) — altijd direct onder hun eigen hoofdaandeel (aangeduid met ↳) weergegeven. Staat het hoofdaandeel niet op het scherm, zoals wanneer met de marktfilter alleen \"Overig\" wordt getoond, dan wordt het preferente aandeel als losse rij volgens de normale sortering weergegeven.",
     "foot_p3": "PER, PBR, ROE en de recente resultaten (YoY) zijn door Valueline berekend op basis van officiële bekendmakingen en hebben grotendeels betrekking op het tweede kwartaal van 2026 (26.2Q) (een deel is \"voorlopig\"). Een negatieve PER of PBR duidt op een verlies in het meest recente kwartaal. Omdat Valueline voor preferente aandelen geen aparte cijfers levert, zijn deze berekend als referentiewaarde via <strong>PER/PBR van het hoofdaandeel × (koers preferent aandeel / koers hoofdaandeel)</strong> (aangeduid als \"Herleid van hoofdaandeel\"); voor ROE — een bedrijfsbreed kengetal — is dezelfde waarde als die van het hoofdaandeel overgenomen (aangeduid als \"Gelijk aan hoofdaandeel\") — dit zijn benaderingen en geen officiële cijfers, raadpleeg voor beleggingsbeslissingen de originele bekendmakingen.",
-    "foot_p4": "De gekleurde rijachtergrond geeft de door de gebruiker gemarkeerde <strong>watchlistaandelen</strong> (56 aandelen) aan. Voor de overige samenstellende aandelen van de KOSPI200 en KOSDAQ150 (ongeveer 307 aandelen) zijn, na verwijdering van duplicaten, eveneens de huidige koers, PER, PBR, ROE, diagnosescore, AI-voorspelling en het vraag-en-aanbodsignaal opgehaald bij Valueline en Hankyung; via de selectievakjes bovenaan kunt u Alle, KOSPI200, KOSDAQ150, Preferente aandelen en Watchlist vrij combineren. Aandelen buiten de watchlist worden echter niet elk uur automatisch bijgewerkt, maar tonen een momentopname van het tijdstip waarop de gegevens zijn opgehaald (uitbreiding van de automatische update is gepland); voor een aantal recent genoteerde aandelen of aandelen die zijn omgezet naar een holdingstructuur (bijv. 삼성에피스홀딩스) kon de code niet in de databron worden gevonden, waardoor alleen de naam en het marktsegment worden weergegeven. De \"T.o.v. hoofdaandeel\"-afwijking bij rijen van preferente aandelen wordt berekend als (koers preferent aandeel－koers hoofdaandeel)/koers hoofdaandeel en wordt altijd weergegeven, ongeacht de filterinstelling.",
+    "foot_p4": "De gekleurde rijachtergrond geeft de door de gebruiker gemarkeerde <strong>watchlistaandelen</strong> (58 aandelen) aan. Voor de overige samenstellende aandelen van de KOSPI200 en KOSDAQ150 (ongeveer 306 aandelen) zijn, na verwijdering van duplicaten, eveneens de huidige koers, PER, PBR, ROE, diagnosescore, AI-voorspelling en het vraag-en-aanbodsignaal opgehaald bij Valueline en Hankyung; via de selectievakjes bovenaan kunt u Alle, KOSPI200, KOSDAQ150, Preferente aandelen en Watchlist vrij combineren. Aandelen buiten de watchlist worden echter niet elk uur automatisch bijgewerkt, maar tonen een momentopname van het tijdstip waarop de gegevens zijn opgehaald (uitbreiding van de automatische update is gepland); voor een aantal recent genoteerde aandelen of aandelen die zijn omgezet naar een holdingstructuur (bijv. 삼성에피스홀딩스) kon de code niet in de databron worden gevonden, waardoor alleen de naam en het marktsegment worden weergegeven. De \"T.o.v. hoofdaandeel\"-afwijking bij rijen van preferente aandelen wordt berekend als (koers preferent aandeel－koers hoofdaandeel)/koers hoofdaandeel en wordt altijd weergegeven, ongeacht de filterinstelling.",
     "foot_p5": "Deze pagina biedt uitsluitend informatie ter referentie en vormt geen beleggingsadvies; beleggingsbeslissingen en de verantwoordelijkheid daarvoor liggen bij uzelf.",
     "footer_by": "Product by",
     "export_csv_btn": "⬇ CSV (Excel) downloaden",
@@ -1250,7 +1311,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Diagnos för bevakningslista · AI-prognospanel",
     "updated_prefix": "Data per",
     "updated_suffix": " · Valueline + Hankyung (kurser för preferensaktier) · Omfattar PER, PBR, diagnospoäng och AI-prognos för samtliga aktier i KOSPI200 och KOSDAQ150",
-    "cadence_note": "Varje ny datapublicering sparas som en ögonblicksbild · välj tidpunkt ovan · Färgad radbakgrund = bevakad aktie",
+    "cadence_note": "Data samlas in dagligen kl. 01:00 (KST) baserat på föregående handelsdags stängningskurs · välj tidpunkt ovan · Färgad radbakgrund = bevakad aktie",
     "snapshot_label": "Tidpunkt",
     "refresh_btn": "Uppdatera",
     "search_placeholder": "Sök aktienamn",
@@ -1268,6 +1329,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "Marknadssegment",
     "col_price": "Aktuellt pris",
     "col_chg": "Förändring",
+    "hist_title": "Senaste 7 dagarna",
+    "hist_date": "Datum",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -1303,7 +1366,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "Diagnospoäng, AI-prognosens kursförändring och utbuds-/efterfrågesignal hämtas direkt från de värden som <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> beräknar med en algoritm baserad på big data och ARIMA (för 효성화학 skiljer sig skalan i källdatan från övriga aktier, så värdet har återgetts oförändrat som \"13\"). För de 10 preferensaktierna (märkta med ●우) beräknar Valueline inte alls AI-diagnos, AI-prognos eller utbuds-/efterfrågesignal (det finns ingen egen sida för dem), så dessa tre fält visar enbart \"Ingen data (preferensaktie)\" — aktuellt pris och kursförändring har hämtats separat från andra kurskällor, och för aktier med gles handel anges datumet för senaste avslut. Marknadssegmentet anges per enskilt värdepapper och inte utifrån stamaktien, så alla preferensaktier visas som \"Övrigt\". GS건설 uteslöts ur KOSPI200 vid den ordinarie indexjusteringen i maj 2026 och klassificeras därför för närvarande som \"Övrigt\".",
     "foot_p2": "Eftersom preferensaktier saknar Valueline-poäng antas de följa samma kursutveckling som sin stamaktie, och de visas därför alltid direkt under sin stamaktie (markerad med ↳), oavsett vilket sorteringskriterium som används (diagnospoäng, kursförändring, AI-prognos, namn, marknadssegment osv.). Om stamaktien inte visas på skärmen — till exempel när marknadsfiltret är inställt på enbart \"Övrigt\" — sorteras preferensaktien istället som en fristående rad enligt den vanliga sorteringen.",
     "foot_p3": "PER, PBR, ROE och senaste resultat (YoY) är värden som Valueline beräknat utifrån offentliggjord finansiell information, och avser i de flesta fall resultatet för andra kvartalet 2026 (26.2Q) (vissa är \"preliminära\"). Ett negativt PER eller PBR innebär förlust under det senaste kvartalet. För preferensaktier tillhandahåller Valueline inga separata siffror, så värdena är istället beräknade referensvärden enligt <strong>stamaktiens PER/PBR × (preferensaktiens kurs / stamaktiens kurs)</strong> (märkta \"Omräknad från stamaktien\"), medan ROE är ett bolagsövergripande nyckeltal och därför visas med samma värde som stamaktien (märkt \"Samma som stamaktien\") — dessa är approximationer och inte faktiska offentliggjorda siffror, så kontrollera originalkällan innan du fattar investeringsbeslut.",
-    "foot_p4": "Radar med färgad bakgrund är de <strong>bevakade aktierna</strong> (56 aktier) som användaren själv har valt ut. Övriga aktier i KOSPI200 och KOSDAQ150 (cirka 307 aktier) har, efter borttagning av dubbletter, också fyllts i med aktuellt pris, PER, PBR, ROE, diagnospoäng, AI-prognos och utbuds-/efterfrågesignal från Valueline och Hankyung, och kryssrutorna högst upp gör det möjligt att fritt kombinera Alla / KOSPI200 / KOSDAQ150 / Preferensaktier / Bevakade aktier. Observera dock att aktier utanför bevakningslistan inte uppdateras automatiskt varje timme, utan visas som en ögonblicksbild från den tidpunkt då de senast fylldes i (automatisk uppdatering planeras utökas till fler aktier framöver). Vissa nyligen noterade aktier eller aktier som konverterats till holdingbolag (t.ex. 삼성에피스홀딩스) saknar identifierbar kod i datakällan och visas därför endast med namn och marknadssegment. Avvikelsen \"Avvikelse mot stamaktien\" för preferensaktierader beräknas som (preferensaktiens kurs － stamaktiens kurs) / stamaktiens kurs, och visas alltid oavsett vilket filter som är valt.",
+    "foot_p4": "Radar med färgad bakgrund är de <strong>bevakade aktierna</strong> (58 aktier) som användaren själv har valt ut. Övriga aktier i KOSPI200 och KOSDAQ150 (cirka 306 aktier) har, efter borttagning av dubbletter, också fyllts i med aktuellt pris, PER, PBR, ROE, diagnospoäng, AI-prognos och utbuds-/efterfrågesignal från Valueline och Hankyung, och kryssrutorna högst upp gör det möjligt att fritt kombinera Alla / KOSPI200 / KOSDAQ150 / Preferensaktier / Bevakade aktier. Observera dock att aktier utanför bevakningslistan inte uppdateras automatiskt varje timme, utan visas som en ögonblicksbild från den tidpunkt då de senast fylldes i (automatisk uppdatering planeras utökas till fler aktier framöver). Vissa nyligen noterade aktier eller aktier som konverterats till holdingbolag (t.ex. 삼성에피스홀딩스) saknar identifierbar kod i datakällan och visas därför endast med namn och marknadssegment. Avvikelsen \"Avvikelse mot stamaktien\" för preferensaktierader beräknas som (preferensaktiens kurs － stamaktiens kurs) / stamaktiens kurs, och visas alltid oavsett vilket filter som är valt.",
     "foot_p5": "Denna sida utgör inte investeringsrådgivning utan är endast avsedd som referensinformation. Investeringsbeslut och ansvaret för dessa vilar helt på användaren.",
     "footer_by": "Produkt av",
     "export_csv_btn": "⬇ Ladda ner CSV (Excel)",
@@ -1326,7 +1389,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Diagnose av favorittaksjar · AI-prognose-dashbord",
     "updated_prefix": "Data per",
     "updated_suffix": " · Valueline + Hankyung (kurs på preferanseaksjar) · Inkluderer PER, PBR, diagnosepoeng og AI-prognose for alle aksjar i KOSPI200 og KOSDAQ150",
-    "cadence_note": "Kvar ny datapublisering blir lagra som eit augeblinksbilete · vel tidspunkt ovanfor · Rad med farga bakgrunn = favorittaksjar",
+    "cadence_note": "Data vert samla inn kvar dag kl. 01:00 (KST) basert på sluttkursen frå føregåande handelsdag · vel tidspunkt ovanfor · Rad med farga bakgrunn = favorittaksjar",
     "snapshot_label": "Tidspunkt",
     "refresh_btn": "Oppdater",
     "search_placeholder": "Søk etter aksjenamn",
@@ -1344,6 +1407,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "Marknad",
     "col_price": "Kurs",
     "col_chg": "Endring",
+    "hist_title": "Siste 7 dagane",
+    "hist_date": "Dato",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -1379,7 +1444,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "Diagnosepoenga, AI-prognosen for kursendring og signalet for tilbod og etterspurnad er henta direkte frå verdiar som <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> har rekna ut med ein algoritme basert på stordata og ARIMA (for 효성화학 er dei opphavlege tala oppgitt på ein annan skala enn for dei andre aksjane, så verdien er ført vidare uendra som «13»). For dei 10 preferanseaksjane (●우-merkte aksjar) reknar Valueline ikkje ut AI-diagnose, -prognose eller tilbod/etterspurnad-signal i det heile (dei har inga eiga side), så berre desse tre felta viser «Ingen data(preferanseaksje)» for dei — kurs og endring er henta frå ei anna kjelde, og for nokre aksjar med lite handel er siste handelsdato oppgitt i staden. Marknadskategorien er sett etter det einskilde verdipapiret og ikkje etter stamaksjen, så alle preferanseaksjar er merkte «Anna». GS건설 vart teke ut av KOSPI200 ved den faste revisjonen i mai 2026, og er no merkt «Anna».",
     "foot_p2": "Sidan preferanseaksjar ikkje har eigne Valueline-poeng, går ein ut frå at dei følgjer same kursutvikling som stamaksjen, og dei vert difor alltid viste rett under stamaksjen sin (merkt med ↳), uavhengig av sorteringa (diagnosepoeng, endring, AI-prognose, namn, marknad osv.). Dersom stamaksjen ikkje er synleg på skjermen — til dømes når marknadsfilteret berre viser «Anna» — vert preferanseaksjen i staden vist som ei eiga rad i vanleg sortering.",
     "foot_p3": "PER, PBR, ROE og siste resultat (YoY) er verdiar som Valueline har rekna ut på grunnlag av børsmeldingar, og dei fleste gjeld resultatet for 2. kvartal 2026 (26.2Q) (nokre er «førebels»). Negativ PER eller PBR tyder underskot i siste kvartal. Sidan Valueline ikkje oppgir eigne tal for preferanseaksjar, er desse verdiane rekna ut som referanseverdiar med <strong>PER/PBR til stamaksjen × (preferanseaksjekurs / stamaksjekurs)</strong> (merkt «Omrekna frå stamaksjen»), medan ROE er eit tal for heile selskapet og difor er sett likt med verdien for stamaksjen («Same som stamaksjen») — dette er tilnærma verdiar og ikkje faktiske meldingstal, så sjå dei opphavlege børsmeldingane før du tek investeringsavgjerder.",
-    "foot_p4": "Rader med farga bakgrunn er dei <strong>favorittaksjane</strong> (56 aksjar) som brukaren har valt ut. Dei resterande aksjane i KOSPI200 og KOSDAQ150 (om lag 307 aksjar), etter at duplikatar er fjerna, er òg fylte inn med kurs, PER, PBR, ROE, diagnosepoeng, AI-prognose og tilbod/etterspurnad-signal henta frå Valueline og Hankyung, og du kan fritt kombinere avmerkingsboksane øvst for Alle / KOSPI200 / KOSDAQ150 / preferanseaksjar / favorittaksjar. Merk at aksjar utanom favorittaksjane ikkje vert automatisk oppdaterte kvar time, men er eit augeblinksbilete frå det tidspunktet dei vart fylte inn (utvida automatisk oppdatering er planlagd seinare); for enkelte nyleg noterte aksjar eller aksjar som har gått over til holdingselskap (til dømes 삼성에피스홀딩스) manglar det kode i datakjelda, så berre namn og marknad er viste. Avviket «Avvik frå stamaksje» for preferanseaksjerader er rekna ut som (preferanseaksjekurs－stamaksjekurs)/stamaksjekurs, og vert alltid vist, uavhengig av filterstatus.",
+    "foot_p4": "Rader med farga bakgrunn er dei <strong>favorittaksjane</strong> (58 aksjar) som brukaren har valt ut. Dei resterande aksjane i KOSPI200 og KOSDAQ150 (om lag 306 aksjar), etter at duplikatar er fjerna, er òg fylte inn med kurs, PER, PBR, ROE, diagnosepoeng, AI-prognose og tilbod/etterspurnad-signal henta frå Valueline og Hankyung, og du kan fritt kombinere avmerkingsboksane øvst for Alle / KOSPI200 / KOSDAQ150 / preferanseaksjar / favorittaksjar. Merk at aksjar utanom favorittaksjane ikkje vert automatisk oppdaterte kvar time, men er eit augeblinksbilete frå det tidspunktet dei vart fylte inn (utvida automatisk oppdatering er planlagd seinare); for enkelte nyleg noterte aksjar eller aksjar som har gått over til holdingselskap (til dømes 삼성에피스홀딩스) manglar det kode i datakjelda, så berre namn og marknad er viste. Avviket «Avvik frå stamaksje» for preferanseaksjerader er rekna ut som (preferanseaksjekurs－stamaksjekurs)/stamaksjekurs, og vert alltid vist, uavhengig av filterstatus.",
     "foot_p5": "Denne sida gjev berre informasjon til referanse, ikkje investeringsråd, og investeringsavgjerder og ansvar ligg hos deg sjølv.",
     "footer_by": "Product by",
     "export_csv_btn": "⬇ Last ned CSV (Excel)",
@@ -1402,7 +1467,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "Diagnose af favoritaktier · AI-prognosedashboard",
     "updated_prefix": "Data pr.",
     "updated_suffix": " · Valueline + Hankyung (kurser for præferenceaktier) · Inkluderer PER, PBR, diagnosescore og AI-prognose for alle aktier i KOSPI200 og KOSDAQ150",
-    "cadence_note": "Hver ny dataudgivelse gemmes som et øjebliksbillede · vælg tidspunkt ovenfor · Rækker med farvet baggrund = favoritaktier",
+    "cadence_note": "Data indsamles dagligt kl. 01:00 (KST) baseret på foregående handelsdags slutkurs · vælg tidspunkt ovenfor · Rækker med farvet baggrund = favoritaktier",
     "snapshot_label": "Tidspunkt",
     "refresh_btn": "Opdater",
     "search_placeholder": "Søg efter aktienavn",
@@ -1420,6 +1485,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "Markedssegment",
     "col_price": "Aktuel kurs",
     "col_chg": "Kursændring",
+    "hist_title": "Seneste 7 dage",
+    "hist_date": "Dato",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -1455,7 +1522,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "Diagnosescore, den AI-forudsagte kursændring og udbuds-/efterspørgselssignalet er hentet direkte fra de værdier, som <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> beregner med en algoritme baseret på big data og ARIMA (for 효성화학 er rådataens notation på en anden skala end de øvrige aktier, så værdien er vist uændret som \"13\"). For de 10 præferenceaktier (mærket ●우) beregner Valueline slet ikke AI-diagnose, -prognose eller udbuds-/efterspørgselssignal (der findes ingen separat side for dem), så disse tre felter viser blot \"Ingen data (præferenceaktie)\" — aktuel kurs og kursændring er indhentet fra en anden kursdatakilde, og for aktier med sjælden handel er den seneste handelsdato angivet. Markedssegmentet er baseret på det enkelte værdipapir og ikke stamaktien, så alle præferenceaktier vises som \"Øvrige\". GS건설 blev udgået af KOSPI200 ved den ordinære revision i maj 2026 og er derfor nu vist som \"Øvrige\".",
     "foot_p2": "Da præferenceaktier ikke har en Valueline-score, antages det, at de følger samme kursudvikling som stamaktien, og de vises derfor altid lige under deres stamaktie (markeret med ↳) uanset det valgte sorteringskriterium (diagnosescore, kursændring, AI-prognose, navn, markedssegment osv.). Hvis stamaktien ikke er synlig på skærmen – f.eks. når markedsfilteret kun viser \"Øvrige\" – vises præferenceaktien i stedet som en almindelig, selvstændig række i den generelle sortering.",
     "foot_p3": "PER, PBR, ROE og seneste resultat (å/å) er værdier, som Valueline har beregnet på baggrund af offentliggjorte regnskaber, og de fleste er baseret på resultatet for 2. kvartal 2026 (26.2Q) (nogle er \"foreløbige\"). Negativ PER eller PBR betyder underskud i det seneste kvartal. Da Valueline ikke leverer separate tal for præferenceaktier, er referenceværdien beregnet som <strong>stamaktiens PER/PBR × (præferenceaktiens kurs / stamaktiens kurs)</strong> (vist som \"Omregnet fra stamaktien\"), og for ROE, som er et nøgletal for hele virksomheden, er samme værdi som stamaktien anvendt uændret (vist som \"Samme som stamaktien\") — disse er tilnærmede værdier og ikke de faktiske offentliggjorte tal, så tjek de oprindelige regnskabsdata, før du træffer investeringsbeslutninger.",
-    "foot_p4": "Rækker med farvet baggrund er de <strong>favoritaktier</strong>, som brugeren har angivet (56 aktier). For de øvrige aktier i KOSPI200 og KOSDAQ150 (ca. 307 aktier) er aktuel kurs, PER, PBR, ROE, diagnosescore, AI-prognose og udbuds-/efterspørgselssignal også hentet fra Valueline og Hankyung, efter at dubletter er fjernet, og du kan frit kombinere Alle/KOSPI200/KOSDAQ150/præferenceaktier/favoritaktier via afkrydsningsfelterne øverst. Bemærk dog, at aktier uden for favoritlisten ikke opdateres automatisk hver time, men vises som et øjebliksbillede fra det tidspunkt, hvor de senest blev indhentet (omfanget af automatisk opdatering udvides senere), og at visse nynoterede aktier eller aktier, der er overgået til holdingselskabsstruktur (f.eks. 삼성에피스홀딩스), kun vises med navn og markedssegment, da koden ikke kunne bekræftes i datakilden. Afvigelsesprocenten \"I forhold til stamaktien\" for præferenceaktie-rækker beregnes som (præferenceaktiens kurs－stamaktiens kurs)/stamaktiens kurs og vises altid, uanset filterindstilling.",
+    "foot_p4": "Rækker med farvet baggrund er de <strong>favoritaktier</strong>, som brugeren har angivet (58 aktier). For de øvrige aktier i KOSPI200 og KOSDAQ150 (ca. 306 aktier) er aktuel kurs, PER, PBR, ROE, diagnosescore, AI-prognose og udbuds-/efterspørgselssignal også hentet fra Valueline og Hankyung, efter at dubletter er fjernet, og du kan frit kombinere Alle/KOSPI200/KOSDAQ150/præferenceaktier/favoritaktier via afkrydsningsfelterne øverst. Bemærk dog, at aktier uden for favoritlisten ikke opdateres automatisk hver time, men vises som et øjebliksbillede fra det tidspunkt, hvor de senest blev indhentet (omfanget af automatisk opdatering udvides senere), og at visse nynoterede aktier eller aktier, der er overgået til holdingselskabsstruktur (f.eks. 삼성에피스홀딩스), kun vises med navn og markedssegment, da koden ikke kunne bekræftes i datakilden. Afvigelsesprocenten \"I forhold til stamaktien\" for præferenceaktie-rækker beregnes som (præferenceaktiens kurs－stamaktiens kurs)/stamaktiens kurs og vises altid, uanset filterindstilling.",
     "foot_p5": "Denne side udgør ikke investeringsrådgivning, men er kun til orientering. Investeringsbeslutninger og ansvaret herfor påhviler brugeren selv.",
     "footer_by": "Product by",
     "export_csv_btn": "⬇ Download CSV (Excel)",
@@ -1478,7 +1545,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "h1": "لوحة تشخيص الأسهم المفضلة · تنبؤ الذكاء الاصطناعي",
     "updated_prefix": "البيانات حتى",
     "updated_suffix": " · Valueline + 한경 (أسعار الأسهم الممتازة) · يشمل PER وPBR ودرجة التشخيص وتنبؤ الذكاء الاصطناعي لجميع أسهم KOSPI200 وKOSDAQ150",
-    "cadence_note": "يتم تسجيل كل نشر جديد للبيانات كلقطة · اختر التوقيت أعلاه · خلفية الصف الملوّنة = من الأسهم المفضلة",
+    "cadence_note": "يتم جمع البيانات يوميًا في الساعة 01:00 بتوقيت كوريا (KST) استنادًا إلى سعر الإغلاق ليوم التداول السابق · اختر التوقيت أعلاه · خلفية الصف الملوّنة = من الأسهم المفضلة",
     "snapshot_label": "نقطة زمنية",
     "refresh_btn": "تحديث",
     "search_placeholder": "البحث عن اسم السهم",
@@ -1496,6 +1563,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "col_market": "تصنيف السوق",
     "col_price": "السعر الحالي",
     "col_chg": "نسبة التغير",
+    "hist_title": "آخر 7 أيام",
+    "hist_date": "التاريخ",
     "col_per": "PER",
     "col_pbr": "PBR",
     "col_roe": "ROE",
@@ -1531,7 +1600,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "foot_p1": "درجة التشخيص، ونسبة التغير المتوقعة بالذكاء الاصطناعي، وإشارة العرض والطلب هي قيم مأخوذة كما هي من <a href=\"https://www.valueline.co.kr\" target=\"_blank\" rel=\"noopener\">Valueline</a> التي تحسبها بخوارزمية قائمة على البيانات الضخمة ونموذج ARIMA (بالنسبة لـ 효성화학، ولأن مقياس البيانات الأصلية يختلف عن باقي الأسهم، تم إدراج القيمة كما وردت وهي \"13\"). بالنسبة إلى الأسهم الممتازة العشرة (المعلّمة بالرمز ●우)، ولأن Valueline لا تحسب لها التشخيص أو التنبؤ بالذكاء الاصطناعي أو إشارة العرض والطلب على الإطلاق (لا توجد لها صفحة مستقلة)، فإن هذه العناصر الثلاثة فقط تظهر بعبارة \"لا توجد بيانات (سهم ممتاز)\" — أما السعر الحالي ونسبة التغير فقد تم تعبئتهما من مصدر تسعير آخر، وبالنسبة إلى بعض الأسهم قليلة التداول تم عرض تاريخ آخر تنفيذ للصفقة. ولأن تصنيف السوق يُحدَّد وفقًا للورقة المالية الفردية وليس وفقًا للسهم العادي، فقد صُنِّفت جميع الأسهم الممتازة ضمن فئة \"أخرى\". أما أما GS건설 فقد استُبعد من مؤشر KOSPI200 في إعادة التوازن الدورية لشهر مايو 2026، وهو مصنّف حاليًا ضمن فئة \"أخرى\".",
     "foot_p2": "نظرًا لعدم توفر درجة من Valueline للأسهم الممتازة، ولافتراض أن أداءها يتحرك بشكل مشابه لأداء سهمها العادي المقابل، فإنها تُعرض دائمًا مباشرة أسفل سهمها العادي (بعلامة ↳)، بصرف النظر عن معيار الترتيب المستخدم (درجة التشخيص، نسبة التغير، تنبؤ الذكاء الاصطناعي، الاسم، تصنيف السوق، وغيرها). أما إذا لم يكن السهم العادي معروضًا على الشاشة — كما يحدث عند تصفية السوق لعرض فئة \"أخرى\" فقط — فيُرتَّب السهم الممتاز أيضًا بشكل طبيعي كصف مستقل.",
     "foot_p3": "قيم PER وPBR وROE وأحدث النتائج (سنويًا) محسوبة من قبل Valueline استنادًا إلى الإفصاحات الرسمية، ومعظمها مبني على نتائج الربع الثاني من عام 2026 (26.2Q) (بعضها \"مبدئي\"). وتشير القيمة السالبة لـ PER أو PBR إلى وجود خسارة في الربع الأخير. وبما أن Valueline لا توفر أرقامًا منفصلة للأسهم الممتازة، فإن PER وPBR لها قيم مرجعية محوّلة عبر معادلة <strong>PER/PBR للسهم العادي × (سعر السهم الممتاز / سعر السهم العادي)</strong> (وتُعرَض بعبارة \"محوّل من السهم العادي\")، أما ROE فهو مؤشر على مستوى الشركة ككل، لذا استُخدمت نفس قيمة السهم العادي كما هي (وتُعرَض بعبارة \"مطابق للسهم العادي\") — وبما أنها تقديرات وليست أرقامًا فعلية من الإفصاحات، يُرجى الرجوع إلى مصادر الإفصاح الأصلية عند اتخاذ القرارات الاستثمارية.",
-    "foot_p4": "تشير خلفية الصف الملوّنة إلى <strong>الأسهم المفضلة</strong> (56 سهمًا) التي حددها المستخدم. أما بقية الأسهم المكوّنة لمؤشري KOSPI200 وKOSDAQ150 (نحو 307 أسهم) فقد تم أيضًا، بعد إزالة التكرار، تعبئتها بالكامل ببيانات السعر الحالي وPER وPBR وROE ودرجة التشخيص وتنبؤ الذكاء الاصطناعي وإشارة العرض والطلب من Valueline و한경، ويمكن دمج الفئات (الكل / KOSPI200 / KOSDAQ150 / الأسهم الممتازة / الأسهم المفضلة) بحرية باستخدام مربعات الاختيار في الأعلى. غير أن الأسهم خارج قائمة الأسهم المفضلة لا تخضع للتحديث التلقائي كل ساعة، بل هي لقطة زمنية اعتبارًا من وقت التعبئة الحالي (ومن المخطط توسيع نطاق التحديث التلقائي لاحقًا)، كما أن بعض الأسهم المُدرجة حديثًا أو التي تحوّلت إلى شركة قابضة (مثل 삼성에피스홀딩스) لا يظهر لها سوى الاسم وتصنيف السوق، لأن رمزها لم يتم التحقق منه في مصدر البيانات. أما نسبة الفارق \"مقابل السهم العادي\" في صفوف الأسهم الممتازة فتُحسب بالمعادلة (سعر السهم الممتاز － سعر السهم العادي) / سعر السهم العادي، وتظهر دائمًا بصرف النظر عن حالة الفلترة.",
+    "foot_p4": "تشير خلفية الصف الملوّنة إلى <strong>الأسهم المفضلة</strong> (58 سهمًا) التي حددها المستخدم. أما بقية الأسهم المكوّنة لمؤشري KOSPI200 وKOSDAQ150 (نحو 306 أسهم) فقد تم أيضًا، بعد إزالة التكرار، تعبئتها بالكامل ببيانات السعر الحالي وPER وPBR وROE ودرجة التشخيص وتنبؤ الذكاء الاصطناعي وإشارة العرض والطلب من Valueline و한경، ويمكن دمج الفئات (الكل / KOSPI200 / KOSDAQ150 / الأسهم الممتازة / الأسهم المفضلة) بحرية باستخدام مربعات الاختيار في الأعلى. غير أن الأسهم خارج قائمة الأسهم المفضلة لا تخضع للتحديث التلقائي كل ساعة، بل هي لقطة زمنية اعتبارًا من وقت التعبئة الحالي (ومن المخطط توسيع نطاق التحديث التلقائي لاحقًا)، كما أن بعض الأسهم المُدرجة حديثًا أو التي تحوّلت إلى شركة قابضة (مثل 삼성에피스홀딩스) لا يظهر لها سوى الاسم وتصنيف السوق، لأن رمزها لم يتم التحقق منه في مصدر البيانات. أما نسبة الفارق \"مقابل السهم العادي\" في صفوف الأسهم الممتازة فتُحسب بالمعادلة (سعر السهم الممتاز － سعر السهم العادي) / سعر السهم العادي، وتظهر دائمًا بصرف النظر عن حالة الفلترة.",
     "foot_p5": "هذه الصفحة معلومات مرجعية وليست استشارة استثمارية، والقرار الاستثماري والمسؤولية عنه تقع على عاتق المستخدم.",
     "footer_by": "المنتج من",
     "export_csv_btn": "⬇ تنزيل CSV (إكسل)",
@@ -1689,7 +1758,9 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     {name:"한화솔루션", code:"009830", market:"KOSPI200", price:32050, chg:-8.95, score:17, ai:null, supply:"보통", per:-42.46, pbr:0.74, roe:-6.85, cap:"72,078억", earn:"매출 +47.01% / 영업이익 +200.33% YoY (26.2Q)"},
     {name:"한화솔루션우", code:"009835", market:"기타", pref:true, parent:"009830", price:18080, chg:-1.20, score:null, ai:null, supply:null, per:-23.95, pbr:0.42, roe:-6.85, valInferred:true},
     {name:"DL", code:"000210", market:"KOSPI200", price:48150, chg:2.67, score:45, ai:null, aiTrend:"하락", supply:"약함", per:6.97, pbr:0.23, roe:-1.39, cap:"9,828억", earn:"매출 +26.19% / 영업이익 +256.11% YoY, 흑자전환 (26.2Q)"},
-    {name:"DL우", code:"000215", market:"기타", pref:true, parent:"000210", price:23550, chg:1.95, score:null, ai:null, supply:null, per:3.41, pbr:0.11, roe:-1.39, valInferred:true}
+    {name:"DL우", code:"000215", market:"기타", pref:true, parent:"000210", price:23550, chg:1.95, score:null, ai:null, supply:null, per:3.41, pbr:0.11, roe:-1.39, valInferred:true},
+    {name:"한화",code:"000880",market:"KOSPI200",price:137400,chg:2.77,score:60,ai:61.89,aiTrend:"상승",supply:"매우강함",per:9.11,pbr:0.55,roe:5.99,cap:"73,274억",earn:"매출 +48.83% / 영업이익 +80.72% YoY (26.2Q)"},
+    {name:"한화3우B",code:"00088K",market:"기타",pref:true,parent:"000880",price:36200,chg:22.92,score:null,ai:null,supply:null,per:2.4,pbr:0.14,roe:5.99,note:"가격은 8/25 마지막 체결 기준(거래 뜸함)",valInferred:true}
   ].filter(function(d){ return !d.skip; });
   WATCHLIST.forEach(function (d) { d.watch = true; });
 
@@ -1814,7 +1885,6 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     "LS": {code:"006260", price:277000, chg:-5.62, score:43, ai:-4.17, supply:"매우약함", per:21.4, pbr:1.73, roe:6.72, cap:"91,572억", earn:"매출 +40.35% / 영업이익 +140.89% YoY (26.2Q)"},
     "에스엘": {code:"005850", price:59000, chg:2.79, score:69, ai:null, supply:"강함", per:7.77, pbr:1.03, roe:13.27, cap:"26,661억", earn:null},
     "두산": {code:"000150", price:1085000, chg:0.65, score:46, ai:null, supply:"매우약함", per:45.29, pbr:6.38, roe:14.09, cap:"174,570억", earn:null},
-    "한화": {code:"000880", price:118100, chg:17.4, score:56, ai:61.89, supply:"매우약함", per:7.34, pbr:0.44, roe:3.54, cap:"59,086억", earn:"매출 +48.83% / 영업이익 +80.72% YoY (26.2Q)"},
     "오뚜기": {code:"007310", price:331500, chg:-0.45, score:47, ai:-3.11, supply:"보통", per:18.28, pbr:0.62, roe:3.42, cap:"13,346억", earn:"매출 +4.63% / 영업이익 +0.34% YoY (26.2Q)"},
     "LG생활건강": {code:"051900", price:316000, chg:0.96, score:53, ai:-3.05, supply:"약함", per:-62.48, pbr:0.83, roe:-1.34, cap:"46,873억", earn:null},
     "코웨이": {code:"021240", price:95900, chg:2.68, score:63, ai:-0.63, supply:"약함", per:9.93, pbr:1.78, roe:17.92, cap:"67,866억", earn:"매출 +14.56% / 영업이익 +4.32% YoY (26.2Q)"},
@@ -2112,6 +2182,109 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
       .catch(function (err) { console.warn("[pomiai] 스냅샷 로드 실패:", file, err); });
   }
 
+  // ---------- D-7 마우스오버 히스토리 팝업 ----------
+  // manifest.json에 쌓인 최근 스냅샷 파일(최대 7개, 최신순)을 백그라운드로 불러와
+  // 종목명별 {날짜라벨, price, chg} 배열을 만든다. 라운드가 아직 며칠치밖에 없으면
+  // 그만큼만 보여주고(지어내지 않음), 매일 라운드가 쌓일수록 최대 7일치까지 자연스럽게 늘어난다.
+  var HISTORY_MAP = {};
+
+  function extractHistRows(snapshotData) {
+    var out = [];
+    if (snapshotData && Array.isArray(snapshotData.watchlist)) {
+      snapshotData.watchlist.forEach(function (d) {
+        out.push({ name: d.name, price: d.price, chg: d.chg });
+      });
+    }
+    if (snapshotData && snapshotData.universeData) {
+      Object.keys(snapshotData.universeData).forEach(function (name) {
+        var d = snapshotData.universeData[name];
+        out.push({ name: name, price: d.price, chg: d.chg });
+      });
+    }
+    return out;
+  }
+
+  function initHistoryPopup() {
+    var tooltip = document.createElement("div");
+    tooltip.className = "hist-tooltip";
+    tooltip.style.display = "none";
+    document.body.appendChild(tooltip);
+
+    function positionTooltip(x, y) {
+      var pad = 14;
+      var rect = tooltip.getBoundingClientRect();
+      var left = x + pad, top = y + pad;
+      if (left + rect.width > window.innerWidth - 8) left = x - rect.width - pad;
+      if (top + rect.height > window.innerHeight - 8) top = y - rect.height - pad;
+      tooltip.style.left = Math.max(8, left) + "px";
+      tooltip.style.top = Math.max(8, top) + "px";
+    }
+
+    function showTooltip(name, x, y) {
+      var t = window._T || I18N.ko;
+      var rows = HISTORY_MAP[name];
+      var html = '<div class="hist-tooltip-title">' + name + ' &middot; ' + t.hist_title + '</div>';
+      if (!rows || !rows.length) {
+        html += '<div class="hist-tooltip-empty">' + t.no_data + '</div>';
+      } else {
+        html += '<table class="hist-tooltip-table"><thead><tr><th>' + t.hist_date + '</th><th>' + t.col_price + '</th><th>' + t.col_chg + '</th></tr></thead><tbody>' +
+          rows.map(function (r) {
+            var c = fmtChg(r.chg);
+            return '<tr><td>' + r.label + '</td><td class="num">' + fmtPrice(r.price) + '</td><td class="num ' + c.cls + '">' + c.text + '</td></tr>';
+          }).join("") +
+          '</tbody></table>';
+      }
+      tooltip.innerHTML = html;
+      tooltip.style.display = "block";
+      positionTooltip(x, y);
+    }
+
+    function hideTooltip() { tooltip.style.display = "none"; }
+
+    var tableBody = document.getElementById("tableBody");
+    tableBody.addEventListener("mouseover", function (e) {
+      var cell = e.target.closest ? e.target.closest("[data-hist]") : null;
+      if (!cell) return;
+      showTooltip(cell.getAttribute("data-hist"), e.clientX, e.clientY);
+    });
+    tableBody.addEventListener("mousemove", function (e) {
+      if (tooltip.style.display === "none") return;
+      var cell = e.target.closest ? e.target.closest("[data-hist]") : null;
+      if (!cell) return;
+      positionTooltip(e.clientX, e.clientY);
+    });
+    tableBody.addEventListener("mouseout", function (e) {
+      var cell = e.target.closest ? e.target.closest("[data-hist]") : null;
+      if (!cell) return;
+      var related = e.relatedTarget;
+      if (related && cell.contains(related)) return;
+      hideTooltip();
+    });
+
+    fetch(SNAPSHOT_BASE + "manifest.json", { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function (manifest) {
+        var list = ((manifest && manifest.snapshots) || []).slice(0, 7); // 최신순 최대 7개
+        return Promise.all(list.map(function (s) {
+          return fetch(SNAPSHOT_BASE + s.file, { cache: "no-store" })
+            .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+            .then(function (data) { return { label: s.label, data: data }; })
+            .catch(function () { return null; });
+        }));
+      })
+      .then(function (entries) {
+        entries.filter(Boolean).forEach(function (entry) {
+          extractHistRows(entry.data).forEach(function (r) {
+            if (!HISTORY_MAP[r.name]) HISTORY_MAP[r.name] = [];
+            HISTORY_MAP[r.name].push({ label: entry.label, price: r.price, chg: r.chg });
+          });
+        });
+      })
+      .catch(function (err) {
+        console.warn("[pomiai] 히스토리 로드 실패:", err);
+      });
+  }
+
   function initSnapshots() {
     var row = document.getElementById("snapshotRow");
     var sel = document.getElementById("snapshotSelect");
@@ -2169,6 +2342,10 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
     var t = window._T || I18N.ko;
     var map = { "상승": t.trend_up, "하락": t.trend_down };
     return map[v] || v;
+  }
+
+  function escAttr(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
   function fmtPrice(v) {
@@ -2458,8 +2635,8 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
       return '<tr class="' + rowClass + '">' +
         '<td class="name-cell"><span class="name">' + (d._isChild ? '<span class="child-arrow">↳</span>' : '') + d.name + '</span>' + (d.code ? '<span class="code num">' + d.code + '</span>' : '') + (d.note ? '<div class="pref-tag">' + d.note + '</div>' : '') + '</td>' +
         '<td><span class="badge ' + mm.cls + '">' + mm.label + '</span></td>' +
-        '<td class="num">' + priceCell + '</td>' +
-        '<td class="chg ' + chg.cls + ' num">' + chg.text + '</td>' +
+        '<td class="num hist-hoverable" data-hist="' + escAttr(d.name) + '">' + priceCell + '</td>' +
+        '<td class="chg ' + chg.cls + ' num hist-hoverable" data-hist="' + escAttr(d.name) + '">' + chg.text + '</td>' +
         '<td class="group-start">' + scoreCell + '</td>' +
         '<td>' + aiCell + '</td>' +
         '<td>' + supplyCell + '</td>' +
@@ -2512,6 +2689,7 @@ html[dir="rtl"] .table-wrap td { text-align: left; }
 
   initLang();
   initSnapshots();
+  initHistoryPopup();
 })();
 </script>
 
