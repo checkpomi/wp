@@ -257,13 +257,13 @@ function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show')
 
 /* ── 국가 규격 데이터 ── */
 const COUNTRIES=[
-  {id:'kr', flag:'🇰🇷', name:'한국', w:35, h:45, faceMin:60, faceMax:80, bg:'white', dpi:300, note:'흰색 배경, 무배경'},
-  {id:'us', flag:'🇺🇸', name:'미국', w:51, h:51, faceMin:70, faceMax:80, bg:'white', dpi:300, note:'흰색/연회색 배경'},
+  {id:'kr', flag:'🇰🇷', name:'한국', w:35, h:45, faceMin:71, faceMax:80, bg:'white', dpi:300, note:'흰색 배경, 무배경'},
+  {id:'us', flag:'🇺🇸', name:'미국', w:51, h:51, faceMin:50, faceMax:69, bg:'white', dpi:300, note:'흰색/연회색 배경'},
   {id:'eu', flag:'🇪🇺', name:'EU/쉥겐', w:35, h:45, faceMin:70, faceMax:80, bg:'white', dpi:300, note:'흰색~연회색'},
-  {id:'jp', flag:'🇯🇵', name:'일본', w:35, h:45, faceMin:60, faceMax:80, bg:'white', dpi:300, note:'흰색 배경'},
-  {id:'gb', flag:'🇬🇧', name:'영국', w:35, h:45, faceMin:60, faceMax:80, bg:'cream', dpi:300, note:'밝은 회색/크림'},
-  {id:'cn', flag:'🇨🇳', name:'중국', w:33, h:48, faceMin:60, faceMax:75, bg:'white', dpi:300, note:'흰색 배경'},
-  {id:'ca', flag:'🇨🇦', name:'캐나다', w:50, h:70, faceMin:70, faceMax:80, bg:'white', dpi:300, note:'흰색 배경'},
+  {id:'jp', flag:'🇯🇵', name:'일본', w:35, h:45, faceMin:71, faceMax:80, bg:'white', dpi:300, note:'흰색 배경'},
+  {id:'gb', flag:'🇬🇧', name:'영국', w:35, h:45, faceMin:64, faceMax:76, bg:'cream', dpi:300, note:'밝은 회색/크림'},
+  {id:'cn', flag:'🇨🇳', name:'중국', w:33, h:48, faceMin:58, faceMax:69, bg:'white', dpi:300, note:'흰색 배경'},
+  {id:'ca', flag:'🇨🇦', name:'캐나다', w:50, h:70, faceMin:44, faceMax:51, bg:'white', dpi:300, note:'흰색 배경'},
   {id:'au', flag:'🇦🇺', name:'호주', w:35, h:45, faceMin:70, faceMax:80, bg:'white', dpi:300, note:'흰색/연색'},
   {id:'sg', flag:'🇸🇬', name:'싱가포르', w:35, h:45, faceMin:60, faceMax:80, bg:'white', dpi:300, note:'흰색 배경'},
   {id:'th', flag:'🇹🇭', name:'태국', w:35, h:45, faceMin:60, faceMax:75, bg:'white', dpi:300, note:'흰색 배경'},
@@ -278,6 +278,7 @@ let photoImg=null;
 let imgX=0,imgY=0,imgScale=1;
 let bgColor='#ffffff';
 let showGuide=true;
+const CANVAS_SIZE=300; /* ?country= 딥링크가 초기화 중 redraw()를 부르므로 국가 그리드 초기화보다 먼저 선언 */
 let isDragging=false,dragStartX=0,dragStartY=0,imgStartX=0,imgStartY=0;
 
 /* ── 국가 그리드 ── */
@@ -361,7 +362,6 @@ function getSpec(){
   }
   return selCountry;
 }
-const CANVAS_SIZE=300;
 function redraw(){
   const spec=getSpec();const ratio=spec.w/spec.h;
   const cw=CANVAS_SIZE,ch=Math.round(CANVAS_SIZE/ratio);
