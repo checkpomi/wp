@@ -278,6 +278,7 @@ let photoImg=null;
 let imgX=0,imgY=0,imgScale=1;
 let bgColor='#ffffff';
 let showGuide=true;
+const CANVAS_SIZE=300; /* ?country= 딥링크가 초기화 중 redraw()를 부르므로 국가 그리드 초기화보다 먼저 선언 */
 let isDragging=false,dragStartX=0,dragStartY=0,imgStartX=0,imgStartY=0;
 
 /* ── 국가 그리드 ── */
@@ -361,7 +362,6 @@ function getSpec(){
   }
   return selCountry;
 }
-const CANVAS_SIZE=300;
 function redraw(){
   const spec=getSpec();const ratio=spec.w/spec.h;
   const cw=CANVAS_SIZE,ch=Math.round(CANVAS_SIZE/ratio);
