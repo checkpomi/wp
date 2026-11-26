@@ -113,14 +113,11 @@ def fetch_index(code):
 
 
 def fetch_index_flow(code):
-    """지수의 투자자별 순매수(억원). PC 페이지의 '개인/외국인/기관' 요약을 읽는다."""
-    html = get(f"https://finance.naver.com/sise/sise_index.naver?code={code}", encoding="euc-kr").text
-    out = {}
-    for key, label in (("personal", "개인"), ("foreign", "외국인"), ("inst", "기관")):
-        m = re.search(label + r"\s*</?[^>]*>\s*(?:<[^>]+>\s*)*([+-]?[\d,]+)", html)
-        if m:
-            out[key] = num(m.group(1))
-    return out if len(out) == 3 else None
+    """지수의 투자자별 순매수(억원). 장중에는 잠정치."""
+    j = get(f"https://m.stock.naver.com/api/index/{code}/trend").json()
+    out = {"personal": num(j.get("personalValue")), "foreign": num(j.get("foreignValue")),
+           "inst": num(j.get("institutionalValue")), "date": j.get("bizdate") or ""}
+    return out if out["foreign"] is not None else None
 
 
 # ---------------------------------------------------------------- 일별 시세
@@ -217,76 +214,98 @@ def table_rows(soup_table):
 
 
 # ---------------------------------------------------------------- 종목별 수급
-def fetch_deal_rank(investor, sosok):
-    """investor: 9000 외국인, 1000 기관계. sosok: 01 코스피, 02 코스닥. 순매수 상위."""
-    url = ("https://finance.naver.com/sise/sise_deal_rank_iframe.naver"
-           f"?sosok={sosok}&investor_gubun={investor}&type=buy")
-    html = get(url, encoding="euc-kr").text
-    soup = BeautifulSoup(html, "html.parser")
-    dates = re.findall(r"(\d{2}\.\d{2}\.\d{2})", soup.get_text(" "))
-    best = []
-    for tb in soup.find_all("table"):
-        rows = table_rows(tb)
-        if len(rows) > len(best):
-            best = rows
-        if rows:
-            break  # 첫 번째 표가 가장 최근 영업일
-    rank = []
-    for i, r in enumerate(best[:20], 1):
-        nums = [num(c) for c in r["cells"]]
-        nums = [n for n in nums if n is not None]
-        rank.append({"rank": i, "name": r["name"], "code": r["code"],
-                     "amount": nums[1] if len(nums) > 1 else None})
-    return {"date": dates[0] if dates else "", "rank": rank}
+UNIVERSE = (("KOSPI", "코스피", 60), ("KOSDAQ", "코스닥", 40))
+
+
+def fetch_universe():
+    out = []
+    for cat, mkt, n in UNIVERSE:
+        j = get(f"https://m.stock.naver.com/api/stocks/marketValue/{cat}?page=1&pageSize={n}").json()
+        for st in j.get("stocks", []):
+            if st.get("stockEndType") != "stock":
+                continue
+            out.append({"name": st.get("stockName"), "code": st.get("itemCode"), "market": mkt})
+    return out
+
+
+def fetch_stock_trend(code):
+    j = get(f"https://m.stock.naver.com/api/stock/{code}/trend?pageSize=3").json()
+    return j if isinstance(j, list) else []
 
 
 def build_supply():
-    data = {"date": "", "foreign": [], "inst": []}
-    for key, inv in (("foreign", "9000"), ("inst", "1000")):
-        for sosok, mkt in (("01", "코스피"), ("02", "코스닥")):
-            try:
-                d = fetch_deal_rank(inv, sosok)
-                data["date"] = data["date"] or d["date"]
-                for r in d["rank"]:
-                    r["market"] = mkt
-                    data[key].append(r)
-            except Exception:  # noqa: BLE001
+    """시총 상위 100종목의 최근 영업일 외국인·기관 순매수 금액을 계산해 순위를 매긴다.
+    종목별 투자자 매매는 장 마감 후 확정되므로, 같은 영업일 자료가 이미 있으면 다시 받지 않는다."""
+    probe = fetch_stock_trend("005930")
+    if not probe:
+        raise RuntimeError("종목별 투자자 매매 응답이 비어 있음")
+    bizdate = probe[0].get("bizdate", "")
+    try:
+        prev = json.load(open(os.path.join(OUT_DIR, "latest.json"), encoding="utf-8")).get("supply") or {}
+        if prev.get("bizdate") == bizdate and prev.get("picks"):
+            return prev
+    except Exception:  # noqa: BLE001
+        pass
+    rows = []
+    for st in fetch_universe():
+        try:
+            t = fetch_stock_trend(st["code"])
+            day = next((x for x in t if x.get("bizdate") == bizdate), None)
+            if not day:
                 continue
-            time.sleep(0.15)
-    if not data["foreign"] and not data["inst"]:
-        raise RuntimeError("수급 순위 표를 읽지 못함")
-    f = {r["code"]: r for r in data["foreign"]}
-    i = {r["code"]: r for r in data["inst"]}
+            close = num(day.get("closePrice")) or 0
+            st["foreign_amt"] = (num(day.get("foreignerPureBuyQuant")) or 0) * close
+            st["inst_amt"] = (num(day.get("organPureBuyQuant")) or 0) * close
+            rows.append(st)
+        except Exception:  # noqa: BLE001
+            continue
+        time.sleep(0.08)
+    if not rows:
+        raise RuntimeError("종목별 수급을 집계하지 못함")
+    f_rank = [r for r in sorted(rows, key=lambda r: -r["foreign_amt"]) if r["foreign_amt"] > 0][:20]
+    i_rank = [r for r in sorted(rows, key=lambda r: -r["inst_amt"]) if r["inst_amt"] > 0][:20]
+    f = {r["code"]: k for k, r in enumerate(f_rank, 1)}
+    i = {r["code"]: k for k, r in enumerate(i_rank, 1)}
+    by = {r["code"]: r for r in rows}
     picks = []
     for code in set(f) | set(i):
         rf, ri = f.get(code), i.get(code)
-        base = rf or ri
         # 점수: 순위가 높을수록 가산, 양쪽 모두 있으면 추가 가산 (원본 금액은 싣지 않는다)
-        score = (21 - rf["rank"] if rf else 0) + (21 - ri["rank"] if ri else 0) + (15 if rf and ri else 0)
-        picks.append({"name": base["name"], "code": code, "market": base["market"],
-                      "foreign_rank": rf["rank"] if rf else None,
-                      "inst_rank": ri["rank"] if ri else None,
+        score = (21 - rf if rf else 0) + (21 - ri if ri else 0) + (15 if rf and ri else 0)
+        picks.append({"name": by[code]["name"], "code": code, "market": by[code]["market"],
+                      "foreign_rank": rf, "inst_rank": ri,
                       "signal": "동시 매수" if rf and ri else ("외국인만" if rf else "기관만"),
                       "score": score})
     picks.sort(key=lambda p: -p["score"])
-    return {"date": data["date"], "picks": picks[:15]}
+    d = bizdate
+    return {"bizdate": bizdate, "date": f"{d[2:4]}.{d[4:6]}.{d[6:8]}" if len(d) == 8 else d,
+            "universe": len(rows), "picks": picks[:15]}
 
 
 # ---------------------------------------------------------------- 거래량 급증
+def pick(d, keys):
+    for k in keys:
+        if d.get(k) not in (None, ""):
+            return d.get(k)
+    return None
+
+
 def fetch_surge():
+    url = ("https://stock.naver.com/api/domestic/market/stock/default"
+           "?tradeType=KRX&marketType=ALL&orderType=quantHigh&startIdx=0&pageSize=12")
+    j = get(url, headers={"Referer": "https://stock.naver.com/"}).json()
+    rows = j if isinstance(j, list) else (j.get("stocks") or j.get("result") or [])
     out = []
-    for sosok, mkt in (("0", "코스피"), ("1", "코스닥")):
-        html = get(f"https://finance.naver.com/sise/sise_quant_high.naver?sosok={sosok}", encoding="euc-kr").text
-        soup = BeautifulSoup(html, "html.parser")
-        tb = soup.select_one("table.type_2") or soup.find("table")
-        for r in table_rows(tb)[:8]:
-            pct = next((c for c in r["cells"] if c.endswith("%")), None)
-            out.append({"name": r["name"], "code": r["code"], "market": mkt,
-                        "ratio": num(r.get("증가율")) if r.get("증가율") else None,
-                        "price": num(r.get("현재가")) if r.get("현재가") else None,
-                        "pct": num(r.get("등락률")) if r.get("등락률") else num(pct)})
-        time.sleep(0.15)
-    return out
+    for r in rows:
+        if r.get("type") not in (None, "ST"):
+            continue  # ETF·ETN 등 제외
+        out.append({"name": r.get("itemname"), "code": r.get("itemcode"),
+                    "market": {"0": "코스피", "1": "코스닥"}.get(str(r.get("sosok")), ""),
+                    "price": num(r.get("nowPrice")),
+                    "pct": num(pick(r, ["prevChangeRate", "fluctuationsRatio", "changeRate", "upDownRate"])),
+                    "ratio": num(pick(r, ["tradeVolumeIncreaseRate", "volumeIncreaseRate", "quantHighRate",
+                                           "tradeVolumeRate", "prevTradeVolumeRate"]))})
+    return out[:10]
 
 
 # ---------------------------------------------------------------- 공시
@@ -463,59 +482,21 @@ def verdict(index, flow, world, news):
 
 
 def debug_probe():
-    """시험 실행(SR_DEBUG=1)에서만: 후보 API 응답과 새 네이버 증권 스크립트 안의 API 경로를 저장한다."""
+    """시험 실행(SR_DEBUG=1)에서만: 거래량 급증 API 레코드 전체를 저장해 필드를 확인한다."""
     ddir = os.path.join(OUT_DIR, "_debug")
     os.makedirs(ddir, exist_ok=True)
     for fn in os.listdir(ddir):
         os.remove(os.path.join(ddir, fn))
-    M = "https://m.stock.naver.com/api"
-    S = "https://stock.naver.com/api/domestic/market"
-    cands = [
-        M + "/stocks/marketValue/KOSPI?page=1&pageSize=3",
-        M + "/stocks/up/KOSPI?page=1&pageSize=3",
-        M + "/stocks/quantTop/KOSPI?page=1&pageSize=3",
-        M + "/stocks/quant/KOSPI?page=1&pageSize=3",
-        M + "/stocks/volume/KOSPI?page=1&pageSize=3",
-        M + "/stocks/priceTop/KOSPI?page=1&pageSize=3",
-        M + "/stocks/searchTop/KOSPI?page=1&pageSize=3",
-        M + "/stocks/foreigner/KOSPI?page=1&pageSize=3",
-        M + "/stocks/investor/KOSPI?page=1&pageSize=3",
-        M + "/stock/005930/trend?pageSize=3",
-        M + "/stock/005930/integration",
-        M + "/index/KOSDAQ/trend",
-        S + "/stock/default?tradeType=KRX&marketType=ALL&orderType=quantTop&startIdx=0&pageSize=3",
-        S + "/stock/default?tradeType=KRX&marketType=ALL&orderType=up&startIdx=0&pageSize=3",
-        "https://stock.naver.com/api/domestic/market/investor/rank?investorType=foreign&tradeType=buy&marketType=KOSPI",
-    ]
     lines = []
-    for url in cands:
+    for ot in ("quantHigh", "quantTop"):
+        url = ("https://stock.naver.com/api/domestic/market/stock/default"
+               "?tradeType=KRX&marketType=ALL&orderType=%s&startIdx=0&pageSize=2" % ot)
         try:
             r = requests.get(url, headers=UA, timeout=12)
-            lines.append("## %s\nstatus=%s len=%s\n%s\n" % (url, r.status_code, len(r.text), r.text[:900]))
+            lines.append("## %s\nstatus=%s\n%s\n" % (url, r.status_code, r.text[:6000]))
         except Exception as e:  # noqa: BLE001
             lines.append("## %s\nERROR %s\n" % (url, e))
     open(os.path.join(ddir, "candidates.txt"), "w", encoding="utf-8").write("\n".join(lines))
-    # 새 PC 사이트의 스크립트에서 API 경로 문자열을 모은다
-    found = set()
-    try:
-        for page in ("https://stock.naver.com/", "https://stock.naver.com/market/stock/kr/investor",
-                     "https://stock.naver.com/market/stock/kr/stocklist/quantTop"):
-            try:
-                html = requests.get(page, headers=UA, timeout=12).text
-            except Exception:  # noqa: BLE001
-                continue
-            for src in set(re.findall(r'src="(https://[^"]+?\.js)"', html)):
-                try:
-                    js = requests.get(src, headers=UA, timeout=12).text
-                except Exception:  # noqa: BLE001
-                    continue
-                for m in re.findall(r'["`](/?api/[A-Za-z0-9_/${}.?=&:-]{4,140})', js):
-                    found.add(m)
-                for m in re.findall(r'["`](/(?:front-api|domestic|market|stock)/[A-Za-z0-9_/${}.?=&:-]{4,140})', js):
-                    found.add(m)
-    except Exception as e:  # noqa: BLE001
-        found.add("ERROR %s" % e)
-    open(os.path.join(ddir, "api_paths.txt"), "w", encoding="utf-8").write("\n".join(sorted(found)))
 
 
 def market_open(t):
