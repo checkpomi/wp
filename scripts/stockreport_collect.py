@@ -193,26 +193,6 @@ def build_watch():
     return out
 
 
-# ---------------------------------------------------------------- 표 파싱 공통
-def table_rows(soup_table):
-    """헤더 이름 → 값 dict 목록으로 변환. 종목 코드는 링크에서 뽑는다."""
-    heads = [th.get_text(" ", strip=True) for th in soup_table.select("tr th")]
-    rows = []
-    for tr in soup_table.select("tr"):
-        a = tr.select_one('a[href*="code="]')
-        tds = tr.find_all("td")
-        if not a or not tds:
-            continue
-        m = re.search(r"code=(\w{6})", a.get("href", ""))
-        cells = [td.get_text(" ", strip=True) for td in tds]
-        row = {"name": a.get_text(strip=True), "code": m.group(1) if m else "", "cells": cells}
-        if heads and len(heads) == len(cells):
-            for h, c in zip(heads, cells):
-                row[h] = c
-        rows.append(row)
-    return rows
-
-
 # ---------------------------------------------------------------- 종목별 수급
 UNIVERSE = (("KOSPI", "코스피", 60), ("KOSDAQ", "코스닥", 40))
 
@@ -292,7 +272,7 @@ def pick(d, keys):
 
 def fetch_surge():
     url = ("https://stock.naver.com/api/domestic/market/stock/default"
-           "?tradeType=KRX&marketType=ALL&orderType=quantHigh&startIdx=0&pageSize=12")
+           "?tradeType=KRX&marketType=ALL&orderType=upperQuantTop&startIdx=0&pageSize=12")
     j = get(url, headers={"Referer": "https://stock.naver.com/"}).json()
     rows = j if isinstance(j, list) else (j.get("stocks") or j.get("result") or [])
     out = []
@@ -303,8 +283,7 @@ def fetch_surge():
                     "market": {"0": "코스피", "1": "코스닥"}.get(str(r.get("sosok")), ""),
                     "price": num(r.get("nowPrice")),
                     "pct": num(pick(r, ["prevChangeRate", "fluctuationsRatio", "changeRate", "upDownRate"])),
-                    "ratio": num(pick(r, ["tradeVolumeIncreaseRate", "volumeIncreaseRate", "quantHighRate",
-                                           "tradeVolumeRate", "prevTradeVolumeRate"]))})
+                    "ratio": num(pick(r, ["quantDiffRate"]))})
     return out[:10]
 
 
@@ -481,32 +460,12 @@ def verdict(index, flow, world, news):
     return {"label": label, "tone": tone, "score": score, "reasons": reasons}
 
 
-def debug_probe():
-    """시험 실행(SR_DEBUG=1)에서만: 거래량 급증 API 레코드 전체를 저장해 필드를 확인한다."""
-    ddir = os.path.join(OUT_DIR, "_debug")
-    os.makedirs(ddir, exist_ok=True)
-    for fn in os.listdir(ddir):
-        os.remove(os.path.join(ddir, fn))
-    lines = []
-    for ot in ("quantHigh", "quantTop"):
-        url = ("https://stock.naver.com/api/domestic/market/stock/default"
-               "?tradeType=KRX&marketType=ALL&orderType=%s&startIdx=0&pageSize=2" % ot)
-        try:
-            r = requests.get(url, headers=UA, timeout=12)
-            lines.append("## %s\nstatus=%s\n%s\n" % (url, r.status_code, r.text[:6000]))
-        except Exception as e:  # noqa: BLE001
-            lines.append("## %s\nERROR %s\n" % (url, e))
-    open(os.path.join(ddir, "candidates.txt"), "w", encoding="utf-8").write("\n".join(lines))
-
-
 def market_open(t):
     return t.weekday() < 5 and dt.time(9, 0) <= t.time() <= dt.time(15, 40)
 
 
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
-    if os.environ.get("SR_DEBUG"):
-        debug_probe()
     t = now_kst()
     index = {
         "kospi": run("지수 코스피", lambda: fetch_index("KOSPI")),
