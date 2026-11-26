@@ -463,27 +463,59 @@ def verdict(index, flow, world, news):
 
 
 def debug_probe():
-    """시험 실행(SR_DEBUG=1)에서만: 파싱이 실패한 페이지의 원문 일부를 저장해 구조를 확인한다."""
+    """시험 실행(SR_DEBUG=1)에서만: 후보 API 응답과 새 네이버 증권 스크립트 안의 API 경로를 저장한다."""
     ddir = os.path.join(OUT_DIR, "_debug")
     os.makedirs(ddir, exist_ok=True)
-    targets = {
-        "sise_index.html": ("https://finance.naver.com/sise/sise_index.naver?code=KOSPI", "euc-kr"),
-        "deal_rank_iframe.html": ("https://finance.naver.com/sise/sise_deal_rank_iframe.naver?sosok=01&investor_gubun=9000&type=buy", "euc-kr"),
-        "deal_rank.html": ("https://finance.naver.com/sise/sise_deal_rank.naver?sosok=01&investor_gubun=9000&type=buy", "euc-kr"),
-        "quant_high.html": ("https://finance.naver.com/sise/sise_quant_high.naver?sosok=0", "euc-kr"),
-        "api_index_trend.json": ("https://m.stock.naver.com/api/index/KOSPI/trend", None),
-        "api_index_integration.json": ("https://m.stock.naver.com/api/index/KOSPI/integration", None),
-        "investor_trend.html": ("https://finance.naver.com/sise/investorDealTrendDay.naver?bizdate=%s&sosok=" % now_kst().strftime("%Y%m%d"), "euc-kr"),
-    }
-    for fn, (url, enc) in targets.items():
+    for fn in os.listdir(ddir):
+        os.remove(os.path.join(ddir, fn))
+    M = "https://m.stock.naver.com/api"
+    S = "https://stock.naver.com/api/domestic/market"
+    cands = [
+        M + "/stocks/marketValue/KOSPI?page=1&pageSize=3",
+        M + "/stocks/up/KOSPI?page=1&pageSize=3",
+        M + "/stocks/quantTop/KOSPI?page=1&pageSize=3",
+        M + "/stocks/quant/KOSPI?page=1&pageSize=3",
+        M + "/stocks/volume/KOSPI?page=1&pageSize=3",
+        M + "/stocks/priceTop/KOSPI?page=1&pageSize=3",
+        M + "/stocks/searchTop/KOSPI?page=1&pageSize=3",
+        M + "/stocks/foreigner/KOSPI?page=1&pageSize=3",
+        M + "/stocks/investor/KOSPI?page=1&pageSize=3",
+        M + "/stock/005930/trend?pageSize=3",
+        M + "/stock/005930/integration",
+        M + "/index/KOSDAQ/trend",
+        S + "/stock/default?tradeType=KRX&marketType=ALL&orderType=quantTop&startIdx=0&pageSize=3",
+        S + "/stock/default?tradeType=KRX&marketType=ALL&orderType=up&startIdx=0&pageSize=3",
+        "https://stock.naver.com/api/domestic/market/investor/rank?investorType=foreign&tradeType=buy&marketType=KOSPI",
+    ]
+    lines = []
+    for url in cands:
         try:
             r = requests.get(url, headers=UA, timeout=12)
-            if enc:
-                r.encoding = enc
-            body = "<!-- %s status=%s len=%s -->\n" % (url, r.status_code, len(r.text)) + r.text[:150000]
+            lines.append("## %s\nstatus=%s len=%s\n%s\n" % (url, r.status_code, len(r.text), r.text[:900]))
         except Exception as e:  # noqa: BLE001
-            body = "<!-- %s ERROR %s -->" % (url, e)
-        open(os.path.join(ddir, fn), "w", encoding="utf-8").write(body)
+            lines.append("## %s\nERROR %s\n" % (url, e))
+    open(os.path.join(ddir, "candidates.txt"), "w", encoding="utf-8").write("\n".join(lines))
+    # 새 PC 사이트의 스크립트에서 API 경로 문자열을 모은다
+    found = set()
+    try:
+        for page in ("https://stock.naver.com/", "https://stock.naver.com/market/stock/kr/investor",
+                     "https://stock.naver.com/market/stock/kr/stocklist/quantTop"):
+            try:
+                html = requests.get(page, headers=UA, timeout=12).text
+            except Exception:  # noqa: BLE001
+                continue
+            for src in set(re.findall(r'src="(https://[^"]+?\.js)"', html)):
+                try:
+                    js = requests.get(src, headers=UA, timeout=12).text
+                except Exception:  # noqa: BLE001
+                    continue
+                for m in re.findall(r'["`](/?api/[A-Za-z0-9_/${}.?=&:-]{4,140})', js):
+                    found.add(m)
+                for m in re.findall(r'["`](/(?:front-api|domestic|market|stock)/[A-Za-z0-9_/${}.?=&:-]{4,140})', js):
+                    found.add(m)
+    except Exception as e:  # noqa: BLE001
+        found.add("ERROR %s" % e)
+    open(os.path.join(ddir, "api_paths.txt"), "w", encoding="utf-8").write("\n".join(sorted(found)))
 
 
 def market_open(t):
