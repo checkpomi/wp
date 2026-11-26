@@ -1409,27 +1409,65 @@ dz.addEventListener('drop', e=>{
   if(e.dataTransfer.files && e.dataTransfer.files.length) setFilesMode(e.dataTransfer.files);
 });
 
+/* 이름 일괄 변경 (2단계).
+   1단계: 바꿀 파일을 모두 임시 이름으로 옮김 → 2단계: 임시 파일을 새 이름으로 옮김.
+   한 번에 "복사 후 원본 삭제"를 하면 다음 경우에 파일이 사라지므로 단계를 나눔.
+   - 새 이름이 아직 처리 전인 다른 파일의 현재 이름과 같을 때 (a→b, b→c / 서로 맞바꾸기)
+   - 대소문자만 바뀔 때 (Windows·macOS는 Photo.JPG와 photo.jpg를 같은 파일로 취급)
+   새 이름을 이미 다른 파일이 쓰고 있으면 덮어쓰지 않고 원래 이름으로 되돌린 뒤 실패로 집계. */
+async function fileExists(name){
+  try{ await dirHandle.getFileHandle(name); return true; }
+  catch(e){ if(e && e.name === 'NotFoundError') return false; throw e; }
+}
+async function copyFileTo(srcName, dstName){
+  const src = await dirHandle.getFileHandle(srcName);
+  const file = await src.getFile();
+  const dst = await dirHandle.getFileHandle(dstName, {create:true});
+  const writable = await dst.createWritable();
+  try{ await writable.write(file); await writable.close(); }
+  catch(e){ try{ await writable.abort(); }catch(_){} try{ await dirHandle.removeEntry(dstName); }catch(_){} throw e; }
+  const written = await (await dirHandle.getFileHandle(dstName)).getFile();
+  if(written.size !== file.size){ try{ await dirHandle.removeEntry(dstName); }catch(_){} throw new Error('size mismatch'); }
+}
+async function renameBatch(pairs){
+  // pairs: [{oldName, newName}]
+  const stamp = Date.now().toString(36);
+  const staged = []; const history = []; let done = 0, failed = 0;
+  for(let i=0;i<pairs.length;i++){
+    const {oldName, newName} = pairs[i];
+    if(oldName === newName){ done++; continue; }
+    const tmpName = `__pomiai_tmp_${stamp}_${i}__${oldName}`;
+    try{
+      await copyFileTo(oldName, tmpName);
+      await dirHandle.removeEntry(oldName);
+      staged.push({oldName, newName, tmpName});
+    }catch(err){ failed++; }
+  }
+  for(const st of staged){
+    let target = st.newName, ok = true;
+    try{ if(await fileExists(st.newName)){ target = st.oldName; ok = false; } }
+    catch(err){ target = st.oldName; ok = false; }
+    try{
+      await copyFileTo(st.tmpName, target);
+      await dirHandle.removeEntry(st.tmpName);
+      if(ok){ history.push({oldName:st.oldName, newName:st.newName}); done++; } else failed++;
+    }catch(err){
+      failed++;
+      // 새 이름으로 옮기지 못하면 원래 이름으로 복구 시도 (실패해도 임시 파일은 폴더에 남아 있음)
+      if(target !== st.oldName){
+        try{ if(!(await fileExists(st.oldName))){ await copyFileTo(st.tmpName, st.oldName); await dirHandle.removeEntry(st.tmpName); } }catch(_){}
+      }
+    }
+  }
+  return {done, failed, history};
+}
+
 document.getElementById('applyBtn').addEventListener('click', async ()=>{
   const rm = document.getElementById('resultMsg');
   rm.className = 'result-msg'; rm.textContent = t('msg_applying');
-  let done=0, failed=0;
+  const btn = document.getElementById('applyBtn'); btn.disabled = true;
   const newNames = entries.map((e,i)=>computeNewName(e,i));
-  const history = [];
-
-  for(let i=0;i<entries.length;i++){
-    const e = entries[i]; const newName = newNames[i];
-    if(newName === e.name){ done++; continue; }
-    try{
-      const file = await e.handle.getFile();
-      const buf = await file.arrayBuffer();
-      const newHandle = await dirHandle.getFileHandle(newName, {create:true});
-      const writable = await newHandle.createWritable();
-      await writable.write(buf); await writable.close();
-      await dirHandle.removeEntry(e.name);
-      history.push({oldName:e.name, newName});
-      done++;
-    }catch(err){ failed++; }
-  }
+  const {done, failed, history} = await renameBatch(entries.map((e,i)=>({oldName:e.name, newName:newNames[i]})));
 
   await loadFolderEntries();
   render();
@@ -1443,19 +1481,8 @@ document.getElementById('undoBtn').addEventListener('click', async ()=>{
   if(!lastApplyHistory) return;
   const rm = document.getElementById('resultMsg');
   rm.className='result-msg'; rm.textContent=t('msg_undoing');
-  let done=0, failed=0;
-  for(const {oldName, newName} of lastApplyHistory.slice().reverse()){
-    try{
-      const handle = await dirHandle.getFileHandle(newName);
-      const file = await handle.getFile();
-      const buf = await file.arrayBuffer();
-      const restored = await dirHandle.getFileHandle(oldName, {create:true});
-      const writable = await restored.createWritable();
-      await writable.write(buf); await writable.close();
-      await dirHandle.removeEntry(newName);
-      done++;
-    }catch(err){ failed++; }
-  }
+  document.getElementById('undoBtn').disabled = true;
+  const {done, failed} = await renameBatch(lastApplyHistory.map(h=>({oldName:h.newName, newName:h.oldName})));
   await loadFolderEntries();
   render();
   lastApplyHistory = null;
