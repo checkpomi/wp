@@ -8,9 +8,6 @@ on:
     - cron: "10 7,9,11 * * 1-5"  # 평일 16:10, 18:10, 20:10 KST (마감 수급 확정분)
     - cron: "30 22 * * 0-4"      # 평일 07:30 KST (미국장 마감 반영)
   workflow_dispatch: {}
-  push:                         # 병합 전 시험 실행용 (이 브랜치에서 수집기를 고칠 때만)
-    branches: [feat/stock-report]
-    paths: ["scripts/stockreport_collect.py", ".github/workflows/stockreport.yml"]
 
 permissions:
   contents: write

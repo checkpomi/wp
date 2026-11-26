@@ -220,7 +220,7 @@ footer{font-size:12px;color:var(--muted);display:grid;gap:6px;padding:4px 2px}
     return sec("외국인·기관이 함께 산 종목", (s.date ? s.date + " 집계" : "최근 영업일 집계"),
       '<div class="scroll"><table><thead><tr><th>종목</th><th>신호</th><th class="r">외국인 순매수</th><th class="r">기관 순매수</th><th class="r">점수</th></tr></thead><tbody>' +
       rows + "</tbody></table></div>" +
-      '<p class="note">각 시장 순매수 금액 상위 20위 안에 든 종목입니다. 점수는 순위가 높을수록, 양쪽이 함께 살수록 올라갑니다. 수급 신호는 시장 전체가 급락하는 날에는 통하지 않습니다.</p>');
+      '<p class="note">시가총액 상위 약 100종목 가운데 순매수 금액이 상위 20위 안에 든 종목입니다. 점수는 순위가 높을수록, 양쪽이 함께 살수록 올라갑니다. 수급 신호는 시장 전체가 급락하는 날에는 통하지 않습니다.</p>');
   }
 
   function vSurge(d) {
@@ -248,7 +248,7 @@ footer{font-size:12px;color:var(--muted);display:grid;gap:6px;padding:4px 2px}
 
   function vWatch(d) {
     var w = d.watch || [];
-    if (!w.length) return sec("내 관심종목 18", "120일선 이격도와 매수 비중", empty("관심종목 시세를 받지 못했습니다."));
+    if (!w.length) return sec("pomiai 관심종목 18", "120일선 이격도와 매수 비중", empty("관심종목 시세를 받지 못했습니다."));
     var sorted = w.slice().sort(function (a, b) { return (isNum(a.disp) ? a.disp : 999) - (isNum(b.disp) ? b.disp : 999); });
     var rows = sorted.map(function (x) {
       if (!isNum(x.close)) return "<tr><td>" + esc(x.name) + '</td><td class="muted" colspan="6">시세 수집 실패</td></tr>';
@@ -265,7 +265,7 @@ footer{font-size:12px;color:var(--muted);display:grid;gap:6px;padding:4px 2px}
       return '<div class="' + (s[1] >= 3 ? "st" + s[1] : "") + '"><b>' + s[1] + "단계</b>" + s[0] + top + "</div>";
     }).join("") + '<div class="st4"><b>4단계</b>' + stages[stages.length - 1][0] + " 미만</div>";
     var date = (sorted.find(function (x) { return x.date; }) || {}).date || "";
-    return sec("내 관심종목 18", "120일선 이격도 낮은 순" + (date ? " · " + date : ""),
+    return sec("pomiai 관심종목 18", "120일선 이격도 낮은 순" + (date ? " · " + date : ""),
       '<div class="scroll"><table><thead><tr><th>종목</th><th class="r">현재가</th><th class="r">등락</th><th class="r">120일선</th><th class="r">이격도</th><th>매수 비중</th><th>60일</th></tr></thead><tbody>' +
       rows + '</tbody></table></div><div class="scale">' + scale + "</div>" +
       '<p class="note">이격도 = 현재가 ÷ 120일 이동평균 × 100. 100보다 낮을수록 120일선 아래에 있다는 뜻이고, 단계가 높을수록 분할 매수 비중을 늘리는 구간입니다. 장중에는 당일 봉이 확정 전 값입니다.</p>');
