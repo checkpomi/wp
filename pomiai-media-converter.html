@@ -15,7 +15,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title id="page-title">pomiai Media Converter</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/ffmpeg.min.js"></script>
 <style>
   :root {
     --bg: #0c0e13;
@@ -465,12 +464,15 @@ function defaultTarget(ext, category) {
 function needsBitrate(ext) { return ['mp3','ogg','m4a'].includes(ext); }
 function buildArgs(inName, outName, targetExt, bitrate, category) {
   if (category === 'audio') {
-    if (targetExt === 'wav' || targetExt === 'flac') return ['-i', inName, outName];
+    /* -vn: 앨범 표지가 들어 있는 음원은 표지가 영상 스트림으로 잡혀, m4a는 변환이 실패하고 ogg는 영상이 섞여 들어감 */
+    if (targetExt === 'wav') return ['-i', inName, '-vn', outName];
+    if (targetExt === 'flac') return ['-i', inName, outName];
     if (targetExt === 'mp3') return ['-i', inName, '-b:a', bitrate + 'k', outName];
-    if (targetExt === 'm4a') return ['-i', inName, '-b:a', bitrate + 'k', '-c:a', 'aac', outName];
-    if (targetExt === 'ogg') return ['-i', inName, '-b:a', bitrate + 'k', '-c:a', 'libvorbis', outName];
+    if (targetExt === 'm4a') return ['-i', inName, '-vn', '-b:a', bitrate + 'k', '-c:a', 'aac', outName];
+    if (targetExt === 'ogg') return ['-i', inName, '-vn', '-b:a', bitrate + 'k', '-c:a', 'libvorbis', outName];
   } else {
-    if (targetExt === 'mp4') return ['-i', inName, '-c:v', 'libx264', '-preset', 'ultrafast', '-c:a', 'aac', outName];
+    /* yuv420p + 짝수 해상도: 원본이 4:4:4·10비트이거나 가로세로가 홀수면 대부분의 기기에서 재생되지 않는 파일이 만들어짐 */
+    if (targetExt === 'mp4') return ['-i', inName, '-c:v', 'libx264', '-preset', 'ultrafast', '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-movflags', '+faststart', outName];
     if (targetExt === 'webm') return ['-i', inName, '-c:v', 'libvpx', '-crf', '30', '-b:v', '0', '-c:a', 'libvorbis', outName];
   }
   return ['-i', inName, outName];
@@ -482,6 +484,7 @@ let itemCounter = 0;
 let ffmpeg = null;
 let ffmpegLoaded = false;
 let converting = false;
+let activeItem = null; /* 진행률을 표시할 현재 변환 항목 */
 
 const dropEl = document.getElementById('drop');
 const fileInput = document.getElementById('fileInput');
@@ -683,17 +686,22 @@ async function toBlobURL(url, mimeType) {
 
 async function ensureFFmpeg(onProgress) {
   if (ffmpegLoaded) return;
-  const { FFmpeg } = FFmpegWASM;
+  /* UMD 빌드는 classWorkerURL을 쓰면 워커가 모듈 워커로 만들어져 코어를 불러오지 못함
+     ("Cannot find module 'blob:…'"로 모든 변환이 실패). ESM 빌드를 불러와 ESM 워커를 사용 */
+  const FF_ESM = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm';
+  const { FFmpeg } = await import(`${FF_ESM}/index.js`);
   ffmpeg = new FFmpeg();
   ffmpeg.on('progress', ({ progress }) => {
-    if (onProgress) onProgress(Math.min(100, Math.max(0, Math.round(progress * 100))));
+    /* 엔진은 한 번만 만들어지므로, 진행률은 처음 넘겨받은 콜백이 아니라 현재 변환 중인 항목에 반영 */
+    if (activeItem && activeItem.status === 'converting') { activeItem.progress = Math.min(100, Math.max(0, Math.round(progress * 100))); renderQueue(); }
   });
   const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm';
-  const classWorkerURL = 'https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/814.ffmpeg.js';
+  /* 워커는 같은 출처여야 하므로, CDN의 ESM 워커를 불러오는 한 줄짜리 모듈을 Blob으로 만들어 사용 */
+  const classWorkerURL = URL.createObjectURL(new Blob([`import "${FF_ESM}/worker.js";`], { type: 'text/javascript' }));
   await ffmpeg.load({
     coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
     wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-    classWorkerURL: await toBlobURL(classWorkerURL, 'text/javascript'),
+    classWorkerURL,
   });
   ffmpegLoaded = true;
 }
@@ -705,40 +713,49 @@ convertAllBtn.addEventListener('click', async () => {
 
   for (const item of queueItems) {
     if (item.status === 'done') continue;
+    const inName = 'input_' + item.id + '.' + item.ext;
+    const outName = 'output_' + item.id + '.' + item.target;
     try {
       if (!ffmpegLoaded) {
         item.status = 'loading';
         renderQueue();
-        await ensureFFmpeg(pct => { item.progress = pct; renderQueue(); });
+        await ensureFFmpeg();
       }
       item.status = 'converting';
       item.progress = 0;
       renderQueue();
 
-      const inName = 'input_' + item.id + '.' + item.ext;
-      const outName = 'output_' + item.id + '.' + item.target;
+      activeItem = item;
       const data = new Uint8Array(await item.file.arrayBuffer());
       await ffmpeg.writeFile(inName, data);
 
       const args = buildArgs(inName, outName, item.target, item.bitrate, item.category);
-      await ffmpeg.exec(args);
+      const exitCode = await ffmpeg.exec(args);
+      /* 실패해도 예외가 나지 않고 깨진 출력 파일이 남을 수 있으므로 종료 코드를 확인 */
+      if (exitCode !== 0) throw new Error('ffmpeg exit code ' + exitCode);
 
       const outData = await ffmpeg.readFile(outName);
       const mime = MIME[item.target] || 'application/octet-stream';
       const blob = new Blob([outData.buffer], { type: mime });
       const baseName = item.file.name.replace(/\.[^/.]+$/, '');
 
+      if (!outData || !outData.length) throw new Error('empty output');
+      if (item.downloadUrl) URL.revokeObjectURL(item.downloadUrl);
       item.downloadUrl = URL.createObjectURL(blob);
       item.downloadName = baseName + '.' + item.target;
       item.status = 'done';
       item.progress = 100;
-
-      await ffmpeg.deleteFile(inName);
-      await ffmpeg.deleteFile(outName);
     } catch (err) {
       console.error(err);
       item.status = 'error';
       item.errorMsg = (err && err.message) ? err.message : String(err);
+    } finally {
+      /* 성공·실패와 관계없이 엔진 메모리에 올린 파일을 지움 */
+      activeItem = null;
+      if (ffmpegLoaded) {
+        try { await ffmpeg.deleteFile(inName); } catch (e) {}
+        try { await ffmpeg.deleteFile(outName); } catch (e) {}
+      }
     }
     renderQueue();
   }
