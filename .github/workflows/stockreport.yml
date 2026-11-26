@@ -31,6 +31,8 @@ jobs:
       - name: Install
         run: pip install --quiet requests beautifulsoup4
       - name: Collect
+        env:
+          SR_DEBUG: ${{ github.event_name == 'push' && '1' || '' }}
         run: python scripts/stockreport_collect.py
       - name: Commit data
         run: |

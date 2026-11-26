@@ -32,7 +32,7 @@ UA = {
 WATCHLIST = [
     ("위메이드맥스", "101730"), ("삼성전자우", "005935"), ("LG우", "003555"),
     ("LG디스플레이", "034220"), ("한화", "000880"), ("롯데쇼핑", "023530"),
-    ("GS리테일", "007070"), ("한화엔진", "082740"), ("HD현대건설기계", "267270"),
+    ("GS리테일", "007070"), ("한화엔진", "082740"), ("HD건설기계", "267270"),
     ("POSCO홀딩스", "005490"), ("LG화학우", "051915"), ("대한항공", "003490"),
     ("두산밥캣", "241560"), ("한국금융지주", "071050"), ("삼성생명", "032830"),
     ("삼성물산", "028260"), ("한국전력", "015760"), ("에코프로", "086520"),
@@ -462,12 +462,38 @@ def verdict(index, flow, world, news):
     return {"label": label, "tone": tone, "score": score, "reasons": reasons}
 
 
+def debug_probe():
+    """시험 실행(SR_DEBUG=1)에서만: 파싱이 실패한 페이지의 원문 일부를 저장해 구조를 확인한다."""
+    ddir = os.path.join(OUT_DIR, "_debug")
+    os.makedirs(ddir, exist_ok=True)
+    targets = {
+        "sise_index.html": ("https://finance.naver.com/sise/sise_index.naver?code=KOSPI", "euc-kr"),
+        "deal_rank_iframe.html": ("https://finance.naver.com/sise/sise_deal_rank_iframe.naver?sosok=01&investor_gubun=9000&type=buy", "euc-kr"),
+        "deal_rank.html": ("https://finance.naver.com/sise/sise_deal_rank.naver?sosok=01&investor_gubun=9000&type=buy", "euc-kr"),
+        "quant_high.html": ("https://finance.naver.com/sise/sise_quant_high.naver?sosok=0", "euc-kr"),
+        "api_index_trend.json": ("https://m.stock.naver.com/api/index/KOSPI/trend", None),
+        "api_index_integration.json": ("https://m.stock.naver.com/api/index/KOSPI/integration", None),
+        "investor_trend.html": ("https://finance.naver.com/sise/investorDealTrendDay.naver?bizdate=%s&sosok=" % now_kst().strftime("%Y%m%d"), "euc-kr"),
+    }
+    for fn, (url, enc) in targets.items():
+        try:
+            r = requests.get(url, headers=UA, timeout=12)
+            if enc:
+                r.encoding = enc
+            body = "<!-- %s status=%s len=%s -->\n" % (url, r.status_code, len(r.text)) + r.text[:150000]
+        except Exception as e:  # noqa: BLE001
+            body = "<!-- %s ERROR %s -->" % (url, e)
+        open(os.path.join(ddir, fn), "w", encoding="utf-8").write(body)
+
+
 def market_open(t):
     return t.weekday() < 5 and dt.time(9, 0) <= t.time() <= dt.time(15, 40)
 
 
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
+    if os.environ.get("SR_DEBUG"):
+        debug_probe()
     t = now_kst()
     index = {
         "kospi": run("지수 코스피", lambda: fetch_index("KOSPI")),
