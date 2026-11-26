@@ -4,23 +4,47 @@
   "picks": [
    {
     "name": "셀트리온",
-    "code": "068270"
+    "code": "068270",
+    "next_date": "20261126",
+    "next_pct": 0.7
    },
    {
     "name": "NAVER",
-    "code": "035420"
+    "code": "035420",
+    "next_date": "20261126",
+    "next_pct": 2.82
    },
    {
     "name": "알테오젠",
-    "code": "196170"
+    "code": "196170",
+    "next_date": "20261126",
+    "next_pct": 3.13
    },
    {
     "name": "삼성에스디에스",
-    "code": "018260"
+    "code": "018260",
+    "next_date": "20261126",
+    "next_pct": 3.37
    },
    {
     "name": "안랩",
-    "code": "053800"
+    "code": "053800",
+    "next_date": "20261126",
+    "next_pct": 3.42
+   }
+  ],
+  "done": true
+ },
+ {
+  "date": "26.11.26",
+  "picks": [
+   {
+    "name": "삼성전기",
+    "code": "009150"
+   },
+   {
+    "name": "SK스퀘어",
+    "code": "402340"
    }
   ]
  }
