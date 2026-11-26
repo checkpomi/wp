@@ -652,7 +652,10 @@ async function openZip(file){
       entries=result.entries;
     }
     zipName=file.name;curPath='';hasZip=true;
-    updateAll();toast('✅ '+file.name+' 열림');
+    updateAll();
+    const brokenList=entries.filter(e=>e.broken);
+    if(brokenList.length)toast(`⚠️ ${file.name} 열림 — ${brokenList.length}개 파일은 손상되어 읽지 못했습니다 (${brokenList.slice(0,3).map(e=>e.name).join(', ')}${brokenList.length>3?' …':''})`,true);
+    else toast('✅ '+file.name+' 열림');
   }catch(e){toast('❌ '+e.message,true);}
   hideProgress();
 }
@@ -673,8 +676,8 @@ async function readZip(file,password){
         if(err.message&&(err.message.includes('password')||err.message.includes('Wrong')||err.message.includes('encrypted'))){
           return{needsPassword:true,entries:[]};
         }
-        // 다른 에러: 파일 건너뜀
-        data=new Uint8Array(0);
+        // 다른 에러(손상 등): 내용을 읽지 못한 항목으로 표시. 빈 파일로 취급하면 저장 시 0바이트로 덮어쓰게 됨
+        data=null;
       }
       const parts=e.filename.split('/');
       items.push({
@@ -687,6 +690,7 @@ async function readZip(file,password){
         ext:(parts[parts.length-1]||'').split('.').pop().toLowerCase(),
         data:data,
         encrypted:e.encrypted||false,
+        broken:data===null,
       });
     }
     return{needsPassword:false,entries:items};
@@ -756,7 +760,7 @@ async function extractSelected(){
 }
 
 async function downloadEntry(entry){
-  if(!entry.data||entry.data.length===0)return;
+  if(!entry.data)return; /* 읽지 못한(손상) 항목만 건너뜀. 0바이트 파일은 그대로 추출 */
   try{
     const blob=new Blob([entry.data]);
     const url=URL.createObjectURL(blob);
@@ -790,7 +794,9 @@ async function saveZip(){
       new zip.BlobWriter('application/zip'),
       savePw?{password:savePw,encryptionStrength:3}:{}
     );
-    const files=entries.filter(e=>!e.isDir);
+    /* 읽지 못한(손상) 항목은 0바이트 파일로 저장하지 않고 제외 */
+    const skipped=entries.filter(e=>!e.isDir&&!e.data).length;
+    const files=entries.filter(e=>!e.isDir&&e.data);
     for(let i=0;i<files.length;i++){
       const f=files[i];setProgress(i/files.length*100,'추가: '+f.name);
       await zipWriter.add(f.path,new zip.Uint8ArrayReader(f.data),{
@@ -804,7 +810,8 @@ async function saveZip(){
     const a=document.createElement('a');a.href=url;a.download=zipName;
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast('✅ '+zipName+(savePw?' (🔒 암호화됨)':'')+' 저장 완료');
+    if(skipped)toast(`⚠️ ${zipName} 저장 완료 — 손상되어 읽지 못한 ${skipped}개 파일은 제외했습니다`,true);
+    else toast('✅ '+zipName+(savePw?' (🔒 암호화됨)':'')+' 저장 완료');
   }catch(e){toast('❌ 저장 실패: '+e.message,true);}
   hideProgress();
 }
@@ -1225,6 +1232,9 @@ function ctxRename(){
     const nv=inp.value.trim();
     if(nv&&nv!==old){
       const oldPath=t.path;const newPath=oldPath.slice(0,oldPath.length-old.length)+nv;
+      /* 경로 구분자가 들어가거나 같은 위치에 같은 이름이 있으면 저장 단계에서 실패하므로 여기서 막음 */
+      if(/[\\/]/.test(nv)){toast('⚠️ 이름에 / 또는 \\ 는 쓸 수 없습니다',true);renderList();return;}
+      if(entries.some(e=>e.path===newPath||e.path.startsWith(newPath+'/'))){toast('⚠️ 같은 이름이 이미 있습니다: '+nv,true);renderList();return;}
       entries=entries.map(e=>{
         if(e.path===oldPath)return{...e,name:nv,path:newPath};
         if(e.path.startsWith(oldPath+'/'))return{...e,path:newPath+e.path.slice(oldPath.length)};
