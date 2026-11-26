@@ -405,6 +405,7 @@ let expr = '';
 let op = null;
 let prev = null;
 let justCalc = false;
+let awaitingOperand = false; /* 연산자를 누른 뒤 아직 숫자를 입력하지 않은 상태 */
 let memory = 0;
 let hasMemory = false;
 let degMode = true; // true=deg, false=rad
@@ -720,12 +721,14 @@ document.querySelectorAll('.btn').forEach(btn=>{
 function inputNum(n){
   if(current === 'Error'){ current='0'; expr=''; }
   if(justCalc){ current='0'; expr=''; justCalc=false; }
+  awaitingOperand = false;
   if(current === '0') current = n;
   else if(current.length < 16) current += n;
   updateDisplay();
 }
 function inputDot(){
   if(justCalc){ current='0'; justCalc=false; }
+  awaitingOperand = false;
   if(!current.includes('.')) current += '.';
   updateDisplay();
 }
@@ -743,7 +746,11 @@ function toggleSign(){
 function inputOp(o){
   if(current === 'Error') return;
   const opSymbols = {'/':'÷','*':'×','-':'−','+':'+'};
-  if(prev !== null && !justCalc){
+  /* 연산자를 연달아 누르면 계산하지 않고 연산자만 교체 (예: 5 × + 3 = 8) */
+  if(awaitingOperand && prev !== null && op !== null && op !== 'pow'){
+    op = o; expr = formatNum(prev.toString()) + ' ' + opSymbols[o]; updateDisplay(); return;
+  }
+  if(prev !== null && op !== null){
     const r = compute(prev, parseFloat(current), op);
     current = r.toString(); prev = parseFloat(r);
   } else {
@@ -752,6 +759,7 @@ function inputOp(o){
   op = o;
   expr = formatNum(current) + ' ' + opSymbols[o];
   justCalc = false;
+  awaitingOperand = true;
   current = '0';
   updateDisplay();
 }
@@ -774,7 +782,7 @@ function roundResult(n){
 
 /* ── = ── */
 function calculate(){
-  if(op === null || prev === null){ justCalc=true; return; }
+  if(op === null || prev === null){ justCalc=true; awaitingOperand=false; return; }
   const b = parseFloat(current);
   const fullExpr = expr + ' ' + formatNum(current);
   const r = compute(prev, b, op);
@@ -784,7 +792,7 @@ function calculate(){
   document.getElementById('memo-input').value = '';
   expr = fullExpr + ' =';
   current = rStr;
-  prev = null; op = null; justCalc = true;
+  prev = null; op = null; justCalc = true; awaitingOperand = false;
   updateDisplay(true);
   if(r === 'Error') document.getElementById('result').classList.add('error');
   else document.getElementById('result').classList.remove('error');
@@ -792,7 +800,7 @@ function calculate(){
 
 /* ── 클리어 ── */
 function clearAll(){
-  current='0'; expr=''; op=null; prev=null; justCalc=false;
+  current='0'; expr=''; op=null; prev=null; justCalc=false; awaitingOperand=false;
   document.getElementById('result').classList.remove('error');
   updateDisplay();
 }
@@ -803,10 +811,11 @@ function calcFn(fn){
     case 'pct':
       if(prev !== null && op) current = (roundResult(prev * parseFloat(current) / 100)).toString();
       else current = (roundResult(parseFloat(current)/100)).toString();
+      awaitingOperand=false;
       updateDisplay(); break;
     case 'mc': memory=0; hasMemory=false; updateMemBadge(); break;
     case 'mr':
-      if(hasMemory){ current=memory.toString(); justCalc=true; updateDisplay(); } break;
+      if(hasMemory){ current=memory.toString(); justCalc=true; awaitingOperand=false; updateDisplay(); } break;
     case 'm+':
       memory = roundResult(memory + parseFloat(current)); hasMemory=true; updateMemBadge(); break;
     case 'm-':
@@ -836,8 +845,8 @@ function sciFn(fn){
     case 'ln':  r=n>0?roundResult(Math.log(n)):'Error'; addHistory(`ln(${n})`,r.toString()); break;
     case 'sqrt':r=n>=0?roundResult(Math.sqrt(n)):'Error'; addHistory(`√(${n})`,r.toString()); break;
     case 'sq':  r=roundResult(n*n); addHistory(`${n}²`,r.toString()); break;
-    case 'pi':  current=Math.PI.toString(); justCalc=true; updateDisplay(); return;
-    case 'e':   current=Math.E.toString(); justCalc=true; updateDisplay(); return;
+    case 'pi':  current=Math.PI.toString(); justCalc=true; awaitingOperand=false; updateDisplay(); return;
+    case 'e':   current=Math.E.toString(); justCalc=true; awaitingOperand=false; updateDisplay(); return;
     case 'pow': prev=n; op='pow'; expr=formatNum(n)+'ʸ'; current='0'; updateDisplay(); return;
     case 'fact':
       if(n<0||!Number.isInteger(n)||n>170){ r='Error'; }
@@ -846,7 +855,7 @@ function sciFn(fn){
     case 'inv': r=n!==0?roundResult(1/n):'Error'; addHistory(`1/${n}`,r.toString()); break;
     default: return;
   }
-  current=r.toString(); justCalc=true;
+  current=r.toString(); justCalc=true; awaitingOperand=false;
   updateDisplay(true);
   if(r==='Error') document.getElementById('result').classList.add('error');
   else document.getElementById('result').classList.remove('error');
@@ -878,7 +887,7 @@ function renderHistory(){
       <div class="hist-res">= ${h.result}</div>
       ${h.memo ? `<div class="hist-memo">📝 ${h.memo}</div>` : ''}`;
     d.addEventListener('click',()=>{
-      current = h.result; justCalc = true; updateDisplay(true);
+      current = h.result; justCalc = true; awaitingOperand = false; updateDisplay(true);
     });
     list.appendChild(d);
   });

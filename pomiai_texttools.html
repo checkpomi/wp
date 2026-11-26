@@ -496,7 +496,8 @@ const ed=$('editor');
 /* ── 카운터 ── */
 function updateCnt(){
   const t=ed.value;
-  const ch=t.length,ns=t.replace(/\s/g,'').length;
+  /* 이모지 등 보조 평면 문자를 1글자로 세기 위해 코드포인트 기준으로 계산 */
+  const ch=[...t].length,ns=[...t.replace(/\s/g,'')].length;
   const w=t.trim()?t.trim().split(/\s+/).length:0;
   const s=t.split(/[.!?。！？]+/).filter(x=>x.trim()).length;
   const l=t?t.split('\n').length:0;
@@ -650,7 +651,7 @@ function xform(type){
            type==='lower'?t.toLowerCase():
            type==='title'?t.replace(/\b\w/g,c=>c.toUpperCase()):
            type==='toggle'?t.split('').map(c=>c===c.toUpperCase()?c.toLowerCase():c.toUpperCase()).join(''):
-           t.split('').reverse().join('');
+           [...t].reverse().join('');
   applyText(r,s,e);toast('✅ 변환 완료');
 }
 function clean(type){
@@ -671,26 +672,26 @@ function clearAll(){
 }
 
 /* ── 찾기·바꾸기 ── */
-let fIdx=0,fList=[];
+let fIdx=0,fList=[],fLens=[];
 function toggleFind(){
   const p=$('find-bar');p.classList.toggle('show');
   if(p.classList.contains('show'))$('ff').focus();
 }
 function doFind(){
-  fList=[];fIdx=0;
+  fList=[];fLens=[];fIdx=0;
   const q=$('ff').value;if(!q){$('fc').textContent='';return;}
   const isRe=$('fx').checked;
   try{
     const re=isRe?new RegExp(q,'g'):new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
-    let m;while((m=re.exec(ed.value))!==null)fList.push(m.index);
+    let m;while((m=re.exec(ed.value))!==null){fList.push(m.index);fLens.push(m[0].length);if(m[0].length===0)re.lastIndex++;}
     $('fc').textContent=fList.length?fList.length+'개':'없음';
   }catch(e){$('fc').textContent='오류';}
 }
 function findNav(d){
   if(!fList.length)return;
   fIdx=(fIdx+d+fList.length)%fList.length;
-  const p=fList[fIdx];const q=$('ff').value;
-  ed.setSelectionRange(p,p+q.length);ed.focus();
+  const p=fList[fIdx];
+  ed.setSelectionRange(p,p+fLens[fIdx]);ed.focus();
   $('fc').textContent=`${fIdx+1}/${fList.length}`;
 }
 function doReplace(){
@@ -705,7 +706,9 @@ function doReplaceAll(){
   try{
     const re=isRe?new RegExp(q,'g'):new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
     const cnt=(ed.value.match(re)||[]).length;
-    ed.value=ed.value.replace(re,r);updateCnt();toast(`✅ ${cnt}개 모두 바꿈`);
+    saveHist();
+    /* 일반 검색일 때는 바꿀 문자열의 $ 기호를 그대로 넣음 */
+    ed.value=isRe?ed.value.replace(re,r):ed.value.replace(re,()=>r);updateCnt();saveHist();toast(`✅ ${cnt}개 모두 바꿈`);
   }catch(e){toast('❌ 정규식 오류');}
 }
 
@@ -718,7 +721,7 @@ function enc(type){
     else if(type==='b64-e') out=btoa(unescape(encodeURIComponent(t)));
     else if(type==='b64-d') out=decodeURIComponent(escape(atob(t.trim())));
     else if(type==='html-e') out=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    else if(type==='html-d'){const d=document.createElement('div');d.innerHTML=t;out=d.textContent||'';}
+    else if(type==='html-d'){const d=document.createElement('textarea');d.innerHTML=t;out=d.value;}
   }catch(e){out='❌ 오류: '+e.message;}
   $('enc-out').value=out;
 }

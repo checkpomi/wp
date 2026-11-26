@@ -880,24 +880,49 @@ function jsonToXml(data,tag='root'){
   return`<?xml version="1.0" encoding="UTF-8"?>\n<root>\n${(Array.isArray(data)?data:[data]).map(i=>toXml(i,'item')).join('\n')}\n</root>`;
 }
 function yamlToJson(yaml){
-  // 단순 YAML 파서 (배열·객체 지원)
+  // 단순 YAML 파서 (1단계 배열·객체 지원)
+  const scalar=v=>{
+    v=v.trim();
+    if(/^(['"]).*\1$/.test(v))return v.slice(1,-1);
+    if((v.startsWith('{')&&v.endsWith('}'))||(v.startsWith('[')&&v.endsWith(']'))){try{return JSON.parse(v);}catch(e){return v;}}
+    if(v==='true')return true;if(v==='false')return false;
+    if(v==='null'||v==='~'||v==='')return null;
+    if(/^-?(0|[1-9]\d*)(\.\d+)?$/.test(v))return Number(v);
+    return v;
+  };
   const lines=yaml.split('\n');
-  const result=[];let cur=null;
+  const result=[];let cur=null;let root=null;
   lines.forEach(l=>{
-    if(l.startsWith('-')){
+    const tl=l.trim();
+    if(!tl||tl.startsWith('#')||tl==='---')return;
+    if(tl.startsWith('- ')||tl==='-'){
       if(cur)result.push(cur);cur={};
-      const rest=l.slice(1).trim();
-      if(rest.includes(':')&&!rest.startsWith('"')){const[k,...vp]=rest.split(':');cur[k.trim()]=vp.join(':').trim().replace(/^['"]|['"]$/g,'');}
-    }else if(l.trim().includes(':')&&cur!==null){
-      const[k,...vp]=l.trim().split(':');cur[k.trim()]=vp.join(':').trim().replace(/^['"]|['"]$/g,'');
+      const rest=tl.slice(1).trim();
+      if(rest.includes(':')&&!rest.startsWith('"')){const[k,...vp]=rest.split(':');cur[k.trim()]=scalar(vp.join(':'));}
+    }else if(tl.includes(':')){
+      const[k,...vp]=tl.split(':');
+      if(cur!==null)cur[k.trim()]=scalar(vp.join(':'));
+      else{if(!root)root={};root[k.trim()]=scalar(vp.join(':'));}
     }
   });
   if(cur)result.push(cur);
-  return result.length?result:JSON.parse('{}');
+  if(result.length)return result;
+  return root||{};
 }
 function jsonToYaml(data){
-  const arr=Array.isArray(data)?data:[data];
-  return arr.map(obj=>'- '+Object.entries(obj).map(([k,v],i)=>(i===0?'':  '  ')+k+': '+v).join('\n  ')).join('\n');
+  const val=v=>{
+    if(v===null||v===undefined)return'null';
+    if(typeof v==='object')return JSON.stringify(v);
+    if(typeof v==='string'){
+      if(v===''||/^[\s\-?:,\[\]{}#&*!|>'"%@`]|:\s|\s#|\s$|\n/.test(v)||/^(true|false|null|~|-?\d+(\.\d+)?)$/i.test(v))return JSON.stringify(v);
+      return v;
+    }
+    return String(v);
+  };
+  const obj2=(obj,first,rest)=>Object.entries(obj).map(([k,v],i)=>(i===0?first:rest)+k+': '+val(v)).join('\n');
+  if(Array.isArray(data))return data.map(o=>(o&&typeof o==='object'&&!Array.isArray(o))?obj2(o,'- ','  '):'- '+val(o)).join('\n');
+  if(data&&typeof data==='object')return obj2(data,'','');
+  return val(data);
 }
 
 /* ════ CSS GRADIENT ════ */
@@ -991,14 +1016,15 @@ function describeCron(min,hr,dom,mon,dow){
   if(mon!=='*')d+=` in ${mons[(parseInt(mon)||1)-1]||'month '+mon}`;
   if(dow==='1-5')d+=' (Weekdays)';
   else if(dow==='6,0'||dow==='0,6')d+=' (Weekends)';
-  else if(dow!=='*')d+=` on ${dow.split(',').map(d=>days[parseInt(d)]||d).join(', ')}`;
+  else if(dow!=='*')d+=` on ${dow.split(',').map(d=>days[parseInt(d)%7]||d).join(', ')}`;
   return d;
 }
 function parseCron(){
   const v=$('cron-parse-in').value.trim();
   if(!v)return;
   const parts=v.split(/\s+/);
-  const [min,hr,dom,mon,dow]=parts.length>=5?parts:['*','*','*','*','*'];
+  /* 6필드(초 포함) 표현식은 첫 필드가 초이므로 건너뜀 */
+  const [min,hr,dom,mon,dow]=parts.length>=6?parts.slice(1):parts.length===5?parts:['*','*','*','*','*'];
   const desc=describeCron(min,hr,dom,mon,dow);
   $('cron-parse-out').textContent=desc;
   $('cron-parse-wrap').style.display='block';
@@ -1048,6 +1074,10 @@ let selTzTargets=new Set(['America/New_York','Europe/London','Asia/Seoul','Asia/
   const now=new Date();
   const local=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
   $('tz-dt').value=local;
+  /* 기본 입력값이 브라우저 현지 시각이므로, 기준 시간대도 브라우저 시간대에 맞춤 */
+  try{const bz=Intl.DateTimeFormat().resolvedOptions().timeZone;const o=new Date().getTimezoneOffset();
+    if(TZ_LIST.some(t=>t.id===bz))fromSel.value=bz;
+    else{const same=TZ_LIST.find(t=>tzOffsetMin(t.id,now)===-o);if(same)fromSel.value=same.id;}}catch(e){}
   convertTz();
   renderWorldClock();
   setInterval(renderWorldClock,1000);
@@ -1056,12 +1086,13 @@ let selTzTargets=new Set(['America/New_York','Europe/London','Asia/Seoul','Asia/
 function convertTz(){
   const dt=$('tz-dt').value;if(!dt)return;
   const from=$('tz-from').value;
-  const inputDt=new Date(dt);
+  const inputDt=zonedToInstant(dt,from);
+  if(isNaN(inputDt))return;
   const result=$('tz-result');result.innerHTML='';
   [...selTzTargets].forEach(tz=>{
     const info=TZ_LIST.find(t=>t.id===tz)||{city:tz,flag:'🌍'};
     try{
-      const fmt=new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'short',year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+      const fmt=new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'short',year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
       const parts=fmt.formatToParts(inputDt);
       const time=parts.find(p=>p.type==='hour')?.value+':'+parts.find(p=>p.type==='minute')?.value;
       const date=parts.find(p=>p.type==='weekday')?.value+', '+parts.find(p=>p.type==='month')?.value+' '+parts.find(p=>p.type==='day')?.value;
@@ -1072,10 +1103,26 @@ function convertTz(){
     }catch(e){}
   });
 }
+/* 해당 시간대의 UTC 오프셋(분). 브라우저 시간대와 무관하게 계산 */
+function tzOffsetMin(tz,dt){
+  const p={};
+  new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})
+    .formatToParts(dt).forEach(x=>{p[x.type]=x.value;});
+  const asUtc=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second);
+  return Math.round((asUtc-Math.floor(dt.getTime()/1000)*1000)/60000);
+}
+/* "YYYY-MM-DDTHH:mm"을 지정한 시간대의 현지 시각으로 해석해 실제 시점(Date)으로 변환 */
+function zonedToInstant(local,tz){
+  const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(local);
+  if(!m)return new Date(NaN);
+  const guess=Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]);
+  let t=guess-tzOffsetMin(tz,new Date(guess))*60000;
+  t=guess-tzOffsetMin(tz,new Date(t))*60000;
+  return new Date(t);
+}
 function getOffset(tz,dt){
   try{
-    const utc=dt.getTime();const local=new Date(dt.toLocaleString('en-US',{timeZone:tz})).getTime();
-    const off=Math.round((local-utc)/60000);const h=Math.floor(Math.abs(off)/60),m=Math.abs(off)%60;
+    const off=tzOffsetMin(tz,dt);const h=Math.floor(Math.abs(off)/60),m=Math.abs(off)%60;
     return`${off>=0?'+':'-'}${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
   }catch(e){return'+00:00';}
 }
@@ -1084,7 +1131,7 @@ function renderWorldClock(){
   const now=new Date();
   TZ_LIST.slice(0,8).forEach(tz=>{
     try{
-      const fmt=new Intl.DateTimeFormat('en-US',{timeZone:tz.id,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+      const fmt=new Intl.DateTimeFormat('en-US',{timeZone:tz.id,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
       const dfmt=new Intl.DateTimeFormat('en-US',{timeZone:tz.id,weekday:'short',month:'short',day:'numeric'});
       const card=document.createElement('div');card.className='tz-card';
       card.innerHTML=`<div class="tz-city">${tz.flag} ${tz.city}</div><div class="tz-time">${fmt.format(now)}</div><div class="tz-date">${dfmt.format(now)}</div><div class="tz-offset">UTC${getOffset(tz.id,now)}</div>`;

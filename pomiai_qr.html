@@ -496,12 +496,14 @@ function getQrContent(){
   if(qrType==='text') return $('qr-text').value||'pomiai';
   if(qrType==='wifi'){
     const s=$('qr-ssid').value,p=$('qr-wifipw').value,e=$('qr-wsec').value;
-    return `WIFI:T:${e};S:${s};P:${p};;`;
+    /* 규격상 \\ ; , : " 는 역슬래시로 이스케이프해야 스캔 시 올바르게 인식됨 */
+    const wq=v=>v.replace(/([\\;,:"])/g,'\\$1');
+    return e==='nopass'?`WIFI:T:nopass;S:${wq(s)};;`:`WIFI:T:${e};S:${wq(s)};P:${wq(p)};;`;
   }
   if(qrType==='vcard'){
     const n=$('vc-name').value,o=$('vc-org').value,ti=$('vc-title').value,
           te=$('vc-tel').value,em=$('vc-email').value,u=$('vc-url').value;
-    return `BEGIN:VCARD\nVERSION:3.0\nFN:${n}\nORG:${o}\nTITLE:${ti}\nTEL:${te}\nEMAIL:${em}\nURL:${u}\nEND:VCARD`;
+    return `BEGIN:VCARD\nVERSION:3.0\nN:${n};;;;\nFN:${n}\nORG:${o}\nTITLE:${ti}\nTEL:${te}\nEMAIL:${em}\nURL:${u}\nEND:VCARD`;
   }
   if(qrType==='email'){
     const t=$('qr-eto').value,s=$('qr-esub').value,b=$('qr-ebody').value;
