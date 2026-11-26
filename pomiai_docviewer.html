@@ -571,66 +571,115 @@ async function loadHwpx(file){
       });
     }
     if(!secs.length){showError('한컴 문서 구조를 인식할 수 없습니다.<br>(.hwpx 파일이 올바른지 확인하세요)');return;}
-    secs.sort((a,b)=>a.path.localeCompare(b.path));
+    /* section10이 section2보다 앞에 오지 않도록 번호 순으로 정렬 */
+    secs.sort((a,b)=>a.path.localeCompare(b.path,undefined,{numeric:true}));
+    let styles={};
+    const hdr=zip.file(/Contents\/header\.xml$/i)[0];
+    if(hdr) styles=parseHwpxStyles(await hdr.async('string'));
     let html='';
-    for(const {f} of secs) html+=parseHwpx(await f.async('string'));
+    for(const {f} of secs) html+=parseHwpx(await f.async('string'), styles);
     if(!html.trim()) html='<p style="color:#888">내용을 추출할 수 없습니다. 그림·수식만 있는 문서일 수 있습니다.</p>';
     showDocument(html, file.name, 'hwpx');
   }catch(err){showError('한컴 파일을 열 수 없습니다.<br>'+escHtml(err.message));}
 }
 
-function parseHwpx(xmlStr){
+/* header.xml의 스타일 표(id → 이름)를 읽음. 본문 단락은 styleIDRef로 스타일을 가리킴 */
+function parseHwpxStyles(xmlStr){
+  const map={};
+  try{
+    const doc=new DOMParser().parseFromString(xmlStr,'application/xml');
+    for(const el of doc.getElementsByTagName('*')){
+      if(el.localName.toLowerCase()!=='style')continue;
+      const id=el.getAttribute('id');
+      if(id!==null)map[id]=((el.getAttribute('name')||'')+' '+(el.getAttribute('engName')||'')).toLowerCase();
+    }
+  }catch(e){}
+  return map;
+}
+
+const HWPX_BR=String.fromCharCode(1); /* 줄바꿈 자리 표시(이스케이프 후 <br>로 바꿈) */
+function parseHwpx(xmlStr, styles){
+  styles=styles||{};
   const doc=new DOMParser().parseFromString(xmlStr,'application/xml');
-  let html='';
+  const ln=el=>el.localName.toLowerCase();
   function ga(el,...ns){for(const n of ns){const v=el.getAttribute(n)||el.getAttribute(n.toLowerCase());if(v!==null)return v;}return '';}
 
-  /* 단락 처리 */
-  /* hwpx 네임스페이스 다양: hp:p, hh:p, hp3:p ... → localName으로 매칭 */
-  const allEls=doc.getElementsByTagName('*');
-  const paras=[],tbls=[];
-  for(const el of allEls){
-    const ln=el.localName.toLowerCase();
-    if(ln==='p') paras.push(el);
-    if(ln==='tbl'||ln==='table') tbls.push(el);
+  function paraTag(para){
+    const ref=ga(para,'styleIDRef');
+    const comb=((ga(para,'styleId','StyleId')||'')+(ga(para,'styleName','StyleName')||'')+' '+(ref!==''&&styles[ref]?styles[ref]:'')).toLowerCase();
+    if(/(제목|개요|heading|outline)\s*1(?!\d)|\bh1\b/.test(comb)) return 'h1';
+    if(/(제목|개요|heading|outline)\s*2(?!\d)|\bh2\b/.test(comb)) return 'h2';
+    if(/(제목|개요|heading|outline)\s*3(?!\d)|\bh3\b/.test(comb)) return 'h3';
+    if(/(제목|개요|heading|outline)\s*4(?!\d)|\bh4\b/.test(comb)) return 'h4';
+    return 'p';
   }
 
-  paras.forEach(para=>{
-    const sid=ga(para,'styleId','StyleId')||'';
-    const snm=ga(para,'styleName','StyleName')||'';
-    const comb=(sid+snm).toLowerCase();
-    let tag='p';
-    if(/제목\s*1|heading.?1|h1/.test(comb)) tag='h1';
-    else if(/제목\s*2|heading.?2|h2/.test(comb)) tag='h2';
-    else if(/제목\s*3|heading.?3|h3/.test(comb)) tag='h3';
-    else if(/제목\s*4|heading.?4|h4/.test(comb)) tag='h4';
-
-    /* 텍스트 런 추출 — localName 't' */
-    let txt='';
-    const runs=para.getElementsByTagName('*');
-    let hasT=false;
-    for(const r of runs){if(r.localName.toLowerCase()==='t'){txt+=r.textContent;hasT=true;}}
-    if(!hasT) txt=para.textContent;
-    txt=txt.replace(/\n/g,' ').trim();
-    if(txt) html+=`<${tag}>${escHtml(txt)}</${tag}>\n`;
-  });
-
-  /* 표 처리 — 단락과 별도로 항상 처리 */
-  tbls.forEach(tbl=>{
-    html+='<div class="tw"><table>\n';
-    const rows=[...tbl.getElementsByTagName('*')].filter(e=>e.localName.toLowerCase()==='tr');
+  /* 문서 순서대로 훑으며 단락과 표를 제자리에 출력.
+     hwpx에서 표는 단락 안(p > run > tbl)에 있고 셀 안에 다시 단락이 있으므로,
+     모든 p와 tbl을 따로 모아 출력하면 셀 내용이 본문에 중복되고 표가 맨 뒤로 밀림. */
+  function renderBlocks(root, inCell){
+    let out='';
+    for(const el of root.children){
+      const n=ln(el);
+      if(n==='p') out+=renderPara(el, inCell);
+      else if(n==='tbl'||n==='table') out+=renderTable(el);
+      else out+=renderBlocks(el, inCell);
+    }
+    return out;
+  }
+  function renderPara(para, inCell){
+    const tag=inCell?'div':paraTag(para);
+    let out='', txt='', hasT=false;
+    const flush=()=>{
+      const t=txt.replace(/[ \t\r\n]+/g,' ').trim(); txt='';
+      if(t) out+=`<${tag}>${escHtml(t).split(HWPX_BR).join('<br>')}</${tag}>\n`;
+    };
+    (function walk(node){
+      for(const el of node.children){
+        const n=ln(el);
+        if(n==='t'){ hasT=true; walkText(el); }
+        else if(n==='tbl'||n==='table'){ flush(); out+=renderTable(el); }
+        else if(n==='p'){ flush(); out+=renderPara(el, inCell); }
+        else walk(el);
+      }
+    })(para);
+    function walkText(t){
+      for(const c of t.childNodes){
+        if(c.nodeType===3) txt+=c.nodeValue;
+        else if(c.nodeType===1){
+          const n=ln(c);
+          if(n==='linebreak') txt+=HWPX_BR;
+          else if(n==='tab') txt+=' ';
+          else walkText(c);
+        }
+      }
+    }
+    if(!hasT && !out && !para.children.length) txt=para.textContent;
+    flush();
+    return out;
+  }
+  function renderTable(tbl){
+    let out='<div class="tw"><table>\n';
+    const rows=[...tbl.children].filter(e=>ln(e)==='tr');
     rows.forEach((row,ri)=>{
-      html+='<tr>';
-      const cells=[...row.getElementsByTagName('*')].filter(e=>['td','th','tc'].includes(e.localName.toLowerCase()));
-      cells.forEach(cell=>{
+      out+='<tr>';
+      [...row.children].filter(e=>['td','th','tc'].includes(ln(e))).forEach(cell=>{
         const ct=ri===0?'th':'td';
-        const t=cell.textContent.replace(/\n/g,' ').trim();
-        html+=`<${ct}>${escHtml(t)}</${ct}>`;
+        let attrs='';
+        const span=[...cell.children].find(e=>ln(e)==='cellspan');
+        if(span){
+          const cs=parseInt(ga(span,'colSpan'))||1, rs=parseInt(ga(span,'rowSpan'))||1;
+          if(cs>1)attrs+=` colspan="${cs}"`; if(rs>1)attrs+=` rowspan="${rs}"`;
+        }
+        let inner=renderBlocks(cell,true);
+        if(!inner.trim()){const t=cell.textContent.replace(/\s+/g,' ').trim(); inner=escHtml(t);}
+        out+=`<${ct}${attrs}>${inner}</${ct}>`;
       });
-      html+='</tr>\n';
+      out+='</tr>\n';
     });
-    html+='</table></div>\n';
-  });
-  return html;
+    return out+'</table></div>\n';
+  }
+  return renderBlocks(doc.documentElement,false);
 }
 
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
