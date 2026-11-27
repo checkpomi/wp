@@ -1,7 +1,8 @@
 name: stockreport-collect
 
 # pomiai 데일리 주식 리포트 데이터 수집
-# 시각은 UTC 기준 (KST = UTC+9). GitHub 예약 실행은 몇 분씩 늦게 시작될 수 있다.
+# 시각은 UTC 기준 (KST = UTC+9). GitHub 예약 실행은 몇 시간씩 밀리거나 빠지는 일이 있어
+# 실제 갱신은 Claude 예약 작업이 workflow_dispatch 로 하루 6회 깨워서 한다. 아래 cron 은 보조용.
 on:
   schedule:
     # 정각·15분 단위는 GitHub 예약 실행이 몰려 누락되기 쉬워 분을 비켜 둔다.

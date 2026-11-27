@@ -479,6 +479,9 @@ def main():
     surge = run("거래량 급증", fetch_surge, default=[])
     watch = run("관심종목 시세", build_watch, default=[])
     dart = run("공시 DART", fetch_dart, default=[])
+    if not dart and "빈 응답" in SOURCES["공시 DART"]["msg"]:
+        # 새벽·개장 전처럼 해당 공시가 0건인 시간은 실패가 아니다
+        SOURCES["공시 DART"] = {"ok": True, "msg": "분류에 해당하는 공시 없음", "ms": SOURCES["공시 DART"]["ms"]}
     world = run("해외 지수·환율", fetch_world, default=[])
     news = run("뉴스 제목", fetch_news)
     SOURCES["공매도·신용잔고"] = {"ok": False, "msg": "1차 버전에서는 수집하지 않음", "ms": 0, "planned": True}
